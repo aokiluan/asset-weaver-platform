@@ -1,20 +1,8 @@
-# Alinhamento do cabeçalho da sidebar
+# Adicionar logo no header
 
-Igualar a altura do `SidebarHeader` à do header principal (`h-14`) para que as bordas inferiores fiquem na mesma linha, e centralizar a logo.
+Adicionar a logo `s3-logo-secundario.png` à esquerda do bloco "S3 Capital Securitizadora S.A. / 60.353.126/0001-71" no header principal, conforme imagem de referência.
 
-## Alteração em `src/components/AppSidebar.tsx`
+## Alteração em `src/components/AppLayout.tsx`
 
-Substituir o `SidebarHeader` atual por:
-
-```tsx
-<SidebarHeader className="h-14 border-b border-sidebar-border py-0 px-3 flex items-center justify-center">
-  <img
-    src={collapsed ? logoSymbol : logoSecundario}
-    alt="S3 Capital"
-    className={collapsed ? "h-8 w-8 object-contain" : "h-8 w-auto object-contain"}
-  />
-</SidebarHeader>
-```
-
-- `h-14` casa com `h-14` do header da página → bordas alinhadas.
-- `justify-center` centraliza a logo horizontalmente, tanto colapsada quanto expandida.
+- Importar `logoSecundario from "@/assets/s3-logo-secundario.png"`.
+- Inserir `<img src={logoSecundario} className="h-9 w-auto object-contain shrink-0" />` antes do bloco de texto da empresa.

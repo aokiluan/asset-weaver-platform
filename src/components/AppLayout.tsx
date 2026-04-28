@@ -3,6 +3,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { Button } from "@/components/ui/button";
 import { LogOut, Bell } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import logoSecundario from "@/assets/s3-logo-secundario.png";
 
 export default function AppLayout() {
   const { user, signOut } = useAuth();
@@ -14,6 +15,11 @@ export default function AppLayout() {
       <div className="flex-1 flex flex-col min-w-0">
         <header className="h-14 flex items-center justify-between border-b bg-card px-3">
           <div className="flex items-center gap-3 min-w-0">
+            <img
+              src={logoSecundario}
+              alt="S3 Capital"
+              className="h-9 w-auto object-contain shrink-0"
+            />
             <div className="flex flex-col leading-tight min-w-0">
               <span className="text-[13px] font-semibold uppercase tracking-wide text-foreground truncate">
                 S3 Capital Securitizadora S.A.
