@@ -67,15 +67,15 @@
     --shadow-card: 0 1px 3px hsl(218 60% 14% / 0.06), 0 1px 2px hsl(218 60% 14% / 0.04);
     --shadow-gold: 0 4px 14px -4px hsl(36 45% 48% / 0.35);
 
-    /* Sidebar — navy escuro institucional */
-    --sidebar-background: 218 60% 11%;
-    --sidebar-foreground: 40 25% 88%;
-    --sidebar-primary: 36 45% 52%;
-    --sidebar-primary-foreground: 218 60% 11%;
-    --sidebar-accent: 218 50% 18%;
+    /* Sidebar — azul-acinzentado (slate steel) */
+    --sidebar-background: 215 22% 18%;
+    --sidebar-foreground: 210 15% 86%;
+    --sidebar-primary: 36 45% 55%;
+    --sidebar-primary-foreground: 215 22% 14%;
+    --sidebar-accent: 215 18% 26%;
     --sidebar-accent-foreground: 40 30% 96%;
-    --sidebar-border: 218 50% 18%;
-    --sidebar-ring: 36 45% 52%;
+    --sidebar-border: 215 18% 26%;
+    --sidebar-ring: 36 45% 55%;
   }
 
   .dark {
@@ -118,13 +118,13 @@
     --input: 215 30% 18%;
     --ring: 36 45% 55%;
 
-    --sidebar-background: 218 60% 6%;
-    --sidebar-foreground: 40 25% 88%;
+    --sidebar-background: 215 22% 12%;
+    --sidebar-foreground: 210 15% 86%;
     --sidebar-primary: 36 45% 55%;
-    --sidebar-primary-foreground: 218 60% 6%;
-    --sidebar-accent: 218 45% 14%;
+    --sidebar-primary-foreground: 215 22% 10%;
+    --sidebar-accent: 215 18% 18%;
     --sidebar-accent-foreground: 40 25% 92%;
-    --sidebar-border: 218 45% 14%;
+    --sidebar-border: 215 18% 18%;
     --sidebar-ring: 36 45% 55%;
   }
 }
