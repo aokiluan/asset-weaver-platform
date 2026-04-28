@@ -296,6 +296,59 @@ export type Database = {
           },
         ]
       }
+      dashboard_widgets: {
+        Row: {
+          ativo: boolean
+          config: Json
+          created_at: string
+          created_by: string | null
+          dataset_id: string
+          descricao: string | null
+          id: string
+          largura: number
+          ordem: number
+          tipo: Database["public"]["Enums"]["dashboard_widget_tipo"]
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          config?: Json
+          created_at?: string
+          created_by?: string | null
+          dataset_id: string
+          descricao?: string | null
+          id?: string
+          largura?: number
+          ordem?: number
+          tipo: Database["public"]["Enums"]["dashboard_widget_tipo"]
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          config?: Json
+          created_at?: string
+          created_by?: string | null
+          dataset_id?: string
+          descricao?: string | null
+          id?: string
+          largura?: number
+          ordem?: number
+          tipo?: Database["public"]["Enums"]["dashboard_widget_tipo"]
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dashboard_widgets_dataset_id_fkey"
+            columns: ["dataset_id"]
+            isOneToOne: false
+            referencedRelation: "report_datasets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documento_categorias: {
         Row: {
           ativo: boolean
@@ -599,6 +652,137 @@ export type Database = {
           },
         ]
       }
+      report_datasets: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          created_by: string | null
+          descricao: string | null
+          id: string
+          nome: string
+          schema: Json
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          descricao?: string | null
+          id?: string
+          nome: string
+          schema?: Json
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          descricao?: string | null
+          id?: string
+          nome?: string
+          schema?: Json
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      report_rows: {
+        Row: {
+          created_at: string
+          dados: Json
+          dataset_id: string
+          id: number
+          periodo_referencia: string
+          row_index: number
+          upload_id: string
+        }
+        Insert: {
+          created_at?: string
+          dados: Json
+          dataset_id: string
+          id?: number
+          periodo_referencia: string
+          row_index: number
+          upload_id: string
+        }
+        Update: {
+          created_at?: string
+          dados?: Json
+          dataset_id?: string
+          id?: number
+          periodo_referencia?: string
+          row_index?: number
+          upload_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_rows_dataset_id_fkey"
+            columns: ["dataset_id"]
+            isOneToOne: false
+            referencedRelation: "report_datasets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_rows_upload_id_fkey"
+            columns: ["upload_id"]
+            isOneToOne: false
+            referencedRelation: "report_uploads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      report_uploads: {
+        Row: {
+          arquivo_nome: string
+          created_at: string
+          dataset_id: string
+          erro_msg: string | null
+          id: string
+          linhas_total: number
+          periodo_referencia: string
+          status: Database["public"]["Enums"]["report_upload_status"]
+          storage_path: string
+          updated_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          arquivo_nome: string
+          created_at?: string
+          dataset_id: string
+          erro_msg?: string | null
+          id?: string
+          linhas_total?: number
+          periodo_referencia: string
+          status?: Database["public"]["Enums"]["report_upload_status"]
+          storage_path: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          arquivo_nome?: string
+          created_at?: string
+          dataset_id?: string
+          erro_msg?: string | null
+          id?: string
+          linhas_total?: number
+          periodo_referencia?: string
+          status?: Database["public"]["Enums"]["report_upload_status"]
+          storage_path?: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_uploads_dataset_id_fkey"
+            columns: ["dataset_id"]
+            isOneToOne: false
+            referencedRelation: "report_datasets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -677,6 +861,7 @@ export type Database = {
         | "aprovado"
         | "reprovado"
         | "inativo"
+      dashboard_widget_tipo: "kpi" | "bar" | "line" | "pie" | "table"
       documento_status: "pendente" | "aprovado" | "reprovado"
       lead_tipo: "cedente" | "investidor"
       opinion_recommendation:
@@ -691,6 +876,7 @@ export type Database = {
         | "aprovado"
         | "reprovado"
         | "cancelado"
+      report_upload_status: "pendente" | "processando" | "processado" | "erro"
       vote_decision: "favoravel" | "desfavoravel" | "abstencao"
     }
     CompositeTypes: {
@@ -837,6 +1023,7 @@ export const Constants = {
         "reprovado",
         "inativo",
       ],
+      dashboard_widget_tipo: ["kpi", "bar", "line", "pie", "table"],
       documento_status: ["pendente", "aprovado", "reprovado"],
       lead_tipo: ["cedente", "investidor"],
       opinion_recommendation: [
@@ -853,6 +1040,7 @@ export const Constants = {
         "reprovado",
         "cancelado",
       ],
+      report_upload_status: ["pendente", "processando", "processado", "erro"],
       vote_decision: ["favoravel", "desfavoravel", "abstencao"],
     },
   },
