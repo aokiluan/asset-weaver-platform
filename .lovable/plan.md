@@ -1,30 +1,28 @@
-# Cabeçalho com identificação da empresa (estilo Nibo)
+# Mover identificação da empresa para a sidebar + tom azul-acinzentado
 
-## O que será feito
+## 1. `src/components/AppSidebar.tsx`
+Reformular o `SidebarHeader` para conter:
+- **Expandida**: logo símbolo branco (pequeno, à esquerda) + bloco de duas linhas:
+  - Linha 1: "S3 CAPITAL SECURITIZADORA S.A." em `font-display`, peso 600, uppercase, cor sidebar-foreground, com `truncate`
+  - Linha 2: "60.353.126/0001-71" em texto pequeno (`text-[11px]`), `tabular-nums`, sidebar-foreground com 60% opacidade
+- **Recolhida**: apenas o símbolo centralizado (como hoje)
+- Mais respiro vertical (`py-4`) para acomodar bem o bloco de texto
 
-Replicar o cabeçalho do Nibo no `AppLayout`, exibindo:
-- Logo horizontal da S3 Capital (símbolo + nome)
-- Razão social: **S3 CAPITAL SECURITIZADORA S.A.**
-- CNPJ: **60.353.126/0001-71**
+## 2. `src/components/AppLayout.tsx`
+Limpar o cabeçalho principal:
+- Remover logo, razão social e CNPJ (que migram para a sidebar)
+- Manter apenas: `SidebarTrigger` + (à direita) função do usuário, sino, e-mail e botão Sair
+- Reduzir altura para `h-12` (era `h-16`)
 
-## Arquivos afetados
+## 3. `src/index.css` — paleta da sidebar mais azul-acinzentada
+Substituir o navy puro por um **slate azulado** (mais cinza, menos saturado), mantendo a hierarquia:
+- `--sidebar-background`: `215 25% 18%` (slate azulado escuro, em vez de navy 218 60% 11%)
+- `--sidebar-foreground`: `210 15% 85%` (off-white levemente azulado)
+- `--sidebar-accent`: `215 20% 26%` (hover/selecionado um pouco mais claro)
+- `--sidebar-border`: `215 20% 26%`
+- `--sidebar-primary` (item ativo): mantém o **dourado** da marca como destaque
 
-### `src/assets/s3-logo-horizontal.png` (já copiado)
-Versão colorida do logo (`Logo_Secundário.png`) para uso sobre fundo claro do header.
-
-### `src/components/AppLayout.tsx`
-- Aumentar altura do header de `h-12` para `h-16` para acomodar logo + duas linhas de texto
-- À esquerda do header (depois do `SidebarTrigger`):
-  - Logo horizontal (`h-9`, navy + dourado, sobre fundo branco do card)
-  - Bloco de duas linhas:
-    - Linha 1: "S3 CAPITAL SECURITIZADORA S.A." em `font-display` (Cormorant), uppercase, peso 600
-    - Linha 2: "60.353.126/0001-71" em texto pequeno muted, com `tabular-nums`
-  - Bloco de texto fica oculto em telas `< sm` (só o logo aparece)
-- À direita do header:
-  - Indicador de função do usuário (oculto em telas `< lg`)
-  - Botão de notificações (ícone `Bell`) — visual, sem ação por enquanto
-  - E-mail do usuário (oculto em telas `< md`)
-  - Botão "Sair"
+Ajustar também o tema escuro com a mesma família de tons.
 
 ## Resultado esperado
-Cabeçalho institucional idêntico ao layout do Nibo: logo + razão social + CNPJ alinhados à esquerda, ações e identificação do usuário à direita, com tipografia serifada da marca dando o tom premium.
+Sidebar com fundo **azul-acinzentado sóbrio** (tipo "slate steel"), com o cabeçalho mostrando logo símbolo + razão social + CNPJ — exatamente o bloco de identificação da empresa que estava no header principal. Header principal fica limpo, só com trigger e ações do usuário.
