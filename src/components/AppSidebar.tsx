@@ -54,28 +54,34 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="border-b border-sidebar-border">
-        <div className="flex items-center gap-2 px-2 py-2">
-          <div className="h-8 w-8 rounded-lg bg-[var(--gradient-primary)] flex items-center justify-center shrink-0">
-            <Shield className="h-4 w-4 text-primary-foreground" />
+      <SidebarHeader className="border-b border-sidebar-border py-2">
+        <div className="flex items-center gap-2 px-2 py-1">
+          <div className="h-7 w-7 rounded-md bg-[var(--gradient-primary)] flex items-center justify-center shrink-0">
+            <Shield className="h-3.5 w-3.5 text-primary-foreground" />
           </div>
           {!collapsed && (
             <div className="flex flex-col leading-tight">
-              <span className="text-sm font-semibold text-sidebar-foreground">Securitizadora</span>
+              <span className="text-[13px] font-semibold text-sidebar-foreground">Securitizadora</span>
               <span className="text-[10px] text-sidebar-foreground/60">Plataforma de gestão</span>
             </div>
           )}
         </div>
       </SidebarHeader>
 
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Operação</SidebarGroupLabel>
+      <SidebarContent className="gap-0">
+        <SidebarGroup className="py-1.5">
+          <SidebarGroupLabel className="text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/50 h-6 px-3">
+            Operação
+          </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="gap-0">
               {mainItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={isActive(item.url)}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive(item.url)}
+                    className="h-8 text-[13px] rounded-md px-3"
+                  >
                     <NavLink to={item.url} end={item.url === "/"}>
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
@@ -88,13 +94,19 @@ export function AppSidebar() {
         </SidebarGroup>
 
         {showAdmin && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Administração</SidebarGroupLabel>
+          <SidebarGroup className="py-1.5 border-t border-sidebar-border/60">
+            <SidebarGroupLabel className="text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/50 h-6 px-3">
+              Administração
+            </SidebarGroupLabel>
             <SidebarGroupContent>
-              <SidebarMenu>
+              <SidebarMenu className="gap-0">
                 {adminItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={isActive(item.url)}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive(item.url)}
+                      className="h-8 text-[13px] rounded-md px-3"
+                    >
                       <NavLink to={item.url}>
                         <item.icon className="h-4 w-4" />
                         <span>{item.title}</span>
