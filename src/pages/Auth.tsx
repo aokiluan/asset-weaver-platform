@@ -76,7 +76,7 @@ export default function Auth() {
             className="h-28 w-auto object-contain"
           />
           <p className="mt-3 text-xs uppercase tracking-[0.2em] text-muted-foreground">
-            Securitizadora · Plataforma de Gestão
+            Securitizadora · Painel de Gestão
           </p>
         </div>
 
