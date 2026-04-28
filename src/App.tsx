@@ -19,6 +19,9 @@ import AdminUsuarios from "./pages/admin/AdminUsuarios.tsx";
 import AdminAlcadas from "./pages/admin/AdminAlcadas.tsx";
 import AdminPipeline from "./pages/admin/AdminPipeline.tsx";
 import AdminCategorias from "./pages/admin/AdminCategorias.tsx";
+import AdminDatasets from "./pages/admin/AdminDatasets.tsx";
+import AdminRelatorios from "./pages/admin/AdminRelatorios.tsx";
+import AdminDashboardWidgets from "./pages/admin/AdminDashboardWidgets.tsx";
 import RoleGuard from "@/components/RoleGuard";
 import NotFound from "./pages/NotFound.tsx";
 
@@ -52,6 +55,9 @@ const App = () => (
               <Route path="/admin/alcadas" element={<RoleGuard role="admin"><AdminAlcadas /></RoleGuard>} />
               <Route path="/admin/pipeline" element={<RoleGuard role="admin"><AdminPipeline /></RoleGuard>} />
               <Route path="/admin/categorias" element={<RoleGuard role="admin"><AdminCategorias /></RoleGuard>} />
+              <Route path="/admin/datasets" element={<RoleGuard role="admin"><AdminDatasets /></RoleGuard>} />
+              <Route path="/admin/relatorios" element={<RoleGuard role="admin"><AdminRelatorios /></RoleGuard>} />
+              <Route path="/admin/widgets" element={<RoleGuard role="admin"><AdminDashboardWidgets /></RoleGuard>} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
