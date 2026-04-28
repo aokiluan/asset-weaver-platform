@@ -14,6 +14,11 @@ import Cedentes from "./pages/Cedentes.tsx";
 import CedenteDetail from "./pages/CedenteDetail.tsx";
 import Credito from "./pages/Credito.tsx";
 import CreditoDetail from "./pages/CreditoDetail.tsx";
+import AdminUsuarios from "./pages/admin/AdminUsuarios.tsx";
+import AdminAlcadas from "./pages/admin/AdminAlcadas.tsx";
+import AdminPipeline from "./pages/admin/AdminPipeline.tsx";
+import AdminCategorias from "./pages/admin/AdminCategorias.tsx";
+import RoleGuard from "@/components/RoleGuard";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -41,6 +46,10 @@ const App = () => (
               <Route path="/cedentes/:id" element={<CedenteDetail />} />
               <Route path="/credito" element={<Credito />} />
               <Route path="/credito/:id" element={<CreditoDetail />} />
+              <Route path="/admin/usuarios" element={<RoleGuard role="admin"><AdminUsuarios /></RoleGuard>} />
+              <Route path="/admin/alcadas" element={<RoleGuard role="admin"><AdminAlcadas /></RoleGuard>} />
+              <Route path="/admin/pipeline" element={<RoleGuard role="admin"><AdminPipeline /></RoleGuard>} />
+              <Route path="/admin/categorias" element={<RoleGuard role="admin"><AdminCategorias /></RoleGuard>} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
