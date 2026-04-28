@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Shield, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import logoVertical from "@/assets/s3-logo-vertical.png";
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -16,7 +17,7 @@ export default function Auth() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    document.title = "Acesso | Securitizadora";
+    document.title = "Acesso | S3 Capital";
   }, []);
 
   if (authLoading) return null;
@@ -69,16 +70,19 @@ export default function Auth() {
     <div className="min-h-screen flex items-center justify-center p-4 bg-[var(--gradient-subtle)]">
       <div className="w-full max-w-md">
         <div className="flex flex-col items-center mb-8">
-          <div className="h-14 w-14 rounded-xl bg-[var(--gradient-primary)] flex items-center justify-center shadow-[var(--shadow-elegant)]">
-            <Shield className="h-7 w-7 text-primary-foreground" />
-          </div>
-          <h1 className="mt-4 text-2xl font-bold text-foreground">Securitizadora</h1>
-          <p className="text-sm text-muted-foreground">Plataforma de gestão</p>
+          <img
+            src={logoVertical}
+            alt="S3 Capital"
+            className="h-28 w-auto object-contain"
+          />
+          <p className="mt-3 text-xs uppercase tracking-[0.2em] text-muted-foreground">
+            Securitizadora · Plataforma de Gestão
+          </p>
         </div>
 
-        <Card className="shadow-[var(--shadow-elegant)]">
+        <Card className="shadow-[var(--shadow-elegant)] border-t-2 border-t-gold">
           <CardHeader>
-            <CardTitle>Acesse sua conta</CardTitle>
+            <CardTitle className="font-display text-2xl">Acesse sua conta</CardTitle>
             <CardDescription>Entre com seu e-mail corporativo</CardDescription>
           </CardHeader>
           <CardContent>
