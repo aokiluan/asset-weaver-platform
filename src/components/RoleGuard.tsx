@@ -21,7 +21,7 @@ export default function RoleGuard({ children, role }: Props) {
       <Loader2 className="h-5 w-5 animate-spin mr-2" /> Carregando...
     </div>;
   }
-  const roles = Array.isArray(role) ? role : [role];
+  const roles: AppRole[] = Array.isArray(role) ? [...role] : [role as AppRole];
   const allowed = roles.some((r) => hasRole(r));
   if (!allowed) {
     return <Navigate to="/" state={{ from: location }} replace />;
