@@ -12,6 +12,7 @@ import {
   Wallet,
 } from "lucide-react";
 import logoSymbol from "@/assets/s3-logo-symbol.png";
+import logoSecundario from "@/assets/s3-logo-secundario.png";
 import {
   Sidebar,
   SidebarContent,
@@ -54,25 +55,31 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border py-4">
-        <div className={`flex items-center gap-2.5 ${collapsed ? "justify-center px-1" : "px-2"}`}>
-          <div className="h-9 w-9 rounded-md bg-white/95 flex items-center justify-center shrink-0 p-1">
+        {collapsed ? (
+          <div className="flex items-center justify-center px-1">
             <img
               src={logoSymbol}
               alt="S3 Capital"
-              className="h-full w-full object-contain"
+              className="h-9 w-9 object-contain"
             />
           </div>
-          {!collapsed && (
+        ) : (
+          <div className="flex items-center gap-2.5 px-2">
+            <img
+              src={logoSecundario}
+              alt="S3 Capital"
+              className="h-9 w-auto object-contain shrink-0"
+            />
             <div className="flex flex-col leading-tight min-w-0">
-              <span className="font-display text-[13px] font-semibold uppercase tracking-wide text-sidebar-foreground truncate">
+              <span className="text-[12px] font-semibold uppercase tracking-wide text-sidebar-foreground truncate">
                 S3 Capital Securitizadora S.A.
               </span>
               <span className="text-[11px] tabular-nums text-sidebar-foreground/60">
                 60.353.126/0001-71
               </span>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </SidebarHeader>
 
       <SidebarContent className="gap-0">
