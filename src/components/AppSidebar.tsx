@@ -3,8 +3,6 @@ import {
   LayoutDashboard,
   Users,
   KanbanSquare,
-  FileText,
-  Shield,
   Settings,
   Building2,
   Scale,
@@ -13,6 +11,8 @@ import {
   Tags,
   Wallet,
 } from "lucide-react";
+import logoHorizontal from "@/assets/s3-logo-horizontal-white.png";
+import logoSymbol from "@/assets/s3-logo-symbol.png";
 import {
   Sidebar,
   SidebarContent,
@@ -54,16 +54,22 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="border-b border-sidebar-border py-2">
-        <div className="flex items-center gap-2 px-2 py-1">
-          <div className="h-7 w-7 rounded-md bg-[var(--gradient-primary)] flex items-center justify-center shrink-0">
-            <Shield className="h-3.5 w-3.5 text-primary-foreground" />
-          </div>
-          {!collapsed && (
-            <div className="flex flex-col leading-tight">
-              <span className="text-[13px] font-semibold text-sidebar-foreground">Securitizadora</span>
-              <span className="text-[10px] text-sidebar-foreground/60">Plataforma de gestão</span>
+      <SidebarHeader className="border-b border-sidebar-border py-3">
+        <div className="flex items-center justify-center px-2">
+          {collapsed ? (
+            <div className="h-9 w-9 rounded-md bg-white/95 flex items-center justify-center shrink-0 p-1">
+              <img
+                src={logoSymbol}
+                alt="S3 Capital"
+                className="h-full w-full object-contain"
+              />
             </div>
+          ) : (
+            <img
+              src={logoHorizontal}
+              alt="S3 Capital"
+              className="h-9 w-auto object-contain"
+            />
           )}
         </div>
       </SidebarHeader>

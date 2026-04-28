@@ -12,107 +12,120 @@
   :root {
     /* Surfaces */
     --background: 210 40% 98%;
-    --foreground: 222 60% 12%;
+    --foreground: 218 55% 11%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222 60% 12%;
+    --card-foreground: 218 55% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 60% 12%;
+    --popover-foreground: 218 55% 11%;
 
-    /* Brand: Navy */
-    --primary: 220 65% 18%;          /* #0f1b3d */
-    --primary-foreground: 210 40% 98%;
-    --primary-hover: 220 55% 25%;
-    --primary-glow: 213 47% 37%;     /* #3b6fa0 */
+    /* Brand: S3 Capital Navy */
+    --primary: 218 60% 14%;          /* #0f1f3d */
+    --primary-foreground: 40 30% 96%;
+    --primary-hover: 218 55% 22%;
+    --primary-glow: 215 45% 32%;
 
     /* Secondary: Steel blue */
-    --secondary: 215 45% 30%;        /* #1e3a5f */
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 215 45% 28%;
+    --secondary-foreground: 40 30% 96%;
 
     --muted: 214 32% 94%;
     --muted-foreground: 215 16% 40%;
 
-    --accent: 213 47% 37%;           /* #3b6fa0 */
-    --accent-foreground: 210 40% 98%;
+    /* Accent: S3 Capital Gold */
+    --accent: 36 45% 48%;            /* #b8893f */
+    --accent-foreground: 218 60% 14%;
+    --gold: 36 45% 48%;
+    --gold-foreground: 218 60% 14%;
+    --gold-soft: 36 55% 88%;
 
     --success: 142 64% 35%;
     --success-foreground: 0 0% 100%;
 
     --warning: 38 92% 50%;
-    --warning-foreground: 222 60% 12%;
+    --warning-foreground: 218 55% 11%;
 
     --destructive: 0 72% 45%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 40 30% 96%;
 
     --border: 214 28% 88%;
     --input: 214 28% 88%;
-    --ring: 220 65% 18%;
+    --ring: 218 60% 14%;
 
-    --radius: 0.625rem;
+    --radius: 0.5rem;
+
+    /* Brand fonts */
+    --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --font-display: "Cormorant Garamond", "Times New Roman", Georgia, serif;
 
     /* Gradients & shadows */
-    --gradient-primary: linear-gradient(135deg, hsl(220 65% 18%), hsl(213 47% 37%));
+    --gradient-primary: linear-gradient(135deg, hsl(218 60% 14%), hsl(215 45% 28%));
+    --gradient-gold: linear-gradient(135deg, hsl(36 50% 42%), hsl(36 55% 58%));
     --gradient-subtle: linear-gradient(180deg, hsl(210 40% 98%), hsl(214 32% 94%));
-    --shadow-elegant: 0 10px 30px -12px hsl(220 65% 18% / 0.25);
-    --shadow-card: 0 1px 3px hsl(220 65% 18% / 0.06), 0 1px 2px hsl(220 65% 18% / 0.04);
+    --shadow-elegant: 0 10px 30px -12px hsl(218 60% 14% / 0.25);
+    --shadow-card: 0 1px 3px hsl(218 60% 14% / 0.06), 0 1px 2px hsl(218 60% 14% / 0.04);
+    --shadow-gold: 0 4px 14px -4px hsl(36 45% 48% / 0.35);
 
-    /* Sidebar — navy escuro */
-    --sidebar-background: 220 65% 14%;
-    --sidebar-foreground: 210 30% 88%;
-    --sidebar-primary: 213 47% 50%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 50% 22%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 220 50% 22%;
-    --sidebar-ring: 213 47% 50%;
+    /* Sidebar — navy escuro institucional */
+    --sidebar-background: 218 60% 11%;
+    --sidebar-foreground: 40 25% 88%;
+    --sidebar-primary: 36 45% 52%;
+    --sidebar-primary-foreground: 218 60% 11%;
+    --sidebar-accent: 218 50% 18%;
+    --sidebar-accent-foreground: 40 30% 96%;
+    --sidebar-border: 218 50% 18%;
+    --sidebar-ring: 36 45% 52%;
   }
 
   .dark {
-    --background: 222 50% 8%;
-    --foreground: 210 30% 92%;
+    --background: 218 50% 8%;
+    --foreground: 40 25% 92%;
 
-    --card: 222 45% 11%;
-    --card-foreground: 210 30% 92%;
+    --card: 218 45% 11%;
+    --card-foreground: 40 25% 92%;
 
-    --popover: 222 45% 11%;
-    --popover-foreground: 210 30% 92%;
+    --popover: 218 45% 11%;
+    --popover-foreground: 40 25% 92%;
 
-    --primary: 213 47% 55%;
-    --primary-foreground: 222 60% 8%;
-    --primary-hover: 213 47% 62%;
-    --primary-glow: 213 47% 45%;
+    --primary: 36 45% 55%;
+    --primary-foreground: 218 60% 8%;
+    --primary-hover: 36 50% 62%;
+    --primary-glow: 36 45% 45%;
 
     --secondary: 215 35% 22%;
-    --secondary-foreground: 210 30% 92%;
+    --secondary-foreground: 40 25% 92%;
 
     --muted: 215 30% 16%;
     --muted-foreground: 215 16% 62%;
 
-    --accent: 213 47% 45%;
-    --accent-foreground: 210 30% 95%;
+    --accent: 36 45% 55%;
+    --accent-foreground: 218 60% 8%;
+    --gold: 36 45% 55%;
+    --gold-foreground: 218 60% 8%;
+    --gold-soft: 36 35% 22%;
 
     --success: 142 50% 45%;
     --success-foreground: 0 0% 100%;
 
     --warning: 38 80% 55%;
-    --warning-foreground: 222 60% 8%;
+    --warning-foreground: 218 60% 8%;
 
     --destructive: 0 62% 50%;
-    --destructive-foreground: 210 30% 95%;
+    --destructive-foreground: 40 25% 95%;
 
     --border: 215 30% 18%;
     --input: 215 30% 18%;
-    --ring: 213 47% 55%;
+    --ring: 36 45% 55%;
 
-    --sidebar-background: 222 55% 6%;
-    --sidebar-foreground: 210 30% 88%;
-    --sidebar-primary: 213 47% 55%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 45% 14%;
-    --sidebar-accent-foreground: 210 30% 92%;
-    --sidebar-border: 220 45% 14%;
-    --sidebar-ring: 213 47% 55%;
+    --sidebar-background: 218 60% 6%;
+    --sidebar-foreground: 40 25% 88%;
+    --sidebar-primary: 36 45% 55%;
+    --sidebar-primary-foreground: 218 60% 6%;
+    --sidebar-accent: 218 45% 14%;
+    --sidebar-accent-foreground: 40 25% 92%;
+    --sidebar-border: 218 45% 14%;
+    --sidebar-ring: 36 45% 55%;
   }
 }
 
@@ -123,10 +136,17 @@
 
   body {
     @apply bg-background text-foreground antialiased;
+    font-family: var(--font-sans);
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 
   h1, h2, h3, h4 {
     @apply font-semibold tracking-tight;
+  }
+
+  .font-display {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: 0.01em;
   }
 }
