@@ -35,7 +35,7 @@ const adminItems = [
 
 const PIN_KEY = "sidebar:pinned";
 const COLLAPSED_W = 56; // px (w-14)
-const EXPANDED_W = 260; // px
+const EXPANDED_W = 220; // px
 
 export function AppSidebar() {
   const { pathname } = useLocation();
@@ -79,17 +79,17 @@ export function AppSidebar() {
         style={{ width: expanded ? EXPANDED_W : COLLAPSED_W }}
       >
         {/* Header */}
-        <div className="h-16 flex items-center justify-between border-b border-sidebar-border px-4 shrink-0">
+        <div className="h-14 flex items-center justify-between border-b border-sidebar-border px-3 shrink-0">
           {expanded ? (
             <>
-              <span className="text-[15px] text-sidebar-foreground">
+              <span className="text-[14px] text-sidebar-foreground">
                 Empresa
               </span>
               <button
                 type="button"
                 onClick={() => setPinned((p) => !p)}
                 className={cn(
-                  "h-8 w-8 flex items-center justify-center rounded-md",
+                  "h-7 w-7 flex items-center justify-center rounded-md",
                   "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent",
                   pinned && "bg-sidebar-accent text-sidebar-foreground",
                 )}
@@ -100,7 +100,7 @@ export function AppSidebar() {
               </button>
             </>
           ) : (
-            <div className="h-8 w-8" aria-hidden />
+            <div className="h-7 w-7" aria-hidden />
           )}
         </div>
 
@@ -158,9 +158,9 @@ function Group({
   children: React.ReactNode;
 }) {
   return (
-    <div className="pt-3 pb-1">
+    <div className="pt-2 pb-1">
       {expanded && (
-        <div className="px-4 h-7 flex items-center text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/50">
+        <div className="px-3 h-6 flex items-center text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/50">
           {label}
         </div>
       )}
@@ -191,13 +191,13 @@ function Item({
         end={end}
         title={!expanded ? label : undefined}
         className={cn(
-          "mx-2 my-0.5 flex items-center gap-3 rounded-lg h-10 px-3 text-[14px]",
+          "mx-2 my-0.5 flex items-center gap-2.5 rounded-md h-9 px-2.5 text-[13px]",
           "text-sidebar-foreground/85 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
           active && "bg-sidebar-accent text-sidebar-accent-foreground font-medium",
           !expanded && "justify-center px-0 mx-1.5",
         )}
       >
-        <Icon className="h-[18px] w-[18px] shrink-0" />
+        <Icon className="h-4 w-4 shrink-0" />
         {expanded && <span className="truncate">{label}</span>}
       </NavLink>
     </li>
