@@ -338,6 +338,19 @@ export default function Index() {
           </CardContent>
         </Card>
       </section>
+
+      {/* Widgets dinâmicos (relatórios externos) */}
+      {customWidgets && customWidgets.length > 0 && (
+        <section className="space-y-3">
+          <header>
+            <h2 className="text-lg font-semibold text-foreground">Indicadores de carteira</h2>
+            <p className="text-xs text-muted-foreground">Dados vindos dos relatórios importados pelo admin.</p>
+          </header>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {customWidgets.map((w) => <DynamicWidget key={w.id} widget={w} />)}
+          </div>
+        </section>
+      )}
     </div>
   );
 }
