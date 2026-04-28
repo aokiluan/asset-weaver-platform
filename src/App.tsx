@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -15,6 +15,9 @@ import CedenteDetail from "./pages/CedenteDetail.tsx";
 import Credito from "./pages/Credito.tsx";
 import CreditoDetail from "./pages/CreditoDetail.tsx";
 import Financeiro from "./pages/Financeiro.tsx";
+import Configuracoes from "./pages/Configuracoes.tsx";
+import BI from "./pages/BI.tsx";
+import BIIndicadores from "./pages/bi/BIIndicadores.tsx";
 import AdminUsuarios from "./pages/admin/AdminUsuarios.tsx";
 import AdminAlcadas from "./pages/admin/AdminAlcadas.tsx";
 import AdminPipeline from "./pages/admin/AdminPipeline.tsx";
@@ -50,14 +53,55 @@ const App = () => (
               <Route path="/cedentes/:id" element={<CedenteDetail />} />
               <Route path="/credito" element={<Credito />} />
               <Route path="/credito/:id" element={<CreditoDetail />} />
-              <Route path="/financeiro" element={<RoleGuard role={["admin", "financeiro", "gestor_risco"]}><Financeiro /></RoleGuard>} />
-              <Route path="/admin/usuarios" element={<RoleGuard role="admin"><AdminUsuarios /></RoleGuard>} />
-              <Route path="/admin/alcadas" element={<RoleGuard role="admin"><AdminAlcadas /></RoleGuard>} />
-              <Route path="/admin/pipeline" element={<RoleGuard role="admin"><AdminPipeline /></RoleGuard>} />
-              <Route path="/admin/categorias" element={<RoleGuard role="admin"><AdminCategorias /></RoleGuard>} />
-              <Route path="/admin/datasets" element={<RoleGuard role="admin"><AdminDatasets /></RoleGuard>} />
-              <Route path="/admin/relatorios" element={<RoleGuard role="admin"><AdminRelatorios /></RoleGuard>} />
-              <Route path="/admin/widgets" element={<RoleGuard role="admin"><AdminDashboardWidgets /></RoleGuard>} />
+              <Route
+                path="/financeiro"
+                element={
+                  <RoleGuard role={["admin", "financeiro", "gestor_risco"]}>
+                    <Financeiro />
+                  </RoleGuard>
+                }
+              />
+
+              {/* Configurações (consolida o antigo /admin/*) */}
+              <Route
+                path="/configuracoes"
+                element={
+                  <RoleGuard role="admin">
+                    <Configuracoes />
+                  </RoleGuard>
+                }
+              >
+                <Route index element={<Navigate to="usuarios" replace />} />
+                <Route path="usuarios" element={<AdminUsuarios />} />
+                <Route path="alcadas" element={<AdminAlcadas />} />
+                <Route path="pipeline" element={<AdminPipeline />} />
+                <Route path="categorias" element={<AdminCategorias />} />
+              </Route>
+
+              {/* BI / Relatórios */}
+              <Route
+                path="/bi"
+                element={
+                  <RoleGuard role="admin">
+                    <BI />
+                  </RoleGuard>
+                }
+              >
+                <Route index element={<Navigate to="indicadores" replace />} />
+                <Route path="indicadores" element={<BIIndicadores />} />
+                <Route path="uploads" element={<AdminRelatorios />} />
+                <Route path="datasets" element={<AdminDatasets />} />
+                <Route path="widgets" element={<AdminDashboardWidgets />} />
+              </Route>
+
+              {/* Redirects das rotas antigas */}
+              <Route path="/admin/usuarios" element={<Navigate to="/configuracoes/usuarios" replace />} />
+              <Route path="/admin/alcadas" element={<Navigate to="/configuracoes/alcadas" replace />} />
+              <Route path="/admin/pipeline" element={<Navigate to="/configuracoes/pipeline" replace />} />
+              <Route path="/admin/categorias" element={<Navigate to="/configuracoes/categorias" replace />} />
+              <Route path="/admin/datasets" element={<Navigate to="/bi/datasets" replace />} />
+              <Route path="/admin/relatorios" element={<Navigate to="/bi/uploads" replace />} />
+              <Route path="/admin/widgets" element={<Navigate to="/bi/widgets" replace />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

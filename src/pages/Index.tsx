@@ -4,7 +4,6 @@ import { Users, Building2, Scale, TrendingUp, CheckCircle2, AlertTriangle, Walle
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { DynamicWidget, WidgetDef } from "@/components/DynamicWidget";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   PieChart, Pie, Cell, Legend, LineChart, Line,
@@ -71,19 +70,6 @@ export default function Index() {
         .select("id, stage, valor_solicitado, valor_aprovado, cedente_id, created_at, decided_at");
       if (error) throw error;
       return data || [];
-    },
-  });
-
-  const { data: customWidgets } = useQuery({
-    queryKey: ["dash-custom-widgets"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("dashboard_widgets")
-        .select("id, titulo, descricao, dataset_id, tipo, config, largura")
-        .eq("ativo", true)
-        .order("ordem");
-      if (error) throw error;
-      return (data ?? []) as unknown as WidgetDef[];
     },
   });
 
@@ -339,18 +325,6 @@ export default function Index() {
         </Card>
       </section>
 
-      {/* Widgets dinâmicos (relatórios externos) */}
-      {customWidgets && customWidgets.length > 0 && (
-        <section className="space-y-3">
-          <header>
-            <h2 className="text-lg font-semibold text-foreground">Indicadores de carteira</h2>
-            <p className="text-xs text-muted-foreground">Dados vindos dos relatórios importados pelo admin.</p>
-          </header>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {customWidgets.map((w) => <DynamicWidget key={w.id} widget={w} />)}
-          </div>
-        </section>
-      )}
     </div>
   );
 }
