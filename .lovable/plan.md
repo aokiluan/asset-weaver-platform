@@ -1,108 +1,81 @@
 ## Objetivo
 
-Transformar o Dashboard Executivo em um painel tipo "Power BI light" alimentado por relatórios externos enviados pelo admin (CSV/Excel), mantendo os KPIs operacionais atuais (leads, propostas, cedentes) e adicionando blocos novos vindos dos relatórios.
+Refatorar a sidebar para um agrupamento estilo Nibo (categorias macro com sub-itens), e introduzir **abas de navegação no topo da página** (estilo "Configurações > Empresa | Categorias | Cobrança | NFS-e | API | Usuários | Avançado") para os módulos que hoje vivem como menus separados.
 
-## Arquitetura conceitual
+## Mudanças propostas
 
-```text
-┌─────────────────┐    upload    ┌──────────────┐   parse    ┌──────────────┐
-│ Admin (web UI)  │ ───────────► │ Storage      │ ─────────► │ Edge Function│
-│  CSV/XLSX       │              │ report-files │            │ ingest-report│
-└─────────────────┘              └──────────────┘            └──────┬───────┘
-                                                                    │ insert
-                                                                    ▼
-                                                          ┌──────────────────┐
-                                                          │ report_datasets  │
-                                                          │ report_uploads   │
-                                                          │ report_rows(jsonb)│
-                                                          └────────┬─────────┘
-                                                                   │
-                                          ┌────────────────────────┴──────────┐
-                                          ▼                                   ▼
-                                   ┌──────────────┐                 ┌─────────────────┐
-                                   │ Dashboard    │  ◄── consulta ──│ dashboard_widgets│
-                                   │ (todos)      │                 │ (config admin)   │
-                                   └──────────────┘                 └─────────────────┘
-```
+### 1. Novo agrupamento da sidebar (Nibo-like)
 
-Três conceitos:
+Hoje temos dois grupos planos (`GESTÃO` e `Administração`). Vamos para grupos macro com sub-itens (collapsible quando expandidos, ícone único quando colapsados). Proposta:
 
-1. **Dataset** — um "tipo" de relatório (ex.: "Carteira mensal", "Títulos vencidos", "Avaliação de resultados"). Tem um schema de colunas esperadas.
-2. **Upload** — um arquivo enviado num período de referência (ex.: "Carteira – out/2026"). Vinculado a um dataset.
-3. **Widget** — um cartão/gráfico no dashboard. Aponta para um dataset, define agregação, filtro e tipo visual.
+**OPERAÇÃO**
+- Dashboard
+- Leads
+- Pipeline
+- Cedentes
+- Crédito
+- Financeiro
 
-## Fluxo do usuário
+**RELATÓRIOS / BI**  *(novo agrupamento)*
+- Indicadores  → `/bi` (página com tabs internas)
+- Uploads      → `/bi/uploads` (atual `/admin/relatorios`)
+- Datasets     → `/bi/datasets` (atual `/admin/datasets`)
+- Widgets      → `/bi/widgets` (atual `/admin/widgets`)
 
-**Admin (gestão de dados):**
-1. Vai em `/admin/datasets` → cria um dataset (nome, descrição, colunas esperadas com tipo: texto/número/data).
-2. Em `/admin/relatorios` → faz upload de um CSV/XLSX, escolhe o dataset e a data de referência.
-3. Sistema valida colunas, importa linhas em `report_rows` (jsonb), marca o upload como `processado`.
-4. Vai em `/admin/dashboard-widgets` → cria um widget escolhendo dataset, tipo (KPI / barra / linha / pizza / tabela), métrica (sum/avg/count de uma coluna), agrupamento e ordem.
+**CONFIGURAÇÕES**  *(consolida o atual "Administração")*
+- Vai virar **um único item de menu** `/configuracoes` que abre uma página com **abas no topo**:
+  - Usuários · Alçadas · Pipeline · Categorias de doc.
 
-**Todos os usuários:**
-- Acessam `/` e veem o dashboard com os KPIs atuais (leads, propostas etc.) **+** os widgets configurados pelo admin, sempre com o snapshot mais recente de cada dataset (ou histórico, conforme widget).
+> As rotas antigas (`/admin/usuarios`, `/admin/alcadas`, etc.) continuam funcionando via redirect para `/configuracoes?tab=usuarios` etc., para não quebrar links.
 
-## Modelo de dados (novo)
+### 2. Abas de navegação no topo da página (estilo Nibo print)
 
-| Tabela | Campos principais |
-|---|---|
-| `report_datasets` | id, nome, slug, descricao, schema (jsonb com `[{key, label, type}]`), ativo, created_by |
-| `report_uploads` | id, dataset_id, arquivo_nome, storage_path, periodo_referencia (date), linhas_total, status (`pendente`/`processado`/`erro`), erro_msg, uploaded_by, created_at |
-| `report_rows` | id, upload_id, dataset_id, periodo_referencia, dados (jsonb), row_index |
-| `dashboard_widgets` | id, titulo, dataset_id, tipo (`kpi`,`bar`,`line`,`pie`,`table`), config (jsonb: metric_col, agg, group_col, filter, format), ordem, ativo, created_by |
+Padrão visual igual à imagem: título grande à esquerda + linha horizontal de tabs com underline azul na ativa.
 
-**RLS:**
-- `report_datasets`, `dashboard_widgets`: SELECT para todos autenticados; INSERT/UPDATE/DELETE só admin.
-- `report_uploads`, `report_rows`: SELECT para todos autenticados; INSERT/UPDATE/DELETE só admin.
+Aplicado em duas páginas-shell:
 
-**Storage:** bucket privado `report-files` (admin upload, signed URLs para download).
+- `/configuracoes` → tabs: Usuários | Alçadas | Pipeline | Categorias de doc.
+- `/bi`           → tabs: Indicadores | Uploads | Datasets | Widgets
 
-## Backend
+Implementação: novo componente `PageTabs` (wrapper sobre `NavLink` com underline ativo) + layout aninhado via `<Outlet />` do React Router. Cada aba é uma rota filha (`/configuracoes/usuarios`, `/configuracoes/alcadas` …), o que mantém URL deep-linkável e botão "voltar" do navegador funcionando.
 
-**Edge function `ingest-report`:**
-- Recebe `upload_id`.
-- Baixa o arquivo do storage, detecta CSV/XLSX (usa SheetJS para XLSX).
-- Lê linhas, valida cabeçalho contra `dataset.schema`, faz cast de tipos.
-- Insere em lotes de 500 em `report_rows`.
-- Atualiza `report_uploads.status` e `linhas_total`.
+### 3. Sidebar collapsible por grupo
 
-## Frontend
+Quando a sidebar está **expandida** (pin ou hover), cada grupo macro vira um **header clicável** que expande/colapsa seus sub-itens (chevron à direita). Quando **colapsada** (modo ícone), mostramos apenas os ícones individuais sem o header de grupo — comportamento que você já tem, só muda o agrupamento.
 
-**Páginas novas (admin):**
-- `src/pages/admin/Datasets.tsx` — CRUD de datasets, editor de schema (lista de colunas).
-- `src/pages/admin/Relatorios.tsx` — upload (drag-and-drop), lista de uploads por dataset, status, reprocessar, baixar.
-- `src/pages/admin/DashboardWidgets.tsx` — CRUD de widgets, preview ao vivo.
+Estado de "qual grupo está aberto" persistido em `localStorage` (mesma chave/padrão do pin atual). O grupo que contém a rota ativa abre automaticamente.
 
-**Dashboard (`src/pages/Index.tsx`):**
-- Mantém seção "Operacional" (KPIs e gráficos atuais).
-- Nova seção "Indicadores de carteira" que renderiza dinamicamente os `dashboard_widgets` ativos.
-- Componente `DynamicWidget` que, a partir de `config`, busca de `report_rows` (filtra pelo último `periodo_referencia` ou faixa) e agrega no cliente via `useMemo` (volume esperado: milhares de linhas por upload — ok no client; se crescer muito, migramos para uma RPC).
+## Detalhes técnicos
 
-**Sidebar:** novo grupo "Admin → Datasets / Relatórios / Widgets" visível só para `admin`.
+**Arquivos a alterar / criar:**
 
-## Roadmap em fases
+- `src/components/AppSidebar.tsx` — reestruturar `mainItems` para árvore com grupos macro + sub-itens; adicionar lógica de expand/collapse por grupo; manter o comportamento pin/hover atual.
+- `src/components/PageTabs.tsx` *(novo)* — componente reutilizável renderizando `NavLink`s horizontais com underline ativo (cor `--primary`), título da página e descrição opcional. Visual idêntico ao print do Nibo.
+- `src/pages/Configuracoes.tsx` *(novo)* — shell layout: `<PageTabs title="Configurações" tabs={[...]} />` + `<Outlet />`.
+- `src/pages/BI.tsx` *(novo)* — shell layout análogo para Relatórios/BI.
+- `src/pages/bi/BIIndicadores.tsx` *(novo)* — move o conteúdo de "Indicadores de carteira" que hoje vive no `Index.tsx` para uma página dedicada (mantém também no Dashboard, ou move — a definir abaixo).
+- `src/App.tsx` — reorganizar as rotas em rotas aninhadas:
+  ```
+  /configuracoes
+    ├── usuarios   (AdminUsuarios)
+    ├── alcadas    (AdminAlcadas)
+    ├── pipeline   (AdminPipeline)
+    └── categorias (AdminCategorias)
+  /bi
+    ├── indicadores (BIIndicadores)
+    ├── uploads     (AdminRelatorios)
+    ├── datasets    (AdminDatasets)
+    └── widgets     (AdminDashboardWidgets)
+  ```
+  + redirects das rotas antigas (`/admin/*`) para os novos paths.
 
-**Fase 1 — Fundação (esta entrega):**
-- Migrations + bucket + RLS.
-- Edge function `ingest-report` com suporte a CSV e XLSX.
-- Telas admin de Datasets e Relatórios (upload + listagem + reprocessar).
-- Widget dinâmico do tipo **KPI** e **bar/line** no dashboard.
-- Tela admin de Widgets (CRUD básico).
+**Sem alterações de banco** — é puramente reorganização de UI/rotas.
 
-**Fase 2 — Refinamento (próxima conversa):**
-- Tipos `pie` e `table`, filtros por período no dashboard.
-- Comparativo entre períodos (mês atual vs. anterior, variação %).
-- Drilldown ao clicar num widget.
+## Pergunta antes de implementar
 
-**Fase 3 — Avançado (futuro):**
-- Cálculos derivados entre datasets (ex.: inadimplência / carteira).
-- Alertas quando métrica cruza um limite.
-- Agendamento via conector (Excel Online / Sheets) para sync automático.
+Os widgets dinâmicos ("Indicadores de carteira") que hoje aparecem no **Dashboard** (`/`) — você quer:
 
-## Premissas que assumi
+- (A) **Mover** para `/bi/indicadores` e remover do Dashboard, OU
+- (B) **Duplicar / manter nos dois lugares** (Dashboard mostra um resumo, BI mostra a versão completa com filtros)?
 
-- Volume por upload na casa de centenas a poucos milhares de linhas — viável guardar como `jsonb` em `report_rows` e agregar no front. Se passar de ~50k linhas, criamos RPCs com `GROUP BY`.
-- Apenas admin envia relatórios e configura widgets; demais usuários só consomem.
-- "Avaliação de resultados" e "títulos vencidos" entram como **dois datasets** que você cadastra no primeiro acesso — o schema é flexível e você define as colunas.
-
-Confirma que faz sentido começar pela **Fase 1**? Se sim, aprovo e implemento.
+Posso assumir **(A) mover** se você não responder, mas confirma para eu não retrabalhar.
