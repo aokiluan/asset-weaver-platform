@@ -9,7 +9,7 @@ type AppRole =
 
 interface Props {
   children: ReactNode;
-  role: AppRole;
+  role: AppRole | readonly AppRole[] | AppRole[];
 }
 
 export default function RoleGuard({ children, role }: Props) {
@@ -21,7 +21,9 @@ export default function RoleGuard({ children, role }: Props) {
       <Loader2 className="h-5 w-5 animate-spin mr-2" /> Carregando...
     </div>;
   }
-  if (!hasRole(role)) {
+  const roles = Array.isArray(role) ? role : [role];
+  const allowed = roles.some((r) => hasRole(r));
+  if (!allowed) {
     return <Navigate to="/" state={{ from: location }} replace />;
   }
   return <>{children}</>;
