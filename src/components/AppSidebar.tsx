@@ -6,6 +6,7 @@ import {
   FileText,
   Shield,
   Settings,
+  Building2,
 } from "lucide-react";
 import {
   Sidebar,
@@ -25,7 +26,7 @@ const mainItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Leads", url: "/leads", icon: Users },
   { title: "Pipeline", url: "/pipeline", icon: KanbanSquare },
-  { title: "Documentos", url: "/documentos", icon: FileText },
+  { title: "Cedentes", url: "/cedentes", icon: Building2 },
 ];
 
 const adminItems = [
