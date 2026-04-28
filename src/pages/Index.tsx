@@ -14,12 +14,12 @@ const fmtBRL = (v: number) =>
 
 const STAGE_LABELS: Record<string, string> = {
   rascunho: "Rascunho",
-  analise_credito: "Análise",
-  parecer_risco: "Parecer Risco",
+  analise: "Análise",
+  parecer: "Parecer Risco",
   comite: "Comitê",
-  aprovada: "Aprovada",
-  reprovada: "Reprovada",
-  cancelada: "Cancelada",
+  aprovado: "Aprovada",
+  reprovado: "Reprovada",
+  cancelado: "Cancelada",
 };
 
 const COLORS = ["hsl(var(--primary))", "hsl(var(--accent))", "#22c55e", "#eab308", "#ef4444", "#8b5cf6", "#06b6d4"];
@@ -88,14 +88,14 @@ export default function Index() {
 
     const totalSolicitado = (proposals || []).reduce((a, p) => a + Number(p.valor_solicitado || 0), 0);
     const totalAprovado = (proposals || [])
-      .filter((p) => p.stage === "aprovada")
+      .filter((p) => p.stage === "aprovado")
       .reduce((a, p) => a + Number(p.valor_aprovado || p.valor_solicitado || 0), 0);
     const propEmAndamento = (proposals || []).filter(
-      (p) => !["aprovada", "reprovada", "cancelada"].includes(p.stage),
+      (p) => !["aprovado", "reprovado", "cancelado"].includes(p.stage),
     ).length;
     const taxaAprovacao = (() => {
-      const decididas = (proposals || []).filter((p) => ["aprovada", "reprovada"].includes(p.stage));
-      const aprovadas = decididas.filter((p) => p.stage === "aprovada");
+      const decididas = (proposals || []).filter((p) => ["aprovado", "reprovado"].includes(p.stage));
+      const aprovadas = decididas.filter((p) => p.stage === "aprovado");
       return decididas.length > 0 ? (aprovadas.length / decididas.length) * 100 : 0;
     })();
 
@@ -166,7 +166,7 @@ export default function Index() {
       );
       if (idx >= 0) {
         buckets[idx].solicitado += Number(p.valor_solicitado || 0);
-        if (p.stage === "aprovada") {
+        if (p.stage === "aprovado") {
           buckets[idx].aprovado += Number(p.valor_aprovado || p.valor_solicitado || 0);
         }
       }
@@ -183,8 +183,8 @@ export default function Index() {
 
   const secondaryKpis = [
     { title: "Conversão comercial", value: `${kpis.conversao.toFixed(1)}%`, icon: Target, hint: "Ganhos / fechados" },
-    { title: "Ticket médio aprovado", value: fmtBRL(kpis.totalAprovado / Math.max(1, (proposals || []).filter((p) => p.stage === "aprovada").length)), icon: Wallet, hint: "Por proposta aprovada" },
-    { title: "Propostas analisadas", value: (proposals || []).filter((p) => ["aprovada", "reprovada"].includes(p.stage)).length, icon: TrendingUp, hint: "Decididas no período" },
+    { title: "Ticket médio aprovado", value: fmtBRL(kpis.totalAprovado / Math.max(1, (proposals || []).filter((p) => p.stage === "aprovado").length)), icon: Wallet, hint: "Por proposta aprovada" },
+    { title: "Propostas analisadas", value: (proposals || []).filter((p) => ["aprovado", "reprovado"].includes(p.stage)).length, icon: TrendingUp, hint: "Decididas no período" },
     { title: "Pendentes de decisão", value: kpis.propEmAndamento, icon: AlertTriangle, hint: "Análise / risco / comitê" },
   ];
 
