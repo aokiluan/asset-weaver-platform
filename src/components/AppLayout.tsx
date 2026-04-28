@@ -14,7 +14,7 @@ export default function AppLayout() {
         <AppSidebar />
 
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-12 flex items-center justify-between border-b bg-card px-3">
+          <header className="h-14 flex items-center justify-between border-b bg-card px-3">
             <div className="flex items-center gap-3 min-w-0">
               <SidebarTrigger />
               <div className="flex flex-col leading-tight min-w-0">
