@@ -74,6 +74,19 @@ export default function Index() {
     },
   });
 
+  const { data: customWidgets } = useQuery({
+    queryKey: ["dash-custom-widgets"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("dashboard_widgets")
+        .select("id, titulo, descricao, dataset_id, tipo, config, largura")
+        .eq("ativo", true)
+        .order("ordem");
+      if (error) throw error;
+      return (data ?? []) as unknown as WidgetDef[];
+    },
+  });
+
   // ===== KPIs =====
   const kpis = useMemo(() => {
     const totalLeads = leads?.length || 0;
