@@ -54,14 +54,12 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="border-b border-sidebar-border py-3">
-        <div className={collapsed ? "flex items-center justify-center px-1" : "flex items-center px-2"}>
-          <img
-            src={collapsed ? logoSymbol : logoSecundario}
-            alt="S3 Capital"
-            className={collapsed ? "h-9 w-9 object-contain" : "h-9 w-auto object-contain"}
-          />
-        </div>
+      <SidebarHeader className="h-14 border-b border-sidebar-border py-0 px-3 flex items-center justify-center">
+        <img
+          src={collapsed ? logoSymbol : logoSecundario}
+          alt="S3 Capital"
+          className={collapsed ? "h-8 w-8 object-contain" : "h-8 w-auto object-contain"}
+        />
       </SidebarHeader>
 
       <SidebarContent className="gap-0">

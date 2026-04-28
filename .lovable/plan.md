@@ -1,16 +1,20 @@
-# Ajuste de contraste da sidebar
+# Alinhamento do cabeçalho da sidebar
 
-Tornar a sidebar visivelmente distinta do conteúdo principal, mantendo o tom azul-acinzentado.
+Igualar a altura do `SidebarHeader` à do header principal (`h-14`) para que as bordas inferiores fiquem na mesma linha, e centralizar a logo.
 
-## Alterações em `src/index.css`
+## Alteração em `src/components/AppSidebar.tsx`
 
-**Light mode**
-- `--sidebar-background`: `215 25% 96%` → `215 28% 90%`
-- `--sidebar-accent`: `215 25% 90%` → `215 30% 84%`
-- `--sidebar-border`: `215 22% 88%` → `215 25% 80%`
+Substituir o `SidebarHeader` atual por:
 
-**Dark mode**
-- `--sidebar-background`: `215 22% 12%` → `215 25% 8%`
-- `--sidebar-border`: `215 18% 18%` → `215 20% 22%`
+```tsx
+<SidebarHeader className="h-14 border-b border-sidebar-border py-0 px-3 flex items-center justify-center">
+  <img
+    src={collapsed ? logoSymbol : logoSecundario}
+    alt="S3 Capital"
+    className={collapsed ? "h-8 w-8 object-contain" : "h-8 w-auto object-contain"}
+  />
+</SidebarHeader>
+```
 
-Demais tokens (foreground, primary dourado) permanecem inalterados.
+- `h-14` casa com `h-14` do header da página → bordas alinhadas.
+- `justify-center` centraliza a logo horizontalmente, tanto colapsada quanto expandida.
