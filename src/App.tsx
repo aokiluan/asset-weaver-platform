@@ -8,6 +8,8 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import AppLayout from "@/components/AppLayout";
 import Index from "./pages/Index.tsx";
 import Auth from "./pages/Auth.tsx";
+import Leads from "./pages/Leads.tsx";
+import Pipeline from "./pages/Pipeline.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -29,6 +31,8 @@ const App = () => (
               }
             >
               <Route path="/" element={<Index />} />
+              <Route path="/leads" element={<Leads />} />
+              <Route path="/pipeline" element={<Pipeline />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
