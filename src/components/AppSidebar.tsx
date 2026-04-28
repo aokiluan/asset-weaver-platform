@@ -54,32 +54,14 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="border-b border-sidebar-border py-4">
-        {collapsed ? (
-          <div className="flex items-center justify-center px-1">
-            <img
-              src={logoSymbol}
-              alt="S3 Capital"
-              className="h-9 w-9 object-contain"
-            />
-          </div>
-        ) : (
-          <div className="flex items-center gap-2.5 px-2">
-            <img
-              src={logoSecundario}
-              alt="S3 Capital"
-              className="h-9 w-auto object-contain shrink-0"
-            />
-            <div className="flex flex-col leading-tight min-w-0">
-              <span className="text-[12px] font-semibold uppercase tracking-wide text-sidebar-foreground truncate">
-                S3 Capital Securitizadora S.A.
-              </span>
-              <span className="text-[11px] tabular-nums text-sidebar-foreground/60">
-                60.353.126/0001-71
-              </span>
-            </div>
-          </div>
-        )}
+      <SidebarHeader className="border-b border-sidebar-border py-3">
+        <div className={collapsed ? "flex items-center justify-center px-1" : "flex items-center px-2"}>
+          <img
+            src={collapsed ? logoSymbol : logoSecundario}
+            alt="S3 Capital"
+            className={collapsed ? "h-9 w-9 object-contain" : "h-9 w-auto object-contain"}
+          />
+        </div>
       </SidebarHeader>
 
       <SidebarContent className="gap-0">

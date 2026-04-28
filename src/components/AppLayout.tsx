@@ -14,12 +14,17 @@ export default function AppLayout() {
         <AppSidebar />
 
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-12 flex items-center justify-between border-b bg-card px-3">
-            <div className="flex items-center gap-2 min-w-0">
+          <header className="h-14 flex items-center justify-between border-b bg-card px-3">
+            <div className="flex items-center gap-3 min-w-0">
               <SidebarTrigger />
-              <span className="text-xs text-muted-foreground hidden lg:inline">
-                {roles.length > 0 ? roles.join(" · ") : "Sem função atribuída"}
-              </span>
+              <div className="flex flex-col leading-tight min-w-0">
+                <span className="text-[13px] font-semibold uppercase tracking-wide text-foreground truncate">
+                  S3 Capital Securitizadora S.A.
+                </span>
+                <span className="text-[11px] tabular-nums text-muted-foreground">
+                  60.353.126/0001-71
+                </span>
+              </div>
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
