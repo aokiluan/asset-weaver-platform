@@ -69,7 +69,7 @@ export default function AdminDatasets() {
     setSaving(true);
     const payload = {
       nome: editing.nome, slug, descricao: editing.descricao || null,
-      schema: cols, ativo: editing.ativo ?? true,
+      schema: cols as any, ativo: editing.ativo ?? true,
     };
     const { error } = editing.id
       ? await supabase.from("report_datasets").update(payload).eq("id", editing.id)
