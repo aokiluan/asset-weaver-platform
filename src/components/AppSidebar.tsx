@@ -107,7 +107,7 @@ export function AppSidebar() {
         {/* Conteúdo */}
         <nav className="flex-1 overflow-y-auto overflow-x-hidden py-2">
           {/* Grupo principal */}
-          <Group expanded={expanded} label="Operação">
+          <Group expanded={expanded} label="GESTÃO">
             {mainItems.map((item) => (
               <Item
                 key={item.title}
