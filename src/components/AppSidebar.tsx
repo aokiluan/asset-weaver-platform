@@ -11,6 +11,9 @@ import {
   ListChecks,
   Tags,
   Wallet,
+  Database,
+  FileSpreadsheet,
+  LayoutGrid,
   Pin,
   PinOff,
 } from "lucide-react";
@@ -31,6 +34,9 @@ const adminItems = [
   { title: "Alçadas", url: "/admin/alcadas", icon: Gavel },
   { title: "Pipeline", url: "/admin/pipeline", icon: ListChecks },
   { title: "Categorias de doc.", url: "/admin/categorias", icon: Tags },
+  { title: "Datasets", url: "/admin/datasets", icon: Database },
+  { title: "Relatórios", url: "/admin/relatorios", icon: FileSpreadsheet },
+  { title: "Widgets", url: "/admin/widgets", icon: LayoutGrid },
 ];
 
 const PIN_KEY = "sidebar:pinned";
