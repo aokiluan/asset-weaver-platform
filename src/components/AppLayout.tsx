@@ -14,23 +14,23 @@ export default function AppLayout() {
         <AppSidebar />
 
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-14 flex items-center justify-between border-b bg-card px-4 shadow-[var(--shadow-card)]">
+          <header className="h-12 flex items-center justify-between border-b bg-card px-3">
             <div className="flex items-center gap-2">
               <SidebarTrigger />
-              <span className="text-sm text-muted-foreground hidden md:inline">
+              <span className="text-xs text-muted-foreground hidden md:inline">
                 {roles.length > 0 ? roles.join(" · ") : "Sem função atribuída"}
               </span>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-sm text-foreground hidden sm:inline">{user?.email}</span>
-              <Button variant="ghost" size="sm" onClick={signOut}>
-                <LogOut className="h-4 w-4 mr-2" />
+              <span className="text-xs text-foreground hidden sm:inline">{user?.email}</span>
+              <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={signOut}>
+                <LogOut className="h-3.5 w-3.5 mr-1.5" />
                 Sair
               </Button>
             </div>
           </header>
 
-          <main className="flex-1 p-6 overflow-auto">
+          <main className="flex-1 p-4 overflow-auto">
             <Outlet />
           </main>
         </div>
