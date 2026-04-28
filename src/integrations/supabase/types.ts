@@ -625,6 +625,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_find_user_by_email: { Args: { _email: string }; Returns: string }
+      admin_list_users: {
+        Args: never
+        Returns: {
+          ativo: boolean
+          cargo: string
+          created_at: string
+          email: string
+          id: string
+          nome: string
+          roles: Database["public"]["Enums"]["app_role"][]
+        }[]
+      }
       can_decide_proposal: { Args: { _user_id: string }; Returns: boolean }
       can_review_documento: { Args: { _user_id: string }; Returns: boolean }
       can_view_cedente: {

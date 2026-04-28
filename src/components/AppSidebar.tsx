@@ -8,6 +8,9 @@ import {
   Settings,
   Building2,
   Scale,
+  Gavel,
+  ListChecks,
+  Tags,
 } from "lucide-react";
 import {
   Sidebar,
@@ -33,6 +36,9 @@ const mainItems = [
 
 const adminItems = [
   { title: "Usuários", url: "/admin/usuarios", icon: Settings },
+  { title: "Alçadas", url: "/admin/alcadas", icon: Gavel },
+  { title: "Pipeline", url: "/admin/pipeline", icon: ListChecks },
+  { title: "Categorias de doc.", url: "/admin/categorias", icon: Tags },
 ];
 
 export function AppSidebar() {
