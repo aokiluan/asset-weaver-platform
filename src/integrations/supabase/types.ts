@@ -14,6 +14,179 @@ export type Database = {
   }
   public: {
     Tables: {
+      cedentes: {
+        Row: {
+          cep: string | null
+          cidade: string | null
+          cnpj: string
+          created_at: string
+          created_by: string | null
+          email: string | null
+          endereco: string | null
+          estado: string | null
+          faturamento_medio: number | null
+          id: string
+          lead_id: string | null
+          limite_aprovado: number | null
+          nome_fantasia: string | null
+          observacoes: string | null
+          owner_id: string | null
+          razao_social: string
+          setor: string | null
+          status: Database["public"]["Enums"]["cedente_status"]
+          telefone: string | null
+          updated_at: string
+        }
+        Insert: {
+          cep?: string | null
+          cidade?: string | null
+          cnpj: string
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          endereco?: string | null
+          estado?: string | null
+          faturamento_medio?: number | null
+          id?: string
+          lead_id?: string | null
+          limite_aprovado?: number | null
+          nome_fantasia?: string | null
+          observacoes?: string | null
+          owner_id?: string | null
+          razao_social: string
+          setor?: string | null
+          status?: Database["public"]["Enums"]["cedente_status"]
+          telefone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cep?: string | null
+          cidade?: string | null
+          cnpj?: string
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          endereco?: string | null
+          estado?: string | null
+          faturamento_medio?: number | null
+          id?: string
+          lead_id?: string | null
+          limite_aprovado?: number | null
+          nome_fantasia?: string | null
+          observacoes?: string | null
+          owner_id?: string | null
+          razao_social?: string
+          setor?: string | null
+          status?: Database["public"]["Enums"]["cedente_status"]
+          telefone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cedentes_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      documento_categorias: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          obrigatorio: boolean
+          ordem: number
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          obrigatorio?: boolean
+          ordem?: number
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          obrigatorio?: boolean
+          ordem?: number
+        }
+        Relationships: []
+      }
+      documentos: {
+        Row: {
+          categoria_id: string | null
+          cedente_id: string
+          created_at: string
+          id: string
+          mime_type: string | null
+          nome_arquivo: string
+          observacoes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["documento_status"]
+          storage_path: string
+          tamanho_bytes: number | null
+          updated_at: string
+          uploaded_by: string
+        }
+        Insert: {
+          categoria_id?: string | null
+          cedente_id: string
+          created_at?: string
+          id?: string
+          mime_type?: string | null
+          nome_arquivo: string
+          observacoes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["documento_status"]
+          storage_path: string
+          tamanho_bytes?: number | null
+          updated_at?: string
+          uploaded_by: string
+        }
+        Update: {
+          categoria_id?: string | null
+          cedente_id?: string
+          created_at?: string
+          id?: string
+          mime_type?: string | null
+          nome_arquivo?: string
+          observacoes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["documento_status"]
+          storage_path?: string
+          tamanho_bytes?: number | null
+          updated_at?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documentos_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "documento_categorias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documentos_cedente_id_fkey"
+            columns: ["cedente_id"]
+            isOneToOne: false
+            referencedRelation: "cedentes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_interactions: {
         Row: {
           created_at: string
@@ -206,6 +379,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_review_documento: { Args: { _user_id: string }; Returns: boolean }
+      can_view_cedente: {
+        Args: { _owner_id: string; _user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -228,6 +406,13 @@ export type Database = {
         | "gestor_risco"
         | "financeiro"
         | "operacional"
+      cedente_status:
+        | "prospect"
+        | "em_analise"
+        | "aprovado"
+        | "reprovado"
+        | "inativo"
+      documento_status: "pendente" | "aprovado" | "reprovado"
       lead_tipo: "cedente" | "investidor"
     }
     CompositeTypes: {
@@ -366,6 +551,14 @@ export const Constants = {
         "financeiro",
         "operacional",
       ],
+      cedente_status: [
+        "prospect",
+        "em_analise",
+        "aprovado",
+        "reprovado",
+        "inativo",
+      ],
+      documento_status: ["pendente", "aprovado", "reprovado"],
       lead_tipo: ["cedente", "investidor"],
     },
   },
