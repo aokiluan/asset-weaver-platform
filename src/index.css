@@ -67,15 +67,15 @@
     --shadow-card: 0 1px 3px hsl(218 60% 14% / 0.06), 0 1px 2px hsl(218 60% 14% / 0.04);
     --shadow-gold: 0 4px 14px -4px hsl(36 45% 48% / 0.35);
 
-    /* Sidebar — azul-acinzentado (slate steel) */
-    --sidebar-background: 215 22% 18%;
-    --sidebar-foreground: 210 15% 86%;
-    --sidebar-primary: 36 45% 55%;
-    --sidebar-primary-foreground: 215 22% 14%;
-    --sidebar-accent: 215 18% 26%;
-    --sidebar-accent-foreground: 40 30% 96%;
-    --sidebar-border: 215 18% 26%;
-    --sidebar-ring: 36 45% 55%;
+    /* Sidebar — off-white azulado (recebe logo colorido transparente) */
+    --sidebar-background: 215 25% 96%;
+    --sidebar-foreground: 218 35% 22%;
+    --sidebar-primary: 36 50% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 215 25% 90%;
+    --sidebar-accent-foreground: 218 60% 14%;
+    --sidebar-border: 215 22% 88%;
+    --sidebar-ring: 36 50% 45%;
   }
 
   .dark {
