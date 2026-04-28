@@ -4,6 +4,7 @@ import { Users, Building2, Scale, TrendingUp, CheckCircle2, AlertTriangle, Walle
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { DynamicWidget, WidgetDef } from "@/components/DynamicWidget";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   PieChart, Pie, Cell, Legend, LineChart, Line,
