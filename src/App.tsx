@@ -12,6 +12,8 @@ import Leads from "./pages/Leads.tsx";
 import Pipeline from "./pages/Pipeline.tsx";
 import Cedentes from "./pages/Cedentes.tsx";
 import CedenteDetail from "./pages/CedenteDetail.tsx";
+import Credito from "./pages/Credito.tsx";
+import CreditoDetail from "./pages/CreditoDetail.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -37,6 +39,8 @@ const App = () => (
               <Route path="/pipeline" element={<Pipeline />} />
               <Route path="/cedentes" element={<Cedentes />} />
               <Route path="/cedentes/:id" element={<CedenteDetail />} />
+              <Route path="/credito" element={<Credito />} />
+              <Route path="/credito/:id" element={<CreditoDetail />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
