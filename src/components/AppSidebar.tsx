@@ -11,6 +11,7 @@ import {
   Gavel,
   ListChecks,
   Tags,
+  Wallet,
 } from "lucide-react";
 import {
   Sidebar,
@@ -32,6 +33,7 @@ const mainItems = [
   { title: "Pipeline", url: "/pipeline", icon: KanbanSquare },
   { title: "Cedentes", url: "/cedentes", icon: Building2 },
   { title: "Crédito", url: "/credito", icon: Scale },
+  { title: "Financeiro", url: "/financeiro", icon: Wallet, roles: ["admin", "financeiro", "gestor_risco"] as const },
 ];
 
 const adminItems = [
