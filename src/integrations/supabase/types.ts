@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      approval_levels: {
+        Row: {
+          approver: Database["public"]["Enums"]["approver_kind"]
+          ativo: boolean
+          created_at: string
+          id: string
+          nome: string
+          ordem: number
+          updated_at: string
+          valor_max: number | null
+          valor_min: number
+          votos_minimos: number
+        }
+        Insert: {
+          approver: Database["public"]["Enums"]["approver_kind"]
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome: string
+          ordem?: number
+          updated_at?: string
+          valor_max?: number | null
+          valor_min?: number
+          votos_minimos?: number
+        }
+        Update: {
+          approver?: Database["public"]["Enums"]["approver_kind"]
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome?: string
+          ordem?: number
+          updated_at?: string
+          valor_max?: number | null
+          valor_min?: number
+          votos_minimos?: number
+        }
+        Relationships: []
+      }
       cedentes: {
         Row: {
           cep: string | null
@@ -87,6 +126,172 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      committee_votes: {
+        Row: {
+          created_at: string
+          decisao: Database["public"]["Enums"]["vote_decision"]
+          id: string
+          justificativa: string | null
+          proposal_id: string
+          updated_at: string
+          voter_id: string
+        }
+        Insert: {
+          created_at?: string
+          decisao: Database["public"]["Enums"]["vote_decision"]
+          id?: string
+          justificativa?: string | null
+          proposal_id: string
+          updated_at?: string
+          voter_id: string
+        }
+        Update: {
+          created_at?: string
+          decisao?: Database["public"]["Enums"]["vote_decision"]
+          id?: string
+          justificativa?: string | null
+          proposal_id?: string
+          updated_at?: string
+          voter_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "committee_votes_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "credit_proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      credit_opinions: {
+        Row: {
+          author_id: string
+          author_role: Database["public"]["Enums"]["app_role"]
+          created_at: string
+          id: string
+          parecer: string
+          pontos_atencao: string | null
+          pontos_fortes: string | null
+          proposal_id: string
+          recomendacao: Database["public"]["Enums"]["opinion_recommendation"]
+          score: number | null
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          author_role: Database["public"]["Enums"]["app_role"]
+          created_at?: string
+          id?: string
+          parecer: string
+          pontos_atencao?: string | null
+          pontos_fortes?: string | null
+          proposal_id: string
+          recomendacao: Database["public"]["Enums"]["opinion_recommendation"]
+          score?: number | null
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          author_role?: Database["public"]["Enums"]["app_role"]
+          created_at?: string
+          id?: string
+          parecer?: string
+          pontos_atencao?: string | null
+          pontos_fortes?: string | null
+          proposal_id?: string
+          recomendacao?: Database["public"]["Enums"]["opinion_recommendation"]
+          score?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_opinions_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "credit_proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      credit_proposals: {
+        Row: {
+          approval_level_id: string | null
+          cedente_id: string
+          codigo: string
+          created_at: string
+          created_by: string | null
+          decided_at: string | null
+          decided_by: string | null
+          decisao_observacao: string | null
+          finalidade: string | null
+          garantias: string | null
+          id: string
+          observacoes: string | null
+          prazo_dias: number | null
+          stage: Database["public"]["Enums"]["proposal_stage"]
+          taxa_sugerida: number | null
+          updated_at: string
+          valor_aprovado: number | null
+          valor_solicitado: number
+        }
+        Insert: {
+          approval_level_id?: string | null
+          cedente_id: string
+          codigo?: string
+          created_at?: string
+          created_by?: string | null
+          decided_at?: string | null
+          decided_by?: string | null
+          decisao_observacao?: string | null
+          finalidade?: string | null
+          garantias?: string | null
+          id?: string
+          observacoes?: string | null
+          prazo_dias?: number | null
+          stage?: Database["public"]["Enums"]["proposal_stage"]
+          taxa_sugerida?: number | null
+          updated_at?: string
+          valor_aprovado?: number | null
+          valor_solicitado: number
+        }
+        Update: {
+          approval_level_id?: string | null
+          cedente_id?: string
+          codigo?: string
+          created_at?: string
+          created_by?: string | null
+          decided_at?: string | null
+          decided_by?: string | null
+          decisao_observacao?: string | null
+          finalidade?: string | null
+          garantias?: string | null
+          id?: string
+          observacoes?: string | null
+          prazo_dias?: number | null
+          stage?: Database["public"]["Enums"]["proposal_stage"]
+          taxa_sugerida?: number | null
+          updated_at?: string
+          valor_aprovado?: number | null
+          valor_solicitado?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_proposals_approval_level_id_fkey"
+            columns: ["approval_level_id"]
+            isOneToOne: false
+            referencedRelation: "approval_levels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_proposals_cedente_id_fkey"
+            columns: ["cedente_id"]
+            isOneToOne: false
+            referencedRelation: "cedentes"
             referencedColumns: ["id"]
           },
         ]
@@ -353,6 +558,47 @@ export type Database = {
         }
         Relationships: []
       }
+      proposal_history: {
+        Row: {
+          created_at: string
+          detalhes: Json | null
+          evento: string
+          id: string
+          proposal_id: string
+          stage_anterior: Database["public"]["Enums"]["proposal_stage"] | null
+          stage_novo: Database["public"]["Enums"]["proposal_stage"] | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          detalhes?: Json | null
+          evento: string
+          id?: string
+          proposal_id: string
+          stage_anterior?: Database["public"]["Enums"]["proposal_stage"] | null
+          stage_novo?: Database["public"]["Enums"]["proposal_stage"] | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          detalhes?: Json | null
+          evento?: string
+          id?: string
+          proposal_id?: string
+          stage_anterior?: Database["public"]["Enums"]["proposal_stage"] | null
+          stage_novo?: Database["public"]["Enums"]["proposal_stage"] | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposal_history_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "credit_proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -379,9 +625,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_decide_proposal: { Args: { _user_id: string }; Returns: boolean }
       can_review_documento: { Args: { _user_id: string }; Returns: boolean }
       can_view_cedente: {
         Args: { _owner_id: string; _user_id: string }
+        Returns: boolean
+      }
+      can_view_proposal: {
+        Args: { _cedente_id: string; _user_id: string }
         Returns: boolean
       }
       has_role: {
@@ -406,6 +657,7 @@ export type Database = {
         | "gestor_risco"
         | "financeiro"
         | "operacional"
+      approver_kind: "analista_credito" | "gestor_risco" | "comite"
       cedente_status:
         | "prospect"
         | "em_analise"
@@ -414,6 +666,19 @@ export type Database = {
         | "inativo"
       documento_status: "pendente" | "aprovado" | "reprovado"
       lead_tipo: "cedente" | "investidor"
+      opinion_recommendation:
+        | "favoravel"
+        | "favoravel_com_ressalva"
+        | "desfavoravel"
+      proposal_stage:
+        | "rascunho"
+        | "analise"
+        | "parecer"
+        | "comite"
+        | "aprovado"
+        | "reprovado"
+        | "cancelado"
+      vote_decision: "favoravel" | "desfavoravel" | "abstencao"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -551,6 +816,7 @@ export const Constants = {
         "financeiro",
         "operacional",
       ],
+      approver_kind: ["analista_credito", "gestor_risco", "comite"],
       cedente_status: [
         "prospect",
         "em_analise",
@@ -560,6 +826,21 @@ export const Constants = {
       ],
       documento_status: ["pendente", "aprovado", "reprovado"],
       lead_tipo: ["cedente", "investidor"],
+      opinion_recommendation: [
+        "favoravel",
+        "favoravel_com_ressalva",
+        "desfavoravel",
+      ],
+      proposal_stage: [
+        "rascunho",
+        "analise",
+        "parecer",
+        "comite",
+        "aprovado",
+        "reprovado",
+        "cancelado",
+      ],
+      vote_decision: ["favoravel", "desfavoravel", "abstencao"],
     },
   },
 } as const

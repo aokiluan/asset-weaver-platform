@@ -7,6 +7,7 @@ import {
   Shield,
   Settings,
   Building2,
+  Scale,
 } from "lucide-react";
 import {
   Sidebar,
@@ -27,6 +28,7 @@ const mainItems = [
   { title: "Leads", url: "/leads", icon: Users },
   { title: "Pipeline", url: "/pipeline", icon: KanbanSquare },
   { title: "Cedentes", url: "/cedentes", icon: Building2 },
+  { title: "Crédito", url: "/credito", icon: Scale },
 ];
 
 const adminItems = [
