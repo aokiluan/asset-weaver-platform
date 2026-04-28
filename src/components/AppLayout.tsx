@@ -13,48 +13,48 @@ export default function AppLayout() {
       <AppSidebar />
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-14 flex items-center justify-between border-b bg-card px-3">
-          <div className="flex items-center gap-3 min-w-0">
+        <header className="h-16 flex items-center justify-between border-b bg-card px-6">
+          <div className="flex items-center gap-3.5 min-w-0">
             <img
               src={logoSecundario}
               alt="S3 Capital"
-              className="h-9 w-auto object-contain shrink-0"
+              className="h-10 w-auto object-contain shrink-0"
             />
             <div className="flex flex-col leading-tight min-w-0">
-              <span className="text-[13px] font-semibold uppercase tracking-wide text-foreground truncate">
-                S3 Capital Securitizadora S.A.
+              <span className="text-[15px] font-semibold text-foreground truncate">
+                S3 CAPITAL SECURITIZADORA S.A.
               </span>
-              <span className="text-[11px] tabular-nums text-muted-foreground">
+              <span className="text-[13px] tabular-nums text-muted-foreground">
                 60.353.126/0001-71
               </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-3 shrink-0">
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              className="h-9 w-9 text-muted-foreground hover:text-foreground"
               aria-label="Notificações"
             >
-              <Bell className="h-4 w-4" />
+              <Bell className="h-5 w-5" />
             </Button>
-            <span className="text-xs text-foreground hidden md:inline px-1">
+            <span className="text-[13px] text-foreground hidden md:inline px-1">
               {user?.email}
             </span>
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 text-xs"
+              className="h-9 text-[13px]"
               onClick={signOut}
             >
-              <LogOut className="h-3.5 w-3.5 mr-1.5" />
+              <LogOut className="h-4 w-4 mr-1.5" />
               Sair
             </Button>
           </div>
         </header>
 
-        <main className="flex-1 p-4 overflow-auto">
+        <main className="flex-1 p-6 overflow-auto">
           <Outlet />
         </main>
       </div>
