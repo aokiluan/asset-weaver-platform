@@ -312,6 +312,8 @@ export default function CedenteDetail() {
             </div>
             <DocumentosUploadKanban
               cedenteId={cedente.id}
+              cedenteRazaoSocial={cedente.razao_social}
+              cedenteCnpj={cedente.cnpj}
               categorias={categorias}
               documentos={documentos as any}
               onChanged={load}
