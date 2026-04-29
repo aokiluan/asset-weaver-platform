@@ -135,7 +135,6 @@ export default function CedenteCadastro() {
           id: `tmp-qsa-${Date.now()}-${i}`,
           nome: q.nome ?? "",
           cpf: (q.cpf_cnpj ?? "").replace(/\D/g, ""),
-          qualificacao: q.qualificacao ?? "",
           nacionalidade: "Brasileira",
         } as Socio));
       });
