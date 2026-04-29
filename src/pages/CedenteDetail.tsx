@@ -410,6 +410,29 @@ export default function CedenteDetail() {
         checklist={checklistEnvio}
         onSent={load}
       />
+
+      <AlertDialog open={!!confirmAdvance} onOpenChange={(o) => !o && setConfirmAdvance(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Avançar para {confirmAdvance ? STAGE_LABEL[confirmAdvance] : ""}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação muda o estágio do cedente na esteira. Todos os usuários com acesso verão a nova etapa.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={advancing}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={advancing}
+              onClick={(e) => { e.preventDefault(); if (confirmAdvance) advanceStage(confirmAdvance); }}
+            >
+              {advancing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
