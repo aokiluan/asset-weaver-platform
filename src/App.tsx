@@ -12,6 +12,7 @@ import Leads from "./pages/Leads.tsx";
 import Pipeline from "./pages/Pipeline.tsx";
 import Cedentes from "./pages/Cedentes.tsx";
 import CedenteDetail from "./pages/CedenteDetail.tsx";
+import CedenteCadastro from "./pages/CedenteCadastro.tsx";
 import Credito from "./pages/Credito.tsx";
 import CreditoDetail from "./pages/CreditoDetail.tsx";
 import Financeiro from "./pages/Financeiro.tsx";
@@ -57,6 +58,8 @@ const App = () => (
               <Route path="/leads" element={<Leads />} />
               <Route path="/pipeline" element={<Pipeline />} />
               <Route path="/cedentes" element={<Cedentes />} />
+              <Route path="/cedentes/novo" element={<CedenteCadastro />} />
+              <Route path="/cedentes/:id/editar" element={<CedenteCadastro />} />
               <Route path="/cedentes/:id" element={<CedenteDetail />} />
               <Route path="/credito" element={<Credito />} />
               <Route path="/credito/:id" element={<CreditoDetail />} />
