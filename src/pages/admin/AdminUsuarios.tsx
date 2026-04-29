@@ -11,7 +11,11 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Loader2, UserPlus, X } from "lucide-react";
 import { toast } from "sonner";
 
-type AppRole = "admin" | "gestor_comercial" | "comercial" | "analista_credito" | "comite" | "gestor_risco" | "financeiro" | "operacional";
+type AppRole =
+  | "admin" | "gestor_comercial" | "comercial" | "analista_credito"
+  | "comite" | "gestor_risco" | "financeiro" | "operacional"
+  | "gestor_credito" | "gestor_financeiro" | "relacao_investidor"
+  | "gestor_relacao_investidor" | "analista_cadastro";
 
 interface UserRow {
   id: string; nome: string; email: string; ativo: boolean; cargo: string | null;
@@ -22,13 +26,25 @@ const ROLE_LABEL: Record<AppRole, string> = {
   admin: "Administrador",
   gestor_comercial: "Gestor Comercial",
   comercial: "Comercial",
+  analista_cadastro: "Analista de Cadastro",
   analista_credito: "Analista de Crédito",
+  gestor_credito: "Gestor de Crédito",
   comite: "Comitê",
   gestor_risco: "Gestor de Risco",
   financeiro: "Financeiro",
+  gestor_financeiro: "Gestor Financeiro",
+  relacao_investidor: "Relação com Investidor",
+  gestor_relacao_investidor: "Gestor de RI",
   operacional: "Operacional",
 };
-const ALL_ROLES: AppRole[] = ["admin","gestor_comercial","comercial","analista_credito","comite","gestor_risco","financeiro","operacional"];
+const ALL_ROLES: AppRole[] = [
+  "admin","gestor_comercial","comercial",
+  "analista_cadastro","analista_credito","gestor_credito",
+  "comite","gestor_risco",
+  "financeiro","gestor_financeiro",
+  "relacao_investidor","gestor_relacao_investidor",
+  "operacional",
+];
 
 export default function AdminUsuarios() {
   const [users, setUsers] = useState<UserRow[]>([]);
