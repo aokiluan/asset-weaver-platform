@@ -5,7 +5,9 @@ import { Loader2 } from "lucide-react";
 
 type AppRole =
   | "admin" | "gestor_comercial" | "comercial" | "analista_credito"
-  | "comite" | "gestor_risco" | "financeiro" | "operacional";
+  | "comite" | "gestor_risco" | "financeiro" | "operacional"
+  | "gestor_credito" | "gestor_financeiro" | "relacao_investidor"
+  | "gestor_relacao_investidor" | "analista_cadastro";
 
 interface Props {
   children: ReactNode;
