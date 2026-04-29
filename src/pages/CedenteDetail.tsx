@@ -143,12 +143,19 @@ export default function CedenteDetail() {
       reviewer_nome: d.reviewed_by ? reviewerMap[d.reviewed_by] ?? null : null,
     })));
     setHasVisitReport(!!visit);
-    const propsList = (props ?? []) as { id: string; stage: string; valor_solicitado?: number | null }[];
+    const propsList = (props ?? []) as { id: string; stage: string; created_at: string; approval_levels: { approver: string; votos_minimos: number } | null }[];
 
     setHasPleito(propsList.length > 0);
     setHasParecer(propsList.some((p) => ["parecer", "comite", "aprovado"].includes(p.stage)));
     setComiteDecidido(propsList.some((p) => p.stage === "aprovado"));
     setMinutaAssinada(!!(ced as any)?.minuta_assinada);
+    const latest = propsList[0] ?? null;
+    setLatestProposal(latest ? {
+      id: latest.id,
+      stage: latest.stage,
+      approver: latest.approval_levels?.approver ?? null,
+      votos_minimos: latest.approval_levels?.votos_minimos ?? 1,
+    } : null);
     setHistory((hist as HistoryRow[]) ?? []);
     if ((ced as Cedente)?.owner_id) {
       const { data: prof } = await supabase.from("profiles").select("nome").eq("id", (ced as Cedente).owner_id!).maybeSingle();
