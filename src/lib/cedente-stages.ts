@@ -1,3 +1,5 @@
+import type { AppRole } from "./roles";
+
 export type CedenteStage =
   | "novo"
   | "cadastro"
