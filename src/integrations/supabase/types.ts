@@ -86,6 +86,116 @@ export type Database = {
         }
         Relationships: []
       }
+      cedente_socios: {
+        Row: {
+          cedente_id: string
+          conjuge_cpf: string | null
+          conjuge_data_expedicao: string | null
+          conjuge_data_nascimento: string | null
+          conjuge_nacionalidade: string | null
+          conjuge_naturalidade: string | null
+          conjuge_nome: string | null
+          conjuge_orgao_emissor: string | null
+          conjuge_rg: string | null
+          conjuge_sexo: string | null
+          cpf: string | null
+          created_at: string
+          data_expedicao: string | null
+          data_nascimento: string | null
+          endereco_bairro: string | null
+          endereco_cep: string | null
+          endereco_cidade: string | null
+          endereco_estado: string | null
+          endereco_logradouro: string | null
+          endereco_numero: string | null
+          estado_civil: string | null
+          id: string
+          nacionalidade: string | null
+          naturalidade: string | null
+          nome: string
+          nome_mae: string | null
+          nome_pai: string | null
+          orgao_emissor: string | null
+          rg: string | null
+          sexo: string | null
+          updated_at: string
+        }
+        Insert: {
+          cedente_id: string
+          conjuge_cpf?: string | null
+          conjuge_data_expedicao?: string | null
+          conjuge_data_nascimento?: string | null
+          conjuge_nacionalidade?: string | null
+          conjuge_naturalidade?: string | null
+          conjuge_nome?: string | null
+          conjuge_orgao_emissor?: string | null
+          conjuge_rg?: string | null
+          conjuge_sexo?: string | null
+          cpf?: string | null
+          created_at?: string
+          data_expedicao?: string | null
+          data_nascimento?: string | null
+          endereco_bairro?: string | null
+          endereco_cep?: string | null
+          endereco_cidade?: string | null
+          endereco_estado?: string | null
+          endereco_logradouro?: string | null
+          endereco_numero?: string | null
+          estado_civil?: string | null
+          id?: string
+          nacionalidade?: string | null
+          naturalidade?: string | null
+          nome: string
+          nome_mae?: string | null
+          nome_pai?: string | null
+          orgao_emissor?: string | null
+          rg?: string | null
+          sexo?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cedente_id?: string
+          conjuge_cpf?: string | null
+          conjuge_data_expedicao?: string | null
+          conjuge_data_nascimento?: string | null
+          conjuge_nacionalidade?: string | null
+          conjuge_naturalidade?: string | null
+          conjuge_nome?: string | null
+          conjuge_orgao_emissor?: string | null
+          conjuge_rg?: string | null
+          conjuge_sexo?: string | null
+          cpf?: string | null
+          created_at?: string
+          data_expedicao?: string | null
+          data_nascimento?: string | null
+          endereco_bairro?: string | null
+          endereco_cep?: string | null
+          endereco_cidade?: string | null
+          endereco_estado?: string | null
+          endereco_logradouro?: string | null
+          endereco_numero?: string | null
+          estado_civil?: string | null
+          id?: string
+          nacionalidade?: string | null
+          naturalidade?: string | null
+          nome?: string
+          nome_mae?: string | null
+          nome_pai?: string | null
+          orgao_emissor?: string | null
+          rg?: string | null
+          sexo?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cedente_socios_cedente_id_fkey"
+            columns: ["cedente_id"]
+            isOneToOne: false
+            referencedRelation: "cedentes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cedente_visit_reports: {
         Row: {
           cedente_id: string
@@ -130,11 +240,14 @@ export type Database = {
       }
       cedentes: {
         Row: {
+          bairro: string | null
+          capital_social: number | null
           cep: string | null
           cidade: string | null
           cnpj: string
           created_at: string
           created_by: string | null
+          data_abertura: string | null
           email: string | null
           endereco: string | null
           estado: string | null
@@ -142,25 +255,32 @@ export type Database = {
           id: string
           lead_id: string | null
           limite_aprovado: number | null
+          logradouro: string | null
           minuta_assinada: boolean
           minuta_assinada_em: string | null
           minuta_assinada_por: string | null
+          natureza_juridica: string | null
           nome_fantasia: string | null
+          numero: string | null
           observacoes: string | null
           owner_id: string | null
           razao_social: string
           setor: string | null
+          situacao_cadastral: string | null
           stage: Database["public"]["Enums"]["cedente_stage"]
           status: Database["public"]["Enums"]["cedente_status"]
           telefone: string | null
           updated_at: string
         }
         Insert: {
+          bairro?: string | null
+          capital_social?: number | null
           cep?: string | null
           cidade?: string | null
           cnpj: string
           created_at?: string
           created_by?: string | null
+          data_abertura?: string | null
           email?: string | null
           endereco?: string | null
           estado?: string | null
@@ -168,25 +288,32 @@ export type Database = {
           id?: string
           lead_id?: string | null
           limite_aprovado?: number | null
+          logradouro?: string | null
           minuta_assinada?: boolean
           minuta_assinada_em?: string | null
           minuta_assinada_por?: string | null
+          natureza_juridica?: string | null
           nome_fantasia?: string | null
+          numero?: string | null
           observacoes?: string | null
           owner_id?: string | null
           razao_social: string
           setor?: string | null
+          situacao_cadastral?: string | null
           stage?: Database["public"]["Enums"]["cedente_stage"]
           status?: Database["public"]["Enums"]["cedente_status"]
           telefone?: string | null
           updated_at?: string
         }
         Update: {
+          bairro?: string | null
+          capital_social?: number | null
           cep?: string | null
           cidade?: string | null
           cnpj?: string
           created_at?: string
           created_by?: string | null
+          data_abertura?: string | null
           email?: string | null
           endereco?: string | null
           estado?: string | null
@@ -194,14 +321,18 @@ export type Database = {
           id?: string
           lead_id?: string | null
           limite_aprovado?: number | null
+          logradouro?: string | null
           minuta_assinada?: boolean
           minuta_assinada_em?: string | null
           minuta_assinada_por?: string | null
+          natureza_juridica?: string | null
           nome_fantasia?: string | null
+          numero?: string | null
           observacoes?: string | null
           owner_id?: string | null
           razao_social?: string
           setor?: string | null
+          situacao_cadastral?: string | null
           stage?: Database["public"]["Enums"]["cedente_stage"]
           status?: Database["public"]["Enums"]["cedente_status"]
           telefone?: string | null
