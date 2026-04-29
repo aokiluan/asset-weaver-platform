@@ -1,3 +1,5 @@
+import type { AppRole } from "./roles";
+
 export type CedenteStage =
   | "novo"
   | "cadastro"
@@ -113,3 +115,26 @@ export function evaluateGates(c: CedenteForGates): GateResult {
     atendidos,
   };
 }
+
+// Cores das etapas (mesmas do kanban /pipeline). Fonte de verdade única.
+export const STAGE_COLORS: Record<CedenteStage, string> = {
+  novo: "hsl(220 9% 64%)",
+  cadastro: "hsl(217 91% 35%)",
+  analise: "hsl(199 89% 48%)",
+  comite: "hsl(38 92% 50%)",
+  formalizacao: "hsl(280 70% 50%)",
+  ativo: "hsl(142 71% 45%)",
+  inativo: "hsl(0 0% 50%)",
+};
+
+// Quem pode ENVIAR (avançar) a partir desta etapa para a próxima.
+// O "owner" do cedente é tratado adicionalmente na UI para a etapa "novo".
+export const STAGE_PERMISSIONS: Record<CedenteStage, AppRole[]> = {
+  novo: ["admin", "gestor_comercial", "comercial"],
+  cadastro: ["admin", "gestor_comercial", "analista_cadastro"],
+  analise: ["admin", "gestor_credito", "analista_credito"],
+  comite: ["admin", "comite", "gestor_credito", "gestor_risco"],
+  formalizacao: ["admin", "gestor_financeiro", "financeiro"],
+  ativo: [],
+  inativo: [],
+};

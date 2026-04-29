@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Pencil, FileText, Loader2, Send } from "lucide-react";
+import { ArrowLeft, Pencil, FileText, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { CedenteFormDialog, CedenteFormValues } from "@/components/cedentes/CedenteFormDialog";
 
@@ -13,6 +13,11 @@ import { CedenteRepresentantesTab } from "@/components/cedentes/CedenteRepresent
 import { DocumentosUploadKanban } from "@/components/cedentes/DocumentosUploadKanban";
 import { EnviarAnaliseDialog } from "@/components/cedentes/EnviarAnaliseDialog";
 import { RevisarCadastroActions } from "@/components/cedentes/RevisarCadastroActions";
+import { CedenteStageStepper } from "@/components/cedentes/CedenteStageStepper";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { CedenteStage, STAGE_LABEL } from "@/lib/cedente-stages";
 
@@ -88,6 +93,8 @@ export default function CedenteDetail() {
   const [ownerName, setOwnerName] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [enviarOpen, setEnviarOpen] = useState(false);
+  const [confirmAdvance, setConfirmAdvance] = useState<CedenteStage | null>(null);
+  const [advancing, setAdvancing] = useState(false);
   const initialTab = searchParams.get("tab") ?? "resumo";
   const [tab, setTab] = useState(initialTab);
 
@@ -184,11 +191,8 @@ export default function CedenteDetail() {
     );
   }
 
-  // Permissões para os botões de transição
+  // Permissões para botões do header (avanço de etapa agora vai pelo stepper)
   const isOwner = !!user && cedente.owner_id === user.id;
-  const podeEnviarAnalise =
-    cedente.stage === "novo" &&
-    (hasRole("admin") || hasRole("gestor_comercial") || hasRole("comercial") || isOwner);
   const podeRevisarCadastro =
     cedente.stage === "cadastro" &&
     (hasRole("admin") || hasRole("analista_cadastro") || hasRole("gestor_comercial"));
@@ -205,6 +209,16 @@ export default function CedenteDetail() {
   }
   const podeAprovarCadastro = pendenciasAnalise.length === 0;
 
+  const advanceStage = async (target: CedenteStage) => {
+    setAdvancing(true);
+    const { error } = await supabase.from("cedentes").update({ stage: target }).eq("id", cedente.id);
+    setAdvancing(false);
+    if (error) { toast.error("Erro ao avançar", { description: error.message }); return; }
+    toast.success(`Cedente movido para ${STAGE_LABEL[target]}`);
+    setConfirmAdvance(null);
+    load();
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
@@ -212,7 +226,7 @@ export default function CedenteDetail() {
         <Button variant="outline" onClick={() => setEditOpen(true)}><Pencil className="h-4 w-4 mr-2" /> Editar dados</Button>
       </div>
 
-      <div className="rounded-lg border bg-card p-6 space-y-2">
+      <div className="rounded-lg border bg-card p-6 space-y-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">{cedente.razao_social}</h1>
@@ -220,22 +234,38 @@ export default function CedenteDetail() {
             <p className="text-sm text-muted-foreground font-mono mt-1">CNPJ: {cedente.cnpj}</p>
           </div>
           <div className="flex items-center gap-2 flex-wrap justify-end">
-            <Badge variant="secondary" className="text-sm px-3 py-1">{STAGE_LABEL[cedente.stage]}</Badge>
-            {podeEnviarAnalise && (
-              <Button onClick={() => setEnviarOpen(true)}>
-                <Send className="h-4 w-4 mr-2" /> Enviar para análise
-              </Button>
-            )}
             {podeRevisarCadastro && (
               <RevisarCadastroActions
                 cedenteId={cedente.id}
                 canApprove={podeAprovarCadastro}
                 pendencias={pendenciasAnalise}
                 onChanged={load}
+                onlyDevolver
               />
             )}
           </div>
         </div>
+
+        <CedenteStageStepper
+          stage={cedente.stage}
+          isOwner={isOwner}
+          gateInfo={{
+            hasVisitReport,
+            hasPleito,
+            obrigatoriosFaltando,
+            docsRejeitados,
+            hasParecer,
+            comiteDecidido,
+            minutaAssinada,
+          }}
+          onAdvance={(target) => {
+            if (cedente.stage === "novo" && target === "cadastro") {
+              setEnviarOpen(true);
+            } else {
+              setConfirmAdvance(target);
+            }
+          }}
+        />
       </div>
 
       <Tabs value={tab} onValueChange={onTabChange}>
@@ -377,6 +407,29 @@ export default function CedenteDetail() {
         checklist={checklistEnvio}
         onSent={load}
       />
+
+      <AlertDialog open={!!confirmAdvance} onOpenChange={(o) => !o && setConfirmAdvance(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Avançar para {confirmAdvance ? STAGE_LABEL[confirmAdvance] : ""}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação muda o estágio do cedente na esteira. Todos os usuários com acesso verão a nova etapa.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={advancing}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={advancing}
+              onClick={(e) => { e.preventDefault(); if (confirmAdvance) advanceStage(confirmAdvance); }}
+            >
+              {advancing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

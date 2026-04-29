@@ -14,9 +14,10 @@ interface Props {
   canApprove: boolean; // gates ok para avançar para "analise"
   pendencias: string[]; // o que falta para avançar
   onChanged: () => void;
+  onlyDevolver?: boolean; // se true, oculta o botão "Aprovar" (esteira passa a ser o canal de avanço)
 }
 
-export function RevisarCadastroActions({ cedenteId, canApprove, pendencias, onChanged }: Props) {
+export function RevisarCadastroActions({ cedenteId, canApprove, pendencias, onChanged, onlyDevolver }: Props) {
   const [devolverOpen, setDevolverOpen] = useState(false);
   const [motivo, setMotivo] = useState("");
   const [saving, setSaving] = useState(false);
@@ -57,10 +58,12 @@ export function RevisarCadastroActions({ cedenteId, canApprove, pendencias, onCh
       <Button variant="outline" onClick={() => setDevolverOpen(true)}>
         <Undo2 className="h-4 w-4 mr-2" /> Devolver ao comercial
       </Button>
-      <Button onClick={aprovar} disabled={!canApprove || saving}>
-        {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
-        Aprovar cadastro
-      </Button>
+      {!onlyDevolver && (
+        <Button onClick={aprovar} disabled={!canApprove || saving}>
+          {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
+          Aprovar cadastro
+        </Button>
+      )}
 
       <Dialog open={devolverOpen} onOpenChange={setDevolverOpen}>
         <DialogContent>
