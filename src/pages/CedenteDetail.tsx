@@ -123,7 +123,7 @@ export default function CedenteDetail() {
         supabase.from("documento_categorias").select("id,nome,obrigatorio,ordem").eq("ativo", true).order("ordem"),
         supabase.from("documentos").select("*").eq("cedente_id", id).order("created_at", { ascending: false }),
         supabase.from("cedente_visit_reports").select("id").eq("cedente_id", id).maybeSingle(),
-        supabase.from("credit_proposals").select("id,stage").eq("cedente_id", id),
+        supabase.from("credit_proposals").select("id,stage,created_at,approval_levels(approver,votos_minimos)").eq("cedente_id", id).order("created_at", { ascending: false }),
         supabase.from("cedente_history").select("*").eq("cedente_id", id).order("created_at", { ascending: false }),
       ]);
     setLoading(false);
