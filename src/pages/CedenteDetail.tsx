@@ -139,6 +139,28 @@ export default function CedenteDetail() {
 
   useEffect(() => { load(); }, [id]);
 
+  // Checklist para envio (novo -> cadastro)
+  // IMPORTANT: All hooks must run on every render (before any early return)
+  // to keep React's hook order stable. Use safe fallbacks when cedente is null.
+  const obrigatoriosFaltando = useMemo(() => {
+    return categorias
+      .filter((c) => c.obrigatorio)
+      .filter((c) => !documentos.some((d) => d.categoria_id === c.id))
+      .map((c) => c.nome);
+  }, [categorias, documentos]);
+
+  const checklistEnvio = useMemo(() => ([
+    {
+      label: obrigatoriosFaltando.length === 0
+        ? "Todos os documentos obrigatórios anexados"
+        : `Documentos obrigatórios faltando: ${obrigatoriosFaltando.join(", ")}`,
+      ok: obrigatoriosFaltando.length === 0,
+    },
+    { label: "Relatório comercial preenchido", ok: hasVisitReport },
+    { label: "Pleito de crédito informado", ok: hasPleito },
+    { label: "Representantes sincronizados", ok: !!cedente?.representantes_sincronizado_em },
+  ]), [obrigatoriosFaltando, hasVisitReport, hasPleito, cedente?.representantes_sincronizado_em]);
+
   if (loading) {
     return <div className="flex items-center justify-center py-16 text-muted-foreground"><Loader2 className="h-5 w-5 animate-spin mr-2" /> Carregando...</div>;
   }
@@ -159,26 +181,6 @@ export default function CedenteDetail() {
   const podeRevisarCadastro =
     cedente.stage === "cadastro" &&
     (hasRole("admin") || hasRole("analista_cadastro") || hasRole("gestor_comercial"));
-
-  // Checklist para envio (novo -> cadastro)
-  const obrigatoriosFaltando = useMemo(() => {
-    return categorias
-      .filter((c) => c.obrigatorio)
-      .filter((c) => !documentos.some((d) => d.categoria_id === c.id))
-      .map((c) => c.nome);
-  }, [categorias, documentos]);
-
-  const checklistEnvio = useMemo(() => ([
-    {
-      label: obrigatoriosFaltando.length === 0
-        ? "Todos os documentos obrigatórios anexados"
-        : `Documentos obrigatórios faltando: ${obrigatoriosFaltando.join(", ")}`,
-      ok: obrigatoriosFaltando.length === 0,
-    },
-    { label: "Relatório comercial preenchido", ok: hasVisitReport },
-    { label: "Pleito de crédito informado", ok: hasPleito },
-    { label: "Representantes sincronizados", ok: !!cedente.representantes_sincronizado_em },
-  ]), [obrigatoriosFaltando, hasVisitReport, hasPleito, cedente.representantes_sincronizado_em]);
 
   // Pendências para a etapa cadastro -> analise
   const docsRejeitados = documentos.filter((d) => d.status === "reprovado").length;
