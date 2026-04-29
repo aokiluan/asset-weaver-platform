@@ -37,6 +37,7 @@ interface Cedente {
   observacoes: string | null;
   owner_id: string | null;
   lead_id: string | null;
+  representantes_sincronizado_em: string | null;
 }
 
 interface Categoria { id: string; nome: string; obrigatorio: boolean; ordem: number }
