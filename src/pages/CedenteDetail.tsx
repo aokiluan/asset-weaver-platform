@@ -153,7 +153,7 @@ export default function CedenteDetail() {
         </div>
       </div>
 
-      <Tabs defaultValue="resumo">
+      <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
           <TabsTrigger value="resumo">Resumo</TabsTrigger>
           <TabsTrigger value="representantes">Representantes legais</TabsTrigger>
