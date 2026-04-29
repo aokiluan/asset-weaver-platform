@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Pencil, FileText, Loader2, ClipboardList } from "lucide-react";
+import { ArrowLeft, Pencil, FileText, Loader2, ClipboardList, Vote } from "lucide-react";
 import { CreditReportForm } from "@/components/credito/CreditReportForm";
 import { ComiteGameSession } from "@/components/credito/ComiteGameSession";
 import { toast } from "sonner";
@@ -398,36 +398,44 @@ export default function CedenteDetail() {
             </div>
           )}
 
-          {latestProposal?.approver === "comite" && (
-            <div className="flex gap-1 border-b">
-              {[
-                { v: "relatorio", label: "Relatório de crédito" },
-                { v: "comite", label: "Comitê" },
-              ].map((t) => (
-                <button
-                  key={t.v}
-                  onClick={() => setCreditoSubTab(t.v as any)}
-                  className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
-                    creditoSubTab === t.v
-                      ? "border-primary text-foreground"
-                      : "border-transparent text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {t.label}
-                </button>
-              ))}
-            </div>
-          )}
+          <div className="flex gap-1 border-b">
+            {[
+              { v: "relatorio", label: "Relatório de crédito" },
+              { v: "comite", label: "Comitê" },
+            ].map((t) => (
+              <button
+                key={t.v}
+                onClick={() => setCreditoSubTab(t.v as any)}
+                className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+                  creditoSubTab === t.v
+                    ? "border-primary text-foreground"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
 
-          {(creditoSubTab === "relatorio" || latestProposal?.approver !== "comite") && (
+          {creditoSubTab === "relatorio" && (
             <CreditReportForm cedenteId={cedente.id} proposalId={latestProposal?.id ?? null} />
           )}
-          {creditoSubTab === "comite" && latestProposal?.approver === "comite" && (
-            <ComiteGameSession
-              proposalId={latestProposal.id}
-              votosMinimos={latestProposal.votos_minimos}
-              proposalStage={latestProposal.stage as any}
-            />
+          {creditoSubTab === "comite" && (
+            latestProposal ? (
+              <ComiteGameSession
+                proposalId={latestProposal.id}
+                votosMinimos={latestProposal.votos_minimos}
+                proposalStage={latestProposal.stage as any}
+              />
+            ) : (
+              <div className="rounded-lg border bg-card p-10 text-center space-y-2">
+                <Vote className="h-10 w-10 mx-auto text-muted-foreground" />
+                <h3 className="text-base font-semibold">Comitê ainda não disponível</h3>
+                <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                  Nenhuma proposta de crédito encaminhada para este cedente. O comitê é habilitado quando a proposta atinge a alçada do colegiado.
+                </p>
+              </div>
+            )
           )}
         </TabsContent>
 

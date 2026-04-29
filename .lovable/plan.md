@@ -1,56 +1,41 @@
 ## Objetivo
 
-Remover a obrigatoriedade de "criar proposta" para preencher o relatório estruturado de crédito. O `CreditReportForm` (8 seções) deve aparecer **direto** na aba **Análise de crédito** do cedente, vinculado ao próprio cedente.
+Exibir o **Comitê** como sub-aba permanente dentro de **Análise de crédito** no cedente, ao lado de **Relatório**, mostrando o resultado individual da votação daquele cedente — independentemente de a proposta estar ou não no estágio "comitê" no momento.
 
-## Mudanças
+## Comportamento por cenário
 
-### 1. Banco — `credit_reports` passa a ser 1:1 com cedente
+| Cenário do cedente | O que aparece na sub-aba Comitê |
+|---|---|
+| Não tem proposta ainda | Estado vazio: "Nenhuma proposta aberta para este cedente. O comitê será habilitado quando houver uma proposta encaminhada." |
+| Tem proposta, mas ainda não chegou ao comitê | Aviso informativo + botão desabilitado: "Proposta em estágio X. Comitê será aberto quando a alçada exigir." (somente leitura) |
+| Proposta no estágio "comitê" (alçada = comite) | Sessão de votação ativa (`ComiteGameSession`) — comportamento atual |
+| Proposta já decidida após passar pelo comitê | Resultado consolidado: votos revelados, decisão final, justificativas, data de encerramento (read-only) |
 
-Migração:
-- `proposal_id` deixa de ser `NOT NULL` (passa a ser opcional, só preenchido quando houver uma proposta vinculada).
-- Remove o `UNIQUE` rígido em `proposal_id` e recria como índice **parcial** (`WHERE proposal_id IS NOT NULL`) — isso evita conflito quando vários cedentes ainda não têm proposta.
-- Cria `UNIQUE INDEX` em `cedente_id` — garante 1 relatório por cedente e habilita `upsert(..., onConflict: "cedente_id")`.
+## Mudanças no código
 
-RLS atual já cobre o caso (políticas baseadas em role, não em proposta) — nada a alterar.
+### `src/pages/CedenteDetail.tsx`
+- Remover o gate `latestProposal?.approver === "comite"` da renderização da sub-aba.
+- A `TabsList` da seção "Análise de crédito" passa a ter sempre as duas opções: **Relatório** e **Comitê**.
+- Renderizar `ComiteGameSession` sempre que houver `latestProposal`; quando não houver, renderizar um estado vazio simples no lugar.
+- Passar uma prop nova `readOnly` (boolean) para `ComiteGameSession` quando a proposta não estiver no estágio comitê (mostra histórico/resultado, mas oculta botões de voto/abrir sessão).
 
-### 2. UI — `CedenteDetail.tsx` (aba "Análise de crédito")
+### `src/components/credito/ComiteGameSession.tsx`
+- Adicionar prop opcional `readOnly?: boolean`.
+- Quando `readOnly`:
+  - Não mostrar botões "Abrir sessão", "Votar", "Revelar", "Encerrar".
+  - Sempre exibir os votos (mesmo se a sessão estava marcada como secreta e foi encerrada — usar dados já existentes).
+  - Mostrar um chip "Somente leitura" no cabeçalho.
+- Quando não há `session` para a proposta e está em `readOnly`: mostrar mensagem "Comitê ainda não foi aberto para esta proposta".
+- Lógica de votação/abertura permanece intacta para o caso ativo.
 
-Substituir o estado vazio "Criar proposta" pelo `CreditReportForm` renderizado direto:
+### Estado vazio (sem proposta)
+Pequeno componente inline no `CedenteDetail` com ícone `Vote`, texto explicativo e link para "Criar proposta" (reaproveitando o fluxo já existente em `/credito`).
 
-```text
-┌─ Aba: Análise de crédito ──────────────────────────────┐
-│  [Relatório estruturado de crédito · 0/8 seções]       │
-│  ▸ 1. Identificação                                    │
-│  ▸ 2. Descrição da empresa                             │
-│  ▸ … (8 acordeões)                                     │
-│  [Pareceres em camadas + conclusão]                    │
-│  [Salvar relatório]                                    │
-│                                                         │
-│  ── Quando existir proposta vinculada ──────────────── │
-│  [Card: Proposta ativa #123 · Estágio: comitê]         │
-│  [Sub-aba: Comitê] (só aparece se alçada = comitê)     │
-└────────────────────────────────────────────────────────┘
-```
+## Não escopo
+- Não alteramos o banco de dados.
+- Não mudamos RLS — `committee_sessions` e `committee_votes` já são visíveis para quem vê a proposta.
+- Não alteramos a tela global `/comite` — ela continua funcionando como hoje.
 
-- Remover botão "Criar proposta" e o `ProposalFormDialog` da aba.
-- Remover sub-aba "Pareceres" (já fica no próprio formulário).
-- Manter sub-aba "Comitê" só quando houver proposta com `approver = "comite"` (gameficação continua dependendo da proposta porque ela carrega a alçada/quórum).
+## Resultado
 
-### 3. `CreditReportForm.tsx`
-
-Tornar `proposalId` opcional:
-- Assinatura: `{ cedenteId: string; proposalId?: string | null }`.
-- Carregamento: busca por `cedente_id` (não mais por `proposal_id`).
-- Upsert: usa `onConflict: "cedente_id"` e só inclui `proposal_id` no payload se existir.
-
-## Arquivos afetados
-
-- **migration nova**: torna `proposal_id` nullable + índices únicos parciais
-- **src/components/credito/CreditReportForm.tsx**: query/upsert por `cedente_id`, `proposalId` opcional
-- **src/pages/CedenteDetail.tsx**: aba "Análise de crédito" renderiza o form direto; mantém comitê condicional; remove `ProposalFormDialog` desta aba
-
-## O que NÃO muda
-
-- A esteira de Crédito (`/credito`) e a criação de propostas por lá continuam funcionando normalmente.
-- Quando uma proposta é criada para o cedente, o relatório existente passa a ser exibido também na tela da proposta (mesma linha, vinculada por `cedente_id`).
-- Comitê gameficado continua exigindo proposta (porque depende de alçada/quórum).
+Dentro de qualquer cedente → aba **Análise de crédito** → duas sub-abas sempre visíveis (**Relatório** | **Comitê**), permitindo consultar o resultado individual do comitê daquele cedente a qualquer momento.
