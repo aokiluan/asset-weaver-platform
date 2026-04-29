@@ -279,9 +279,8 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2"><Label>Nome</Label><Input value={form.entrevistado_nome} onChange={(e) => set("entrevistado_nome", e.target.value)} /></div>
                 <div className="space-y-2"><Label>Cargo</Label><Input value={form.entrevistado_cargo} onChange={(e) => set("entrevistado_cargo", e.target.value)} /></div>
-                <div className="space-y-2"><Label>CPF</Label><Input value={form.entrevistado_cpf} onChange={(e) => set("entrevistado_cpf", e.target.value)} /></div>
                 <div className="space-y-2"><Label>Telefone</Label><Input value={form.entrevistado_telefone} onChange={(e) => set("entrevistado_telefone", e.target.value)} /></div>
-                <div className="space-y-2 md:col-span-2"><Label>E-mail</Label><Input type="email" value={form.entrevistado_email} onChange={(e) => set("entrevistado_email", e.target.value)} /></div>
+                <div className="space-y-2"><Label>E-mail</Label><Input type="email" value={form.entrevistado_email} onChange={(e) => set("entrevistado_email", e.target.value)} /></div>
               </div>
             </div>
           </AccordionContent>
