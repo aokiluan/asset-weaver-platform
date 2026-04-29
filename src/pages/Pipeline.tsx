@@ -17,23 +17,50 @@ import {
   useDraggable,
 } from "@dnd-kit/core";
 import { toast } from "sonner";
-import { LeadFormDialog } from "@/components/leads/LeadFormDialog";
+import { CedenteStage, STAGE_LABEL, STAGE_ORDER } from "@/lib/cedente-stages";
 
-interface Stage { id: string; nome: string; ordem: number; cor: string | null }
-interface Lead {
+interface CedenteCard {
   id: string;
-  nome: string;
-  empresa: string | null;
-  tipo: "cedente" | "investidor";
-  valor_estimado: number | null;
-  stage_id: string | null;
+  razao_social: string;
+  nome_fantasia: string | null;
+  cnpj: string | null;
+  stage: CedenteStage;
+  faturamento_medio: number | null;
+  setor: string | null;
 }
 
-function LeadCard({ lead }: { lead: Lead }) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: lead.id });
-  const style = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : undefined;
-  const fmt = (v: number | null) =>
-    v == null ? null : new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(v);
+const STAGE_COLORS: Record<CedenteStage, string> = {
+  novo: "hsl(220 9% 64%)",
+  cadastro: "hsl(217 91% 35%)",
+  analise: "hsl(199 89% 48%)",
+  comite: "hsl(38 92% 50%)",
+  formalizacao: "hsl(280 70% 50%)",
+  ativo: "hsl(142 71% 45%)",
+  inativo: "hsl(0 0% 50%)",
+};
+
+const fmtBRL = (v: number | null) =>
+  v == null
+    ? null
+    : new Intl.NumberFormat("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+        maximumFractionDigits: 0,
+      }).format(v);
+
+function CedenteCardItem({
+  cedente,
+  onOpen,
+}: {
+  cedente: CedenteCard;
+  onOpen: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: cedente.id,
+  });
+  const style = transform
+    ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
+    : undefined;
 
   return (
     <div
@@ -41,23 +68,48 @@ function LeadCard({ lead }: { lead: Lead }) {
       style={style}
       {...listeners}
       {...attributes}
+      onDoubleClick={onOpen}
       className={`p-3 rounded-md bg-card border shadow-[var(--shadow-card)] cursor-grab active:cursor-grabbing ${isDragging ? "opacity-40" : ""}`}
     >
       <div className="flex items-start justify-between gap-2">
-        <p className="text-sm font-medium leading-tight">{lead.nome}</p>
-        <Badge variant={lead.tipo === "cedente" ? "default" : "secondary"} className="text-[10px]">{lead.tipo}</Badge>
+        <p className="text-sm font-medium leading-tight line-clamp-2">
+          {cedente.razao_social}
+        </p>
+        <Badge variant="secondary" className="text-[10px] shrink-0">cedente</Badge>
       </div>
-      {lead.empresa && <p className="text-xs text-muted-foreground mt-1">{lead.empresa}</p>}
-      {lead.valor_estimado != null && (
-        <p className="text-xs font-semibold text-primary mt-2 tabular-nums">{fmt(lead.valor_estimado)}</p>
+      {cedente.nome_fantasia && cedente.nome_fantasia !== cedente.razao_social && (
+        <p className="text-xs text-muted-foreground mt-1 truncate">{cedente.nome_fantasia}</p>
       )}
+      {cedente.cnpj && (
+        <p className="text-[11px] text-muted-foreground mt-1 tabular-nums">
+          CNPJ: {cedente.cnpj}
+        </p>
+      )}
+      <div className="flex items-center justify-between mt-2 gap-2">
+        {cedente.setor && (
+          <span className="text-[10px] text-muted-foreground truncate">{cedente.setor}</span>
+        )}
+        {cedente.faturamento_medio != null && (
+          <span className="text-xs font-semibold text-primary tabular-nums">
+            {fmtBRL(cedente.faturamento_medio)}
+          </span>
+        )}
+      </div>
     </div>
   );
 }
 
-function StageColumn({ stage, leads }: { stage: Stage; leads: Lead[] }) {
-  const { setNodeRef, isOver } = useDroppable({ id: stage.id });
-  const total = leads.reduce((s, l) => s + (l.valor_estimado ?? 0), 0);
+function StageColumn({
+  stage,
+  cedentes,
+  onOpen,
+}: {
+  stage: CedenteStage;
+  cedentes: CedenteCard[];
+  onOpen: (id: string) => void;
+}) {
+  const { setNodeRef, isOver } = useDroppable({ id: stage });
+  const total = cedentes.reduce((s, c) => s + (c.faturamento_medio ?? 0), 0);
 
   return (
     <div
@@ -66,20 +118,25 @@ function StageColumn({ stage, leads }: { stage: Stage; leads: Lead[] }) {
     >
       <div className="p-3 border-b flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full" style={{ background: stage.cor ?? "hsl(var(--primary))" }} />
-          <span className="text-sm font-semibold">{stage.nome}</span>
-          <span className="text-xs text-muted-foreground">({leads.length})</span>
+          <span
+            className="h-2 w-2 rounded-full"
+            style={{ background: STAGE_COLORS[stage] }}
+          />
+          <span className="text-sm font-semibold">{STAGE_LABEL[stage]}</span>
+          <span className="text-xs text-muted-foreground">({cedentes.length})</span>
         </div>
       </div>
       <div className="p-2 space-y-2 flex-1 overflow-y-auto min-h-[200px] max-h-[calc(100vh-260px)]">
-        {leads.map((l) => <LeadCard key={l.id} lead={l} />)}
-        {leads.length === 0 && (
+        {cedentes.map((c) => (
+          <CedenteCardItem key={c.id} cedente={c} onOpen={() => onOpen(c.id)} />
+        ))}
+        {cedentes.length === 0 && (
           <div className="text-xs text-muted-foreground text-center py-8">Vazio</div>
         )}
       </div>
       {total > 0 && (
         <div className="p-2 border-t text-xs text-muted-foreground text-right tabular-nums">
-          Total: {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(total)}
+          Faturamento: {fmtBRL(total)}
         </div>
       )}
     </div>
@@ -88,28 +145,34 @@ function StageColumn({ stage, leads }: { stage: Stage; leads: Lead[] }) {
 
 export default function Pipeline() {
   const navigate = useNavigate();
-  const [stages, setStages] = useState<Stage[]>([]);
-  const [leads, setLeads] = useState<Lead[]>([]);
+  const [cedentes, setCedentes] = useState<CedenteCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+  );
 
-  useEffect(() => { document.title = "Pipeline | Securitizadora"; }, []);
+  useEffect(() => {
+    document.title = "Pipeline | Securitizadora";
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [{ data: st }, { data: lds }] = await Promise.all([
-      supabase.from("pipeline_stages").select("id,nome,ordem,cor").eq("ativo", true).order("ordem"),
-      supabase.from("leads").select("id,nome,empresa,tipo,valor_estimado,stage_id").order("created_at", { ascending: false }),
-    ]);
-    setStages(st ?? []);
-    setLeads((lds ?? []) as any);
+    const { data, error } = await supabase
+      .from("cedentes")
+      .select("id,razao_social,nome_fantasia,cnpj,stage,faturamento_medio,setor")
+      .order("created_at", { ascending: false });
+    if (error) {
+      toast.error("Erro ao carregar cedentes", { description: error.message });
+    }
+    setCedentes((data ?? []) as CedenteCard[]);
     setLoading(false);
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const onDragStart = (e: DragStartEvent) => setActiveId(String(e.active.id));
 
@@ -117,26 +180,38 @@ export default function Pipeline() {
     setActiveId(null);
     const { active, over } = e;
     if (!over) return;
-    const leadId = String(active.id);
-    const newStage = String(over.id);
+    const cedenteId = String(active.id);
+    const newStage = String(over.id) as CedenteStage;
 
-    const lead = leads.find((l) => l.id === leadId);
-    if (!lead || lead.stage_id === newStage) return;
+    const c = cedentes.find((x) => x.id === cedenteId);
+    if (!c || c.stage === newStage) return;
 
-    // Optimistic update
-    setLeads((prev) => prev.map((l) => l.id === leadId ? { ...l, stage_id: newStage } : l));
+    // Optimistic
+    setCedentes((prev) =>
+      prev.map((x) => (x.id === cedenteId ? { ...x, stage: newStage } : x)),
+    );
 
-    const { error } = await supabase.from("leads").update({ stage_id: newStage }).eq("id", leadId);
+    const { error } = await supabase
+      .from("cedentes")
+      .update({ stage: newStage })
+      .eq("id", cedenteId);
+
     if (error) {
       toast.error("Erro ao mover", { description: error.message });
       load();
+    } else {
+      toast.success(`Movido para ${STAGE_LABEL[newStage]}`);
     }
   };
 
-  const activeLead = activeId ? leads.find((l) => l.id === activeId) : null;
+  const activeCedente = activeId ? cedentes.find((c) => c.id === activeId) : null;
 
   if (loading) {
-    return <div className="py-12 flex justify-center"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
+    return (
+      <div className="py-12 flex justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
   }
 
   return (
@@ -144,7 +219,9 @@ export default function Pipeline() {
       <header className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Pipeline</h1>
-          <p className="text-sm text-muted-foreground">Arraste os cards entre estágios.</p>
+          <p className="text-sm text-muted-foreground">
+            Arraste os cards entre estágios. Duplo-clique abre o cedente.
+          </p>
         </div>
         <Button onClick={() => navigate("/cedentes/novo")}>
           <Plus className="h-4 w-4 mr-2" /> Novo cadastro
@@ -153,22 +230,29 @@ export default function Pipeline() {
 
       <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd}>
         <div className="flex gap-4 overflow-x-auto pb-4">
-          {stages.map((s) => (
-            <StageColumn key={s.id} stage={s} leads={leads.filter((l) => l.stage_id === s.id)} />
+          {STAGE_ORDER.map((s) => (
+            <StageColumn
+              key={s}
+              stage={s}
+              cedentes={cedentes.filter((c) => c.stage === s)}
+              onOpen={(id) => navigate(`/cedentes/${id}`)}
+            />
           ))}
         </div>
 
         <DragOverlay>
-          {activeLead && (
+          {activeCedente && (
             <Card className="p-3 w-72 shadow-[var(--shadow-elegant)]">
-              <p className="text-sm font-medium">{activeLead.nome}</p>
-              {activeLead.empresa && <p className="text-xs text-muted-foreground">{activeLead.empresa}</p>}
+              <p className="text-sm font-medium">{activeCedente.razao_social}</p>
+              {activeCedente.cnpj && (
+                <p className="text-xs text-muted-foreground tabular-nums">
+                  {activeCedente.cnpj}
+                </p>
+              )}
             </Card>
           )}
         </DragOverlay>
       </DndContext>
-
-      <LeadFormDialog open={dialogOpen} onOpenChange={setDialogOpen} onSaved={load} />
     </div>
   );
 }
