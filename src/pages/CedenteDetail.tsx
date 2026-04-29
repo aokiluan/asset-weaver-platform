@@ -90,6 +90,7 @@ export default function CedenteDetail() {
   const [hasParecer, setHasParecer] = useState(false);
   const [comiteDecidido, setComiteDecidido] = useState(false);
   const [minutaAssinada, setMinutaAssinada] = useState(false);
+  const [latestProposal, setLatestProposal] = useState<{ id: string; stage: string; approver: string | null; votos_minimos: number } | null>(null);
   const [history, setHistory] = useState<HistoryRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [ownerName, setOwnerName] = useState<string | null>(null);
