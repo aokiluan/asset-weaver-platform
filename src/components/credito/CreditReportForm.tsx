@@ -24,8 +24,8 @@ import {
 } from "@/lib/credit-report";
 
 interface Props {
-  proposalId: string;
   cedenteId: string;
+  proposalId?: string | null;
 }
 
 type ReportRow = {
@@ -52,16 +52,16 @@ type ReportRow = {
   updated_at: string;
 };
 
-const emptyReport = (proposalId: string, cedenteId: string): Partial<ReportRow> => ({
-  proposal_id: proposalId,
+const emptyReport = (cedenteId: string, proposalId?: string | null): Partial<ReportRow> => ({
+  proposal_id: proposalId ?? null,
   cedente_id: cedenteId,
   identificacao: {}, empresa: {}, rede_societaria: {}, carteira: {},
   restritivos: {}, financeiro: {}, due_diligence: {}, pleito: {},
 });
 
-export function CreditReportForm({ proposalId, cedenteId }: Props) {
+export function CreditReportForm({ cedenteId, proposalId }: Props) {
   const { user, hasRole } = useAuth();
-  const [report, setReport] = useState<Partial<ReportRow>>(emptyReport(proposalId, cedenteId));
+  const [report, setReport] = useState<Partial<ReportRow>>(emptyReport(cedenteId, proposalId));
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
@@ -77,15 +77,16 @@ export function CreditReportForm({ proposalId, cedenteId }: Props) {
       const { data, error } = await supabase
         .from("credit_reports")
         .select("*")
-        .eq("proposal_id", proposalId)
+        .eq("cedente_id", cedenteId)
         .maybeSingle();
       if (!active) return;
       if (error) toast.error("Erro ao carregar relatório", { description: error.message });
       if (data) setReport(data as ReportRow);
+      else setReport(emptyReport(cedenteId, proposalId));
       setLoading(false);
     })();
     return () => { active = false; };
-  }, [proposalId]);
+  }, [cedenteId, proposalId]);
 
   const completude = useMemo(() => computeCompletude(report as any), [report]);
 
@@ -104,16 +105,18 @@ export function CreditReportForm({ proposalId, cedenteId }: Props) {
     setSaving(true);
     const payload: any = {
       ...report,
-      proposal_id: proposalId,
       cedente_id: cedenteId,
       completude: computeCompletude(report as any),
       updated_by: user.id,
     };
+    // proposal_id é opcional: só envia se houver
+    if (proposalId) payload.proposal_id = proposalId;
+    else if (!report.proposal_id) delete payload.proposal_id;
     if (!report.id) payload.created_by = user.id;
 
     const { data, error } = await supabase
       .from("credit_reports")
-      .upsert(payload, { onConflict: "proposal_id" })
+      .upsert(payload, { onConflict: "cedente_id" })
       .select()
       .single();
     setSaving(false);

@@ -675,7 +675,7 @@ export type Database = {
           pleito: Json
           pontos_atencao: string | null
           pontos_positivos: string | null
-          proposal_id: string
+          proposal_id: string | null
           recomendacao: string | null
           rede_societaria: Json
           restritivos: Json
@@ -701,7 +701,7 @@ export type Database = {
           pleito?: Json
           pontos_atencao?: string | null
           pontos_positivos?: string | null
-          proposal_id: string
+          proposal_id?: string | null
           recomendacao?: string | null
           rede_societaria?: Json
           restritivos?: Json
@@ -727,7 +727,7 @@ export type Database = {
           pleito?: Json
           pontos_atencao?: string | null
           pontos_positivos?: string | null
-          proposal_id?: string
+          proposal_id?: string | null
           recomendacao?: string | null
           rede_societaria?: Json
           restritivos?: Json
