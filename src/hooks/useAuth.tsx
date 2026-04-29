@@ -10,7 +10,12 @@ type AppRole =
   | "comite"
   | "gestor_risco"
   | "financeiro"
-  | "operacional";
+  | "operacional"
+  | "gestor_credito"
+  | "gestor_financeiro"
+  | "relacao_investidor"
+  | "gestor_relacao_investidor"
+  | "analista_cadastro";
 
 interface AuthContextValue {
   user: User | null;
