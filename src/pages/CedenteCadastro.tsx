@@ -84,7 +84,7 @@ export default function CedenteCadastro() {
       faturamento_medio: data.faturamento_medio,
     });
 
-    const { data: socData } = await supabase.from("cedente_socios").select("*").eq("cedente_id", id);
+    const { data: socData } = await supabase.from("cedente_representantes").select("*").eq("cedente_id", id);
     setSocios(
       (socData ?? []).map((s: any) => ({
         ...s,
@@ -213,7 +213,7 @@ export default function CedenteCadastro() {
     // Salvar sócios
     if (id && socios.length > 0) {
       // Estratégia simples: deletar todos e re-inserir (igual ao projeto antigo)
-      await supabase.from("cedente_socios").delete().eq("cedente_id", id);
+      await supabase.from("cedente_representantes").delete().eq("cedente_id", id);
       const toInsert = socios.map((s) => {
         const { id: _localId, persisted: _p, ...rest } = s;
         return {
@@ -228,7 +228,7 @@ export default function CedenteCadastro() {
           endereco_cep: rest.endereco_cep?.replace(/\D/g, "") || null,
         };
       });
-      const { error: sErr } = await supabase.from("cedente_socios").insert(toInsert);
+      const { error: sErr } = await supabase.from("cedente_representantes").insert(toInsert);
       if (sErr) { toast.error("Erro ao salvar sócios", { description: sErr.message }); setSaving(false); return; }
     }
 
