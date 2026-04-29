@@ -3,7 +3,7 @@ import { Link, useParams, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { ArrowLeft, Pencil, FileText, Loader2, ClipboardList, Vote } from "lucide-react";
 import { CreditReportForm } from "@/components/credito/CreditReportForm";
 import { ComiteGameSession } from "@/components/credito/ComiteGameSession";
@@ -98,7 +98,7 @@ export default function CedenteDetail() {
   const [enviarOpen, setEnviarOpen] = useState(false);
   const [confirmAdvance, setConfirmAdvance] = useState<CedenteStage | null>(null);
   const [advancing, setAdvancing] = useState(false);
-  const [creditoSubTab, setCreditoSubTab] = useState<"relatorio" | "comite">("relatorio");
+  
   const initialTab = searchParams.get("tab") ?? "resumo";
   const [tab, setTab] = useState(initialTab);
 
@@ -279,26 +279,48 @@ export default function CedenteDetail() {
         />
       </div>
 
-      <Tabs value={tab} onValueChange={onTabChange}>
-        <TabsList>
-          <TabsTrigger value="resumo">Resumo</TabsTrigger>
-          <TabsTrigger value="representantes">Representantes legais</TabsTrigger>
-          <TabsTrigger value="documentos" className="gap-2">
-            Documentos
-            {documentos.filter((d) => d.status === "pendente").length > 0 && (
-              <Badge variant="destructive" className="h-4 min-w-4 px-1 text-[10px] rounded-full">
-                {documentos.filter((d) => d.status === "pendente").length}
-              </Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="visita">Relatório comercial</TabsTrigger>
-          <TabsTrigger value="credito" className="gap-2">
-            <ClipboardList className="h-3.5 w-3.5" /> Análise de crédito
-          </TabsTrigger>
-          <TabsTrigger value="historico">Histórico</TabsTrigger>
-        </TabsList>
+      {(() => {
+        const pendentesCount = documentos.filter((d) => d.status === "pendente").length;
+        const TABS: Array<{ v: string; label: string; icon?: any; badge?: number }> = [
+          { v: "resumo", label: "Resumo" },
+          { v: "representantes", label: "Representantes legais" },
+          { v: "documentos", label: "Documentos", badge: pendentesCount },
+          { v: "visita", label: "Relatório comercial" },
+          { v: "credito", label: "Análise de crédito", icon: ClipboardList },
+          { v: "comite", label: "Comitê", icon: Vote },
+          { v: "historico", label: "Histórico" },
+        ];
+        return (
+          <div className="flex gap-1 border-b overflow-x-auto">
+            {TABS.map((t) => {
+              const Icon = t.icon;
+              const active = tab === t.v;
+              return (
+                <button
+                  key={t.v}
+                  onClick={() => onTabChange(t.v)}
+                  className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px transition-colors flex items-center gap-2 whitespace-nowrap ${
+                    active
+                      ? "border-primary text-foreground"
+                      : "border-transparent text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {Icon && <Icon className="h-3.5 w-3.5" />}
+                  {t.label}
+                  {t.badge && t.badge > 0 ? (
+                    <Badge variant="destructive" className="h-4 min-w-4 px-1 text-[10px] rounded-full">
+                      {t.badge}
+                    </Badge>
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
+        );
+      })()}
 
-        <TabsContent value="resumo" className="mt-4">
+      {tab === "resumo" && (
+        <div className="mt-4">
           <div className="rounded-lg border bg-card p-6 space-y-6">
             <section className="space-y-3">
               <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Identificação</h3>
@@ -345,17 +367,21 @@ export default function CedenteDetail() {
               </section>
             )}
           </div>
-        </TabsContent>
+        </div>
+      )}
 
-        <TabsContent value="representantes" className="mt-4">
+      {tab === "representantes" && (
+        <div className="mt-4">
           <CedenteRepresentantesTab
             cedenteId={cedente.id}
             jaSincronizado={!!cedente.representantes_sincronizado_em}
             onSynced={load}
           />
-        </TabsContent>
+        </div>
+      )}
 
-        <TabsContent value="documentos" className="mt-4">
+      {tab === "documentos" && (
+        <div className="mt-4">
           <div className="rounded-lg border bg-card p-6 space-y-4">
             <div className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
@@ -370,9 +396,11 @@ export default function CedenteDetail() {
               onChanged={load}
             />
           </div>
-        </TabsContent>
+        </div>
+      )}
 
-        <TabsContent value="visita" className="mt-4">
+      {tab === "visita" && (
+        <div className="mt-4">
           <div className="rounded-lg border bg-card p-6">
             <div className="mb-4">
               <h2 className="text-lg font-semibold">Relatório comercial</h2>
@@ -380,9 +408,11 @@ export default function CedenteDetail() {
             </div>
             <CedenteVisitReportForm cedenteId={cedente.id} onSaved={load} />
           </div>
-        </TabsContent>
+        </div>
+      )}
 
-        <TabsContent value="credito" className="mt-4 space-y-4">
+      {tab === "credito" && (
+        <div className="mt-4 space-y-4">
           {latestProposal && (
             <div className="rounded-lg border bg-card p-4 flex flex-wrap items-center justify-between gap-3">
               <div className="space-y-0.5">
@@ -397,49 +427,32 @@ export default function CedenteDetail() {
               </Button>
             </div>
           )}
+          <CreditReportForm cedenteId={cedente.id} proposalId={latestProposal?.id ?? null} />
+        </div>
+      )}
 
-          <div className="flex gap-1 border-b">
-            {[
-              { v: "relatorio", label: "Relatório de crédito" },
-              { v: "comite", label: "Comitê" },
-            ].map((t) => (
-              <button
-                key={t.v}
-                onClick={() => setCreditoSubTab(t.v as any)}
-                className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
-                  creditoSubTab === t.v
-                    ? "border-primary text-foreground"
-                    : "border-transparent text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
-
-          {creditoSubTab === "relatorio" && (
-            <CreditReportForm cedenteId={cedente.id} proposalId={latestProposal?.id ?? null} />
+      {tab === "comite" && (
+        <div className="mt-4 space-y-4">
+          {latestProposal ? (
+            <ComiteGameSession
+              proposalId={latestProposal.id}
+              votosMinimos={latestProposal.votos_minimos}
+              proposalStage={latestProposal.stage as any}
+            />
+          ) : (
+            <div className="rounded-lg border bg-card p-10 text-center space-y-2">
+              <Vote className="h-10 w-10 mx-auto text-muted-foreground" />
+              <h3 className="text-base font-semibold">Comitê ainda não disponível</h3>
+              <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                Nenhuma proposta de crédito encaminhada para este cedente. O comitê é habilitado quando a proposta atinge a alçada do colegiado.
+              </p>
+            </div>
           )}
-          {creditoSubTab === "comite" && (
-            latestProposal ? (
-              <ComiteGameSession
-                proposalId={latestProposal.id}
-                votosMinimos={latestProposal.votos_minimos}
-                proposalStage={latestProposal.stage as any}
-              />
-            ) : (
-              <div className="rounded-lg border bg-card p-10 text-center space-y-2">
-                <Vote className="h-10 w-10 mx-auto text-muted-foreground" />
-                <h3 className="text-base font-semibold">Comitê ainda não disponível</h3>
-                <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                  Nenhuma proposta de crédito encaminhada para este cedente. O comitê é habilitado quando a proposta atinge a alçada do colegiado.
-                </p>
-              </div>
-            )
-          )}
-        </TabsContent>
+        </div>
+      )}
 
-        <TabsContent value="historico" className="mt-4">
+      {tab === "historico" && (
+        <div className="mt-4">
           <div className="rounded-lg border bg-card p-6">
             <h2 className="text-lg font-semibold mb-4">Histórico de estágios</h2>
             {history.length === 0 ? (
@@ -461,8 +474,8 @@ export default function CedenteDetail() {
               </ol>
             )}
           </div>
-        </TabsContent>
-      </Tabs>
+        </div>
+      )}
 
       <CedenteFormDialog
         open={editOpen}

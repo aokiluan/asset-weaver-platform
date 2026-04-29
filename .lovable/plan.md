@@ -1,41 +1,62 @@
 ## Objetivo
 
-Exibir o **Comitê** como sub-aba permanente dentro de **Análise de crédito** no cedente, ao lado de **Relatório**, mostrando o resultado individual da votação daquele cedente — independentemente de a proposta estar ou não no estágio "comitê" no momento.
+1. **Trocar o estilo das abas principais** do `CedenteDetail` pelo mesmo padrão visual usado hoje nas sub-abas (botões com `border-b-2` ativo, sem o "pill" do shadcn `Tabs`).
+2. **Promover "Comitê" a aba principal** independente, lado a lado com "Análise de crédito", removendo o sistema de sub-abas.
 
-## Comportamento por cenário
+## Layout final (abas principais)
 
-| Cenário do cedente | O que aparece na sub-aba Comitê |
-|---|---|
-| Não tem proposta ainda | Estado vazio: "Nenhuma proposta aberta para este cedente. O comitê será habilitado quando houver uma proposta encaminhada." |
-| Tem proposta, mas ainda não chegou ao comitê | Aviso informativo + botão desabilitado: "Proposta em estágio X. Comitê será aberto quando a alçada exigir." (somente leitura) |
-| Proposta no estágio "comitê" (alçada = comite) | Sessão de votação ativa (`ComiteGameSession`) — comportamento atual |
-| Proposta já decidida após passar pelo comitê | Resultado consolidado: votos revelados, decisão final, justificativas, data de encerramento (read-only) |
+```
+Resumo │ Representantes │ Documentos │ Relatório comercial │ Análise de crédito │ Comitê │ Histórico
+─────────────────────────────────────────────────────────────────────────────────────────────
+```
 
-## Mudanças no código
+Estilo: linha de botões com `border-b` na faixa, e a aba ativa com `border-primary text-foreground`, inativas com `border-transparent text-muted-foreground`.
+
+## Mudanças
 
 ### `src/pages/CedenteDetail.tsx`
-- Remover o gate `latestProposal?.approver === "comite"` da renderização da sub-aba.
-- A `TabsList` da seção "Análise de crédito" passa a ter sempre as duas opções: **Relatório** e **Comitê**.
-- Renderizar `ComiteGameSession` sempre que houver `latestProposal`; quando não houver, renderizar um estado vazio simples no lugar.
-- Passar uma prop nova `readOnly` (boolean) para `ComiteGameSession` quando a proposta não estiver no estágio comitê (mostra histórico/resultado, mas oculta botões de voto/abrir sessão).
 
-### `src/components/credito/ComiteGameSession.tsx`
-- Adicionar prop opcional `readOnly?: boolean`.
-- Quando `readOnly`:
-  - Não mostrar botões "Abrir sessão", "Votar", "Revelar", "Encerrar".
-  - Sempre exibir os votos (mesmo se a sessão estava marcada como secreta e foi encerrada — usar dados já existentes).
-  - Mostrar um chip "Somente leitura" no cabeçalho.
-- Quando não há `session` para a proposta e está em `readOnly`: mostrar mensagem "Comitê ainda não foi aberto para esta proposta".
-- Lógica de votação/abertura permanece intacta para o caso ativo.
+- **Remover** o uso de `Tabs/TabsList/TabsTrigger/TabsContent` do shadcn nessa página.
+- **Adicionar** um array de definição de abas:
+  ```ts
+  const TABS = [
+    { v: "resumo", label: "Resumo" },
+    { v: "representantes", label: "Representantes legais" },
+    { v: "documentos", label: "Documentos", badge: pendentesCount },
+    { v: "visita", label: "Relatório comercial" },
+    { v: "credito", label: "Análise de crédito", icon: ClipboardList },
+    { v: "comite", label: "Comitê", icon: Vote },
+    { v: "historico", label: "Histórico" },
+  ];
+  ```
+- Renderizar a barra de abas no estilo das sub-abas:
+  ```tsx
+  <div className="flex gap-1 border-b overflow-x-auto">
+    {TABS.map(t => (
+      <button onClick={() => onTabChange(t.v)}
+        className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px transition-colors flex items-center gap-2 whitespace-nowrap ${
+          tab === t.v ? "border-primary text-foreground"
+                       : "border-transparent text-muted-foreground hover:text-foreground"
+        }`}>
+        {t.icon && <t.icon className="h-3.5 w-3.5" />}
+        {t.label}
+        {t.badge ? <Badge>...</Badge> : null}
+      </button>
+    ))}
+  </div>
+  ```
+- Substituir cada `<TabsContent value="x">` por `{tab === "x" && (...)}`.
+- **Aba "Análise de crédito"**: passa a renderizar **somente** o `CreditReportForm` (mais o card de proposta vinculada). Sem sub-abas internas.
+- **Aba "Comitê"** (nova, no nível principal):
+  - Se houver `latestProposal`: renderiza `<ComiteGameSession proposalId=... votosMinimos=... proposalStage=... />`.
+  - Se não houver: estado vazio com ícone `Vote` e mensagem "Comitê será habilitado quando houver proposta encaminhada".
+- Remover estado `creditoSubTab` e `setCreditoSubTab` (não são mais necessários).
+- Atualizar o tipo do estado `tab` para incluir `"comite"` e ajustar `onTabChange` se houver tipagem estrita.
 
-### Estado vazio (sem proposta)
-Pequeno componente inline no `CedenteDetail` com ícone `Vote`, texto explicativo e link para "Criar proposta" (reaproveitando o fluxo já existente em `/credito`).
-
-## Não escopo
-- Não alteramos o banco de dados.
-- Não mudamos RLS — `committee_sessions` e `committee_votes` já são visíveis para quem vê a proposta.
-- Não alteramos a tela global `/comite` — ela continua funcionando como hoje.
+### Compatibilidade
+- `onTabChange` já manipula query string (`?tab=`); incluir `"comite"` na lista de valores válidos.
+- Nenhuma mudança em outros componentes, no banco ou em RLS.
 
 ## Resultado
 
-Dentro de qualquer cedente → aba **Análise de crédito** → duas sub-abas sempre visíveis (**Relatório** | **Comitê**), permitindo consultar o resultado individual do comitê daquele cedente a qualquer momento.
+Barra de abas no estilo "underline minimalista" (igual às sub-abas atuais), com **Comitê** como aba principal autônoma exibindo a sessão de votação daquele cedente.
