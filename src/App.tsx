@@ -25,6 +25,12 @@ import AdminCategorias from "./pages/admin/AdminCategorias.tsx";
 import AdminDatasets from "./pages/admin/AdminDatasets.tsx";
 import AdminRelatorios from "./pages/admin/AdminRelatorios.tsx";
 import AdminDashboardWidgets from "./pages/admin/AdminDashboardWidgets.tsx";
+import GestaoComercial from "./pages/gestao/GestaoComercial.tsx";
+import GestaoOperacional from "./pages/gestao/GestaoOperacional.tsx";
+import GestaoFinanceiro from "./pages/gestao/GestaoFinanceiro.tsx";
+import GestaoDiario from "./pages/gestao/GestaoDiario.tsx";
+import Comite from "./pages/Comite.tsx";
+import Formalizacao from "./pages/Formalizacao.tsx";
 import RoleGuard from "@/components/RoleGuard";
 import NotFound from "./pages/NotFound.tsx";
 
@@ -56,8 +62,32 @@ const App = () => (
               <Route
                 path="/financeiro"
                 element={
-                  <RoleGuard role={["admin", "financeiro", "gestor_risco"]}>
+                  <RoleGuard role={["admin", "financeiro", "gestor_financeiro", "gestor_risco"]}>
                     <Financeiro />
+                  </RoleGuard>
+                }
+              />
+
+              {/* Gestão (dashboards) */}
+              <Route path="/gestao/comercial" element={<GestaoComercial />} />
+              <Route path="/gestao/operacional" element={<GestaoOperacional />} />
+              <Route path="/gestao/financeiro" element={<GestaoFinanceiro />} />
+              <Route path="/gestao/diario" element={<GestaoDiario />} />
+
+              {/* Comitê e Formalização (placeholders Fase 2/3) */}
+              <Route
+                path="/comite"
+                element={
+                  <RoleGuard role={["admin", "comite", "gestor_credito", "analista_credito"]}>
+                    <Comite />
+                  </RoleGuard>
+                }
+              />
+              <Route
+                path="/formalizacao"
+                element={
+                  <RoleGuard role={["admin", "analista_cadastro", "gestor_comercial"]}>
+                    <Formalizacao />
                   </RoleGuard>
                 }
               />

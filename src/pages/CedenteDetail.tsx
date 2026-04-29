@@ -3,11 +3,15 @@ import { Link, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ArrowLeft, Upload, Download, Trash2, CheckCircle2, XCircle, Pencil, FileText, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { CedenteFormDialog, CedenteFormValues } from "@/components/cedentes/CedenteFormDialog";
+import { CedenteStageBar } from "@/components/cedentes/CedenteStageBar";
+import { CedenteVisitReportForm } from "@/components/cedentes/CedenteVisitReportForm";
+import { CedenteStage, STAGE_LABEL, evaluateGates, nextStage } from "@/lib/cedente-stages";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
@@ -27,6 +31,7 @@ interface Cedente {
   setor: string | null;
   faturamento_medio: number | null;
   status: "prospect" | "em_analise" | "aprovado" | "reprovado" | "inativo";
+  stage: CedenteStage;
   limite_aprovado: number | null;
   observacoes: string | null;
   owner_id: string | null;
@@ -51,12 +56,15 @@ interface Documento {
   created_at: string;
 }
 
-const STATUS_LABEL: Record<Cedente["status"], string> = {
-  prospect: "Prospect", em_analise: "Em análise", aprovado: "Aprovado", reprovado: "Reprovado", inativo: "Inativo",
-};
-const STATUS_VARIANT: Record<Cedente["status"], "default" | "secondary" | "destructive" | "outline"> = {
-  prospect: "outline", em_analise: "secondary", aprovado: "default", reprovado: "destructive", inativo: "outline",
-};
+interface HistoryRow {
+  id: string;
+  evento: string;
+  stage_anterior: CedenteStage | null;
+  stage_novo: CedenteStage | null;
+  created_at: string;
+  user_id: string | null;
+}
+
 const DOC_VARIANT: Record<Documento["status"], "default" | "secondary" | "destructive"> = {
   pendente: "secondary", aprovado: "default", reprovado: "destructive",
 };
@@ -76,8 +84,13 @@ export default function CedenteDetail() {
   const [cedente, setCedente] = useState<Cedente | null>(null);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [documentos, setDocumentos] = useState<Documento[]>([]);
+  const [hasVisitReport, setHasVisitReport] = useState(false);
+  const [hasPleito, setHasPleito] = useState(false);
+  const [hasParecer, setHasParecer] = useState(false);
+  const [history, setHistory] = useState<HistoryRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [advancing, setAdvancing] = useState(false);
   const [categoriaUpload, setCategoriaUpload] = useState<string>("");
   const [editOpen, setEditOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -85,25 +98,30 @@ export default function CedenteDetail() {
   const load = async () => {
     if (!id) return;
     setLoading(true);
-    const [{ data: ced, error: e1 }, { data: cats }, { data: docs }] = await Promise.all([
-      supabase.from("cedentes").select("*").eq("id", id).maybeSingle(),
-      supabase.from("documento_categorias").select("id,nome,obrigatorio,ordem").eq("ativo", true).order("ordem"),
-      supabase.from("documentos").select("*").eq("cedente_id", id).order("created_at", { ascending: false }),
-    ]);
+    const [{ data: ced, error: e1 }, { data: cats }, { data: docs }, { data: visit }, { data: props }, { data: hist }] =
+      await Promise.all([
+        supabase.from("cedentes").select("*").eq("id", id).maybeSingle(),
+        supabase.from("documento_categorias").select("id,nome,obrigatorio,ordem").eq("ativo", true).order("ordem"),
+        supabase.from("documentos").select("*").eq("cedente_id", id).order("created_at", { ascending: false }),
+        supabase.from("cedente_visit_reports").select("id").eq("cedente_id", id).maybeSingle(),
+        supabase.from("credit_proposals").select("id,stage").eq("cedente_id", id),
+        supabase.from("cedente_history").select("*").eq("cedente_id", id).order("created_at", { ascending: false }),
+      ]);
     setLoading(false);
     if (e1) { toast.error("Erro ao carregar", { description: e1.message }); return; }
     setCedente(ced as Cedente);
     setCategorias(cats ?? []);
     setDocumentos((docs as Documento[]) ?? []);
+    setHasVisitReport(!!visit);
+    setHasPleito((props ?? []).length > 0);
+    setHasParecer((props ?? []).some((p: any) => ["parecer", "comite", "aprovado"].includes(p.stage)));
+    setHistory((hist as HistoryRow[]) ?? []);
   };
 
   useEffect(() => { load(); }, [id]);
 
   const handleUploadClick = () => {
-    if (!categoriaUpload) {
-      toast.error("Selecione a categoria do documento antes de enviar.");
-      return;
-    }
+    if (!categoriaUpload) { toast.error("Selecione a categoria do documento antes de enviar."); return; }
     fileInputRef.current?.click();
   };
 
@@ -111,46 +129,29 @@ export default function CedenteDetail() {
     const file = e.target.files?.[0];
     if (!file || !cedente) return;
     e.target.value = "";
-
     setUploading(true);
     try {
       const { data: auth } = await supabase.auth.getUser();
       if (!auth.user) throw new Error("Não autenticado");
-
       const safeName = file.name.replace(/[^\w.\-]+/g, "_");
       const path = `${cedente.id}/${Date.now()}-${safeName}`;
-
       const { error: upErr } = await supabase.storage.from("cedente-docs")
         .upload(path, file, { contentType: file.type, upsert: false });
       if (upErr) throw upErr;
-
       const { error: insErr } = await supabase.from("documentos").insert({
-        cedente_id: cedente.id,
-        categoria_id: categoriaUpload || null,
-        nome_arquivo: file.name,
-        storage_path: path,
-        tamanho_bytes: file.size,
-        mime_type: file.type || null,
-        uploaded_by: auth.user.id,
+        cedente_id: cedente.id, categoria_id: categoriaUpload || null, nome_arquivo: file.name,
+        storage_path: path, tamanho_bytes: file.size, mime_type: file.type || null, uploaded_by: auth.user.id,
       });
-      if (insErr) {
-        await supabase.storage.from("cedente-docs").remove([path]);
-        throw insErr;
-      }
-
+      if (insErr) { await supabase.storage.from("cedente-docs").remove([path]); throw insErr; }
       toast.success("Documento enviado");
-      setCategoriaUpload("");
-      load();
+      setCategoriaUpload(""); load();
     } catch (err: any) {
       toast.error("Erro no upload", { description: err.message });
-    } finally {
-      setUploading(false);
-    }
+    } finally { setUploading(false); }
   };
 
   const handleDownload = async (doc: Documento) => {
-    const { data, error } = await supabase.storage.from("cedente-docs")
-      .createSignedUrl(doc.storage_path, 60);
+    const { data, error } = await supabase.storage.from("cedente-docs").createSignedUrl(doc.storage_path, 60);
     if (error || !data) { toast.error("Erro ao gerar link", { description: error?.message }); return; }
     window.open(data.signedUrl, "_blank");
   };
@@ -160,20 +161,64 @@ export default function CedenteDetail() {
     if (e1) { toast.error("Erro ao remover arquivo", { description: e1.message }); return; }
     const { error: e2 } = await supabase.from("documentos").delete().eq("id", doc.id);
     if (e2) { toast.error("Erro ao remover registro", { description: e2.message }); return; }
-    toast.success("Documento removido");
-    load();
+    toast.success("Documento removido"); load();
   };
 
   const handleReview = async (doc: Documento, status: "aprovado" | "reprovado") => {
     const { data: auth } = await supabase.auth.getUser();
     const { error } = await supabase.from("documentos").update({
-      status,
-      reviewed_by: auth.user?.id,
-      reviewed_at: new Date().toISOString(),
+      status, reviewed_by: auth.user?.id, reviewed_at: new Date().toISOString(),
     }).eq("id", doc.id);
     if (error) { toast.error("Erro ao revisar", { description: error.message }); return; }
     toast.success(status === "aprovado" ? "Documento aprovado" : "Documento reprovado");
     load();
+  };
+
+  // Gates
+  const obrigatoriosFaltando = categorias
+    .filter(c => c.obrigatorio)
+    .filter(c => !documentos.some(d => d.categoria_id === c.id && d.status === "aprovado"))
+    .map(c => c.nome);
+  const docsRejeitados = documentos.filter(d => d.status === "reprovado").length;
+
+  const gate = cedente
+    ? evaluateGates({
+        stage: cedente.stage,
+        hasVisitReport, hasPleito,
+        obrigatoriosFaltando,
+        docsRejeitados,
+        hasParecer,
+        comiteDecidido: false, // Fase 2
+        minutaAssinada: false, // Fase 3
+      })
+    : { next: null, allowed: false, pendentes: [], atendidos: [] };
+
+  const handleAdvance = async () => {
+    if (!cedente || !gate.next) return;
+    setAdvancing(true);
+    const { error } = await supabase.from("cedentes").update({ stage: gate.next }).eq("id", cedente.id);
+    setAdvancing(false);
+    if (error) { toast.error("Erro ao avançar", { description: error.message }); return; }
+    toast.success(`Cedente avançou para ${STAGE_LABEL[gate.next]}`);
+    load();
+  };
+
+  const handleReturn = async () => {
+    if (!cedente) return;
+    const idx = ["novo","cadastro","analise","comite","formalizacao","ativo"].indexOf(cedente.stage);
+    if (idx <= 0) return;
+    const prev = ["novo","cadastro","analise","comite","formalizacao","ativo"][idx - 1] as CedenteStage;
+    const { error } = await supabase.from("cedentes").update({ stage: prev }).eq("id", cedente.id);
+    if (error) { toast.error("Erro", { description: error.message }); return; }
+    toast.success(`Devolvido para ${STAGE_LABEL[prev]}`);
+    load();
+  };
+
+  const handleInativar = async () => {
+    if (!cedente) return;
+    const { error } = await supabase.from("cedentes").update({ stage: "inativo" }).eq("id", cedente.id);
+    if (error) { toast.error("Erro", { description: error.message }); return; }
+    toast.success("Cedente inativado"); load();
   };
 
   if (loading) {
@@ -188,13 +233,6 @@ export default function CedenteDetail() {
     );
   }
 
-  const docsByCategoria = new Map<string | null, Documento[]>();
-  documentos.forEach(d => {
-    const k = d.categoria_id;
-    if (!docsByCategoria.has(k)) docsByCategoria.set(k, []);
-    docsByCategoria.get(k)!.push(d);
-  });
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
@@ -202,136 +240,200 @@ export default function CedenteDetail() {
         <Button variant="outline" onClick={() => setEditOpen(true)}><Pencil className="h-4 w-4 mr-2" /> Editar dados</Button>
       </div>
 
-      <div className="rounded-lg border bg-card p-6 space-y-4">
+      <div className="rounded-lg border bg-card p-6 space-y-2">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">{cedente.razao_social}</h1>
             {cedente.nome_fantasia && <p className="text-sm text-muted-foreground">{cedente.nome_fantasia}</p>}
             <p className="text-sm text-muted-foreground font-mono mt-1">CNPJ: {cedente.cnpj}</p>
           </div>
-          <Badge variant={STATUS_VARIANT[cedente.status]} className="text-sm px-3 py-1">{STATUS_LABEL[cedente.status]}</Badge>
+          <Badge variant="secondary" className="text-sm px-3 py-1">{STAGE_LABEL[cedente.stage]}</Badge>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm pt-2 border-t">
-          <div><div className="text-xs text-muted-foreground">E-mail</div><div>{cedente.email ?? "—"}</div></div>
-          <div><div className="text-xs text-muted-foreground">Telefone</div><div>{cedente.telefone ?? "—"}</div></div>
-          <div><div className="text-xs text-muted-foreground">Setor</div><div>{cedente.setor ?? "—"}</div></div>
-          <div><div className="text-xs text-muted-foreground">Cidade/UF</div><div>{[cedente.cidade, cedente.estado].filter(Boolean).join(" / ") || "—"}</div></div>
-          <div><div className="text-xs text-muted-foreground">Faturamento médio</div><div>{fmtBRL(cedente.faturamento_medio)}</div></div>
-          <div><div className="text-xs text-muted-foreground">Limite aprovado</div><div className="font-semibold">{fmtBRL(cedente.limite_aprovado)}</div></div>
-        </div>
-        {cedente.observacoes && (
-          <div className="text-sm pt-2 border-t">
-            <div className="text-xs text-muted-foreground mb-1">Observações</div>
-            <p className="whitespace-pre-wrap">{cedente.observacoes}</p>
-          </div>
-        )}
       </div>
 
-      <div className="rounded-lg border bg-card p-6 space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-semibold flex items-center gap-2"><FileText className="h-5 w-5" /> Documentos</h2>
-            <p className="text-xs text-muted-foreground">Upload, revisão e download dos documentos do cedente.</p>
-          </div>
-        </div>
+      <CedenteStageBar
+        stage={cedente.stage}
+        gate={gate}
+        onAdvance={handleAdvance}
+        onReturn={handleReturn}
+        onInativar={handleInativar}
+        advancing={advancing}
+      />
 
-        <div className="flex flex-wrap items-center gap-3 p-4 rounded-md border bg-muted/30">
-          <div className="flex-1 min-w-[240px]">
-            <Select value={categoriaUpload} onValueChange={setCategoriaUpload}>
-              <SelectTrigger><SelectValue placeholder="Categoria do documento..." /></SelectTrigger>
-              <SelectContent>
-                {categorias.map(c => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.nome}{c.obrigatorio && <span className="text-destructive ml-1">*</span>}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileChange} />
-          <Button onClick={handleUploadClick} disabled={uploading}>
-            {uploading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
-            Enviar arquivo
-          </Button>
-        </div>
+      <Tabs defaultValue="resumo">
+        <TabsList>
+          <TabsTrigger value="resumo">Resumo</TabsTrigger>
+          <TabsTrigger value="documentos">Documentos</TabsTrigger>
+          <TabsTrigger value="visita">Relatório de visita</TabsTrigger>
+          <TabsTrigger value="pleito">Pleito</TabsTrigger>
+          <TabsTrigger value="historico">Histórico</TabsTrigger>
+        </TabsList>
 
-        {/* Checklist de obrigatórios */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-          {categorias.filter(c => c.obrigatorio).map(c => {
-            const docs = docsByCategoria.get(c.id) ?? [];
-            const aprovado = docs.some(d => d.status === "aprovado");
-            const tem = docs.length > 0;
-            return (
-              <div key={c.id} className="flex items-center justify-between text-sm rounded-md border px-3 py-2">
-                <span>{c.nome}</span>
-                {aprovado ? <Badge variant="default">OK</Badge>
-                  : tem ? <Badge variant="secondary">Pendente</Badge>
-                  : <Badge variant="outline">Faltando</Badge>}
+        <TabsContent value="resumo" className="mt-4">
+          <div className="rounded-lg border bg-card p-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div><div className="text-xs text-muted-foreground">E-mail</div><div>{cedente.email ?? "—"}</div></div>
+              <div><div className="text-xs text-muted-foreground">Telefone</div><div>{cedente.telefone ?? "—"}</div></div>
+              <div><div className="text-xs text-muted-foreground">Setor</div><div>{cedente.setor ?? "—"}</div></div>
+              <div><div className="text-xs text-muted-foreground">Cidade/UF</div><div>{[cedente.cidade, cedente.estado].filter(Boolean).join(" / ") || "—"}</div></div>
+              <div><div className="text-xs text-muted-foreground">Faturamento médio</div><div>{fmtBRL(cedente.faturamento_medio)}</div></div>
+              <div><div className="text-xs text-muted-foreground">Limite aprovado</div><div className="font-semibold">{fmtBRL(cedente.limite_aprovado)}</div></div>
+            </div>
+            {cedente.observacoes && (
+              <div className="text-sm pt-4 mt-4 border-t">
+                <div className="text-xs text-muted-foreground mb-1">Observações</div>
+                <p className="whitespace-pre-wrap">{cedente.observacoes}</p>
               </div>
-            );
-          })}
-        </div>
-
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Arquivo</TableHead>
-              <TableHead>Categoria</TableHead>
-              <TableHead>Tamanho</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {documentos.length === 0 && (
-              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Nenhum documento enviado.</TableCell></TableRow>
             )}
-            {documentos.map(d => {
-              const cat = categorias.find(c => c.id === d.categoria_id);
-              return (
-                <TableRow key={d.id}>
-                  <TableCell className="font-medium">{d.nome_arquivo}</TableCell>
-                  <TableCell>{cat?.nome ?? "—"}</TableCell>
-                  <TableCell>{fmtBytes(d.tamanho_bytes)}</TableCell>
-                  <TableCell><Badge variant={DOC_VARIANT[d.status]}>{d.status}</Badge></TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-1">
-                      <Button size="icon" variant="ghost" onClick={() => handleDownload(d)} title="Baixar">
-                        <Download className="h-4 w-4" />
-                      </Button>
-                      {d.status !== "aprovado" && (
-                        <Button size="icon" variant="ghost" onClick={() => handleReview(d, "aprovado")} title="Aprovar">
-                          <CheckCircle2 className="h-4 w-4 text-green-600" />
-                        </Button>
-                      )}
-                      {d.status !== "reprovado" && (
-                        <Button size="icon" variant="ghost" onClick={() => handleReview(d, "reprovado")} title="Reprovar">
-                          <XCircle className="h-4 w-4 text-destructive" />
-                        </Button>
-                      )}
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button size="icon" variant="ghost" title="Remover"><Trash2 className="h-4 w-4" /></Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Remover documento?</AlertDialogTitle>
-                            <AlertDialogDescription>O arquivo será excluído permanentemente.</AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDelete(d)}>Remover</AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="documentos" className="mt-4">
+          <div className="rounded-lg border bg-card p-6 space-y-4">
+            <div className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              <h2 className="text-lg font-semibold">Documentos</h2>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3 p-4 rounded-md border bg-muted/30">
+              <div className="flex-1 min-w-[240px]">
+                <Select value={categoriaUpload} onValueChange={setCategoriaUpload}>
+                  <SelectTrigger><SelectValue placeholder="Categoria do documento..." /></SelectTrigger>
+                  <SelectContent>
+                    {categorias.map(c => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.nome}{c.obrigatorio && <span className="text-destructive ml-1">*</span>}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileChange} />
+              <Button onClick={handleUploadClick} disabled={uploading}>
+                {uploading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
+                Enviar arquivo
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {categorias.filter(c => c.obrigatorio).map(c => {
+                const docs = documentos.filter(d => d.categoria_id === c.id);
+                const aprovado = docs.some(d => d.status === "aprovado");
+                const tem = docs.length > 0;
+                return (
+                  <div key={c.id} className="flex items-center justify-between text-sm rounded-md border px-3 py-2">
+                    <span>{c.nome}</span>
+                    {aprovado ? <Badge variant="default">OK</Badge>
+                      : tem ? <Badge variant="secondary">Pendente</Badge>
+                      : <Badge variant="outline">Faltando</Badge>}
+                  </div>
+                );
+              })}
+            </div>
+
+            <Table>
+              <TableHeader><TableRow>
+                <TableHead>Arquivo</TableHead><TableHead>Categoria</TableHead>
+                <TableHead>Tamanho</TableHead><TableHead>Status</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
+              </TableRow></TableHeader>
+              <TableBody>
+                {documentos.length === 0 && (
+                  <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Nenhum documento enviado.</TableCell></TableRow>
+                )}
+                {documentos.map(d => {
+                  const cat = categorias.find(c => c.id === d.categoria_id);
+                  return (
+                    <TableRow key={d.id}>
+                      <TableCell className="font-medium">{d.nome_arquivo}</TableCell>
+                      <TableCell>{cat?.nome ?? "—"}</TableCell>
+                      <TableCell>{fmtBytes(d.tamanho_bytes)}</TableCell>
+                      <TableCell><Badge variant={DOC_VARIANT[d.status]}>{d.status}</Badge></TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button size="icon" variant="ghost" onClick={() => handleDownload(d)} title="Baixar"><Download className="h-4 w-4" /></Button>
+                          {d.status !== "aprovado" && (
+                            <Button size="icon" variant="ghost" onClick={() => handleReview(d, "aprovado")} title="Aprovar"><CheckCircle2 className="h-4 w-4 text-green-600" /></Button>
+                          )}
+                          {d.status !== "reprovado" && (
+                            <Button size="icon" variant="ghost" onClick={() => handleReview(d, "reprovado")} title="Reprovar"><XCircle className="h-4 w-4 text-destructive" /></Button>
+                          )}
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button size="icon" variant="ghost" title="Remover"><Trash2 className="h-4 w-4" /></Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Remover documento?</AlertDialogTitle>
+                                <AlertDialogDescription>O arquivo será excluído permanentemente.</AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDelete(d)}>Remover</AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="visita" className="mt-4">
+          <div className="rounded-lg border bg-card p-6">
+            <div className="mb-4">
+              <h2 className="text-lg font-semibold">Relatório de visita</h2>
+              <p className="text-sm text-muted-foreground">Modelo padrão. Obrigatório para avançar do estágio "Novo".</p>
+            </div>
+            <CedenteVisitReportForm cedenteId={cedente.id} onSaved={load} />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="pleito" className="mt-4">
+          <div className="rounded-lg border bg-card p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold">Pleito de crédito</h2>
+                <p className="text-sm text-muted-foreground">Use a tela de Crédito para criar e acompanhar as propostas deste cedente.</p>
+              </div>
+              <Button asChild><Link to="/credito">Ir para Crédito</Link></Button>
+            </div>
+            <div className="text-sm">
+              {hasPleito
+                ? <Badge variant="default">Pleito registrado</Badge>
+                : <Badge variant="outline">Nenhum pleito ainda</Badge>}
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="historico" className="mt-4">
+          <div className="rounded-lg border bg-card p-6">
+            <h2 className="text-lg font-semibold mb-4">Histórico de estágios</h2>
+            {history.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Sem registros.</p>
+            ) : (
+              <ol className="space-y-3 text-sm">
+                {history.map(h => (
+                  <li key={h.id} className="flex gap-3 border-l-2 border-primary pl-3">
+                    <div>
+                      <div className="font-medium">
+                        {h.evento === "criado"
+                          ? <>Criado em <span className="text-primary">{STAGE_LABEL[h.stage_novo!]}</span></>
+                          : <>{STAGE_LABEL[h.stage_anterior!]} → <span className="text-primary">{STAGE_LABEL[h.stage_novo!]}</span></>}
+                      </div>
+                      <div className="text-xs text-muted-foreground">{new Date(h.created_at).toLocaleString("pt-BR")}</div>
                     </div>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </div>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
+        </TabsContent>
+      </Tabs>
 
       <CedenteFormDialog
         open={editOpen}

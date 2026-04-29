@@ -53,6 +53,81 @@ export type Database = {
         }
         Relationships: []
       }
+      cedente_history: {
+        Row: {
+          cedente_id: string
+          created_at: string
+          detalhes: Json | null
+          evento: string
+          id: string
+          stage_anterior: Database["public"]["Enums"]["cedente_stage"] | null
+          stage_novo: Database["public"]["Enums"]["cedente_stage"] | null
+          user_id: string | null
+        }
+        Insert: {
+          cedente_id: string
+          created_at?: string
+          detalhes?: Json | null
+          evento: string
+          id?: string
+          stage_anterior?: Database["public"]["Enums"]["cedente_stage"] | null
+          stage_novo?: Database["public"]["Enums"]["cedente_stage"] | null
+          user_id?: string | null
+        }
+        Update: {
+          cedente_id?: string
+          created_at?: string
+          detalhes?: Json | null
+          evento?: string
+          id?: string
+          stage_anterior?: Database["public"]["Enums"]["cedente_stage"] | null
+          stage_novo?: Database["public"]["Enums"]["cedente_stage"] | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      cedente_visit_reports: {
+        Row: {
+          cedente_id: string
+          contexto: string
+          created_at: string
+          created_by: string
+          data_visita: string
+          id: string
+          participantes: string
+          percepcoes: string
+          pontos_atencao: string | null
+          recomendacao: string
+          updated_at: string
+        }
+        Insert: {
+          cedente_id: string
+          contexto: string
+          created_at?: string
+          created_by: string
+          data_visita: string
+          id?: string
+          participantes: string
+          percepcoes: string
+          pontos_atencao?: string | null
+          recomendacao: string
+          updated_at?: string
+        }
+        Update: {
+          cedente_id?: string
+          contexto?: string
+          created_at?: string
+          created_by?: string
+          data_visita?: string
+          id?: string
+          participantes?: string
+          percepcoes?: string
+          pontos_atencao?: string | null
+          recomendacao?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       cedentes: {
         Row: {
           cep: string | null
@@ -72,6 +147,7 @@ export type Database = {
           owner_id: string | null
           razao_social: string
           setor: string | null
+          stage: Database["public"]["Enums"]["cedente_stage"]
           status: Database["public"]["Enums"]["cedente_status"]
           telefone: string | null
           updated_at: string
@@ -94,6 +170,7 @@ export type Database = {
           owner_id?: string | null
           razao_social: string
           setor?: string | null
+          stage?: Database["public"]["Enums"]["cedente_stage"]
           status?: Database["public"]["Enums"]["cedente_status"]
           telefone?: string | null
           updated_at?: string
@@ -116,6 +193,7 @@ export type Database = {
           owner_id?: string | null
           razao_social?: string
           setor?: string | null
+          stage?: Database["public"]["Enums"]["cedente_stage"]
           status?: Database["public"]["Enums"]["cedente_status"]
           telefone?: string | null
           updated_at?: string
@@ -854,7 +932,20 @@ export type Database = {
         | "gestor_risco"
         | "financeiro"
         | "operacional"
+        | "gestor_credito"
+        | "gestor_financeiro"
+        | "relacao_investidor"
+        | "gestor_relacao_investidor"
+        | "analista_cadastro"
       approver_kind: "analista_credito" | "gestor_risco" | "comite"
+      cedente_stage:
+        | "novo"
+        | "cadastro"
+        | "analise"
+        | "comite"
+        | "formalizacao"
+        | "ativo"
+        | "inativo"
       cedente_status:
         | "prospect"
         | "em_analise"
@@ -1014,8 +1105,22 @@ export const Constants = {
         "gestor_risco",
         "financeiro",
         "operacional",
+        "gestor_credito",
+        "gestor_financeiro",
+        "relacao_investidor",
+        "gestor_relacao_investidor",
+        "analista_cadastro",
       ],
       approver_kind: ["analista_credito", "gestor_risco", "comite"],
+      cedente_stage: [
+        "novo",
+        "cadastro",
+        "analise",
+        "comite",
+        "formalizacao",
+        "ativo",
+        "inativo",
+      ],
       cedente_status: [
         "prospect",
         "em_analise",

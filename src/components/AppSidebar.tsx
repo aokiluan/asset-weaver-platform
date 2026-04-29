@@ -19,6 +19,11 @@ import {
   Pin,
   PinOff,
   ChevronDown,
+  TrendingUp,
+  Activity,
+  CalendarDays,
+  Vote,
+  FileSignature,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
@@ -40,33 +45,44 @@ type Group = {
 
 const GROUPS: Group[] = [
   {
+    key: "gestao",
+    label: "Gestão",
+    icon: BarChart3,
+    items: [
+      { title: "Dashboard Comercial", url: "/gestao/comercial", icon: TrendingUp },
+      { title: "Dashboard Operacional", url: "/gestao/operacional", icon: Activity },
+      { title: "Dashboard Financeiro", url: "/gestao/financeiro", icon: Wallet },
+      { title: "Dashboard Diário", url: "/gestao/diario", icon: CalendarDays },
+    ],
+  },
+  {
     key: "operacao",
     label: "Operação",
     icon: Briefcase,
     items: [
-      { title: "Dashboard", url: "/", icon: LayoutDashboard },
+      { title: "Início", url: "/", icon: LayoutDashboard },
       { title: "Leads", url: "/leads", icon: Users },
       { title: "Pipeline", url: "/pipeline", icon: KanbanSquare },
       { title: "Cedentes", url: "/cedentes", icon: Building2 },
       { title: "Crédito", url: "/credito", icon: Scale },
       {
+        title: "Comitê",
+        url: "/comite",
+        icon: Vote,
+        roles: ["admin", "comite", "gestor_credito", "analista_credito"] as const,
+      },
+      {
+        title: "Formalização",
+        url: "/formalizacao",
+        icon: FileSignature,
+        roles: ["admin", "analista_cadastro", "gestor_comercial"] as const,
+      },
+      {
         title: "Financeiro",
         url: "/financeiro",
         icon: Wallet,
-        roles: ["admin", "financeiro", "gestor_risco"] as const,
+        roles: ["admin", "financeiro", "gestor_financeiro", "gestor_risco"] as const,
       },
-    ],
-  },
-  {
-    key: "bi",
-    label: "Relatórios / BI",
-    icon: BarChart3,
-    adminOnly: true,
-    items: [
-      { title: "Indicadores", url: "/bi/indicadores", icon: LayoutGrid },
-      { title: "Uploads", url: "/bi/uploads", icon: FileSpreadsheet },
-      { title: "Datasets", url: "/bi/datasets", icon: Database },
-      { title: "Widgets", url: "/bi/widgets", icon: LayoutGrid },
     ],
   },
   {
@@ -79,6 +95,9 @@ const GROUPS: Group[] = [
       { title: "Alçadas", url: "/configuracoes/alcadas", icon: Gavel },
       { title: "Pipeline", url: "/configuracoes/pipeline", icon: ListChecks },
       { title: "Categorias de doc.", url: "/configuracoes/categorias", icon: Tags },
+      { title: "BI – Datasets", url: "/bi/datasets", icon: Database },
+      { title: "BI – Uploads", url: "/bi/uploads", icon: FileSpreadsheet },
+      { title: "BI – Widgets", url: "/bi/widgets", icon: LayoutGrid },
     ],
   },
 ];
@@ -106,11 +125,10 @@ export function AppSidebar() {
       GROUPS.filter((g) => !g.adminOnly || hasRole("admin")).map((g) => ({
         ...g,
         items: g.items.filter((i) => !i.roles || i.roles.some((r) => hasRole(r as any))),
-      })),
+      })).filter((g) => g.items.length > 0),
     [hasRole],
   );
 
-  // Estado dos grupos abertos (persistido). Por padrão, abre todos + sempre abre o que contém a rota ativa.
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
     if (typeof window === "undefined") return {};
     try {
@@ -128,7 +146,6 @@ export function AppSidebar() {
     localStorage.setItem(OPEN_KEY, JSON.stringify(openGroups));
   }, [openGroups]);
 
-  // Garante que o grupo da rota ativa esteja aberto.
   useEffect(() => {
     const activeGroup = visibleGroups.find((g) =>
       g.items.some((i) => isActive(i.url)),
@@ -160,7 +177,6 @@ export function AppSidebar() {
         )}
         style={{ width: expanded ? EXPANDED_W : COLLAPSED_W }}
       >
-        {/* Header */}
         <div className="h-16 flex items-center justify-between border-b border-sidebar-border px-3 shrink-0">
           {expanded ? (
             <>
@@ -186,7 +202,6 @@ export function AppSidebar() {
           )}
         </div>
 
-        {/* Conteúdo */}
         <nav className="flex-1 overflow-y-auto overflow-x-hidden py-2">
           {visibleGroups.map((group, idx) => {
             const isOpen = openGroups[group.key] ?? true;
@@ -219,7 +234,6 @@ export function AppSidebar() {
                     />
                   </button>
                 ) : (
-                  // Quando colapsada, mostramos só um separador visual (sem header).
                   <div className="h-1" aria-hidden />
                 )}
 
@@ -240,7 +254,6 @@ export function AppSidebar() {
                   </ul>
                 )}
 
-                {/* Indicador discreto quando colapsado e o grupo tem rota ativa */}
                 {!expanded && groupHasActive && (
                   <div className="mx-auto mt-1 h-0.5 w-6 rounded bg-sidebar-foreground/20" />
                 )}
