@@ -116,7 +116,7 @@ export function CedenteStageBar({ stage, gate, onAdvance, onReturn, onInativar, 
       {isFinal && (
         <div className="border-t pt-4 flex items-center gap-2 text-sm text-muted-foreground">
           <Circle className="h-3 w-3" />
-          {stage === "ativo"
+          {(stage as CedenteStage) === "ativo"
             ? "Cedente ativo. Pode operar normalmente."
             : "Cedente inativo. Operações bloqueadas."}
         </div>
