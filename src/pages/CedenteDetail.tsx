@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ArrowLeft, Upload, Download, Trash2, CheckCircle2, XCircle, Pencil, FileText, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { CedenteFormDialog, CedenteFormValues } from "@/components/cedentes/CedenteFormDialog";
-import { CedenteStageBar } from "@/components/cedentes/CedenteStageBar";
+
 import { CedenteVisitReportForm } from "@/components/cedentes/CedenteVisitReportForm";
 import { CedenteStage, STAGE_LABEL, evaluateGates, nextStage } from "@/lib/cedente-stages";
 import {
