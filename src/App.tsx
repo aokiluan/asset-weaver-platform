@@ -32,6 +32,7 @@ import GestaoFinanceiro from "./pages/gestao/GestaoFinanceiro.tsx";
 import GestaoDiario from "./pages/gestao/GestaoDiario.tsx";
 import Comite from "./pages/Comite.tsx";
 import Formalizacao from "./pages/Formalizacao.tsx";
+import FilaCadastros from "./pages/cadastro/FilaCadastros.tsx";
 import RoleGuard from "@/components/RoleGuard";
 import NotFound from "./pages/NotFound.tsx";
 
@@ -92,6 +93,14 @@ const App = () => (
                 element={
                   <RoleGuard role={["admin", "analista_cadastro", "gestor_comercial"]}>
                     <Formalizacao />
+                  </RoleGuard>
+                }
+              />
+              <Route
+                path="/cadastro/fila"
+                element={
+                  <RoleGuard role={["admin", "analista_cadastro", "gestor_comercial"]}>
+                    <FilaCadastros />
                   </RoleGuard>
                 }
               />
