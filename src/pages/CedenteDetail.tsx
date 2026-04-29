@@ -524,6 +524,13 @@ export default function CedenteDetail() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ProposalFormDialog
+        open={novaPropostaOpen}
+        onOpenChange={setNovaPropostaOpen}
+        cedenteId={cedente.id}
+        onSaved={() => { setNovaPropostaOpen(false); setTab("credito"); load(); }}
+      />
     </div>
   );
 }
