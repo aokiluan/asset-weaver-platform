@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Pencil, FileText, Loader2, ClipboardList, Vote, Plus } from "lucide-react";
+import { ArrowLeft, Pencil, FileText, Loader2, ClipboardList, Plus } from "lucide-react";
 import { CreditReportForm } from "@/components/credito/CreditReportForm";
 import { ComiteGameSession } from "@/components/credito/ComiteGameSession";
 import { ProposalFormDialog } from "@/components/credito/ProposalFormDialog";
