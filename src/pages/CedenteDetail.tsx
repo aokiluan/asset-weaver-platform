@@ -120,7 +120,18 @@ export default function CedenteDetail() {
     if (e1) { toast.error("Erro ao carregar", { description: e1.message }); return; }
     setCedente(ced as Cedente);
     setCategorias(cats ?? []);
-    setDocumentos((docs as Documento[]) ?? []);
+    const docsList = (docs as Documento[]) ?? [];
+    // Hidrata nome do reviewer p/ exibir o selo "Verificado por X"
+    const reviewerIds = Array.from(new Set(docsList.map((d) => d.reviewed_by).filter(Boolean) as string[]));
+    let reviewerMap: Record<string, string> = {};
+    if (reviewerIds.length > 0) {
+      const { data: profs } = await supabase.from("profiles").select("id,nome").in("id", reviewerIds);
+      reviewerMap = Object.fromEntries((profs ?? []).map((p) => [p.id, p.nome]));
+    }
+    setDocumentos(docsList.map((d) => ({
+      ...d,
+      reviewer_nome: d.reviewed_by ? reviewerMap[d.reviewed_by] ?? null : null,
+    })));
     setHasVisitReport(!!visit);
     const propsList = (props ?? []) as { id: string; stage: string; valor_solicitado?: number | null }[];
 
@@ -231,7 +242,14 @@ export default function CedenteDetail() {
         <TabsList>
           <TabsTrigger value="resumo">Resumo</TabsTrigger>
           <TabsTrigger value="representantes">Representantes legais</TabsTrigger>
-          <TabsTrigger value="documentos">Documentos</TabsTrigger>
+          <TabsTrigger value="documentos" className="gap-2">
+            Documentos
+            {documentos.filter((d) => d.status === "pendente").length > 0 && (
+              <Badge variant="destructive" className="h-4 min-w-4 px-1 text-[10px] rounded-full">
+                {documentos.filter((d) => d.status === "pendente").length}
+              </Badge>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="visita">Relatório comercial</TabsTrigger>
           <TabsTrigger value="historico">Histórico</TabsTrigger>
         </TabsList>
@@ -301,6 +319,8 @@ export default function CedenteDetail() {
             </div>
             <DocumentosUploadKanban
               cedenteId={cedente.id}
+              cedenteRazaoSocial={cedente.razao_social}
+              cedenteCnpj={cedente.cnpj}
               categorias={categorias}
               documentos={documentos as any}
               onChanged={load}

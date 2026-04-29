@@ -1,127 +1,110 @@
 
-# Fluxo de envio para análise + Revamp da aba Documentos
+# Modo "Conciliação de Documentos" — inspirado no Nibo
 
-## Parte 1 — Envio do cedente para o analista de cadastro
+## Conceito
 
-### Como funciona hoje
-O cedente tem `stage` (`novo → cadastro → analise → comite → formalizacao → ativo`). Já existe `evaluateGates()` validando o que falta para avançar de `novo` para `cadastro` (documentos obrigatórios, relatório de visita, pleito). **O que falta é o gatilho explícito** — o comercial não tem um botão claro de "enviar para análise" e o analista de cadastro não tem uma fila de trabalho.
+Replicar a metáfora do Nibo (botão **Conciliação** com contador de pendências → tela dedicada de validação item a item):
 
-### Solução proposta
+- A aba **Documentos** continua sendo a "caixa de entrada" — o comercial sobe arquivos, vê status, organiza por categoria.
+- Surge um **botão "Conciliar documentos"** no topo da aba, com **badge vermelho** mostrando quantos documentos estão pendentes de validação.
+- Esse botão **só fica clicável para `analista_cadastro`, `gestor_comercial` e `admin`**. Para os demais aparece como informativo (tooltip "apenas analista de cadastro").
+- Clicar abre uma **tela cheia de conciliação** (drawer/sheet ocupando ~95% da viewport) com layout lado-a-lado:
+  - **Esquerda (40%)**: ficha do documento — nome, categoria sugerida, dados extraídos do CNPJ/cedente, observações, histórico de upload.
+  - **Direita (60%)**: o documento renderizado (PDF iframe / imagem).
+  - **Rodapé fixo**: botões grandes `Reprovar` · `Marcar como verificado ✓` · `Próximo →` + `← Anterior`.
+- Ao **verificar**, o documento passa para `status = aprovado` + ganha um selo "Verificado por X em DD/MM" e some da fila de pendências.
+- Voltando para a aba Documentos, cada item validado mostra **selo verde "Verificado"** com nome do analista — visível para todos.
 
-**1. Botão "Enviar para análise de cadastro"** no cabeçalho do `CedenteDetail` (quando `stage = 'novo'`):
-
-- Abre um modal de revisão com checklist do `evaluateGates`:
-  - Documentos obrigatórios anexados (por categoria, com ✓/✗)
-  - Relatório comercial preenchido
-  - Pleito informado
-  - Representantes sincronizados
-- Se algo está faltando → botão desabilitado + lista vermelha do que resolver.
-- Se OK → campo opcional "observação para o analista" + botão **Enviar**.
-- Ao enviar: muda `stage` para `cadastro` (o trigger `log_cedente_stage_change` já registra no histórico). A observação vira uma entrada em `cedente_history.detalhes`.
-- **Permissão**: visível apenas para `comercial`, `gestor_comercial`, `admin` e o owner do cedente.
-
-**2. Painel do analista de cadastro** (quando `stage = 'cadastro'`):
-
-- Mesmo botão vira **"Aprovar cadastro → enviar para crédito"** + botão secundário **"Devolver ao comercial"** (volta para `novo` com motivo obrigatório, registrado no histórico).
-- **Permissão**: visível apenas para `analista_cadastro`, `gestor_comercial` (atua como gestor de cadastro hoje), `admin`.
-- Para avançar: gates já existem (sem documentos rejeitados, todos obrigatórios validados).
-
-**3. Fila de cadastros para analisar** — nova página `/cadastro/fila`:
-
-- Lista de cedentes com `stage = 'cadastro'`, ordenada por data de envio.
-- Colunas: razão social, CNPJ, comercial responsável, dias parado, % de docs já revisados.
-- Linha clicável → abre `CedenteDetail` direto na aba Documentos.
-- Item no sidebar **"Análise de cadastro"** visível apenas para `analista_cadastro / gestor_comercial / admin` (via `RoleGuard`).
-
-### Por que assim e não notificação por e-mail / atribuição manual
-A mudança de `stage` já é o "envio" — toda a infra (histórico, gates, RLS) já gira em torno disso. Só falta tornar a transição visível e bloqueá-la atrás de um checklist.
-
----
-
-## Parte 2 — Revamp ergonômico da aba Documentos
-
-### Problema atual
-Cards grandes em grid 3-colunas para a fila + lista por categoria empilhada verticalmente. Para o analista comparar 8-15 documentos isso obriga a rolar muito e abrir cada arquivo em nova aba.
-
-### Layout proposto: **Split-view com lista densa + viewer embutido**
+## Fluxo
 
 ```text
-┌─────────────────────────────────────────────────────────────────┐
-│ [Dropzone fina — 1 linha, expande no drag-over]                 │
-├──────────────────────┬──────────────────────────────────────────┤
-│ LISTA (esquerda)     │  VIEWER (direita)                        │
-│ 380px largura fixa   │  flex-1                                  │
-│                      │                                          │
-│ ▾ Sem categoria (3)  │  ┌──────────────────────────────────┐   │
-│   ☐ doc1.pdf  IA→CNPJ│  │                                  │   │
-│   ☐ doc2.pdf  IA→Soc │  │   Preview do PDF / imagem        │   │
-│ ▾ Contrato social ✓  │  │   (iframe / <img>)               │   │
-│   ☐ contrato.pdf  ✓  │  │                                  │   │
-│ ▾ CNPJ ✗ pendente    │  └──────────────────────────────────┘   │
-│   ☐ cnpj.pdf         │  Toolbar: [Aprovar] [Reprovar]          │
-│ ▾ Faturamento (vazio)│           [Mover ▾] [Baixar] [Excluir]  │
-│                      │  Observações: [textarea]                │
-└──────────────────────┴──────────────────────────────────────────┘
+Aba Documentos (visível a todos)
+┌─────────────────────────────────────────────────────────┐
+│ [Upload]    [⚖ Conciliar  •3]  ← badge com pendências   │
+│                  ↑ só clicável p/ analista              │
+│                                                         │
+│  Lista atual de documentos com selos:                   │
+│   📄 Contrato.pdf      [✓ Verificado · Ana · 29/04]    │
+│   📄 CNPJ.pdf          [⏳ Aguardando análise]          │
+│   📄 Comp.End.pdf      [✗ Reprovado · falta atual]     │
+└─────────────────────────────────────────────────────────┘
+                       ↓ clica "Conciliar"
+┌─────────────────────────────────────────────────────────┐
+│ Conciliação · Cedente XYZ            1 de 3   [X fechar]│
+├──────────────────────────┬──────────────────────────────┤
+│ FICHA (40%)              │  VIEWER (60%)                │
+│                          │                              │
+│ 📄 contrato_social.pdf   │  ┌────────────────────────┐  │
+│ Categoria sugerida:      │  │                        │  │
+│   Contrato Social  [aceitar]│ │   PDF / Imagem         │  │
+│                          │  │   render nativo        │  │
+│ Dados extraídos:         │  │                        │  │
+│  CNPJ: 12.345...   ✓ bate │  │                        │  │
+│  Razão: ACME LTDA  ✓ bate │  └────────────────────────┘  │
+│                          │                              │
+│ Observações [textarea]   │                              │
+│                          │                              │
+├──────────────────────────┴──────────────────────────────┤
+│ ← Anterior         [✗ Reprovar]  [✓ Verificar]  Próx → │
+└─────────────────────────────────────────────────────────┘
 ```
 
-### Mudanças na lista (esquerda)
+## Permissões
 
-- **Linhas densas** (h-8, ~32px) em vez de cards. Ícone + nome truncado + badge minúsculo de status.
-- **Agrupamento por categoria colapsável** (Accordion). Header da categoria mostra: nome, contador `n/obrig`, status (✓ OK / ⏳ pendente / ✗ faltando).
-- **Drag-and-drop mantém-se**: arrastar uma linha sobre o header de outra categoria move.
-- **Seleção múltipla** com checkbox → permite "Aprovar selecionados" / "Mover selecionados para X" em massa (matador para o analista).
-- **Sugestão da IA** aparece como badge inline `🤖 CNPJ` clicável que aceita a sugestão sem abrir o card.
-- **Filtros no topo da lista**: `Todos | Pendentes | Aprovados | Reprovados | Sem categoria`.
-- **Atalhos de teclado**: `↑/↓` navega, `Enter` abre no viewer, `A` aprova, `R` reprova, `Del` exclui.
+| Ação | Quem pode |
+|---|---|
+| Ver aba Documentos / upload | comercial, owner, gestor, admin, analista |
+| Ver botão "Conciliar" + badge | todos (informativo) |
+| Abrir tela de conciliação e validar | `analista_cadastro`, `gestor_comercial`, `admin` |
+| Selo "Verificado por X" | exibido para todos |
 
-### Viewer (direita)
+A RLS de `documentos` já é coberta por `can_review_documento` — não precisa migration.
 
-- Selecionar uma linha mostra o arquivo no painel à direita usando signed URL.
-- PDF via `<iframe>` (Chrome render nativo); imagens via `<img>`.
-- Toolbar fixa em cima com aprovar/reprovar/mover/baixar/excluir — sem precisar voltar à lista.
-- Campo de observação salvando direto em `documentos.observacoes` (debounced).
-- Botões `← Anterior / Próximo →` para varrer a fila sem voltar para a lista — fluxo de revisão tipo Gmail.
+## Mudanças técnicas
 
-### Modo "comparação lado a lado" (bônus, opt-in)
+### 1. Nova prop/dado no card de documento
+- Buscar `reviewed_by` + nome do reviewer (join com `profiles`) na query de `CedenteDetail` para mostrar "Verificado por Ana".
 
-Toggle no topo: **[Lista] [Viewer] [Comparar 2]**. Em "Comparar 2", duas linhas selecionadas viram dois iframes lado a lado (útil para conferir contrato social vs. última alteração).
+### 2. Componente novo `ConciliacaoDocumentosSheet.tsx`
+- `<Sheet>` em modo `right` com `w-[95vw] sm:max-w-[95vw]`.
+- Estado interno: índice atual + lista de docs pendentes (filtrada de `documentos`).
+- Atalhos: `←/→` navega, `V` verifica, `R` reprova, `Esc` fecha.
+- Reuso do mesmo signed-URL preview que já existe.
+- Botão "Aceitar sugestão IA" inline na ficha.
+- Quando a fila esvazia: tela de "🎉 Todos os documentos conciliados" com botão "Fechar".
 
-### Responsividade
+### 3. Refator pequeno em `DocumentosUploadKanban.tsx`
+- Remover o split-view atual (lista + viewer embutido) — fica apenas a **lista** com selos visuais reforçados.
+- Adicionar acima da lista:
+  ```tsx
+  <Button onClick={openConciliacao} disabled={!canReview}>
+    <Scale /> Conciliar documentos
+    {pendentes > 0 && <Badge variant="destructive">{pendentes}</Badge>}
+  </Button>
+  ```
+- Cada linha ganha selo:
+  - `aprovado` → badge verde "✓ Verificado · {nome} · {data}"
+  - `pendente` → badge âmbar "⏳ Aguardando análise"
+  - `reprovado` → badge vermelho "✗ Reprovado" + tooltip com observação
+- Mantém: dropzone, filtros, drag-and-drop entre categorias, ações em massa, sugestão IA.
 
-- ≥1280px: split 380/flex.
-- 768–1279px: viewer vira drawer lateral (Sheet) acionado por clique.
-- <768px: mantém visualização atual de cards (mobile).
+### 4. Hook auxiliar `useCanReviewDocs`
+- Wrapper que retorna `hasRole('analista_cadastro') || hasRole('gestor_comercial') || hasRole('admin')`.
+- Usado tanto no botão "Conciliar" quanto nas ações de aprovar/reprovar das linhas (que ficam ocultas para quem não pode validar).
 
----
+### 5. Indicador na aba "Documentos" do `CedenteDetail`
+- O label da aba ganha o mesmo badge: `Documentos •3` (3 = pendentes), para o analista perceber pendência mesmo de outras abas.
 
-## Detalhes técnicos
+## O que **não** muda
+- Nenhuma migration nem alteração de RLS — `can_review_documento` já cobre.
+- Endpoint `classify-documento` continua igual.
+- Workflow de "Enviar para análise" / "Aprovar cadastro" continua igual.
+- Storage e estrutura de categorias intactos.
 
-### Banco
-Nenhuma migration de tabela. Já temos:
-- `cedentes.stage` para a transição.
-- `cedente_history` com trigger automático.
-- `documentos.observacoes` para anotações do analista.
+## Riscos / pontos a confirmar
+- **Performance no viewer**: PDFs grandes carregados via iframe podem demorar. Mantenho o pré-carregamento (signed URL) só do doc atual.
+- **Comportamento em mobile**: a tela de conciliação fica em modo "stack" (ficha em cima, viewer embaixo) abaixo de 1024px. Aceitável dado que o público alvo (analista) trabalha em desktop.
+- **"Verificado" vs "Aprovado"**: estou usando o mesmo `status='aprovado'` no banco e mudando só o vocabulário na UI ("Verificado" soa mais natural na metáfora de conciliação). Se preferir um terceiro estado separado, precisamos de migration.
 
-Adicionar **opcionalmente** `cedentes.enviado_analise_em timestamptz` para medir SLA na fila — pode ser feito via trigger `BEFORE UPDATE` quando `stage` vai para `cadastro`. Recomendo incluir.
-
-### Componentes novos / alterados
-- `src/components/cedentes/EnviarAnaliseDialog.tsx` — modal com checklist + observação.
-- `src/components/cedentes/RevisarCadastroActions.tsx` — botões aprovar/devolver para o analista.
-- `src/pages/cadastro/FilaCadastros.tsx` — nova página + rota + entrada no sidebar.
-- `src/components/cedentes/DocumentosUploadKanban.tsx` — refator pesado para split-view + lista densa + viewer embutido + seleção múltipla + atalhos.
-- `src/pages/CedenteDetail.tsx` — encaixar os botões de transição no header.
-- `src/components/AppSidebar.tsx` — nova entrada "Análise de cadastro" com `RoleGuard`.
-
-### Permissões (UI + reforço por RLS já existente)
-- Enviar para análise: `comercial | gestor_comercial | admin | owner`.
-- Aprovar/devolver cadastro: `analista_cadastro | gestor_comercial | admin`.
-- Aprovar/reprovar documento individual: já coberto por `can_review_documento`.
-
-### Riscos / pontos a confirmar
-- Não existe role `gestor_cadastro` no enum atual — usei `gestor_comercial` como gestor da etapa de cadastro. Se quiser uma role separada, precisamos adicionar ao enum `app_role` (migration) e atualizar `useAuth`.
-- Preview de PDF via iframe depende de signed URL de curta duração; vou usar 5min e refrescar ao trocar de doc.
-
----
-
-## Pergunta antes de implementar
-Quer que eu **crie a role `gestor_cadastro`** separada agora, ou seguimos com `gestor_comercial` cumprindo esse papel por enquanto?
+## Pergunta
+Quer que eu mantenha o **drag-and-drop** entre categorias na lista (útil para o comercial reorganizar antes de enviar), ou simplifico tudo só com o menu "Mover para…"?
