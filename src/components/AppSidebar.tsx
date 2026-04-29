@@ -121,10 +121,12 @@ export function AppSidebar() {
 
   const visibleGroups = useMemo(
     () =>
-      GROUPS.filter((g) => !g.adminOnly || hasRole("admin")).map((g) => ({
+      GROUPS.map((g) => ({
         ...g,
         items: g.items.filter((i) => !i.roles || i.roles.some((r) => hasRole(r as any))),
-      })).filter((g) => g.items.length > 0),
+      }))
+        .filter((g) => (g.adminOnly ? hasRole("admin") || g.items.some((i) => i.roles) : true))
+        .filter((g) => g.items.length > 0),
     [hasRole],
   );
 
