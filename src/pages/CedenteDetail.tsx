@@ -291,92 +291,12 @@ export default function CedenteDetail() {
               <FileText className="h-5 w-5" />
               <h2 className="text-lg font-semibold">Documentos</h2>
             </div>
-
-            <div className="flex flex-wrap items-center gap-3 p-4 rounded-md border bg-muted/30">
-              <div className="flex-1 min-w-[240px]">
-                <Select value={categoriaUpload} onValueChange={setCategoriaUpload}>
-                  <SelectTrigger><SelectValue placeholder="Categoria do documento..." /></SelectTrigger>
-                  <SelectContent>
-                    {categorias.map(c => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.nome}{c.obrigatorio && <span className="text-destructive ml-1">*</span>}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileChange} />
-              <Button onClick={handleUploadClick} disabled={uploading}>
-                {uploading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
-                Enviar arquivo
-              </Button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              {categorias.filter(c => c.obrigatorio).map(c => {
-                const docs = documentos.filter(d => d.categoria_id === c.id);
-                const aprovado = docs.some(d => d.status === "aprovado");
-                const tem = docs.length > 0;
-                return (
-                  <div key={c.id} className="flex items-center justify-between text-sm rounded-md border px-3 py-2">
-                    <span>{c.nome}</span>
-                    {aprovado ? <Badge variant="default">OK</Badge>
-                      : tem ? <Badge variant="secondary">Pendente</Badge>
-                      : <Badge variant="outline">Faltando</Badge>}
-                  </div>
-                );
-              })}
-            </div>
-
-            <Table>
-              <TableHeader><TableRow>
-                <TableHead>Arquivo</TableHead><TableHead>Categoria</TableHead>
-                <TableHead>Tamanho</TableHead><TableHead>Status</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow></TableHeader>
-              <TableBody>
-                {documentos.length === 0 && (
-                  <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Nenhum documento enviado.</TableCell></TableRow>
-                )}
-                {documentos.map(d => {
-                  const cat = categorias.find(c => c.id === d.categoria_id);
-                  return (
-                    <TableRow key={d.id}>
-                      <TableCell className="font-medium">{d.nome_arquivo}</TableCell>
-                      <TableCell>{cat?.nome ?? "—"}</TableCell>
-                      <TableCell>{fmtBytes(d.tamanho_bytes)}</TableCell>
-                      <TableCell><Badge variant={DOC_VARIANT[d.status]}>{d.status}</Badge></TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button size="icon" variant="ghost" onClick={() => handleDownload(d)} title="Baixar"><Download className="h-4 w-4" /></Button>
-                          {d.status !== "aprovado" && (
-                            <Button size="icon" variant="ghost" onClick={() => handleReview(d, "aprovado")} title="Aprovar"><CheckCircle2 className="h-4 w-4 text-green-600" /></Button>
-                          )}
-                          {d.status !== "reprovado" && (
-                            <Button size="icon" variant="ghost" onClick={() => handleReview(d, "reprovado")} title="Reprovar"><XCircle className="h-4 w-4 text-destructive" /></Button>
-                          )}
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button size="icon" variant="ghost" title="Remover"><Trash2 className="h-4 w-4" /></Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Remover documento?</AlertDialogTitle>
-                                <AlertDialogDescription>O arquivo será excluído permanentemente.</AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDelete(d)}>Remover</AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+            <DocumentosUploadKanban
+              cedenteId={cedente.id}
+              categorias={categorias}
+              documentos={documentos as any}
+              onChanged={load}
+            />
           </div>
         </TabsContent>
 
