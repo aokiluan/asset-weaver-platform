@@ -226,20 +226,50 @@ export default function CedenteDetail() {
         </TabsList>
 
         <TabsContent value="resumo" className="mt-4">
-          <div className="rounded-lg border bg-card p-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-              <div><div className="text-xs text-muted-foreground">E-mail</div><div>{cedente.email ?? "—"}</div></div>
-              <div><div className="text-xs text-muted-foreground">Telefone</div><div>{cedente.telefone ?? "—"}</div></div>
-              <div><div className="text-xs text-muted-foreground">Setor</div><div>{cedente.setor ?? "—"}</div></div>
-              <div><div className="text-xs text-muted-foreground">Cidade/UF</div><div>{[cedente.cidade, cedente.estado].filter(Boolean).join(" / ") || "—"}</div></div>
-              <div><div className="text-xs text-muted-foreground">Faturamento médio</div><div>{fmtBRL(cedente.faturamento_medio)}</div></div>
-              <div><div className="text-xs text-muted-foreground">Limite aprovado</div><div className="font-semibold">{fmtBRL(cedente.limite_aprovado)}</div></div>
-            </div>
-            {cedente.observacoes && (
-              <div className="text-sm pt-4 mt-4 border-t">
-                <div className="text-xs text-muted-foreground mb-1">Observações</div>
-                <p className="whitespace-pre-wrap">{cedente.observacoes}</p>
+          <div className="rounded-lg border bg-card p-6 space-y-6">
+            <section className="space-y-3">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Identificação</h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                <div><div className="text-xs text-muted-foreground">Razão social</div><div>{cedente.razao_social}</div></div>
+                <div><div className="text-xs text-muted-foreground">Nome fantasia</div><div>{cedente.nome_fantasia ?? "—"}</div></div>
+                <div><div className="text-xs text-muted-foreground">CNPJ</div><div className="font-mono">{cedente.cnpj}</div></div>
               </div>
+            </section>
+
+            <section className="space-y-3 pt-4 border-t">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Contato</h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                <div><div className="text-xs text-muted-foreground">E-mail</div><div>{cedente.email ?? "—"}</div></div>
+                <div><div className="text-xs text-muted-foreground">Telefone</div><div>{cedente.telefone ?? "—"}</div></div>
+              </div>
+            </section>
+
+            <section className="space-y-3 pt-4 border-t">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Endereço</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div className="md:col-span-2"><div className="text-xs text-muted-foreground">Endereço</div><div>{cedente.endereco ?? "—"}</div></div>
+                <div><div className="text-xs text-muted-foreground">Cidade</div><div>{cedente.cidade ?? "—"}</div></div>
+                <div><div className="text-xs text-muted-foreground">UF</div><div>{cedente.estado ?? "—"}</div></div>
+                <div><div className="text-xs text-muted-foreground">CEP</div><div>{cedente.cep ?? "—"}</div></div>
+              </div>
+            </section>
+
+            <section className="space-y-3 pt-4 border-t">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Comercial</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div><div className="text-xs text-muted-foreground">Setor</div><div>{cedente.setor ?? "—"}</div></div>
+                <div><div className="text-xs text-muted-foreground">Faturamento médio</div><div>{fmtBRL(cedente.faturamento_medio)}</div></div>
+                <div><div className="text-xs text-muted-foreground">Status</div><div className="capitalize">{cedente.status.replace("_", " ")}</div></div>
+                <div><div className="text-xs text-muted-foreground">Limite aprovado</div><div className="font-semibold">{fmtBRL(cedente.limite_aprovado)}</div></div>
+                <div className="md:col-span-2"><div className="text-xs text-muted-foreground">Responsável comercial</div><div>{ownerName ?? "—"}</div></div>
+              </div>
+            </section>
+
+            {cedente.observacoes && (
+              <section className="space-y-2 pt-4 border-t">
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Observações</h3>
+                <p className="text-sm whitespace-pre-wrap">{cedente.observacoes}</p>
+              </section>
             )}
           </div>
         </TabsContent>
