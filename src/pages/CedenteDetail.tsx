@@ -4,7 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Pencil, FileText, Loader2 } from "lucide-react";
+import { ArrowLeft, Pencil, FileText, Loader2, ClipboardList, Vote } from "lucide-react";
+import { CreditReportForm } from "@/components/credito/CreditReportForm";
+import { ComiteGameSession } from "@/components/credito/ComiteGameSession";
 import { toast } from "sonner";
 import { CedenteFormDialog, CedenteFormValues } from "@/components/cedentes/CedenteFormDialog";
 
@@ -88,6 +90,7 @@ export default function CedenteDetail() {
   const [hasParecer, setHasParecer] = useState(false);
   const [comiteDecidido, setComiteDecidido] = useState(false);
   const [minutaAssinada, setMinutaAssinada] = useState(false);
+  const [latestProposal, setLatestProposal] = useState<{ id: string; stage: string; approver: string | null; votos_minimos: number } | null>(null);
   const [history, setHistory] = useState<HistoryRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [ownerName, setOwnerName] = useState<string | null>(null);
@@ -120,7 +123,7 @@ export default function CedenteDetail() {
         supabase.from("documento_categorias").select("id,nome,obrigatorio,ordem").eq("ativo", true).order("ordem"),
         supabase.from("documentos").select("*").eq("cedente_id", id).order("created_at", { ascending: false }),
         supabase.from("cedente_visit_reports").select("id").eq("cedente_id", id).maybeSingle(),
-        supabase.from("credit_proposals").select("id,stage").eq("cedente_id", id),
+        supabase.from("credit_proposals").select("id,stage,created_at,approval_levels(approver,votos_minimos)").eq("cedente_id", id).order("created_at", { ascending: false }),
         supabase.from("cedente_history").select("*").eq("cedente_id", id).order("created_at", { ascending: false }),
       ]);
     setLoading(false);
@@ -140,12 +143,19 @@ export default function CedenteDetail() {
       reviewer_nome: d.reviewed_by ? reviewerMap[d.reviewed_by] ?? null : null,
     })));
     setHasVisitReport(!!visit);
-    const propsList = (props ?? []) as { id: string; stage: string; valor_solicitado?: number | null }[];
+    const propsList = (props ?? []) as { id: string; stage: string; created_at: string; approval_levels: { approver: string; votos_minimos: number } | null }[];
 
     setHasPleito(propsList.length > 0);
     setHasParecer(propsList.some((p) => ["parecer", "comite", "aprovado"].includes(p.stage)));
     setComiteDecidido(propsList.some((p) => p.stage === "aprovado"));
     setMinutaAssinada(!!(ced as any)?.minuta_assinada);
+    const latest = propsList[0] ?? null;
+    setLatestProposal(latest ? {
+      id: latest.id,
+      stage: latest.stage,
+      approver: latest.approval_levels?.approver ?? null,
+      votos_minimos: latest.approval_levels?.votos_minimos ?? 1,
+    } : null);
     setHistory((hist as HistoryRow[]) ?? []);
     if ((ced as Cedente)?.owner_id) {
       const { data: prof } = await supabase.from("profiles").select("nome").eq("id", (ced as Cedente).owner_id!).maybeSingle();
@@ -281,6 +291,14 @@ export default function CedenteDetail() {
             )}
           </TabsTrigger>
           <TabsTrigger value="visita">Relatório comercial</TabsTrigger>
+          <TabsTrigger value="credito" className="gap-2">
+            <ClipboardList className="h-3.5 w-3.5" /> Relatório de crédito
+          </TabsTrigger>
+          {latestProposal?.approver === "comite" && (
+            <TabsTrigger value="comite" className="gap-2">
+              <Vote className="h-3.5 w-3.5" /> Comitê
+            </TabsTrigger>
+          )}
           <TabsTrigger value="historico">Histórico</TabsTrigger>
         </TabsList>
 
@@ -367,6 +385,26 @@ export default function CedenteDetail() {
             <CedenteVisitReportForm cedenteId={cedente.id} onSaved={load} />
           </div>
         </TabsContent>
+
+        <TabsContent value="credito" className="mt-4">
+          {latestProposal ? (
+            <CreditReportForm proposalId={latestProposal.id} cedenteId={cedente.id} />
+          ) : (
+            <div className="rounded-lg border bg-card p-6 text-sm text-muted-foreground">
+              Nenhuma proposta de crédito vinculada a este cedente. Crie uma proposta na esteira de Crédito para preencher o relatório.
+            </div>
+          )}
+        </TabsContent>
+
+        {latestProposal?.approver === "comite" && (
+          <TabsContent value="comite" className="mt-4">
+            <ComiteGameSession
+              proposalId={latestProposal.id}
+              votosMinimos={latestProposal.votos_minimos}
+              proposalStage={latestProposal.stage as any}
+            />
+          </TabsContent>
+        )}
 
         <TabsContent value="historico" className="mt-4">
           <div className="rounded-lg border bg-card p-6">
