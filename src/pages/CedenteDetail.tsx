@@ -65,27 +65,20 @@ interface HistoryRow {
 const fmtBRL = (v: number | null) =>
   v == null ? "—" : v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-const fmtBRL = (v: number | null) =>
-  v == null ? "—" : v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-
 export default function CedenteDetail() {
   const { id } = useParams<{ id: string }>();
   const [cedente, setCedente] = useState<Cedente | null>(null);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [documentos, setDocumentos] = useState<Documento[]>([]);
   const [hasVisitReport, setHasVisitReport] = useState(false);
-  
+
   const [hasParecer, setHasParecer] = useState(false);
   const [comiteDecidido, setComiteDecidido] = useState(false);
   const [minutaAssinada, setMinutaAssinada] = useState(false);
   const [history, setHistory] = useState<HistoryRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
   const [ownerName, setOwnerName] = useState<string | null>(null);
-  
-  const [categoriaUpload, setCategoriaUpload] = useState<string>("");
   const [editOpen, setEditOpen] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const load = async () => {
     if (!id) return;
@@ -106,7 +99,7 @@ export default function CedenteDetail() {
     setDocumentos((docs as Documento[]) ?? []);
     setHasVisitReport(!!visit);
     const propsList = (props ?? []) as { id: string; stage: string }[];
-    
+
     setHasParecer(propsList.some((p) => ["parecer", "comite", "aprovado"].includes(p.stage)));
     setComiteDecidido(propsList.some((p) => p.stage === "aprovado"));
     setMinutaAssinada(!!(ced as any)?.minuta_assinada);
@@ -120,61 +113,6 @@ export default function CedenteDetail() {
   };
 
   useEffect(() => { load(); }, [id]);
-
-  const handleUploadClick = () => {
-    if (!categoriaUpload) { toast.error("Selecione a categoria do documento antes de enviar."); return; }
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !cedente) return;
-    e.target.value = "";
-    setUploading(true);
-    try {
-      const { data: auth } = await supabase.auth.getUser();
-      if (!auth.user) throw new Error("Não autenticado");
-      const safeName = file.name.replace(/[^\w.\-]+/g, "_");
-      const path = `${cedente.id}/${Date.now()}-${safeName}`;
-      const { error: upErr } = await supabase.storage.from("cedente-docs")
-        .upload(path, file, { contentType: file.type, upsert: false });
-      if (upErr) throw upErr;
-      const { error: insErr } = await supabase.from("documentos").insert({
-        cedente_id: cedente.id, categoria_id: categoriaUpload || null, nome_arquivo: file.name,
-        storage_path: path, tamanho_bytes: file.size, mime_type: file.type || null, uploaded_by: auth.user.id,
-      });
-      if (insErr) { await supabase.storage.from("cedente-docs").remove([path]); throw insErr; }
-      toast.success("Documento enviado");
-      setCategoriaUpload(""); load();
-    } catch (err: any) {
-      toast.error("Erro no upload", { description: err.message });
-    } finally { setUploading(false); }
-  };
-
-  const handleDownload = async (doc: Documento) => {
-    const { data, error } = await supabase.storage.from("cedente-docs").createSignedUrl(doc.storage_path, 60);
-    if (error || !data) { toast.error("Erro ao gerar link", { description: error?.message }); return; }
-    window.open(data.signedUrl, "_blank");
-  };
-
-  const handleDelete = async (doc: Documento) => {
-    const { error: e1 } = await supabase.storage.from("cedente-docs").remove([doc.storage_path]);
-    if (e1) { toast.error("Erro ao remover arquivo", { description: e1.message }); return; }
-    const { error: e2 } = await supabase.from("documentos").delete().eq("id", doc.id);
-    if (e2) { toast.error("Erro ao remover registro", { description: e2.message }); return; }
-    toast.success("Documento removido"); load();
-  };
-
-  const handleReview = async (doc: Documento, status: "aprovado" | "reprovado") => {
-    const { data: auth } = await supabase.auth.getUser();
-    const { error } = await supabase.from("documentos").update({
-      status, reviewed_by: auth.user?.id, reviewed_at: new Date().toISOString(),
-    }).eq("id", doc.id);
-    if (error) { toast.error("Erro ao revisar", { description: error.message }); return; }
-    toast.success(status === "aprovado" ? "Documento aprovado" : "Documento reprovado");
-    load();
-  };
-
 
   if (loading) {
     return <div className="flex items-center justify-center py-16 text-muted-foreground"><Loader2 className="h-5 w-5 animate-spin mr-2" /> Carregando...</div>;
