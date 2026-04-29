@@ -125,7 +125,25 @@ export default function CedenteCadastro() {
       data_abertura: d.data_abertura || p.data_abertura,
       situacao_cadastral: d.situacao || p.situacao_cadastral,
     }));
-    toast.success("Dados preenchidos via CNPJ");
+
+    // Auto-popular sócios do QSA (Quadro de Sócios da Receita)
+    if (Array.isArray(d.qsa) && d.qsa.length > 0) {
+      setSocios((prev) => {
+        // não sobrescreve se usuário já adicionou sócios
+        if (prev.length > 0) return prev;
+        return d.qsa.map((q: any, i: number) => ({
+          id: `tmp-qsa-${Date.now()}-${i}`,
+          nome: q.nome ?? "",
+          cpf: (q.cpf_cnpj ?? "").replace(/\D/g, ""),
+          nacionalidade: "Brasileira",
+        } as Socio));
+      });
+      toast.success(`Dados preenchidos via CNPJ (${d.qsa.length} sócio${d.qsa.length > 1 ? "s" : ""} importado${d.qsa.length > 1 ? "s" : ""})`, {
+        description: "CPFs vêm mascarados pela Receita — complete manualmente.",
+      });
+    } else {
+      toast.success("Dados preenchidos via CNPJ");
+    }
   };
 
   const handleCEPBlur = async () => {
