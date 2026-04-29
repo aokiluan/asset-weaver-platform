@@ -6,14 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Loader2, CheckCircle2, XCircle, Send, FileSignature, Vote, History, Building2 } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { ArrowLeft, Loader2, CheckCircle2, XCircle, Send, History, Building2, FileText, Vote } from "lucide-react";
 import { toast } from "sonner";
+import { CreditReportForm } from "@/components/credito/CreditReportForm";
+import { ComiteGameSession } from "@/components/credito/ComiteGameSession";
 
 type Stage = "rascunho" | "analise" | "parecer" | "comite" | "aprovado" | "reprovado" | "cancelado";
-type Recommendation = "favoravel" | "favoravel_com_ressalva" | "desfavoravel";
-type VoteDecision = "favoravel" | "desfavoravel" | "abstencao";
 type ApproverKind = "analista_credito" | "gestor_risco" | "comite";
 
 interface Proposal {
@@ -25,17 +24,6 @@ interface Proposal {
   approval_level_id: string | null;
   cedentes: { razao_social: string; cnpj: string } | null;
   approval_levels: { nome: string; approver: ApproverKind; votos_minimos: number; valor_min: number; valor_max: number | null } | null;
-}
-
-interface Opinion {
-  id: string; author_id: string; author_role: string;
-  recomendacao: Recommendation; score: number | null;
-  pontos_fortes: string | null; pontos_atencao: string | null; parecer: string;
-  created_at: string;
-}
-
-interface Vote {
-  id: string; voter_id: string; decisao: VoteDecision; justificativa: string | null; created_at: string;
 }
 
 interface HistoryItem {
@@ -52,12 +40,6 @@ const STAGE_VARIANT: Record<Stage, "default" | "secondary" | "destructive" | "ou
   rascunho: "outline", analise: "secondary", parecer: "secondary", comite: "secondary",
   aprovado: "default", reprovado: "destructive", cancelado: "outline",
 };
-const REC_LABEL: Record<Recommendation, string> = {
-  favoravel: "Favorável", favoravel_com_ressalva: "Favorável c/ ressalva", desfavoravel: "Desfavorável",
-};
-const VOTE_LABEL: Record<VoteDecision, string> = {
-  favoravel: "Favorável", desfavoravel: "Desfavorável", abstencao: "Abstenção",
-};
 const STAGES_ORDER: Stage[] = ["analise", "parecer", "comite", "aprovado"];
 
 const fmtBRL = (v: number | null) =>
@@ -68,74 +50,55 @@ export default function CreditoDetail() {
   const { id } = useParams<{ id: string }>();
   const { user, hasRole } = useAuth();
   const [proposal, setProposal] = useState<Proposal | null>(null);
-  const [opinions, setOpinions] = useState<Opinion[]>([]);
-  const [votes, setVotes] = useState<Vote[]>([]);
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [reportCompletude, setReportCompletude] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [savingDecision, setSavingDecision] = useState(false);
   const [valorAprovado, setValorAprovado] = useState<string>("");
   const [decisaoObs, setDecisaoObs] = useState<string>("");
 
-  // form parecer
-  const [opRec, setOpRec] = useState<Recommendation>("favoravel");
-  const [opScore, setOpScore] = useState<string>("");
-  const [opFortes, setOpFortes] = useState<string>("");
-  const [opAtencao, setOpAtencao] = useState<string>("");
-  const [opTexto, setOpTexto] = useState<string>("");
-  const [savingOp, setSavingOp] = useState(false);
-
-  // form voto
-  const [voteDec, setVoteDec] = useState<VoteDecision>("favoravel");
-  const [voteJust, setVoteJust] = useState<string>("");
-  const [savingVote, setSavingVote] = useState(false);
-
   const load = async () => {
     if (!id) return;
     setLoading(true);
-    const [{ data: p, error }, { data: ops }, { data: vs }, { data: hist }] = await Promise.all([
+    const [{ data: p, error }, { data: hist }, { data: rep }] = await Promise.all([
       supabase.from("credit_proposals")
         .select("*,cedentes(razao_social,cnpj),approval_levels(nome,approver,votos_minimos,valor_min,valor_max)")
         .eq("id", id).maybeSingle(),
-      supabase.from("credit_opinions").select("*").eq("proposal_id", id).order("created_at"),
-      supabase.from("committee_votes").select("*").eq("proposal_id", id).order("created_at"),
       supabase.from("proposal_history").select("*").eq("proposal_id", id).order("created_at", { ascending: false }),
+      supabase.from("credit_reports").select("completude").eq("proposal_id", id).maybeSingle(),
     ]);
     setLoading(false);
     if (error) { toast.error("Erro", { description: error.message }); return; }
     setProposal(p as Proposal);
-    setOpinions((ops as Opinion[]) ?? []);
-    setVotes((vs as Vote[]) ?? []);
     setHistory((hist as HistoryItem[]) ?? []);
+    setReportCompletude(rep?.completude ?? 0);
     if (p?.valor_aprovado) setValorAprovado(String(p.valor_aprovado));
   };
 
   useEffect(() => { load(); }, [id]);
 
-  // Carrega o próprio parecer no formulário se já existir
+  // Realtime: ao salvar relatório, atualiza completude
   useEffect(() => {
-    if (!user) return;
-    const own = opinions.find(o => o.author_id === user.id);
-    if (own) {
-      setOpRec(own.recomendacao); setOpScore(own.score?.toString() ?? "");
-      setOpFortes(own.pontos_fortes ?? ""); setOpAtencao(own.pontos_atencao ?? "");
-      setOpTexto(own.parecer);
-    }
-    const ownVote = votes.find(v => v.voter_id === user.id);
-    if (ownVote) { setVoteDec(ownVote.decisao); setVoteJust(ownVote.justificativa ?? ""); }
-  }, [opinions, votes, user]);
+    if (!id) return;
+    const ch = supabase
+      .channel(`report-${id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "credit_reports", filter: `proposal_id=eq.${id}` },
+        (payload: any) => setReportCompletude(payload.new?.completude ?? 0))
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [id]);
 
-  const canEditProposal = hasRole("admin") || hasRole("gestor_comercial");
-  const canWriteOpinion = hasRole("analista_credito") || hasRole("gestor_risco") || hasRole("admin");
-  const canVote = hasRole("comite") || hasRole("admin");
-  const canDecide = hasRole("admin") || hasRole("analista_credito") || hasRole("gestor_risco") || hasRole("comite");
+  const canDecide = hasRole("admin") || hasRole("analista_credito") || hasRole("gestor_risco") || hasRole("comite") || hasRole("gestor_credito");
 
-  const votosFavoraveis = useMemo(() => votes.filter(v => v.decisao === "favoravel").length, [votes]);
-  const votosMinimos = proposal?.approval_levels?.votos_minimos ?? 1;
   const isComite = proposal?.approval_levels?.approver === "comite";
-  const comiteAtingiuMinimo = isComite && votosFavoraveis >= votosMinimos;
+  const votosMinimos = proposal?.approval_levels?.votos_minimos ?? 1;
 
   const advance = async (toStage: Stage) => {
     if (!proposal) return;
+    if (toStage === "comite" && reportCompletude < 8) {
+      toast.error("Complete as 8 seções do relatório antes de enviar ao comitê");
+      return;
+    }
     setSavingDecision(true);
     const { error } = await supabase.from("credit_proposals").update({ stage: toStage }).eq("id", proposal.id);
     setSavingDecision(false);
@@ -160,41 +123,6 @@ export default function CreditoDetail() {
     setSavingDecision(false);
     if (error) { toast.error("Erro", { description: error.message }); return; }
     toast.success(status === "aprovado" ? "Proposta aprovada" : "Proposta reprovada");
-    load();
-  };
-
-  const salvarParecer = async () => {
-    if (!proposal || !user) return;
-    if (!opTexto.trim()) { toast.error("Escreva o parecer"); return; }
-    setSavingOp(true);
-    // descobrir o role usado
-    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
-    const roleList = (roles ?? []).map(r => r.role);
-    const author_role = roleList.includes("analista_credito") ? "analista_credito"
-      : roleList.includes("gestor_risco") ? "gestor_risco" : "admin";
-
-    const payload = {
-      proposal_id: proposal.id, author_id: user.id, author_role: author_role as any,
-      recomendacao: opRec, score: opScore ? Number(opScore) : null,
-      pontos_fortes: opFortes || null, pontos_atencao: opAtencao || null, parecer: opTexto,
-    };
-    const { error } = await supabase.from("credit_opinions").upsert(payload, { onConflict: "proposal_id,author_id" });
-    setSavingOp(false);
-    if (error) { toast.error("Erro ao salvar parecer", { description: error.message }); return; }
-    toast.success("Parecer salvo");
-    load();
-  };
-
-  const salvarVoto = async () => {
-    if (!proposal || !user) return;
-    setSavingVote(true);
-    const { error } = await supabase.from("committee_votes").upsert(
-      { proposal_id: proposal.id, voter_id: user.id, decisao: voteDec, justificativa: voteJust || null },
-      { onConflict: "proposal_id,voter_id" }
-    );
-    setSavingVote(false);
-    if (error) { toast.error("Erro ao votar", { description: error.message }); return; }
-    toast.success("Voto registrado");
     load();
   };
 
@@ -235,8 +163,6 @@ export default function CreditoDetail() {
           <div><div className="text-xs text-muted-foreground">Prazo</div><div>{proposal.prazo_dias ? `${proposal.prazo_dias} dias` : "—"}</div></div>
           <div><div className="text-xs text-muted-foreground">Taxa sugerida</div><div>{proposal.taxa_sugerida != null ? `${proposal.taxa_sugerida}% a.m.` : "—"}</div></div>
           <div><div className="text-xs text-muted-foreground">Aprovado</div><div className="font-semibold">{fmtBRL(proposal.valor_aprovado)}</div></div>
-          <div className="md:col-span-2"><div className="text-xs text-muted-foreground">Finalidade</div><div>{proposal.finalidade ?? "—"}</div></div>
-          <div className="md:col-span-2"><div className="text-xs text-muted-foreground">Garantias</div><div>{proposal.garantias ?? "—"}</div></div>
         </div>
 
         {proposal.approval_levels && (
@@ -251,7 +177,7 @@ export default function CreditoDetail() {
         )}
       </div>
 
-      {/* Esteira */}
+      {/* Esteira + ações de transição */}
       <div className="rounded-lg border bg-card p-6">
         <div className="flex flex-wrap items-center gap-2">
           {STAGES_ORDER.map((s, i) => {
@@ -276,8 +202,8 @@ export default function CreditoDetail() {
               </Button>
             )}
             {proposal.stage === "parecer" && isComite && (
-              <Button size="sm" onClick={() => advance("comite")} disabled={savingDecision}>
-                <Send className="h-4 w-4 mr-2" /> Enviar para Comitê
+              <Button size="sm" onClick={() => advance("comite")} disabled={savingDecision || reportCompletude < 8}>
+                <Send className="h-4 w-4 mr-2" /> Enviar para Comitê {reportCompletude < 8 && `(${reportCompletude}/8 seções)`}
               </Button>
             )}
             {proposal.stage === "parecer" && !isComite && (
@@ -294,12 +220,6 @@ export default function CreditoDetail() {
       ) && (
         <div className="rounded-lg border bg-card p-6 space-y-3">
           <h2 className="text-lg font-semibold">Decisão final</h2>
-          {isComite && (
-            <p className="text-sm text-muted-foreground">
-              Votos favoráveis: <strong>{votosFavoraveis}</strong> de <strong>{votosMinimos}</strong> mínimos.{" "}
-              {comiteAtingiuMinimo ? <span className="text-green-600">Quórum atingido.</span> : <span>Quórum não atingido.</span>}
-            </p>
-          )}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className="space-y-2">
               <Label>Valor aprovado (R$)</Label>
@@ -311,7 +231,7 @@ export default function CreditoDetail() {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button onClick={() => decidir("aprovado")} disabled={savingDecision || (isComite && !comiteAtingiuMinimo)}>
+            <Button onClick={() => decidir("aprovado")} disabled={savingDecision}>
               <CheckCircle2 className="h-4 w-4 mr-2" /> Aprovar
             </Button>
             <Button variant="destructive" onClick={() => decidir("reprovado")} disabled={savingDecision}>
@@ -328,132 +248,43 @@ export default function CreditoDetail() {
         </div>
       )}
 
-      {/* Pareceres */}
-      <div className="rounded-lg border bg-card p-6 space-y-4">
-        <h2 className="text-lg font-semibold flex items-center gap-2"><FileSignature className="h-5 w-5" /> Pareceres ({opinions.length})</h2>
-        {opinions.length === 0 && <p className="text-sm text-muted-foreground">Nenhum parecer registrado.</p>}
-        <div className="space-y-3">
-          {opinions.map((o) => (
-            <div key={o.id} className="rounded-md border p-4 space-y-2">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="text-sm">
-                  <Badge variant="outline" className="mr-2">{o.author_role}</Badge>
-                  <Badge variant={o.recomendacao === "favoravel" ? "default" : o.recomendacao === "desfavoravel" ? "destructive" : "secondary"}>
-                    {REC_LABEL[o.recomendacao]}
-                  </Badge>
-                  {o.score != null && <span className="ml-2 text-xs text-muted-foreground">Score: {o.score}</span>}
-                </div>
-                <span className="text-xs text-muted-foreground">{fmtDate(o.created_at)}</span>
-              </div>
-              <p className="text-sm whitespace-pre-wrap">{o.parecer}</p>
-              {(o.pontos_fortes || o.pontos_atencao) && (
-                <div className="grid md:grid-cols-2 gap-3 text-xs pt-2 border-t">
-                  {o.pontos_fortes && <div><div className="text-muted-foreground">Pontos fortes</div><p className="whitespace-pre-wrap">{o.pontos_fortes}</p></div>}
-                  {o.pontos_atencao && <div><div className="text-muted-foreground">Pontos de atenção</div><p className="whitespace-pre-wrap">{o.pontos_atencao}</p></div>}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+      {/* Abas: Relatório / Comitê / Histórico */}
+      <Tabs defaultValue="relatorio" className="w-full">
+        <TabsList>
+          <TabsTrigger value="relatorio"><FileText className="h-4 w-4 mr-2" /> Relatório de crédito</TabsTrigger>
+          {isComite && <TabsTrigger value="comite"><Vote className="h-4 w-4 mr-2" /> Comitê</TabsTrigger>}
+          <TabsTrigger value="historico"><History className="h-4 w-4 mr-2" /> Histórico</TabsTrigger>
+        </TabsList>
 
-        {canWriteOpinion && !finalStage && (
-          <div className="rounded-md bg-muted/30 border p-4 space-y-3">
-            <p className="text-sm font-medium">{opinions.find(o => o.author_id === user?.id) ? "Atualizar meu parecer" : "Registrar meu parecer"}</p>
-            <div className="grid md:grid-cols-3 gap-3">
-              <div className="space-y-2">
-                <Label>Recomendação</Label>
-                <Select value={opRec} onValueChange={(v) => setOpRec(v as Recommendation)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="favoravel">Favorável</SelectItem>
-                    <SelectItem value="favoravel_com_ressalva">Favorável c/ ressalva</SelectItem>
-                    <SelectItem value="desfavoravel">Desfavorável</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Score (0-1000)</Label>
-                <Input type="number" value={opScore} onChange={(e) => setOpScore(e.target.value)} />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Parecer *</Label>
-              <Textarea rows={3} value={opTexto} onChange={(e) => setOpTexto(e.target.value)} />
-            </div>
-            <div className="grid md:grid-cols-2 gap-3">
-              <div className="space-y-2"><Label>Pontos fortes</Label><Textarea rows={2} value={opFortes} onChange={(e) => setOpFortes(e.target.value)} /></div>
-              <div className="space-y-2"><Label>Pontos de atenção</Label><Textarea rows={2} value={opAtencao} onChange={(e) => setOpAtencao(e.target.value)} /></div>
-            </div>
-            <Button onClick={salvarParecer} disabled={savingOp}>
-              {savingOp && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} Salvar parecer
-            </Button>
-          </div>
+        <TabsContent value="relatorio" className="mt-4">
+          <CreditReportForm proposalId={proposal.id} cedenteId={proposal.cedente_id} />
+        </TabsContent>
+
+        {isComite && (
+          <TabsContent value="comite" className="mt-4">
+            <ComiteGameSession proposalId={proposal.id} votosMinimos={votosMinimos} proposalStage={proposal.stage} />
+          </TabsContent>
         )}
-      </div>
 
-      {/* Comitê */}
-      {isComite && (
-        <div className="rounded-lg border bg-card p-6 space-y-4">
-          <h2 className="text-lg font-semibold flex items-center gap-2"><Vote className="h-5 w-5" /> Comitê — Votos ({votes.length})</h2>
-          <p className="text-xs text-muted-foreground">Mínimo de {votosMinimos} voto(s) favoráveis para aprovar.</p>
-          {votes.length === 0 && <p className="text-sm text-muted-foreground">Nenhum voto registrado.</p>}
-          <div className="space-y-2">
-            {votes.map((v) => (
-              <div key={v.id} className="rounded-md border p-3 flex items-start justify-between gap-3">
-                <div className="space-y-1">
-                  <Badge variant={v.decisao === "favoravel" ? "default" : v.decisao === "desfavoravel" ? "destructive" : "secondary"}>
-                    {VOTE_LABEL[v.decisao]}
-                  </Badge>
-                  {v.justificativa && <p className="text-sm whitespace-pre-wrap">{v.justificativa}</p>}
+        <TabsContent value="historico" className="mt-4">
+          <div className="rounded-lg border bg-card p-6 space-y-3">
+            <div className="space-y-2">
+              {history.map((h) => (
+                <div key={h.id} className="text-sm flex justify-between border-b pb-2 last:border-0">
+                  <div>
+                    <span className="font-medium">{h.evento}</span>
+                    {h.stage_anterior && h.stage_novo && (
+                      <span className="text-muted-foreground"> — {STAGE_LABEL[h.stage_anterior]} → {STAGE_LABEL[h.stage_novo]}</span>
+                    )}
+                  </div>
+                  <span className="text-xs text-muted-foreground">{fmtDate(h.created_at)}</span>
                 </div>
-                <span className="text-xs text-muted-foreground shrink-0">{fmtDate(v.created_at)}</span>
-              </div>
-            ))}
+              ))}
+              {history.length === 0 && <p className="text-sm text-muted-foreground">Sem eventos registrados.</p>}
+            </div>
           </div>
-
-          {canVote && proposal.stage === "comite" && (
-            <div className="rounded-md bg-muted/30 border p-4 space-y-3">
-              <p className="text-sm font-medium">{votes.find(v => v.voter_id === user?.id) ? "Atualizar meu voto" : "Registrar meu voto"}</p>
-              <div className="space-y-2">
-                <Label>Decisão</Label>
-                <Select value={voteDec} onValueChange={(v) => setVoteDec(v as VoteDecision)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="favoravel">Favorável</SelectItem>
-                    <SelectItem value="desfavoravel">Desfavorável</SelectItem>
-                    <SelectItem value="abstencao">Abstenção</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Justificativa</Label>
-                <Textarea rows={2} value={voteJust} onChange={(e) => setVoteJust(e.target.value)} />
-              </div>
-              <Button onClick={salvarVoto} disabled={savingVote}>
-                {savingVote && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} Salvar voto
-              </Button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Histórico */}
-      <div className="rounded-lg border bg-card p-6 space-y-3">
-        <h2 className="text-lg font-semibold flex items-center gap-2"><History className="h-5 w-5" /> Histórico</h2>
-        <div className="space-y-2">
-          {history.map((h) => (
-            <div key={h.id} className="text-sm flex justify-between border-b pb-2 last:border-0">
-              <div>
-                <span className="font-medium">{h.evento}</span>
-                {h.stage_anterior && h.stage_novo && (
-                  <span className="text-muted-foreground"> — {STAGE_LABEL[h.stage_anterior]} → {STAGE_LABEL[h.stage_novo]}</span>
-                )}
-              </div>
-              <span className="text-xs text-muted-foreground">{fmtDate(h.created_at)}</span>
-            </div>
-          ))}
-        </div>
-      </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
