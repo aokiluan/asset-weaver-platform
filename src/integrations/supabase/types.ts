@@ -337,6 +337,7 @@ export type Database = {
           data_abertura: string | null
           email: string | null
           endereco: string | null
+          enviado_analise_em: string | null
           estado: string | null
           faturamento_medio: number | null
           id: string
@@ -371,6 +372,7 @@ export type Database = {
           data_abertura?: string | null
           email?: string | null
           endereco?: string | null
+          enviado_analise_em?: string | null
           estado?: string | null
           faturamento_medio?: number | null
           id?: string
@@ -405,6 +407,7 @@ export type Database = {
           data_abertura?: string | null
           email?: string | null
           endereco?: string | null
+          enviado_analise_em?: string | null
           estado?: string | null
           faturamento_medio?: number | null
           id?: string
