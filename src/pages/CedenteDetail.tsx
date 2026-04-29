@@ -191,11 +191,8 @@ export default function CedenteDetail() {
     );
   }
 
-  // Permissões para os botões de transição
+  // Permissões para botões do header (avanço de etapa agora vai pelo stepper)
   const isOwner = !!user && cedente.owner_id === user.id;
-  const podeEnviarAnalise =
-    cedente.stage === "novo" &&
-    (hasRole("admin") || hasRole("gestor_comercial") || hasRole("comercial") || isOwner);
   const podeRevisarCadastro =
     cedente.stage === "cadastro" &&
     (hasRole("admin") || hasRole("analista_cadastro") || hasRole("gestor_comercial"));
