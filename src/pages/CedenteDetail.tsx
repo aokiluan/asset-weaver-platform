@@ -222,6 +222,7 @@ export default function CedenteDetail() {
       <Tabs defaultValue="resumo">
         <TabsList>
           <TabsTrigger value="resumo">Resumo</TabsTrigger>
+          <TabsTrigger value="representantes">Representantes legais</TabsTrigger>
           <TabsTrigger value="documentos">Documentos</TabsTrigger>
           <TabsTrigger value="visita">Relatório comercial</TabsTrigger>
           <TabsTrigger value="historico">Histórico</TabsTrigger>
