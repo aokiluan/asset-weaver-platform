@@ -104,7 +104,7 @@ export function CedenteStageBar({ stage, gate, onAdvance, onReturn, onInativar, 
                 Devolver para etapa anterior
               </Button>
             )}
-            {onInativar && stage !== "inativo" && (
+            {onInativar && (
               <Button variant="ghost" onClick={onInativar} className="text-destructive">
                 Inativar
               </Button>
