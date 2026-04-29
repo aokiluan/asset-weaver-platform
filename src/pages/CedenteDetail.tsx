@@ -219,7 +219,7 @@ export default function CedenteDetail() {
         <Button variant="outline" onClick={() => setEditOpen(true)}><Pencil className="h-4 w-4 mr-2" /> Editar dados</Button>
       </div>
 
-      <div className="rounded-lg border bg-card p-6 space-y-2">
+      <div className="rounded-lg border bg-card p-6 space-y-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">{cedente.razao_social}</h1>
@@ -227,22 +227,38 @@ export default function CedenteDetail() {
             <p className="text-sm text-muted-foreground font-mono mt-1">CNPJ: {cedente.cnpj}</p>
           </div>
           <div className="flex items-center gap-2 flex-wrap justify-end">
-            <Badge variant="secondary" className="text-sm px-3 py-1">{STAGE_LABEL[cedente.stage]}</Badge>
-            {podeEnviarAnalise && (
-              <Button onClick={() => setEnviarOpen(true)}>
-                <Send className="h-4 w-4 mr-2" /> Enviar para análise
-              </Button>
-            )}
             {podeRevisarCadastro && (
               <RevisarCadastroActions
                 cedenteId={cedente.id}
                 canApprove={podeAprovarCadastro}
                 pendencias={pendenciasAnalise}
                 onChanged={load}
+                onlyDevolver
               />
             )}
           </div>
         </div>
+
+        <CedenteStageStepper
+          stage={cedente.stage}
+          isOwner={isOwner}
+          gateInfo={{
+            hasVisitReport,
+            hasPleito,
+            obrigatoriosFaltando,
+            docsRejeitados,
+            hasParecer,
+            comiteDecidido,
+            minutaAssinada,
+          }}
+          onAdvance={(target) => {
+            if (cedente.stage === "novo" && target === "cadastro") {
+              setEnviarOpen(true);
+            } else {
+              setConfirmAdvance(target);
+            }
+          }}
+        />
       </div>
 
       <Tabs value={tab} onValueChange={onTabChange}>
