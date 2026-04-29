@@ -61,7 +61,6 @@ const GROUPS: Group[] = [
     icon: Briefcase,
     items: [
       { title: "CRM", url: "/pipeline", icon: KanbanSquare },
-      { title: "Cadastro", url: "/leads", icon: Users },
       { title: "Cedentes", url: "/cedentes", icon: Building2 },
       { title: "Crédito", url: "/credito", icon: Scale },
       {
