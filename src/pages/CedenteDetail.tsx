@@ -347,6 +347,14 @@ export default function CedenteDetail() {
         initial={cedente as unknown as CedenteFormValues}
         onSaved={load}
       />
+
+      <EnviarAnaliseDialog
+        open={enviarOpen}
+        onOpenChange={setEnviarOpen}
+        cedenteId={cedente.id}
+        checklist={checklistEnvio}
+        onSent={load}
+      />
     </div>
   );
 }
