@@ -1,16 +1,19 @@
-import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Pencil, FileText, Loader2 } from "lucide-react";
+import { ArrowLeft, Pencil, FileText, Loader2, Send } from "lucide-react";
 import { toast } from "sonner";
 import { CedenteFormDialog, CedenteFormValues } from "@/components/cedentes/CedenteFormDialog";
 
 import { CedenteVisitReportForm } from "@/components/cedentes/CedenteVisitReportForm";
 import { CedenteRepresentantesTab } from "@/components/cedentes/CedenteRepresentantesTab";
 import { DocumentosUploadKanban } from "@/components/cedentes/DocumentosUploadKanban";
+import { EnviarAnaliseDialog } from "@/components/cedentes/EnviarAnaliseDialog";
+import { RevisarCadastroActions } from "@/components/cedentes/RevisarCadastroActions";
+import { useAuth } from "@/hooks/useAuth";
 import { CedenteStage, STAGE_LABEL } from "@/lib/cedente-stages";
 
 interface Cedente {
@@ -69,10 +72,13 @@ const fmtBRL = (v: number | null) =>
 
 export default function CedenteDetail() {
   const { id } = useParams<{ id: string }>();
+  const { user, hasRole } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [cedente, setCedente] = useState<Cedente | null>(null);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [documentos, setDocumentos] = useState<Documento[]>([]);
   const [hasVisitReport, setHasVisitReport] = useState(false);
+  const [hasPleito, setHasPleito] = useState(false);
 
   const [hasParecer, setHasParecer] = useState(false);
   const [comiteDecidido, setComiteDecidido] = useState(false);
@@ -81,7 +87,16 @@ export default function CedenteDetail() {
   const [loading, setLoading] = useState(true);
   const [ownerName, setOwnerName] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
-  const [tab, setTab] = useState("resumo");
+  const [enviarOpen, setEnviarOpen] = useState(false);
+  const initialTab = searchParams.get("tab") ?? "resumo";
+  const [tab, setTab] = useState(initialTab);
+
+  const onTabChange = (v: string) => {
+    setTab(v);
+    const sp = new URLSearchParams(searchParams);
+    if (v === "resumo") sp.delete("tab"); else sp.set("tab", v);
+    setSearchParams(sp, { replace: true });
+  };
 
   const load = async () => {
     if (!id) return;
