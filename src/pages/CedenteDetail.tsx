@@ -295,13 +295,8 @@ export default function CedenteDetail() {
           </TabsTrigger>
           <TabsTrigger value="visita">Relatório comercial</TabsTrigger>
           <TabsTrigger value="credito" className="gap-2">
-            <ClipboardList className="h-3.5 w-3.5" /> Relatório de crédito
+            <ClipboardList className="h-3.5 w-3.5" /> Análise de crédito
           </TabsTrigger>
-          {latestProposal?.approver === "comite" && (
-            <TabsTrigger value="comite" className="gap-2">
-              <Vote className="h-3.5 w-3.5" /> Comitê
-            </TabsTrigger>
-          )}
           <TabsTrigger value="historico">Histórico</TabsTrigger>
         </TabsList>
 
