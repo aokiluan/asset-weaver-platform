@@ -64,6 +64,12 @@ const GROUPS: Group[] = [
       { title: "Cedentes", url: "/cedentes", icon: Building2 },
       { title: "Crédito", url: "/credito", icon: Scale },
       {
+        title: "Análise de cadastro",
+        url: "/cadastro/fila",
+        icon: ListChecks,
+        roles: ["admin", "analista_cadastro", "gestor_comercial"] as const,
+      },
+      {
         title: "Comitê",
         url: "/comite",
         icon: Vote,
