@@ -386,6 +386,26 @@ export default function CedenteDetail() {
           </div>
         </TabsContent>
 
+        <TabsContent value="credito" className="mt-4">
+          {latestProposal ? (
+            <CreditReportForm proposalId={latestProposal.id} cedenteId={cedente.id} />
+          ) : (
+            <div className="rounded-lg border bg-card p-6 text-sm text-muted-foreground">
+              Nenhuma proposta de crédito vinculada a este cedente. Crie uma proposta na esteira de Crédito para preencher o relatório.
+            </div>
+          )}
+        </TabsContent>
+
+        {latestProposal?.approver === "comite" && (
+          <TabsContent value="comite" className="mt-4">
+            <ComiteGameSession
+              proposalId={latestProposal.id}
+              votosMinimos={latestProposal.votos_minimos}
+              proposalStage={latestProposal.stage as any}
+            />
+          </TabsContent>
+        )}
+
         <TabsContent value="historico" className="mt-4">
           <div className="rounded-lg border bg-card p-6">
             <h2 className="text-lg font-semibold mb-4">Histórico de estágios</h2>
