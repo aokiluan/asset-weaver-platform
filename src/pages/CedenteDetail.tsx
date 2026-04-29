@@ -277,6 +277,14 @@ export default function CedenteDetail() {
           </div>
         </TabsContent>
 
+        <TabsContent value="representantes" className="mt-4">
+          <CedenteRepresentantesTab
+            cedenteId={cedente.id}
+            jaSincronizado={!!cedente.representantes_sincronizado_em}
+            onSynced={load}
+          />
+        </TabsContent>
+
         <TabsContent value="documentos" className="mt-4">
           <div className="rounded-lg border bg-card p-6 space-y-4">
             <div className="flex items-center gap-2">
