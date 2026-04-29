@@ -41,6 +41,8 @@ interface Documento {
   id: string;
   cedente_id: string;
   categoria_id: string | null;
+  categoria_sugerida_id: string | null;
+  classificacao_status: "pendente" | "analisando" | "sugerido" | "erro";
   nome_arquivo: string;
   storage_path: string;
   tamanho_bytes: number | null;
