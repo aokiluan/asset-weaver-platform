@@ -24,8 +24,8 @@ import {
 } from "@/lib/credit-report";
 
 interface Props {
-  proposalId: string;
   cedenteId: string;
+  proposalId?: string | null;
 }
 
 type ReportRow = {
