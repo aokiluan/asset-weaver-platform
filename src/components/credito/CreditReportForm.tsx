@@ -105,16 +105,18 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
     setSaving(true);
     const payload: any = {
       ...report,
-      proposal_id: proposalId,
       cedente_id: cedenteId,
       completude: computeCompletude(report as any),
       updated_by: user.id,
     };
+    // proposal_id é opcional: só envia se houver
+    if (proposalId) payload.proposal_id = proposalId;
+    else if (!report.proposal_id) delete payload.proposal_id;
     if (!report.id) payload.created_by = user.id;
 
     const { data, error } = await supabase
       .from("credit_reports")
-      .upsert(payload, { onConflict: "proposal_id" })
+      .upsert(payload, { onConflict: "cedente_id" })
       .select()
       .single();
     setSaving(false);
