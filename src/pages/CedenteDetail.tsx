@@ -242,7 +242,14 @@ export default function CedenteDetail() {
         <TabsList>
           <TabsTrigger value="resumo">Resumo</TabsTrigger>
           <TabsTrigger value="representantes">Representantes legais</TabsTrigger>
-          <TabsTrigger value="documentos">Documentos</TabsTrigger>
+          <TabsTrigger value="documentos" className="gap-2">
+            Documentos
+            {documentos.filter((d) => d.status === "pendente").length > 0 && (
+              <Badge variant="destructive" className="h-4 min-w-4 px-1 text-[10px] rounded-full">
+                {documentos.filter((d) => d.status === "pendente").length}
+              </Badge>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="visita">Relatório comercial</TabsTrigger>
           <TabsTrigger value="historico">Histórico</TabsTrigger>
         </TabsList>
