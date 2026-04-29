@@ -384,25 +384,83 @@ export default function CedenteDetail() {
           </div>
         </TabsContent>
 
-        <TabsContent value="credito" className="mt-4">
+        <TabsContent value="credito" className="mt-4 space-y-4">
           {latestProposal ? (
-            <CreditReportForm proposalId={latestProposal.id} cedenteId={cedente.id} />
+            <>
+              <div className="rounded-lg border bg-card p-4 flex flex-wrap items-center justify-between gap-3">
+                <div className="space-y-0.5">
+                  <div className="text-sm font-semibold">Proposta de crédito ativa</div>
+                  <div className="text-xs text-muted-foreground">
+                    Estágio: <span className="font-medium capitalize">{latestProposal.stage}</span>
+                    {latestProposal.approver && <> · Alçada: <span className="font-medium capitalize">{latestProposal.approver}</span></>}
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button asChild variant="outline" size="sm">
+                    <Link to={`/credito/${latestProposal.id}`}>Abrir na esteira</Link>
+                  </Button>
+                  {(hasRole("admin") || hasRole("comercial") || hasRole("gestor_comercial")) && (
+                    <Button size="sm" variant="ghost" onClick={() => setNovaPropostaOpen(true)}>
+                      <Plus className="h-4 w-4 mr-1" /> Nova proposta
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex gap-1 border-b">
+                {[
+                  { v: "relatorio", label: "Relatório de crédito" },
+                  ...(latestProposal.approver === "comite" ? [{ v: "comite", label: "Comitê" }] : []),
+                  { v: "pareceres", label: "Pareceres" },
+                ].map((t) => (
+                  <button
+                    key={t.v}
+                    onClick={() => setCreditoSubTab(t.v as any)}
+                    className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+                      creditoSubTab === t.v
+                        ? "border-primary text-foreground"
+                        : "border-transparent text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+
+              {creditoSubTab === "relatorio" && (
+                <CreditReportForm proposalId={latestProposal.id} cedenteId={cedente.id} />
+              )}
+              {creditoSubTab === "comite" && latestProposal.approver === "comite" && (
+                <ComiteGameSession
+                  proposalId={latestProposal.id}
+                  votosMinimos={latestProposal.votos_minimos}
+                  proposalStage={latestProposal.stage as any}
+                />
+              )}
+              {creditoSubTab === "pareceres" && (
+                <div className="rounded-lg border bg-card p-6 text-sm text-muted-foreground">
+                  Pareceres em camadas (comercial, regional, compliance, analista) ficam no formulário do relatório de crédito.
+                  Use a aba <span className="font-medium text-foreground">Relatório de crédito</span> para preencher e revisar.
+                </div>
+              )}
+            </>
           ) : (
-            <div className="rounded-lg border bg-card p-6 text-sm text-muted-foreground">
-              Nenhuma proposta de crédito vinculada a este cedente. Crie uma proposta na esteira de Crédito para preencher o relatório.
+            <div className="rounded-lg border bg-card p-8 text-center space-y-3">
+              <ClipboardList className="h-10 w-10 text-muted-foreground mx-auto" />
+              <div>
+                <h3 className="text-base font-semibold">Nenhuma proposta de crédito</h3>
+                <p className="text-sm text-muted-foreground max-w-md mx-auto mt-1">
+                  Crie uma proposta para iniciar o relatório estruturado de crédito (8 seções) e o fluxo de comitê.
+                </p>
+              </div>
+              {(hasRole("admin") || hasRole("comercial") || hasRole("gestor_comercial") || hasRole("analista_credito") || hasRole("gestor_credito")) && (
+                <Button onClick={() => setNovaPropostaOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" /> Criar proposta de crédito
+                </Button>
+              )}
             </div>
           )}
         </TabsContent>
-
-        {latestProposal?.approver === "comite" && (
-          <TabsContent value="comite" className="mt-4">
-            <ComiteGameSession
-              proposalId={latestProposal.id}
-              votosMinimos={latestProposal.votos_minimos}
-              proposalStage={latestProposal.stage as any}
-            />
-          </TabsContent>
-        )}
 
         <TabsContent value="historico" className="mt-4">
           <div className="rounded-lg border bg-card p-6">
