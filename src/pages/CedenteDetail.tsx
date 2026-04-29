@@ -193,8 +193,8 @@ export default function CedenteDetail() {
         obrigatoriosFaltando,
         docsRejeitados,
         hasParecer,
-        comiteDecidido: false, // Fase 2
-        minutaAssinada: false, // Fase 3
+        comiteDecidido,
+        minutaAssinada,
       })
     : { next: null, allowed: false, pendentes: [], atendidos: [] };
 
