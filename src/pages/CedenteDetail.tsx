@@ -13,6 +13,11 @@ import { CedenteRepresentantesTab } from "@/components/cedentes/CedenteRepresent
 import { DocumentosUploadKanban } from "@/components/cedentes/DocumentosUploadKanban";
 import { EnviarAnaliseDialog } from "@/components/cedentes/EnviarAnaliseDialog";
 import { RevisarCadastroActions } from "@/components/cedentes/RevisarCadastroActions";
+import { CedenteStageStepper } from "@/components/cedentes/CedenteStageStepper";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { CedenteStage, STAGE_LABEL } from "@/lib/cedente-stages";
 
