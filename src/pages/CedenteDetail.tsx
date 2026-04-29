@@ -93,6 +93,8 @@ export default function CedenteDetail() {
   const [ownerName, setOwnerName] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [enviarOpen, setEnviarOpen] = useState(false);
+  const [confirmAdvance, setConfirmAdvance] = useState<CedenteStage | null>(null);
+  const [advancing, setAdvancing] = useState(false);
   const initialTab = searchParams.get("tab") ?? "resumo";
   const [tab, setTab] = useState(initialTab);
 
