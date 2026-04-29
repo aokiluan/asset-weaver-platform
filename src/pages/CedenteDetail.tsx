@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { CedenteFormDialog, CedenteFormValues } from "@/components/cedentes/CedenteFormDialog";
 
 import { CedenteVisitReportForm } from "@/components/cedentes/CedenteVisitReportForm";
+import { CedenteRepresentantesTab } from "@/components/cedentes/CedenteRepresentantesTab";
 import { CedenteStage, STAGE_LABEL } from "@/lib/cedente-stages";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
