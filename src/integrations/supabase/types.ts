@@ -854,6 +854,11 @@ export type Database = {
         | "gestor_risco"
         | "financeiro"
         | "operacional"
+        | "gestor_credito"
+        | "gestor_financeiro"
+        | "relacao_investidor"
+        | "gestor_relacao_investidor"
+        | "analista_cadastro"
       approver_kind: "analista_credito" | "gestor_risco" | "comite"
       cedente_status:
         | "prospect"
@@ -1014,6 +1019,11 @@ export const Constants = {
         "gestor_risco",
         "financeiro",
         "operacional",
+        "gestor_credito",
+        "gestor_financeiro",
+        "relacao_investidor",
+        "gestor_relacao_investidor",
+        "analista_cadastro",
       ],
       approver_kind: ["analista_credito", "gestor_risco", "comite"],
       cedente_status: [
