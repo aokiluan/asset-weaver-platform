@@ -198,43 +198,118 @@ export type Database = {
       }
       cedente_visit_reports: {
         Row: {
+          assinatura_digital_observacao: string | null
+          assinatura_digital_tipo: string | null
+          avalistas_solidarios: Json
           cedente_id: string
-          contexto: string
+          contexto: string | null
           created_at: string
           created_by: string
           data_visita: string
+          empresas_ligadas: Json
+          entrevistado_cargo: string | null
+          entrevistado_cpf: string | null
+          entrevistado_email: string | null
+          entrevistado_nome: string | null
+          entrevistado_telefone: string | null
+          faturamento_mensal: number | null
           id: string
-          participantes: string
-          percepcoes: string
+          limite_global_solicitado: number | null
+          modalidades: Json
+          parceiros_financeiros: string | null
+          parecer_comercial: string | null
+          participantes: string | null
+          pct_vendas_boleto: number | null
+          pct_vendas_cartao: number | null
+          pct_vendas_cheque: number | null
+          pct_vendas_outros: number | null
+          pct_vendas_pf: number | null
+          pct_vendas_pj: number | null
+          percepcoes: string | null
           pontos_atencao: string | null
-          recomendacao: string
+          principais_produtos: string | null
+          qtd_funcionarios: number | null
+          ramo_atividade: string | null
+          recomendacao: string | null
+          tipo_visita: string | null
           updated_at: string
+          visitante: string | null
         }
         Insert: {
+          assinatura_digital_observacao?: string | null
+          assinatura_digital_tipo?: string | null
+          avalistas_solidarios?: Json
           cedente_id: string
-          contexto: string
+          contexto?: string | null
           created_at?: string
           created_by: string
           data_visita: string
+          empresas_ligadas?: Json
+          entrevistado_cargo?: string | null
+          entrevistado_cpf?: string | null
+          entrevistado_email?: string | null
+          entrevistado_nome?: string | null
+          entrevistado_telefone?: string | null
+          faturamento_mensal?: number | null
           id?: string
-          participantes: string
-          percepcoes: string
+          limite_global_solicitado?: number | null
+          modalidades?: Json
+          parceiros_financeiros?: string | null
+          parecer_comercial?: string | null
+          participantes?: string | null
+          pct_vendas_boleto?: number | null
+          pct_vendas_cartao?: number | null
+          pct_vendas_cheque?: number | null
+          pct_vendas_outros?: number | null
+          pct_vendas_pf?: number | null
+          pct_vendas_pj?: number | null
+          percepcoes?: string | null
           pontos_atencao?: string | null
-          recomendacao: string
+          principais_produtos?: string | null
+          qtd_funcionarios?: number | null
+          ramo_atividade?: string | null
+          recomendacao?: string | null
+          tipo_visita?: string | null
           updated_at?: string
+          visitante?: string | null
         }
         Update: {
+          assinatura_digital_observacao?: string | null
+          assinatura_digital_tipo?: string | null
+          avalistas_solidarios?: Json
           cedente_id?: string
-          contexto?: string
+          contexto?: string | null
           created_at?: string
           created_by?: string
           data_visita?: string
+          empresas_ligadas?: Json
+          entrevistado_cargo?: string | null
+          entrevistado_cpf?: string | null
+          entrevistado_email?: string | null
+          entrevistado_nome?: string | null
+          entrevistado_telefone?: string | null
+          faturamento_mensal?: number | null
           id?: string
-          participantes?: string
-          percepcoes?: string
+          limite_global_solicitado?: number | null
+          modalidades?: Json
+          parceiros_financeiros?: string | null
+          parecer_comercial?: string | null
+          participantes?: string | null
+          pct_vendas_boleto?: number | null
+          pct_vendas_cartao?: number | null
+          pct_vendas_cheque?: number | null
+          pct_vendas_outros?: number | null
+          pct_vendas_pf?: number | null
+          pct_vendas_pj?: number | null
+          percepcoes?: string | null
           pontos_atencao?: string | null
-          recomendacao?: string
+          principais_produtos?: string | null
+          qtd_funcionarios?: number | null
+          ramo_atividade?: string | null
+          recomendacao?: string | null
+          tipo_visita?: string | null
           updated_at?: string
+          visitante?: string | null
         }
         Relationships: []
       }

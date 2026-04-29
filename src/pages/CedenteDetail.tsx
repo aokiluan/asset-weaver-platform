@@ -85,7 +85,7 @@ export default function CedenteDetail() {
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [documentos, setDocumentos] = useState<Documento[]>([]);
   const [hasVisitReport, setHasVisitReport] = useState(false);
-  const [hasPleito, setHasPleito] = useState(false);
+  
   const [hasParecer, setHasParecer] = useState(false);
   const [comiteDecidido, setComiteDecidido] = useState(false);
   const [minutaAssinada, setMinutaAssinada] = useState(false);
@@ -116,7 +116,7 @@ export default function CedenteDetail() {
     setDocumentos((docs as Documento[]) ?? []);
     setHasVisitReport(!!visit);
     const propsList = (props ?? []) as { id: string; stage: string }[];
-    setHasPleito(propsList.length > 0);
+    
     setHasParecer(propsList.some((p) => ["parecer", "comite", "aprovado"].includes(p.stage)));
     setComiteDecidido(propsList.some((p) => p.stage === "aprovado"));
     setMinutaAssinada(!!(ced as any)?.minuta_assinada);
@@ -214,8 +214,7 @@ export default function CedenteDetail() {
         <TabsList>
           <TabsTrigger value="resumo">Resumo</TabsTrigger>
           <TabsTrigger value="documentos">Documentos</TabsTrigger>
-          <TabsTrigger value="visita">Relatório de visita</TabsTrigger>
-          <TabsTrigger value="pleito">Pleito</TabsTrigger>
+          <TabsTrigger value="visita">Relatório comercial</TabsTrigger>
           <TabsTrigger value="historico">Histórico</TabsTrigger>
         </TabsList>
 
@@ -336,27 +335,10 @@ export default function CedenteDetail() {
         <TabsContent value="visita" className="mt-4">
           <div className="rounded-lg border bg-card p-6">
             <div className="mb-4">
-              <h2 className="text-lg font-semibold">Relatório de visita</h2>
-              <p className="text-sm text-muted-foreground">Modelo padrão. Obrigatório para avançar do estágio "Novo".</p>
+              <h2 className="text-lg font-semibold">Relatório comercial</h2>
+              <p className="text-sm text-muted-foreground">Inclui dados da visita, do negócio e o pleito de crédito.</p>
             </div>
             <CedenteVisitReportForm cedenteId={cedente.id} onSaved={load} />
-          </div>
-        </TabsContent>
-
-        <TabsContent value="pleito" className="mt-4">
-          <div className="rounded-lg border bg-card p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-lg font-semibold">Pleito de crédito</h2>
-                <p className="text-sm text-muted-foreground">Use a tela de Crédito para criar e acompanhar as propostas deste cedente.</p>
-              </div>
-              <Button asChild><Link to="/credito">Ir para Crédito</Link></Button>
-            </div>
-            <div className="text-sm">
-              {hasPleito
-                ? <Badge variant="default">Pleito registrado</Badge>
-                : <Badge variant="outline">Nenhum pleito ainda</Badge>}
-            </div>
           </div>
         </TabsContent>
 
