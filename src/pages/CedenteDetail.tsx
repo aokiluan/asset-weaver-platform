@@ -99,6 +99,8 @@ export default function CedenteDetail() {
   const [enviarOpen, setEnviarOpen] = useState(false);
   const [confirmAdvance, setConfirmAdvance] = useState<CedenteStage | null>(null);
   const [advancing, setAdvancing] = useState(false);
+  const [novaPropostaOpen, setNovaPropostaOpen] = useState(false);
+  const [creditoSubTab, setCreditoSubTab] = useState<"relatorio" | "comite" | "pareceres">("relatorio");
   const initialTab = searchParams.get("tab") ?? "resumo";
   const [tab, setTab] = useState(initialTab);
 
