@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Pencil, FileText, Loader2, Send } from "lucide-react";
+import { ArrowLeft, Pencil, FileText, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { CedenteFormDialog, CedenteFormValues } from "@/components/cedentes/CedenteFormDialog";
 
