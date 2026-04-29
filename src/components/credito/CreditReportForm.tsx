@@ -52,16 +52,16 @@ type ReportRow = {
   updated_at: string;
 };
 
-const emptyReport = (proposalId: string, cedenteId: string): Partial<ReportRow> => ({
-  proposal_id: proposalId,
+const emptyReport = (cedenteId: string, proposalId?: string | null): Partial<ReportRow> => ({
+  proposal_id: proposalId ?? null,
   cedente_id: cedenteId,
   identificacao: {}, empresa: {}, rede_societaria: {}, carteira: {},
   restritivos: {}, financeiro: {}, due_diligence: {}, pleito: {},
 });
 
-export function CreditReportForm({ proposalId, cedenteId }: Props) {
+export function CreditReportForm({ cedenteId, proposalId }: Props) {
   const { user, hasRole } = useAuth();
-  const [report, setReport] = useState<Partial<ReportRow>>(emptyReport(proposalId, cedenteId));
+  const [report, setReport] = useState<Partial<ReportRow>>(emptyReport(cedenteId, proposalId));
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
