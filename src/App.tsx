@@ -25,6 +25,12 @@ import AdminCategorias from "./pages/admin/AdminCategorias.tsx";
 import AdminDatasets from "./pages/admin/AdminDatasets.tsx";
 import AdminRelatorios from "./pages/admin/AdminRelatorios.tsx";
 import AdminDashboardWidgets from "./pages/admin/AdminDashboardWidgets.tsx";
+import GestaoComercial from "./pages/gestao/GestaoComercial.tsx";
+import GestaoOperacional from "./pages/gestao/GestaoOperacional.tsx";
+import GestaoFinanceiro from "./pages/gestao/GestaoFinanceiro.tsx";
+import GestaoDiario from "./pages/gestao/GestaoDiario.tsx";
+import Comite from "./pages/Comite.tsx";
+import Formalizacao from "./pages/Formalizacao.tsx";
 import RoleGuard from "@/components/RoleGuard";
 import NotFound from "./pages/NotFound.tsx";
 
