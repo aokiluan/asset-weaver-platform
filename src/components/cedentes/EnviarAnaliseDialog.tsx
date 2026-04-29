@@ -32,7 +32,7 @@ export function EnviarAnaliseDialog({ open, onOpenChange, cedenteId, checklist, 
   const enviar = async () => {
     if (!allOk) return;
     setSaving(true);
-    const updates: Record<string, unknown> = { stage: "cadastro" };
+    const updates: { stage: "cadastro"; observacoes?: string } = { stage: "cadastro" };
     if (obs.trim()) updates.observacoes = obs.trim();
     const { error } = await supabase.from("cedentes").update(updates).eq("id", cedenteId);
     setSaving(false);
