@@ -142,6 +142,9 @@ export type Database = {
           id: string
           lead_id: string | null
           limite_aprovado: number | null
+          minuta_assinada: boolean
+          minuta_assinada_em: string | null
+          minuta_assinada_por: string | null
           nome_fantasia: string | null
           observacoes: string | null
           owner_id: string | null
@@ -165,6 +168,9 @@ export type Database = {
           id?: string
           lead_id?: string | null
           limite_aprovado?: number | null
+          minuta_assinada?: boolean
+          minuta_assinada_em?: string | null
+          minuta_assinada_por?: string | null
           nome_fantasia?: string | null
           observacoes?: string | null
           owner_id?: string | null
@@ -188,6 +194,9 @@ export type Database = {
           id?: string
           lead_id?: string | null
           limite_aprovado?: number | null
+          minuta_assinada?: boolean
+          minuta_assinada_em?: string | null
+          minuta_assinada_por?: string | null
           nome_fantasia?: string | null
           observacoes?: string | null
           owner_id?: string | null

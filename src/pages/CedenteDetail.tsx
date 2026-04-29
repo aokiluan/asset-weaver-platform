@@ -87,6 +87,8 @@ export default function CedenteDetail() {
   const [hasVisitReport, setHasVisitReport] = useState(false);
   const [hasPleito, setHasPleito] = useState(false);
   const [hasParecer, setHasParecer] = useState(false);
+  const [comiteDecidido, setComiteDecidido] = useState(false);
+  const [minutaAssinada, setMinutaAssinada] = useState(false);
   const [history, setHistory] = useState<HistoryRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -113,8 +115,11 @@ export default function CedenteDetail() {
     setCategorias(cats ?? []);
     setDocumentos((docs as Documento[]) ?? []);
     setHasVisitReport(!!visit);
-    setHasPleito((props ?? []).length > 0);
-    setHasParecer((props ?? []).some((p: any) => ["parecer", "comite", "aprovado"].includes(p.stage)));
+    const propsList = (props ?? []) as { id: string; stage: string }[];
+    setHasPleito(propsList.length > 0);
+    setHasParecer(propsList.some((p) => ["parecer", "comite", "aprovado"].includes(p.stage)));
+    setComiteDecidido(propsList.some((p) => p.stage === "aprovado"));
+    setMinutaAssinada(!!(ced as any)?.minuta_assinada);
     setHistory((hist as HistoryRow[]) ?? []);
   };
 
@@ -188,8 +193,8 @@ export default function CedenteDetail() {
         obrigatoriosFaltando,
         docsRejeitados,
         hasParecer,
-        comiteDecidido: false, // Fase 2
-        minutaAssinada: false, // Fase 3
+        comiteDecidido,
+        minutaAssinada,
       })
     : { next: null, allowed: false, pendentes: [], atendidos: [] };
 
