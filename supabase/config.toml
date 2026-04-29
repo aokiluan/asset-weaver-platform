@@ -1,1 +1,7 @@
 project_id = "ojnikpihujkmcxvoaqdx"
+
+[functions.validate-cnpj]
+verify_jwt = false
+
+[functions.validate-cep]
+verify_jwt = false
