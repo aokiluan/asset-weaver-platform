@@ -86,7 +86,7 @@ export type Database = {
         }
         Relationships: []
       }
-      cedente_socios: {
+      cedente_representantes: {
         Row: {
           cedente_id: string
           conjuge_cpf: string | null
@@ -109,6 +109,7 @@ export type Database = {
           endereco_logradouro: string | null
           endereco_numero: string | null
           estado_civil: string | null
+          fonte: string
           id: string
           nacionalidade: string | null
           naturalidade: string | null
@@ -116,8 +117,11 @@ export type Database = {
           nome_mae: string | null
           nome_pai: string | null
           orgao_emissor: string | null
+          participacao_capital: number | null
+          qualificacao: string | null
           rg: string | null
           sexo: string | null
+          sincronizado_em: string | null
           updated_at: string
         }
         Insert: {
@@ -142,6 +146,7 @@ export type Database = {
           endereco_logradouro?: string | null
           endereco_numero?: string | null
           estado_civil?: string | null
+          fonte?: string
           id?: string
           nacionalidade?: string | null
           naturalidade?: string | null
@@ -149,8 +154,11 @@ export type Database = {
           nome_mae?: string | null
           nome_pai?: string | null
           orgao_emissor?: string | null
+          participacao_capital?: number | null
+          qualificacao?: string | null
           rg?: string | null
           sexo?: string | null
+          sincronizado_em?: string | null
           updated_at?: string
         }
         Update: {
@@ -175,6 +183,7 @@ export type Database = {
           endereco_logradouro?: string | null
           endereco_numero?: string | null
           estado_civil?: string | null
+          fonte?: string
           id?: string
           nacionalidade?: string | null
           naturalidade?: string | null
@@ -182,8 +191,11 @@ export type Database = {
           nome_mae?: string | null
           nome_pai?: string | null
           orgao_emissor?: string | null
+          participacao_capital?: number | null
+          qualificacao?: string | null
           rg?: string | null
           sexo?: string | null
+          sincronizado_em?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -340,6 +352,7 @@ export type Database = {
           observacoes: string | null
           owner_id: string | null
           razao_social: string
+          representantes_sincronizado_em: string | null
           setor: string | null
           situacao_cadastral: string | null
           stage: Database["public"]["Enums"]["cedente_stage"]
@@ -373,6 +386,7 @@ export type Database = {
           observacoes?: string | null
           owner_id?: string | null
           razao_social: string
+          representantes_sincronizado_em?: string | null
           setor?: string | null
           situacao_cadastral?: string | null
           stage?: Database["public"]["Enums"]["cedente_stage"]
@@ -406,6 +420,7 @@ export type Database = {
           observacoes?: string | null
           owner_id?: string | null
           razao_social?: string
+          representantes_sincronizado_em?: string | null
           setor?: string | null
           situacao_cadastral?: string | null
           stage?: Database["public"]["Enums"]["cedente_stage"]
