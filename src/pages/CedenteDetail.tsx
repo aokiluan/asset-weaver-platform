@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { CedenteFormDialog, CedenteFormValues } from "@/components/cedentes/CedenteFormDialog";
 
 import { CedenteVisitReportForm } from "@/components/cedentes/CedenteVisitReportForm";
+import { CedenteRepresentantesTab } from "@/components/cedentes/CedenteRepresentantesTab";
 import { CedenteStage, STAGE_LABEL } from "@/lib/cedente-stages";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -36,6 +37,7 @@ interface Cedente {
   observacoes: string | null;
   owner_id: string | null;
   lead_id: string | null;
+  representantes_sincronizado_em: string | null;
 }
 
 interface Categoria { id: string; nome: string; obrigatorio: boolean; ordem: number }
@@ -220,6 +222,7 @@ export default function CedenteDetail() {
       <Tabs defaultValue="resumo">
         <TabsList>
           <TabsTrigger value="resumo">Resumo</TabsTrigger>
+          <TabsTrigger value="representantes">Representantes legais</TabsTrigger>
           <TabsTrigger value="documentos">Documentos</TabsTrigger>
           <TabsTrigger value="visita">Relatório comercial</TabsTrigger>
           <TabsTrigger value="historico">Histórico</TabsTrigger>
@@ -272,6 +275,14 @@ export default function CedenteDetail() {
               </section>
             )}
           </div>
+        </TabsContent>
+
+        <TabsContent value="representantes" className="mt-4">
+          <CedenteRepresentantesTab
+            cedenteId={cedente.id}
+            jaSincronizado={!!cedente.representantes_sincronizado_em}
+            onSynced={load}
+          />
         </TabsContent>
 
         <TabsContent value="documentos" className="mt-4">
