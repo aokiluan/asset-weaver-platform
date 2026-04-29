@@ -77,15 +77,16 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
       const { data, error } = await supabase
         .from("credit_reports")
         .select("*")
-        .eq("proposal_id", proposalId)
+        .eq("cedente_id", cedenteId)
         .maybeSingle();
       if (!active) return;
       if (error) toast.error("Erro ao carregar relatório", { description: error.message });
       if (data) setReport(data as ReportRow);
+      else setReport(emptyReport(cedenteId, proposalId));
       setLoading(false);
     })();
     return () => { active = false; };
-  }, [proposalId]);
+  }, [cedenteId, proposalId]);
 
   const completude = useMemo(() => computeCompletude(report as any), [report]);
 
