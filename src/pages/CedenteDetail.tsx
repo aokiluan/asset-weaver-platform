@@ -9,9 +9,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ArrowLeft, Upload, Download, Trash2, CheckCircle2, XCircle, Pencil, FileText, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { CedenteFormDialog, CedenteFormValues } from "@/components/cedentes/CedenteFormDialog";
-import { CedenteStageBar } from "@/components/cedentes/CedenteStageBar";
+
 import { CedenteVisitReportForm } from "@/components/cedentes/CedenteVisitReportForm";
-import { CedenteStage, STAGE_LABEL, evaluateGates, nextStage } from "@/lib/cedente-stages";
+import { CedenteStage, STAGE_LABEL } from "@/lib/cedente-stages";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
@@ -92,7 +92,7 @@ export default function CedenteDetail() {
   const [history, setHistory] = useState<HistoryRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const [advancing, setAdvancing] = useState(false);
+  
   const [categoriaUpload, setCategoriaUpload] = useState<string>("");
   const [editOpen, setEditOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -179,52 +179,6 @@ export default function CedenteDetail() {
     load();
   };
 
-  // Gates
-  const obrigatoriosFaltando = categorias
-    .filter(c => c.obrigatorio)
-    .filter(c => !documentos.some(d => d.categoria_id === c.id && d.status === "aprovado"))
-    .map(c => c.nome);
-  const docsRejeitados = documentos.filter(d => d.status === "reprovado").length;
-
-  const gate = cedente
-    ? evaluateGates({
-        stage: cedente.stage,
-        hasVisitReport, hasPleito,
-        obrigatoriosFaltando,
-        docsRejeitados,
-        hasParecer,
-        comiteDecidido,
-        minutaAssinada,
-      })
-    : { next: null, allowed: false, pendentes: [], atendidos: [] };
-
-  const handleAdvance = async () => {
-    if (!cedente || !gate.next) return;
-    setAdvancing(true);
-    const { error } = await supabase.from("cedentes").update({ stage: gate.next }).eq("id", cedente.id);
-    setAdvancing(false);
-    if (error) { toast.error("Erro ao avançar", { description: error.message }); return; }
-    toast.success(`Cedente avançou para ${STAGE_LABEL[gate.next]}`);
-    load();
-  };
-
-  const handleReturn = async () => {
-    if (!cedente) return;
-    const idx = ["novo","cadastro","analise","comite","formalizacao","ativo"].indexOf(cedente.stage);
-    if (idx <= 0) return;
-    const prev = ["novo","cadastro","analise","comite","formalizacao","ativo"][idx - 1] as CedenteStage;
-    const { error } = await supabase.from("cedentes").update({ stage: prev }).eq("id", cedente.id);
-    if (error) { toast.error("Erro", { description: error.message }); return; }
-    toast.success(`Devolvido para ${STAGE_LABEL[prev]}`);
-    load();
-  };
-
-  const handleInativar = async () => {
-    if (!cedente) return;
-    const { error } = await supabase.from("cedentes").update({ stage: "inativo" }).eq("id", cedente.id);
-    if (error) { toast.error("Erro", { description: error.message }); return; }
-    toast.success("Cedente inativado"); load();
-  };
 
   if (loading) {
     return <div className="flex items-center justify-center py-16 text-muted-foreground"><Loader2 className="h-5 w-5 animate-spin mr-2" /> Carregando...</div>;
@@ -255,15 +209,6 @@ export default function CedenteDetail() {
           <Badge variant="secondary" className="text-sm px-3 py-1">{STAGE_LABEL[cedente.stage]}</Badge>
         </div>
       </div>
-
-      <CedenteStageBar
-        stage={cedente.stage}
-        gate={gate}
-        onAdvance={handleAdvance}
-        onReturn={handleReturn}
-        onInativar={handleInativar}
-        advancing={advancing}
-      />
 
       <Tabs defaultValue="resumo">
         <TabsList>
