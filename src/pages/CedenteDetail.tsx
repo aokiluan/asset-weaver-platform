@@ -256,15 +256,6 @@ export default function CedenteDetail() {
         </div>
       </div>
 
-      <CedenteStageBar
-        stage={cedente.stage}
-        gate={gate}
-        onAdvance={handleAdvance}
-        onReturn={handleReturn}
-        onInativar={handleInativar}
-        advancing={advancing}
-      />
-
       <Tabs defaultValue="resumo">
         <TabsList>
           <TabsTrigger value="resumo">Resumo</TabsTrigger>
