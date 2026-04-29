@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,6 +52,7 @@ const fmtCNPJ = (s: string) => {
 };
 
 export default function Cedentes() {
+  const navigate = useNavigate();
   const [items, setItems] = useState<Cedente[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -96,8 +97,8 @@ export default function Cedentes() {
           <h1 className="text-2xl font-semibold tracking-tight">Cedentes</h1>
           <p className="text-sm text-muted-foreground">Cadastro de cedentes, status de análise e limites aprovados.</p>
         </div>
-        <Button onClick={() => { setEditing(undefined); setDialogOpen(true); }}>
-          <Plus className="h-4 w-4 mr-2" /> Novo cedente
+        <Button onClick={() => navigate("/cedentes/novo")}>
+          <Plus className="h-4 w-4 mr-2" /> Novo cadastro
         </Button>
       </div>
 
@@ -176,7 +177,7 @@ export default function Cedentes() {
                       <Link to={`/cedentes/${c.id}`}><ExternalLink className="h-4 w-4" /></Link>
                     </Button>
                     <Button size="icon" variant="ghost" title="Editar"
-                      onClick={() => { setEditing({ ...c } as any); setDialogOpen(true); }}>
+                      onClick={() => navigate(`/cedentes/${c.id}/editar`)}>
                       <Pencil className="h-4 w-4" />
                     </Button>
                     <AlertDialog>

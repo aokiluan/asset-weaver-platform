@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -86,6 +87,7 @@ function StageColumn({ stage, leads }: { stage: Stage; leads: Lead[] }) {
 }
 
 export default function Pipeline() {
+  const navigate = useNavigate();
   const [stages, setStages] = useState<Stage[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
@@ -144,8 +146,8 @@ export default function Pipeline() {
           <h1 className="text-2xl font-bold text-foreground">Pipeline</h1>
           <p className="text-sm text-muted-foreground">Arraste os cards entre estágios.</p>
         </div>
-        <Button onClick={() => setDialogOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" /> Novo lead
+        <Button onClick={() => navigate("/cedentes/novo")}>
+          <Plus className="h-4 w-4 mr-2" /> Novo cadastro
         </Button>
       </header>
 
