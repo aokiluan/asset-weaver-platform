@@ -1,62 +1,30 @@
-## Upload em lote + classificação automática por IA
+## Problema
 
-### Fluxo do usuário
+Ao trocar para qualquer aba diferente de "Resumo" na página do cedente, a página volta automaticamente para a aba "Resumo".
 
-1. Usuário arrasta vários arquivos (ou clica para selecionar) em uma **dropzone única no topo** da aba Documentos.
-2. Cada arquivo aparece como um **card na "Fila de não classificados"** com nome, tamanho, miniatura/ícone e badge de status: `Enviando → Analisando → Sugerido: <Categoria>`.
-3. A IA lê o conteúdo de cada arquivo e sugere uma categoria. O card mostra a sugestão com botão **"Aceitar"** (move para a categoria) ou o usuário pode arrastar manualmente para outra dropzone.
-4. Abaixo da fila ficam **dropzones empilhadas, uma por categoria** (Contrato Social, Cartão CNPJ, etc.). Cada dropzone lista os documentos já classificados ali e aceita drop dos cards pendentes.
+## Causa raiz
 
-```text
-┌─────────────────────────────────────────────┐
-│  📁 Arraste arquivos aqui ou clique         │
-│     (PDF, JPG, PNG até 20MB)                │
-└─────────────────────────────────────────────┘
+Em `src/pages/CedenteDetail.tsx`:
 
-🕓 Fila (3)
-┌────────────────┐ ┌────────────────┐ ┌────────────────┐
-│ contrato.pdf   │ │ cartao.jpg     │ │ extrato.pdf    │
-│ Sugerido:      │ │ Analisando...  │ │ Sugerido:      │
-│ Contrato Soc.  │ │                │ │ Comprovante    │
-│ [Aceitar][↓]   │ │                │ │ [Aceitar][↓]   │
-└────────────────┘ └────────────────┘ └────────────────┘
+1. Componentes filhos (ex.: `DocumentosUploadKanban`, `CedenteRepresentantesTab`, `CedenteVisitReportForm`) chamam `onChanged={load}` / `onSaved={load}` para recarregar dados — e o `DocumentosUploadKanban` faz polling automático enquanto há documentos no status `analisando`.
+2. A função `load()` chama `setLoading(true)`, fazendo o componente renderizar apenas o spinner "Carregando..." e **desmontar** todo o `<Tabs>`.
+3. Quando o loading termina, o `<Tabs defaultValue="resumo">` é remontado do zero — e como a aba ativa é apenas estado interno não-controlado do Radix, ela é perdida e volta para "resumo".
 
-📂 Contrato Social  ─────────────── (drop aqui)
-   • doc-anterior.pdf  [aprovado]
+## Solução
 
-📂 Cartão CNPJ  ──────────────────── (drop aqui)
-   (vazio)
+Tornar a `<Tabs>` controlada e não desmontar a árvore durante refresh:
 
-📂 Comprovante de Endereço ─────── (drop aqui)
-   ...
-```
+1. **Controlar a aba ativa**: adicionar `const [tab, setTab] = useState("resumo")` e usar `<Tabs value={tab} onValueChange={setTab}>`. Isso preserva a aba ativa entre re-renders mesmo se o componente fosse remontado.
+2. **Não desmontar a UI durante refresh**: separar o estado `loading` inicial de um `refreshing`. Mostrar o spinner de tela cheia somente no carregamento inicial (quando `cedente` ainda é `null`). Refreshes subsequentes (chamadas a `load()` vindas de filhos) atualizam os dados em background sem trocar para a tela "Carregando...".
 
-### Mudanças técnicas
+### Mudanças em `src/pages/CedenteDetail.tsx`
 
-**1. Banco — campo de sugestão**
-- Adicionar `categoria_sugerida_id uuid` e `classificacao_status text` (`pendente`/`analisando`/`sugerido`/`erro`) em `documentos`. Permite distinguir "ainda na fila" de "classificado".
+- Adicionar `const [tab, setTab] = useState("resumo")`.
+- Trocar `<Tabs defaultValue="resumo">` por `<Tabs value={tab} onValueChange={setTab}>`.
+- Em `load()`: chamar `setLoading(true)` apenas se ainda não houver dados (`if (!cedente) setLoading(true)`), e sempre `setLoading(false)` ao final. Assim o primeiro carregamento mostra o spinner global, mas refreshes não derrubam a UI.
 
-**2. Edge function `classify-documento`**
-- Input: `{ documento_id }`
-- Baixa o arquivo do bucket `cedente-docs` (signed URL ou via service role)
-- Para PDF: extrai texto das primeiras páginas (usar pdf parsing leve via fetch + biblioteca compatível com Deno, ou enviar PDF inteiro para Lovable AI que aceita anexos)
-- Envia conteúdo + lista de categorias disponíveis ao **Lovable AI Gateway** (`google/gemini-3-flash-preview`) usando **tool calling** para garantir saída estruturada `{ categoria_id, confianca, motivo }`
-- Atualiza `documentos.categoria_sugerida_id` e `classificacao_status='sugerido'`
-- Trata erros 429/402 e marca `classificacao_status='erro'`
+Isso resolve o bug sem alterar nenhum componente filho.
 
-**3. Frontend — `CedenteDetail.tsx` (aba Documentos)**
-- Substituir o seletor de categoria + botão único pelo novo componente `DocumentosUploadKanban`:
-  - **Dropzone múltipla** usando input `multiple` + handlers nativos `onDragOver/onDrop` (sem libs novas)
-  - Loop: faz upload de cada arquivo (status `enviando`), insere row em `documentos` sem `categoria_id`, dispara `supabase.functions.invoke("classify-documento", { documento_id })`
-  - Cards arrastáveis com HTML5 drag-and-drop nativo (`draggable`, `onDragStart`, `onDragOver`, `onDrop`)
-  - Drop em uma categoria → `update documentos set categoria_id=..., categoria_sugerida_id=null` 
-  - Botão "Aceitar sugestão" → mesma ação usando o id sugerido
-- Lista existente (tabela com revisão/download/delete) permanece **abaixo** da área kanban, sem mudança.
+## Bônus (warning no console)
 
-**4. Realtime opcional (simples)**
-- Após disparar o classify, fazer polling leve a cada 2s nos docs com status `analisando` até resolver, ou simplesmente recarregar quando a function retorna. Vou usar a segunda abordagem para manter simples.
-
-### Custo / observações
-- Cada arquivo gera 1 chamada à IA (~1-2 centavos de crédito Lovable AI). Erros de rate limit (429) e de crédito (402) viram toasts informando o usuário.
-- Funciona bem para PDF com texto e imagens (Gemini é multimodal). PDFs 100% escaneados também funcionam pois o Gemini faz OCR nativo.
-- Sem libs novas no frontend — uso HTML5 drag-and-drop nativo.
+Há um aviso "Function components cannot be given refs" apontando para `Badge` dentro de `DocumentosUploadKanban` — provavelmente um `Badge` usado como filho de um `Tooltip`/`asChild` ou similar. Posso investigar e corrigir junto se desejar (envolver em `forwardRef` ou em um `<span>`). Não é a causa do bug das abas, mas mantém o console limpo.

@@ -81,10 +81,17 @@ export default function CedenteDetail() {
   const [loading, setLoading] = useState(true);
   const [ownerName, setOwnerName] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
+  const [tab, setTab] = useState("resumo");
 
   const load = async () => {
     if (!id) return;
-    setLoading(true);
+    // Only show full-screen spinner on the very first load.
+    // Subsequent refreshes (triggered by child components) update data
+    // in the background so the active tab is preserved.
+    setCedente((prev) => {
+      if (!prev) setLoading(true);
+      return prev;
+    });
     const [{ data: ced, error: e1 }, { data: cats }, { data: docs }, { data: visit }, { data: props }, { data: hist }] =
       await Promise.all([
         supabase.from("cedentes").select("*").eq("id", id).maybeSingle(),
@@ -146,7 +153,7 @@ export default function CedenteDetail() {
         </div>
       </div>
 
-      <Tabs defaultValue="resumo">
+      <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
           <TabsTrigger value="resumo">Resumo</TabsTrigger>
           <TabsTrigger value="representantes">Representantes legais</TabsTrigger>
