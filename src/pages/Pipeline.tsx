@@ -17,7 +17,7 @@ import {
   useDraggable,
 } from "@dnd-kit/core";
 import { toast } from "sonner";
-import { CedenteStage, STAGE_LABEL, STAGE_ORDER } from "@/lib/cedente-stages";
+import { CedenteStage, STAGE_COLORS, STAGE_LABEL, STAGE_ORDER } from "@/lib/cedente-stages";
 
 interface CedenteCard {
   id: string;
@@ -28,16 +28,6 @@ interface CedenteCard {
   faturamento_medio: number | null;
   setor: string | null;
 }
-
-const STAGE_COLORS: Record<CedenteStage, string> = {
-  novo: "hsl(220 9% 64%)",
-  cadastro: "hsl(217 91% 35%)",
-  analise: "hsl(199 89% 48%)",
-  comite: "hsl(38 92% 50%)",
-  formalizacao: "hsl(280 70% 50%)",
-  ativo: "hsl(142 71% 45%)",
-  inativo: "hsl(0 0% 50%)",
-};
 
 const fmtBRL = (v: number | null) =>
   v == null
