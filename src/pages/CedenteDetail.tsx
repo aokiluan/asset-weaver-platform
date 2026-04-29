@@ -92,7 +92,7 @@ export default function CedenteDetail() {
   const [history, setHistory] = useState<HistoryRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const [advancing, setAdvancing] = useState(false);
+  
   const [categoriaUpload, setCategoriaUpload] = useState<string>("");
   const [editOpen, setEditOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
