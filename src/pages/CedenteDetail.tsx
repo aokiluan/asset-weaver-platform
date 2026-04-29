@@ -12,6 +12,7 @@ import { CedenteFormDialog, CedenteFormValues } from "@/components/cedentes/Cede
 
 import { CedenteVisitReportForm } from "@/components/cedentes/CedenteVisitReportForm";
 import { CedenteRepresentantesTab } from "@/components/cedentes/CedenteRepresentantesTab";
+import { DocumentosUploadKanban } from "@/components/cedentes/DocumentosUploadKanban";
 import { CedenteStage, STAGE_LABEL } from "@/lib/cedente-stages";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
