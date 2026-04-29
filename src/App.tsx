@@ -52,7 +52,8 @@ const App = () => (
                 </ProtectedRoute>
               }
             >
-              <Route path="/" element={<Index />} />
+              <Route path="/" element={<Navigate to="/gestao/comercial" replace />} />
+              <Route path="/inicio" element={<Index />} />
               <Route path="/leads" element={<Leads />} />
               <Route path="/pipeline" element={<Pipeline />} />
               <Route path="/cedentes" element={<Cedentes />} />

@@ -60,9 +60,8 @@ const GROUPS: Group[] = [
     label: "Operação",
     icon: Briefcase,
     items: [
-      { title: "Início", url: "/", icon: LayoutDashboard },
-      { title: "Leads", url: "/leads", icon: Users },
-      { title: "Pipeline", url: "/pipeline", icon: KanbanSquare },
+      { title: "CRM", url: "/pipeline", icon: KanbanSquare },
+      { title: "Cadastro", url: "/leads", icon: Users },
       { title: "Cedentes", url: "/cedentes", icon: Building2 },
       { title: "Crédito", url: "/credito", icon: Scale },
       {
