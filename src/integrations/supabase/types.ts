@@ -690,7 +690,9 @@ export type Database = {
       documentos: {
         Row: {
           categoria_id: string | null
+          categoria_sugerida_id: string | null
           cedente_id: string
+          classificacao_status: string
           created_at: string
           id: string
           mime_type: string | null
@@ -706,7 +708,9 @@ export type Database = {
         }
         Insert: {
           categoria_id?: string | null
+          categoria_sugerida_id?: string | null
           cedente_id: string
+          classificacao_status?: string
           created_at?: string
           id?: string
           mime_type?: string | null
@@ -722,7 +726,9 @@ export type Database = {
         }
         Update: {
           categoria_id?: string | null
+          categoria_sugerida_id?: string | null
           cedente_id?: string
+          classificacao_status?: string
           created_at?: string
           id?: string
           mime_type?: string | null
@@ -740,6 +746,13 @@ export type Database = {
           {
             foreignKeyName: "documentos_categoria_id_fkey"
             columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "documento_categorias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documentos_categoria_sugerida_id_fkey"
+            columns: ["categoria_sugerida_id"]
             isOneToOne: false
             referencedRelation: "documento_categorias"
             referencedColumns: ["id"]
