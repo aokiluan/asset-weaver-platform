@@ -45,6 +45,14 @@ Deno.serve(async (req) => {
       email: j.email ?? "",
       data_abertura: j.data_inicio_atividade ?? "",
       situacao: j.descricao_situacao_cadastral ?? "",
+      qsa: Array.isArray(j.qsa)
+        ? j.qsa.map((s: any) => ({
+            nome: s.nome_socio ?? "",
+            cpf_cnpj: s.cnpj_cpf_do_socio ?? "",
+            qualificacao: s.qualificacao_socio ?? "",
+            data_entrada: s.data_entrada_sociedade ?? "",
+          }))
+        : [],
     };
 
     return new Response(JSON.stringify({ success: true, data }), {
