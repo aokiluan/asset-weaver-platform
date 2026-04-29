@@ -122,8 +122,9 @@ export default function CedenteDetail() {
     setCategorias(cats ?? []);
     setDocumentos((docs as Documento[]) ?? []);
     setHasVisitReport(!!visit);
-    const propsList = (props ?? []) as { id: string; stage: string }[];
+    const propsList = (props ?? []) as { id: string; stage: string; valor_solicitado?: number | null }[];
 
+    setHasPleito(propsList.length > 0);
     setHasParecer(propsList.some((p) => ["parecer", "comite", "aprovado"].includes(p.stage)));
     setComiteDecidido(propsList.some((p) => p.stage === "aprovado"));
     setMinutaAssinada(!!(ced as any)?.minuta_assinada);
@@ -150,6 +151,47 @@ export default function CedenteDetail() {
     );
   }
 
+  // Permissões para os botões de transição
+  const isOwner = !!user && cedente.owner_id === user.id;
+  const podeEnviarAnalise =
+    cedente.stage === "novo" &&
+    (hasRole("admin") || hasRole("gestor_comercial") || hasRole("comercial") || isOwner);
+  const podeRevisarCadastro =
+    cedente.stage === "cadastro" &&
+    (hasRole("admin") || hasRole("analista_cadastro") || hasRole("gestor_comercial"));
+
+  // Checklist para envio (novo -> cadastro)
+  const obrigatoriosFaltando = useMemo(() => {
+    return categorias
+      .filter((c) => c.obrigatorio)
+      .filter((c) => !documentos.some((d) => d.categoria_id === c.id))
+      .map((c) => c.nome);
+  }, [categorias, documentos]);
+
+  const checklistEnvio = useMemo(() => ([
+    {
+      label: obrigatoriosFaltando.length === 0
+        ? "Todos os documentos obrigatórios anexados"
+        : `Documentos obrigatórios faltando: ${obrigatoriosFaltando.join(", ")}`,
+      ok: obrigatoriosFaltando.length === 0,
+    },
+    { label: "Relatório comercial preenchido", ok: hasVisitReport },
+    { label: "Pleito de crédito informado", ok: hasPleito },
+    { label: "Representantes sincronizados", ok: !!cedente.representantes_sincronizado_em },
+  ]), [obrigatoriosFaltando, hasVisitReport, hasPleito, cedente.representantes_sincronizado_em]);
+
+  // Pendências para a etapa cadastro -> analise
+  const docsRejeitados = documentos.filter((d) => d.status === "reprovado").length;
+  const docsObrigSemAprov = categorias
+    .filter((c) => c.obrigatorio)
+    .filter((c) => !documentos.some((d) => d.categoria_id === c.id && d.status === "aprovado"));
+  const pendenciasAnalise: string[] = [];
+  if (docsRejeitados > 0) pendenciasAnalise.push(`${docsRejeitados} documento(s) reprovado(s)`);
+  if (docsObrigSemAprov.length > 0) {
+    pendenciasAnalise.push(`Categorias sem documento aprovado: ${docsObrigSemAprov.map((c) => c.nome).join(", ")}`);
+  }
+  const podeAprovarCadastro = pendenciasAnalise.length === 0;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
@@ -164,11 +206,26 @@ export default function CedenteDetail() {
             {cedente.nome_fantasia && <p className="text-sm text-muted-foreground">{cedente.nome_fantasia}</p>}
             <p className="text-sm text-muted-foreground font-mono mt-1">CNPJ: {cedente.cnpj}</p>
           </div>
-          <Badge variant="secondary" className="text-sm px-3 py-1">{STAGE_LABEL[cedente.stage]}</Badge>
+          <div className="flex items-center gap-2 flex-wrap justify-end">
+            <Badge variant="secondary" className="text-sm px-3 py-1">{STAGE_LABEL[cedente.stage]}</Badge>
+            {podeEnviarAnalise && (
+              <Button onClick={() => setEnviarOpen(true)}>
+                <Send className="h-4 w-4 mr-2" /> Enviar para análise
+              </Button>
+            )}
+            {podeRevisarCadastro && (
+              <RevisarCadastroActions
+                cedenteId={cedente.id}
+                canApprove={podeAprovarCadastro}
+                pendencias={pendenciasAnalise}
+                onChanged={load}
+              />
+            )}
+          </div>
         </div>
       </div>
 
-      <Tabs value={tab} onValueChange={setTab}>
+      <Tabs value={tab} onValueChange={onTabChange}>
         <TabsList>
           <TabsTrigger value="resumo">Resumo</TabsTrigger>
           <TabsTrigger value="representantes">Representantes legais</TabsTrigger>
