@@ -1,12 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, Upload, Download, Trash2, CheckCircle2, XCircle, Pencil, FileText, Loader2 } from "lucide-react";
+import { ArrowLeft, Pencil, FileText, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { CedenteFormDialog, CedenteFormValues } from "@/components/cedentes/CedenteFormDialog";
 
@@ -14,10 +12,6 @@ import { CedenteVisitReportForm } from "@/components/cedentes/CedenteVisitReport
 import { CedenteRepresentantesTab } from "@/components/cedentes/CedenteRepresentantesTab";
 import { DocumentosUploadKanban } from "@/components/cedentes/DocumentosUploadKanban";
 import { CedenteStage, STAGE_LABEL } from "@/lib/cedente-stages";
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 
 interface Cedente {
   id: string;
