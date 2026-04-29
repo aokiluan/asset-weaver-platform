@@ -122,6 +122,12 @@ export default function CedenteDetail() {
     setComiteDecidido(propsList.some((p) => p.stage === "aprovado"));
     setMinutaAssinada(!!(ced as any)?.minuta_assinada);
     setHistory((hist as HistoryRow[]) ?? []);
+    if ((ced as Cedente)?.owner_id) {
+      const { data: prof } = await supabase.from("profiles").select("nome").eq("id", (ced as Cedente).owner_id!).maybeSingle();
+      setOwnerName(prof?.nome ?? null);
+    } else {
+      setOwnerName(null);
+    }
   };
 
   useEffect(() => { load(); }, [id]);
