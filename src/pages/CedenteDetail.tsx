@@ -116,7 +116,7 @@ export default function CedenteDetail() {
     setDocumentos((docs as Documento[]) ?? []);
     setHasVisitReport(!!visit);
     const propsList = (props ?? []) as { id: string; stage: string }[];
-    setHasPleito(propsList.length > 0);
+    
     setHasParecer(propsList.some((p) => ["parecer", "comite", "aprovado"].includes(p.stage)));
     setComiteDecidido(propsList.some((p) => p.stage === "aprovado"));
     setMinutaAssinada(!!(ced as any)?.minuta_assinada);
