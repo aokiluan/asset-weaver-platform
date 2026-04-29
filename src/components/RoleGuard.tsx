@@ -2,12 +2,7 @@ import { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2 } from "lucide-react";
-
-type AppRole =
-  | "admin" | "gestor_comercial" | "comercial" | "analista_credito"
-  | "comite" | "gestor_risco" | "financeiro" | "operacional"
-  | "gestor_credito" | "gestor_financeiro" | "relacao_investidor"
-  | "gestor_relacao_investidor" | "analista_cadastro";
+import type { AppRole } from "@/lib/roles";
 
 interface Props {
   children: ReactNode;
