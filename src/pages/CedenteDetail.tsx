@@ -92,6 +92,7 @@ export default function CedenteDetail() {
   const [history, setHistory] = useState<HistoryRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [ownerName, setOwnerName] = useState<string | null>(null);
   
   const [categoriaUpload, setCategoriaUpload] = useState<string>("");
   const [editOpen, setEditOpen] = useState(false);
