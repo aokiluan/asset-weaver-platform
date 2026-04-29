@@ -62,8 +62,32 @@ const App = () => (
               <Route
                 path="/financeiro"
                 element={
-                  <RoleGuard role={["admin", "financeiro", "gestor_risco"]}>
+                  <RoleGuard role={["admin", "financeiro", "gestor_financeiro", "gestor_risco"]}>
                     <Financeiro />
+                  </RoleGuard>
+                }
+              />
+
+              {/* Gestão (dashboards) */}
+              <Route path="/gestao/comercial" element={<GestaoComercial />} />
+              <Route path="/gestao/operacional" element={<GestaoOperacional />} />
+              <Route path="/gestao/financeiro" element={<GestaoFinanceiro />} />
+              <Route path="/gestao/diario" element={<GestaoDiario />} />
+
+              {/* Comitê e Formalização (placeholders Fase 2/3) */}
+              <Route
+                path="/comite"
+                element={
+                  <RoleGuard role={["admin", "comite", "gestor_credito", "analista_credito"]}>
+                    <Comite />
+                  </RoleGuard>
+                }
+              />
+              <Route
+                path="/formalizacao"
+                element={
+                  <RoleGuard role={["admin", "analista_cadastro", "gestor_comercial"]}>
+                    <Formalizacao />
                   </RoleGuard>
                 }
               />
