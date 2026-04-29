@@ -120,7 +120,18 @@ export default function CedenteDetail() {
     if (e1) { toast.error("Erro ao carregar", { description: e1.message }); return; }
     setCedente(ced as Cedente);
     setCategorias(cats ?? []);
-    setDocumentos((docs as Documento[]) ?? []);
+    const docsList = (docs as Documento[]) ?? [];
+    // Hidrata nome do reviewer p/ exibir o selo "Verificado por X"
+    const reviewerIds = Array.from(new Set(docsList.map((d) => d.reviewed_by).filter(Boolean) as string[]));
+    let reviewerMap: Record<string, string> = {};
+    if (reviewerIds.length > 0) {
+      const { data: profs } = await supabase.from("profiles").select("id,nome").in("id", reviewerIds);
+      reviewerMap = Object.fromEntries((profs ?? []).map((p) => [p.id, p.nome]));
+    }
+    setDocumentos(docsList.map((d) => ({
+      ...d,
+      reviewer_nome: d.reviewed_by ? reviewerMap[d.reviewed_by] ?? null : null,
+    })));
     setHasVisitReport(!!visit);
     const propsList = (props ?? []) as { id: string; stage: string; valor_solicitado?: number | null }[];
 
