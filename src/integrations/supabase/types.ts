@@ -441,6 +441,54 @@ export type Database = {
           },
         ]
       }
+      committee_sessions: {
+        Row: {
+          abertura: string
+          created_at: string
+          created_by: string | null
+          deadline: string | null
+          encerrada_em: string | null
+          encerrada_por: string | null
+          id: string
+          proposal_id: string
+          revelada_em: string | null
+          revelada_por: string | null
+          status: string
+          updated_at: string
+          voto_secreto: boolean
+        }
+        Insert: {
+          abertura?: string
+          created_at?: string
+          created_by?: string | null
+          deadline?: string | null
+          encerrada_em?: string | null
+          encerrada_por?: string | null
+          id?: string
+          proposal_id: string
+          revelada_em?: string | null
+          revelada_por?: string | null
+          status?: string
+          updated_at?: string
+          voto_secreto?: boolean
+        }
+        Update: {
+          abertura?: string
+          created_at?: string
+          created_by?: string | null
+          deadline?: string | null
+          encerrada_em?: string | null
+          encerrada_por?: string | null
+          id?: string
+          proposal_id?: string
+          revelada_em?: string | null
+          revelada_por?: string | null
+          status?: string
+          updated_at?: string
+          voto_secreto?: boolean
+        }
+        Relationships: []
+      }
       committee_votes: {
         Row: {
           created_at: string
@@ -606,6 +654,87 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      credit_reports: {
+        Row: {
+          carteira: Json
+          cedente_id: string
+          completude: number
+          conclusao: string | null
+          created_at: string
+          created_by: string | null
+          due_diligence: Json
+          empresa: Json
+          financeiro: Json
+          id: string
+          identificacao: Json
+          parecer_analista: string | null
+          parecer_comercial: string | null
+          parecer_compliance: string | null
+          parecer_regional: string | null
+          pleito: Json
+          pontos_atencao: string | null
+          pontos_positivos: string | null
+          proposal_id: string
+          recomendacao: string | null
+          rede_societaria: Json
+          restritivos: Json
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          carteira?: Json
+          cedente_id: string
+          completude?: number
+          conclusao?: string | null
+          created_at?: string
+          created_by?: string | null
+          due_diligence?: Json
+          empresa?: Json
+          financeiro?: Json
+          id?: string
+          identificacao?: Json
+          parecer_analista?: string | null
+          parecer_comercial?: string | null
+          parecer_compliance?: string | null
+          parecer_regional?: string | null
+          pleito?: Json
+          pontos_atencao?: string | null
+          pontos_positivos?: string | null
+          proposal_id: string
+          recomendacao?: string | null
+          rede_societaria?: Json
+          restritivos?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          carteira?: Json
+          cedente_id?: string
+          completude?: number
+          conclusao?: string | null
+          created_at?: string
+          created_by?: string | null
+          due_diligence?: Json
+          empresa?: Json
+          financeiro?: Json
+          id?: string
+          identificacao?: Json
+          parecer_analista?: string | null
+          parecer_comercial?: string | null
+          parecer_compliance?: string | null
+          parecer_regional?: string | null
+          pleito?: Json
+          pontos_atencao?: string | null
+          pontos_positivos?: string | null
+          proposal_id?: string
+          recomendacao?: string | null
+          rede_societaria?: Json
+          restritivos?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
       }
       dashboard_widgets: {
         Row: {
