@@ -76,12 +76,6 @@ const GROUPS: Group[] = [
         icon: FileSignature,
         roles: ["admin", "analista_cadastro", "gestor_comercial"] as const,
       },
-      {
-        title: "Financeiro",
-        url: "/financeiro",
-        icon: Wallet,
-        roles: ["admin", "financeiro", "gestor_financeiro", "gestor_risco"] as const,
-      },
     ],
   },
   {
@@ -90,6 +84,12 @@ const GROUPS: Group[] = [
     icon: Settings,
     adminOnly: true,
     items: [
+      {
+        title: "Financeiro",
+        url: "/financeiro",
+        icon: Wallet,
+        roles: ["admin", "financeiro", "gestor_financeiro", "gestor_risco"] as const,
+      },
       { title: "Usuários", url: "/configuracoes/usuarios", icon: Users },
       { title: "Alçadas", url: "/configuracoes/alcadas", icon: Gavel },
       { title: "Pipeline", url: "/configuracoes/pipeline", icon: ListChecks },
@@ -121,10 +121,12 @@ export function AppSidebar() {
 
   const visibleGroups = useMemo(
     () =>
-      GROUPS.filter((g) => !g.adminOnly || hasRole("admin")).map((g) => ({
+      GROUPS.map((g) => ({
         ...g,
         items: g.items.filter((i) => !i.roles || i.roles.some((r) => hasRole(r as any))),
-      })).filter((g) => g.items.length > 0),
+      }))
+        .filter((g) => (g.adminOnly ? hasRole("admin") || g.items.some((i) => i.roles) : true))
+        .filter((g) => g.items.length > 0),
     [hasRole],
   );
 
