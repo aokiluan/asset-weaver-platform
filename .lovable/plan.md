@@ -1,79 +1,56 @@
-## Esteira mini-kanban no topo do cedente, espelhando o Pipeline (CRM)
+## Objetivo
 
-Adicionar uma faixa horizontal compacta logo abaixo do cabeçalho do cedente, mostrando todas as etapas da esteira **lendo a mesma fonte de verdade do kanban grande de `/pipeline`** (`STAGE_ORDER`, `STAGE_LABEL`, `STAGE_COLORS`). A etapa atual fica destacada; anteriores aparecem como concluídas; futuras ficam apagadas. Apenas o usuário com permissão para movimentar a etapa atual consegue interagir; para os demais é puramente informativa.
+Remover a obrigatoriedade de "criar proposta" para preencher o relatório estruturado de crédito. O `CreditReportForm` (8 seções) deve aparecer **direto** na aba **Análise de crédito** do cedente, vinculado ao próprio cedente.
 
-### Parametrização única (fonte de verdade)
+## Mudanças
 
-Hoje as etapas vivem em `src/lib/cedente-stages.ts` mas as cores estão duplicadas dentro de `Pipeline.tsx`. Vou centralizar tudo lá para que o mini-kanban e o kanban grande sempre fiquem em sincronia:
+### 1. Banco — `credit_reports` passa a ser 1:1 com cedente
 
-**Em `src/lib/cedente-stages.ts`** (acrescentar):
-- `STAGE_COLORS: Record<CedenteStage, string>` — movido de `Pipeline.tsx`.
-- `STAGE_PERMISSIONS: Record<CedenteStage, AppRole[]>` — quem pode **enviar a partir** desta etapa (matriz abaixo).
-- Tipo `AppRole` já existe em `RoleGuard.tsx`; vou exportá-lo de um único lugar (`src/lib/roles.ts`) e reaproveitar em ambos.
+Migração:
+- `proposal_id` deixa de ser `NOT NULL` (passa a ser opcional, só preenchido quando houver uma proposta vinculada).
+- Remove o `UNIQUE` rígido em `proposal_id` e recria como índice **parcial** (`WHERE proposal_id IS NOT NULL`) — isso evita conflito quando vários cedentes ainda não têm proposta.
+- Cria `UNIQUE INDEX` em `cedente_id` — garante 1 relatório por cedente e habilita `upsert(..., onConflict: "cedente_id")`.
 
-`Pipeline.tsx` passa a importar `STAGE_COLORS` do mesmo módulo (sem mudança visual).
+RLS atual já cobre o caso (políticas baseadas em role, não em proposta) — nada a alterar.
 
-### Matriz de permissões por transição
+### 2. UI — `CedenteDetail.tsx` (aba "Análise de crédito")
 
-| De → Para | Quem pode mover | Gate (já existente) |
-|---|---|---|
-| novo → cadastro | comercial (owner), gestor_comercial, admin | checklist do `EnviarAnaliseDialog` |
-| cadastro → análise | analista_cadastro, gestor_comercial, admin | sem doc reprovado + obrigatórios aprovados |
-| análise → comitê | analista_credito, gestor_credito, admin | parecer concluído (`hasParecer`) |
-| comitê → formalização | comite, gestor_credito, gestor_risco, admin | decisão registrada (`comiteDecidido`) |
-| formalização → ativo | financeiro, gestor_financeiro, admin | minuta assinada (`minutaAssinada`) |
-
-Devolver/voltar continua só pelos botões "Devolver…" existentes — a esteira só **avança**, evitando cliques destrutivos acidentais.
-
-### Layout (ASCII)
+Substituir o estado vazio "Criar proposta" pelo `CreditReportForm` renderizado direto:
 
 ```text
- ●━━━━━━━●━━━━━━━○━━━━━━━○━━━━━━━○━━━━━━━○
- Novo    Cadastro  Análise   Comitê   Formaliz.  Ativo
- ✓        ●(atual)  ↑clicável  bloq.    bloq.     bloq.
+┌─ Aba: Análise de crédito ──────────────────────────────┐
+│  [Relatório estruturado de crédito · 0/8 seções]       │
+│  ▸ 1. Identificação                                    │
+│  ▸ 2. Descrição da empresa                             │
+│  ▸ … (8 acordeões)                                     │
+│  [Pareceres em camadas + conclusão]                    │
+│  [Salvar relatório]                                    │
+│                                                         │
+│  ── Quando existir proposta vinculada ──────────────── │
+│  [Card: Proposta ativa #123 · Estágio: comitê]         │
+│  [Sub-aba: Comitê] (só aparece se alçada = comitê)     │
+└────────────────────────────────────────────────────────┘
 ```
 
-- `✓` etapas concluídas — bolinha na cor da etapa, opacidade 50%.
-- `●` etapa atual — bolinha cheia na cor da etapa + label em negrito.
-- Próxima etapa: clicável **se** o usuário tem permissão **e** os gates estão atendidos.
-  - Sem permissão → tooltip "Apenas [papel] pode avançar para [etapa]".
-  - Faltam gates → tooltip lista as pendências.
-- Demais etapas futuras: cinza fraco, sem cursor.
-- Conector entre pontos colorido até a etapa atual; cinza depois.
-- Altura total ~48px, sem fundo próprio, integrado ao card do cabeçalho.
+- Remover botão "Criar proposta" e o `ProposalFormDialog` da aba.
+- Remover sub-aba "Pareceres" (já fica no próprio formulário).
+- Manter sub-aba "Comitê" só quando houver proposta com `approver = "comite"` (gameficação continua dependendo da proposta porque ela carrega a alçada/quórum).
 
-### Implementação
+### 3. `CreditReportForm.tsx`
 
-**Novo componente** `src/components/cedentes/CedenteStageStepper.tsx`:
-- Props: `stage: CedenteStage`, `gateInfo: { hasVisitReport, hasPleito, obrigatoriosFaltando, docsRejeitados, hasParecer, comiteDecidido, minutaAssinada }`, `isOwner: boolean`, `onAdvance(target: CedenteStage): void`.
-- Calcula próxima etapa via `nextStage()` (já existe em `cedente-stages.ts`).
-- Calcula gate via `evaluateGates()` (já existe).
-- Calcula `canMove` cruzando `useAuth().hasRole` com `STAGE_PERMISSIONS[stage]` + `isOwner` para `novo`.
-- Renderiza `<ol>` horizontal com `flex` + linha conectora via spans absolutos. Tooltips do shadcn.
+Tornar `proposalId` opcional:
+- Assinatura: `{ cedenteId: string; proposalId?: string | null }`.
+- Carregamento: busca por `cedente_id` (não mais por `proposal_id`).
+- Upsert: usa `onConflict: "cedente_id"` e só inclui `proposal_id` no payload se existir.
 
-**Integração em `CedenteDetail.tsx`**:
-- Inserir o stepper no card do cabeçalho, abaixo do nome/CNPJ.
-- Centralizar handlers das transições:
-  - `novo → cadastro` → abre o `EnviarAnaliseDialog` existente.
-  - `cadastro → análise` → reaproveita lógica de `RevisarCadastroActions.aprovar` (extrair função `aprovarCadastro` num util ou manter dentro do componente).
-  - `análise → comitê`, `comitê → formalização`, `formalização → ativo` → diálogo simples de confirmação (`AlertDialog`) listando o gate atendido + `supabase.from("cedentes").update({ stage: <next> })` + toast + `load()`.
-- Remover do header os botões redundantes "Enviar para análise" e "Aprovar cadastro" (a esteira passa a ser o ponto único de avanço). Mantemos apenas "Devolver ao comercial" no header quando `stage === 'cadastro'`.
-- O `Badge` solto de stage no cabeçalho fica redundante e pode ser removido (a etapa atual já está clara na trilha).
+## Arquivos afetados
 
-**Refator em `Pipeline.tsx`**:
-- Remover `STAGE_COLORS` local e importar de `@/lib/cedente-stages`.
-- (Opcional, fora de escopo curto) usar `STAGE_PERMISSIONS` para bloquear drag-and-drop também no kanban grande quando o usuário não tem permissão para a transição. **Sugiro fazer junto** — fica realmente espelhado.
+- **migration nova**: torna `proposal_id` nullable + índices únicos parciais
+- **src/components/credito/CreditReportForm.tsx**: query/upsert por `cedente_id`, `proposalId` opcional
+- **src/pages/CedenteDetail.tsx**: aba "Análise de crédito" renderiza o form direto; mantém comitê condicional; remove `ProposalFormDialog` desta aba
 
-**Sem mudanças no banco**: as RLS já restringem `update` em `cedentes`. A UI apenas espelha quem realmente consegue executar o `UPDATE`.
+## O que NÃO muda
 
-### Visual / minimalismo
-
-- Pontos: 10px de diâmetro; conector: 2px de altura.
-- Cores via `STAGE_COLORS` (mesmas do pipeline grande), com opacidade reduzida para etapas concluídas/futuras.
-- Sem ícones por etapa — só o ponto + label `text-xs`. Mantém a tela limpa.
-
-### Fora de escopo
-
-- Drag-and-drop dentro do mini-kanban (intencional: clique só na próxima etapa).
-- Notificação ao próximo responsável.
-- Mudança visual no `/pipeline` global além do refactor de cores e (opcional) bloqueio por permissão.
+- A esteira de Crédito (`/credito`) e a criação de propostas por lá continuam funcionando normalmente.
+- Quando uma proposta é criada para o cedente, o relatório existente passa a ser exibido também na tela da proposta (mesma linha, vinculada por `cedente_id`).
+- Comitê gameficado continua exigindo proposta (porque depende de alçada/quórum).
