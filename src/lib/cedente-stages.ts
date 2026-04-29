@@ -94,12 +94,12 @@ export function evaluateGates(c: CedenteForGates): GateResult {
     }
     case "comite": {
       // comite -> formalizacao
-      check(c.comiteDecidido, "Decisão do comitê registrada (Fase 2)");
+      check(c.comiteDecidido, "Decisão do comitê registrada");
       break;
     }
     case "formalizacao": {
       // formalizacao -> ativo
-      check(c.minutaAssinada, "Minuta gerada e assinada (Fase 3)");
+      check(c.minutaAssinada, "Minuta gerada e assinada");
       break;
     }
     default:
