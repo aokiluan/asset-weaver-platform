@@ -1,56 +1,59 @@
 ## Objetivo
 
-Hoje a aba **Representantes legais** apenas lista o que veio da Receita (nome, CPF mascarado, qualificação, % capital). Quero que cada representante possa ser **expandido e editado** com o mesmo conjunto de campos que usamos no cadastro de sócios (RG, filiação, endereço, estado civil, cônjuge, etc.), além de permitir adicionar representantes manualmente.
+Evitar perda de dados digitados em caso de refresh, queda de conexão ou fechamento acidental. Vou implementar **autosave de rascunho local** (localStorage) com restauração automática nos formulários longos do projeto.
 
-A boa notícia: a tabela `cedente_representantes` no banco **já tem todas as colunas** necessárias (sexo, data_nascimento, rg, orgao_emissor, naturalidade, nome_pai/mae, endereço completo, estado_civil e bloco completo de cônjuge). Não precisa de migration.
+## Como funciona
 
-## O que vai mudar
+1. **Salva enquanto digita**: a cada alteração, com debounce de ~600ms, o estado do formulário é serializado em `localStorage` sob uma chave única por usuário.
+2. **Restaura ao abrir**: quando o form monta, se existir rascunho válido, o conteúdo é carregado automaticamente e mostra um aviso discreto: *"Rascunho restaurado · há X min"* com botão **"Descartar"**.
+3. **Limpa após salvar com sucesso**: assim que o `INSERT`/`UPDATE` no banco volta sem erro, a chave do rascunho é removida.
+4. **Indicador visual**: pequeno texto no rodapé do form: *"Rascunho salvo · 14:02"*.
+5. **Escopo por usuário**: chave inclui o `user.id` para não vazar entre contas no mesmo navegador.
+6. **TTL de 7 dias**: rascunhos mais antigos são descartados automaticamente.
+7. **Sem arquivos**: uploads de documento ficam fora do rascunho (apenas campos de texto/número/data/select).
 
-### 1. `src/components/cedentes/CedenteRepresentantesTab.tsx` (refatorar)
+## O que vou criar
 
-Transformar a tabela atual em uma **lista de cards expansíveis** (Accordion). Cada card mostra no cabeçalho o que já aparece hoje (nome, CPF, qualificação, % capital, badge da fonte) e, ao expandir, exibe o formulário completo do representante.
+### 1. Hook `src/hooks/useFormDraft.ts`
 
-- Reaproveita o componente `SocioFormCard` (renomeando uso interno para "Representante"), que já tem todos os campos pedidos:
-  - Identificação: nome, sexo, data nascimento, CPF, RG, órgão emissor, data expedição, naturalidade, nacionalidade, nome do pai, nome da mãe
-  - Endereço completo com auto-preenchimento via CEP
-  - Estado civil + bloco de cônjuge (aparece quando casado/união estável)
-- Adiciona dois campos extras no topo do card: **Qualificação** (texto livre, ex: "Diretor", "Sócio-administrador") e **% Capital** (numérico).
-- Botão **"Salvar"** por card → faz `update` na linha em `cedente_representantes`. Toast de confirmação.
-- Botão **"+ Adicionar representante"** no rodapé → cria card vazio em memória; ao salvar, faz `insert` com `fonte = 'manual'`.
-- Botão **"Remover"** (já existe no SocioFormCard) → confirmação + delete.
-- Botão **"Atualizar da Receita"** continua igual; ao sincronizar, mantém os campos extras já preenchidos manualmente (a edge function `sync-representantes` já faz upsert por CPF/nome, então dados manuais não são apagados — vou validar isso).
-
-### 2. Pequeno ajuste no `SocioFormCard.tsx`
-
-Tornar o título configurável via prop opcional (`title?: string`) para mostrar "Representante N" ao invés de "Sócio N", sem duplicar o componente. Mudança mínima e retrocompatível.
-
-### 3. Persistência
-
-Nada de novo no schema. Os updates usam o cliente Supabase normal — RLS já permite edição para admin, gestor comercial, analista de cadastro e dono do cedente.
-
-## Layout (referência ASCII)
-
-```text
-Representantes legais                 [ Atualizar da Receita ]
-──────────────────────────────────────────────────────────────
-▾ EVERALDO FERNANDO SILVERIO   ***926008**   Diretor   —   [Receita]
-   ┌─────────────────────────────────────────────────────────┐
-   │ Qualificação [______]   % Capital [___]                 │
-   │ Nome [_________________]  Sexo [▾]  Nascimento [__]     │
-   │ CPF [____]  RG [____]  Órgão [__]  Data exp. [__]       │
-   │ Naturalidade / Nacionalidade / Pai / Mãe                │
-   │ Endereço completo (CEP autopreenche)                    │
-   │ Estado civil [▾]  → se casado: bloco do cônjuge         │
-   │                                       [Remover] [Salvar]│
-   └─────────────────────────────────────────────────────────┘
-▸ LUAN AOKI HELENA SCHUWARTEN  ***428128**   Diretor   —   [Receita]
-
-[ + Adicionar representante ]
+```ts
+const { restored, lastSavedAt, discardDraft, clearDraft } = useFormDraft({
+  key: `cedente-novo:${user.id}`,
+  value: form,
+  setValue: setForm,
+  enabled: open, // só ativa enquanto o form está visível
+});
 ```
+
+### 2. Componente `src/components/ui/draft-indicator.tsx`
+
+Bloco compacto exibido no rodapé dos forms com timestamp do último rascunho salvo e botão "Descartar rascunho".
+
+### 3. Aplicar nos 6 formulários
+
+| Formulário | Chave do rascunho |
+|---|---|
+| `CedenteNovoSheet` | `draft:cedente-novo:<userId>` |
+| `CedenteFormDialog` | `draft:cedente-edit:<cedenteId>` |
+| `CedenteRepresentantesTab` (estado dos cards não persistidos / em edição) | `draft:representantes:<cedenteId>` |
+| `CedenteVisitReportForm` | `draft:visit-report:<cedenteId>` |
+| `CreditReportForm` | `draft:credit-report:<cedenteId>` |
+| `LeadFormDialog` | `draft:lead:<leadId\|new>:<userId>` |
+
+## Por que localStorage e não banco?
+
+Salvar a cada tecla no Supabase geraria escrita excessiva, custos e ruído de histórico/triggers. O rascunho local é instantâneo, gratuito, e cobre exatamente o caso "fechei sem querer / atualizei a página". O save oficial no banco continua acontecendo via botão **Salvar**.
 
 ## Arquivos afetados
 
-- `src/components/cedentes/CedenteRepresentantesTab.tsx` — refatoração principal
-- `src/components/cedentes/SocioFormCard.tsx` — adicionar prop `title?` opcional
+**Novos**:
+- `src/hooks/useFormDraft.ts`
+- `src/components/ui/draft-indicator.tsx`
 
-Posso seguir com a implementação?
+**Editados**:
+- `src/components/cedentes/CedenteNovoSheet.tsx`
+- `src/components/cedentes/CedenteFormDialog.tsx`
+- `src/components/cedentes/CedenteRepresentantesTab.tsx`
+- `src/components/cedentes/CedenteVisitReportForm.tsx`
+- `src/components/credito/CreditReportForm.tsx`
+- `src/components/leads/LeadFormDialog.tsx`
