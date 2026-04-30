@@ -46,9 +46,10 @@ interface Props {
   title?: string;
   headerExtra?: React.ReactNode;
   footerExtra?: React.ReactNode;
+  hideDataExpedicao?: boolean;
 }
 
-export function SocioFormCard({ socio, index, onChange, onRemove, title, headerExtra, footerExtra }: Props) {
+export function SocioFormCard({ socio, index, onChange, onRemove, title, headerExtra, footerExtra, hideDataExpedicao }: Props) {
   const set = <K extends keyof Socio>(k: K, v: Socio[K]) => onChange({ ...socio, [k]: v });
 
   const handleCEP = async (cep: string) => {
