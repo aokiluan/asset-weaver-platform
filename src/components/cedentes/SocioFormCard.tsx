@@ -224,10 +224,6 @@ export function SocioFormCard({ socio, index, onChange, onRemove, title, headerE
               <Input value={socio.conjuge_orgao_emissor ?? ""} onChange={(e) => set("conjuge_orgao_emissor", e.target.value)} />
             </div>
             <div>
-              <Label>Data de expedição</Label>
-              <Input type="date" value={socio.conjuge_data_expedicao ?? ""} onChange={(e) => set("conjuge_data_expedicao", e.target.value)} />
-            </div>
-            <div>
               <Label>Naturalidade</Label>
               <Input value={socio.conjuge_naturalidade ?? ""} onChange={(e) => set("conjuge_naturalidade", e.target.value)} />
             </div>
