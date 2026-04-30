@@ -1,91 +1,65 @@
-
 ## Objetivo
 
-Tornar a tela de Documentos mais compacta e óbvia para o comercial classificar:
+Reduzir o ruído visual da tabela "Compacto" e transformar o "drop" textual em uma zona de arraste sutil mas inequívoca, mantendo alta densidade.
 
-1. A área tracejada de upload passa a abrigar também os arquivos **"Sem categoria"** (bandeja única de entrada).
-2. Substituir o modo **Quadro** (kanban com colunas largas) por uma **Tabela Compacta** inspirada na "Central de Documentos" da imagem 2 — cada linha (categoria) é uma drop-zone.
+## Mudanças propostas
 
-Sem mudanças de banco. Mudanças isoladas em `src/components/cedentes/DocumentosUploadKanban.tsx`.
+### 1. Tabela mais limpa (menos colunas, menos cores)
 
----
+Hoje a linha tem: ponto de status • badge SIM/NÃO • chevron • nome • "faltando" • anexados • verificados • drop. É demais.
 
-## 1. Bandeja de entrada unificada (Upload + Sem categoria)
-
-Hoje o "Sem categoria" é só mais um grupo na lista/quadro. Vamos fundi-lo com o dropzone de upload no topo:
+Nova estrutura por linha (apenas 3 zonas visuais):
 
 ```text
-┌──────────────────────────────────────────────────────────────┐
-│ ⬆  Arraste arquivos aqui ou clique para selecionar           │
-│                              PDF/JPG/PNG • IA sugere categoria│
-├──────────────────────────────────────────────────────────────┤
-│ 3 arquivos sem categoria — arraste para uma linha abaixo      │
-│ ┌────────────────────────┬───────────────────────┬─────────┐ │
-│ │ ☐ contrato_v2.pdf      │ IA: Contrato Social ✓ │ ↓ ✕    │ │
-│ │ ☐ comprovante.jpg      │ IA: Comprov. End.  ✓ │ ↓ ✕    │ │
-│ │ ☐ doc_misterio.pdf     │ — sem sugestão —      │ ↓ ✕    │ │
-│ └────────────────────────┴───────────────────────┴─────────┘ │
-└──────────────────────────────────────────────────────────────┘
+●  Contrato Social *                              0 anexos      ⤓ solte aqui
+●  Cartão CNPJ *           ▸                      1 · 0 verif.  ⤓ solte aqui
+●  Comprovante Endereço                           0 anexos      ⤓ solte aqui
 ```
 
-Comportamento:
-- Quando **não há** docs sem categoria, só o dropzone aparece (estado atual).
-- Quando há, expande mostrando lista compacta interna: nome + chip da sugestão de IA + botão "Aceitar" + dropdown para mover manualmente + remover.
-- O dropzone continua aceitando upload por drag (de arquivos do SO) **e** por click — não conflita com drag interno (que é entre cards e linhas da tabela).
-- Cards desta bandeja são `draggable` para arrastar até a tabela de categorias.
-- Removemos o grupo "Sem categoria" da lista/tabela principal abaixo (evita duplicação).
+Regras:
+- **Remover** a coluna "OBRIG." com badges SIM/NÃO. O obrigatório vira apenas um asterisco `*` discreto ao lado do nome (igual a campo obrigatório de formulário).
+- **Remover** o texto "faltando" em vermelho. O ponto de status já comunica (vermelho = obrigatório vazio, âmbar = anexado/não verificado, verde = ok, cinza = opcional vazio).
+- **Unificar** "ANEXADOS" e "VERIFICADOS" em uma única coluna textual à direita: `0 anexos` / `1 · 0 verif.` / `2 · 2 verif. ✓`. Sem pílulas azuis.
+- **Remover** os fundos coloridos das linhas (`bg-destructive/5`). Linha fica neutra; só o ponto carrega cor. Hover normal.
+- Chevron de expandir só aparece quando há documentos (já é assim, mantém).
+- Header da tabela: só `CATEGORIA` e `STATUS` (alinhado à direita). Sem "OBRIG.", "ANEXADOS", "VERIFICADOS" separados.
 
-## 2. Tabela compacta de categorias (substitui o modo Quadro)
+### 2. Zona de drop minimalista por linha
 
-Inspirada na "Central de Documentos" mas otimizada para drag-and-drop. Cada **linha = uma categoria** = uma drop-zone.
+Substituir o texto "drop" por um alvo de drop sutil ancorado à direita da linha:
 
+Estado padrão (sem arrasto na tela):
 ```text
-┌────┬─────────┬────────────────────────────────┬──────────┬──────────┬─────┐
-│ ●  │ OBRIG.  │ CATEGORIA                      │ ANEXADOS │ VERIFIC. │ ▾   │
-├────┼─────────┼────────────────────────────────┼──────────┼──────────┼─────┤
-│ ✓  │  SIM    │ Contrato Social                │   2      │  2/2 ✓   │  ▸  │
-│ ✗  │  SIM    │ Comprovante de Endereço        │   0      │   —      │  ▸  │ ← drop aqui
-│ ✓  │  NÃO    │ Procuração                     │   1      │  0/1     │  ▸  │
-│ ✓  │  SIM    │ Declaração de Faturamento      │   3      │  1/3     │  ▾  │
-│    │         │   ↳ ☐ fat_jan.pdf  …  ✓ verif. │          │          │     │
-│    │         │   ↳ ☐ fat_fev.pdf  …  ⏳ pend. │          │          │     │
-└────┴─────────┴────────────────────────────────┴──────────┴──────────┴─────┘
+… 0 anexos      [ ⤓ ]      ← ícone fantasma, opacity 40%, sem borda
 ```
 
-Características:
-- **Densidade alta**: linhas de ~36px, sem cards grandes. Toda a página de categorias cabe sem rolagem horizontal.
-- **Coluna "●"**: bolinha de status (verde se completo, vermelho vazio, cinza opcional vazio).
-- **Coluna "OBRIG."**: chip "SIM" verde / "NÃO" cinza (estilo da imagem).
-- **Coluna ANEXADOS / VERIFICADOS**: contagens.
-- **Linha inteira é drop-zone**: ao arrastar um doc da bandeja (ou de outra categoria) para qualquer ponto da linha, a linha realça (ring-primary) e ao soltar move o(s) documento(s).
-- **Expansão inline (▸/▾)**: clicar na linha (ou no chevron) revela sub-linhas com cada documento daquela categoria — checkbox, nome, selo de status, mover/baixar/remover. Todas começam **colapsadas** por padrão (visão executiva).
-- **Multi-seleção continua funcionando**: checkbox nas sub-linhas e na bandeja; arrastar 1 = arrasta o(s) selecionado(s) (já implementado em `onCardDragStart`).
-- Linhas obrigatórias vazias ganham borda esquerda destacada (accent-destructive sutil) — substitui o "faltando" verboso.
+Quando o usuário começa a arrastar qualquer documento (drag global ativo):
+```text
+… 0 anexos      [ ⤓  soltar aqui ]   ← borda tracejada fina, aparece em todas as linhas
+```
 
-### Toggle de visualização
+Quando arrasta POR CIMA da linha:
+```text
+… 0 anexos      [ ⤓  soltar em Contrato Social ]   ← preenche, ring primary
+```
 
-- Renomear modos: **"Compacto"** (a nova tabela, default) e **"Detalhado"** (lista atual com grupos colapsáveis e cards). Removemos o modo "Quadro" (kanban largo).
-- O ícone `LayoutGrid` é reaproveitado para "Compacto"; `LayoutList` para "Detalhado".
+Implementação:
+- Detectar drag ativo via estado `draggingIds` (já temos `onCardDragStart`). Setar `isDragging` global no `onDragStart` raiz e limpar no `onDragEnd`.
+- O alvo de drop é um `<span>` de ~140px à direita: `border border-dashed border-transparent` no estado normal; `border-border` quando `isDragging`; `border-primary bg-primary/10` quando hover.
+- A linha inteira continua aceitando drop (área maior é boa para UX), mas o feedback visual fica concentrado no alvo, não pintando a linha toda.
 
-## 3. Detalhes técnicos
+### 3. Ajustes finos
 
-Arquivo único: `src/components/cedentes/DocumentosUploadKanban.tsx`.
+- Reduzir altura da linha: `py-1.5` em vez de `py-2.5`.
+- Tipografia: nome da categoria `text-sm`, contadores `text-xs text-muted-foreground`.
+- Manter os filtros (Todos / Pendentes / …) como estão.
+- Manter a barra "2/10 categorias obrigatórias preenchidas" no topo.
+- Manter o tray de upload + "sem categoria" no topo (já implementado).
 
-- `ViewMode = "compacto" | "detalhado"` (default `"compacto"`).
-- Novo componente interno `<EntradaSemCategoria>`:
-  - Recebe os docs com `categoria_id === null`, renderiza dropzone + lista interna (quando `docs.length > 0`).
-  - Reusa `uploadFiles`, `onCardDragStart`, `moveTo`, `handleDelete`.
-  - Quando o usuário solta um arquivo do SO no dropzone: continua como upload; quando solta um card interno (que já está sem categoria), nada acontece (drop-zone interna ignora `text/documento-ids`).
-- Novo `<TabelaCategorias>` (modo compacto):
-  - `grupos` filtrado para excluir `SEM_CAT` (já mostrado na bandeja).
-  - Cada `<tr>` aplica `onDragOver/onDrop` chamando `onCategoryDragOver/onCategoryDrop` existentes.
-  - Estado `expanded: Set<string>` (independente de `collapsed` do modo detalhado).
-  - Sub-linhas usam variante simplificada do `renderCard` (sem o card grande do board) — basicamente o mesmo HTML do variant `"list"` atual mas dentro de `<tr>`.
-- O modo "Detalhado" reaproveita o renderizador atual de lista, mas também sem o grupo `SEM_CAT` (movido p/ bandeja).
-- Filtros (`Todos`, `Pendentes`, etc.) continuam funcionando — o filtro `"sem_categoria"` passa a focar/destacar a bandeja (rolar até ela e abrir um anel) em vez de filtrar a tabela; alternativa simples: manter como está mas escondendo a tabela quando o filtro for `sem_categoria`.
+## Resultado esperado
 
-## 4. Fora de escopo
+Tabela com no máximo 3 elementos visuais por linha (status • categoria • contador+drop), zero badges coloridos repetidos, zero fundos vermelhos. Quando o usuário arrasta, todas as linhas "acendem" discretamente com a borda tracejada — fica óbvio onde soltar sem precisar de texto explicativo permanente.
 
-- Sem mudanças de schema, RLS, ou edge functions.
-- Permissões de conciliação (admin / analista_cadastro) permanecem como já implementado.
-- `ConciliacaoDocumentosSheet` não muda nesta passada.
+## Arquivo afetado
+
+- `src/components/cedentes/DocumentosUploadKanban.tsx` — refatorar somente a renderização da tabela compacta (`viewMode === "compacto"`) e adicionar estado `isDragging` global. Sem mudança de schema, sem mudança em outras views.
