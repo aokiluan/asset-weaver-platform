@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Send, Undo2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
-import type { AppRole } from "@/lib/roles";
+import { ROLE_LABEL, type AppRole } from "@/lib/roles";
 import {
   CedenteStage, STAGE_LABEL, evaluateGates, type CedenteForGates,
 } from "@/lib/cedente-stages";
