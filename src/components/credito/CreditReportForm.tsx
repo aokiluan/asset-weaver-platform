@@ -132,6 +132,7 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
     if (error) { toast.error("Erro ao salvar", { description: error.message }); return; }
     setReport(data as ReportRow);
     setDirty(false);
+    clearDraft();
     toast.success("Relatório salvo");
   };
 
