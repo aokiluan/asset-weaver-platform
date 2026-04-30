@@ -101,8 +101,8 @@ const GROUPS: Group[] = [
 
 const PIN_KEY = "sidebar:pinned";
 const OPEN_KEY = "sidebar:openGroups";
-const COLLAPSED_W = 56;
-const EXPANDED_W = 240;
+const COLLAPSED_W = 60;
+const EXPANDED_W = 248;
 
 export function AppSidebar() {
   const { pathname } = useLocation();
@@ -219,15 +219,14 @@ export function AppSidebar() {
                       setOpenGroups((s) => ({ ...s, [group.key]: !isOpen }))
                     }
                     className={cn(
-                      "w-full px-3 h-8 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider",
-                      "text-sidebar-foreground/55 hover:text-sidebar-foreground transition-colors",
+                      "w-full px-4 h-7 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.08em]",
+                      "text-muted-foreground hover:text-foreground transition-colors",
                     )}
                   >
-                    <group.icon className="h-3.5 w-3.5" />
                     <span className="flex-1 text-left truncate">{group.label}</span>
                     <ChevronDown
                       className={cn(
-                        "h-3.5 w-3.5 transition-transform",
+                        "h-3 w-3 transition-transform opacity-60",
                         !isOpen && "-rotate-90",
                       )}
                     />
@@ -289,13 +288,16 @@ function SidebarItem({
         end={end}
         title={!expanded ? label : undefined}
         className={cn(
-          "my-0.5 flex items-center gap-2.5 rounded-md h-9 text-[13px]",
-          "text-sidebar-foreground/85 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-          active && "bg-sidebar-accent text-sidebar-accent-foreground font-medium",
-          expanded ? (nested ? "mx-2 pl-6 pr-2.5" : "mx-2 px-2.5") : "mx-1.5 justify-center px-0",
+          "relative my-0.5 flex items-center gap-3 rounded-md h-10 text-[13.5px]",
+          "text-sidebar-foreground/85 hover:bg-sidebar-accent hover:text-foreground transition-colors",
+          active && [
+            "bg-primary/10 text-primary font-medium hover:bg-primary/10 hover:text-primary",
+            "before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-[3px] before:rounded-r before:bg-primary",
+          ],
+          expanded ? (nested ? "mx-2 pl-5 pr-3" : "mx-2 px-3") : "mx-1.5 justify-center px-0",
         )}
       >
-        <Icon className="h-4 w-4 shrink-0" />
+        <Icon className={cn("h-4 w-4 shrink-0", active && "text-primary")} />
         {expanded && <span className="truncate">{label}</span>}
       </NavLink>
     </li>
