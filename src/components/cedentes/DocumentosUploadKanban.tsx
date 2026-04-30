@@ -117,6 +117,7 @@ export function DocumentosUploadKanban({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
   const [dragOverCat, setDragOverCat] = useState<string | null>(null);
+  const [isAnyDragging, setIsAnyDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [checked, setChecked] = useState<Set<string>>(new Set());
   const [filter, setFilter] = useState<Filter>("todos");
