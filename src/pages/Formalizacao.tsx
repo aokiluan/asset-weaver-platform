@@ -113,7 +113,7 @@ export default function Formalizacao() {
 
   const handleGerarPDF = (c: CedenteRow) => {
     const proposta = propostas[c.id] ?? null;
-    downloadMinutaPDF({ cedente: c, proposta });
+    downloadMinutaPDF({ cedente: c, representantes: [], fiadores: [], proposta });
     toast.success("Minuta gerada", {
       description: "Suba o PDF na ferramenta de assinatura (CRDC).",
     });
