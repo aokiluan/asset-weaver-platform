@@ -164,6 +164,11 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
           </div>
         </div>
         <Progress value={(completude / 8) * 100} className="h-2" />
+        <DraftIndicator
+          lastSavedAt={lastSavedAt}
+          restored={restored}
+          onDiscard={() => discardDraft(emptyReport(cedenteId, proposalId))}
+        />
       </div>
 
       {/* Acordeão das 8 seções */}
