@@ -70,6 +70,19 @@ export function LeadFormDialog({ open, onOpenChange, initial, onSaved }: Props) 
     })();
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const tipo = watch("tipo");
+  const stageId = watch("stage_id");
+  const ownerId = watch("owner_id");
+  const allValues = watch();
+
+  const draftKey = open ? `lead-${initial?.id ?? "new"}` : null;
+  const { restored, lastSavedAt, clearDraft, discardDraft } = useFormDraft<LeadFormValues>({
+    key: draftKey,
+    value: allValues,
+    setValue: (v) => reset(v),
+    enabled: open,
+  });
+
   const onSubmit = async (values: LeadFormValues) => {
     setSaving(true);
     const payload = {
