@@ -181,11 +181,16 @@ export function CedenteRepresentantesTab({ cedenteId, jaSincronizado, onSynced }
       return;
     }
     toast.success("Representante salvo");
-    setItems((prev) =>
-      prev.map((r) =>
+    setItems((prev) => {
+      const next = prev.map((r) =>
         r.id === id ? { ...r, id: savedId, persisted: true, dirty: false } : r,
-      ),
-    );
+      );
+      // Se não há mais itens com edição pendente, limpa o rascunho local
+      if (!next.some((r) => r.dirty || !r.persisted)) {
+        clearDraft();
+      }
+      return next;
+    });
   };
 
   return (
