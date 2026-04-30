@@ -75,11 +75,13 @@ export function SocioFormCard({ socio, index, onChange, onRemove, title, headerE
   return (
     <div className="rounded-lg border bg-card p-4 space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold">Sócio {index + 1}</h3>
+        <h3 className="font-semibold">{title ?? `Sócio ${index + 1}`}</h3>
         <Button variant="ghost" size="sm" onClick={onRemove} className="text-destructive">
           <Trash2 className="h-4 w-4 mr-1" /> Remover
         </Button>
       </div>
+
+      {headerExtra}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div className="md:col-span-2">
