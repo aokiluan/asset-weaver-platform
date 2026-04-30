@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/accordion";
 import { Loader2, Save, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { useFormDraft } from "@/hooks/useFormDraft";
+import { DraftIndicator } from "@/components/ui/draft-indicator";
 
 interface Props {
   cedenteId: string;
@@ -123,6 +125,13 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
   const [saving, setSaving] = useState(false);
   const [existingId, setExistingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(empty());
+
+  const { restored, lastSavedAt, clearDraft, discardDraft } = useFormDraft<FormState>({
+    key: `visit-report:${cedenteId}`,
+    value: form,
+    setValue: setForm,
+    enabled: !loading,
+  });
 
   useEffect(() => {
     (async () => {
@@ -237,6 +246,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
     setSaving(false);
     if (error) { toast.error("Erro ao salvar", { description: error.message }); return; }
     toast.success("Relatório comercial salvo");
+    clearDraft();
     onSaved?.();
   };
 
@@ -444,7 +454,12 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
         </AccordionItem>
       </Accordion>
 
-      <div className="flex justify-end pt-2">
+      <div className="flex items-center justify-between pt-2 gap-3 flex-wrap">
+        <DraftIndicator
+          lastSavedAt={lastSavedAt}
+          restored={restored}
+          onDiscard={() => discardDraft(empty())}
+        />
         <Button onClick={handleSave} disabled={saving}>
           {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
           {existingId ? "Atualizar relatório" : "Salvar relatório"}

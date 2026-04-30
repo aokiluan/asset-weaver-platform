@@ -10,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { useFormDraft } from "@/hooks/useFormDraft";
+import { DraftIndicator } from "@/components/ui/draft-indicator";
 
 type CedenteStatus = "prospect" | "em_analise" | "aprovado" | "reprovado" | "inativo";
 
@@ -67,6 +69,15 @@ export function CedenteFormDialog({ open, onOpenChange, initial, onSaved }: Prop
 
   const status = watch("status");
   const ownerId = watch("owner_id");
+  const allValues = watch();
+
+  const draftKey = open ? `cedente-${initial?.id ?? "new"}` : null;
+  const { restored, lastSavedAt, clearDraft, discardDraft } = useFormDraft<CedenteFormValues>({
+    key: draftKey,
+    value: allValues,
+    setValue: (v) => reset(v),
+    enabled: open,
+  });
 
   const onSubmit = async (values: CedenteFormValues) => {
     setSaving(true);
@@ -103,6 +114,7 @@ export function CedenteFormDialog({ open, onOpenChange, initial, onSaved }: Prop
       return;
     }
     toast.success(isEdit ? "Cedente atualizado" : "Cedente criado");
+    clearDraft();
     onSaved();
     onOpenChange(false);
   };
@@ -219,12 +231,19 @@ export function CedenteFormDialog({ open, onOpenChange, initial, onSaved }: Prop
             <Textarea id="observacoes" rows={3} {...register("observacoes")} />
           </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-            <Button type="submit" disabled={saving}>
-              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isEdit ? "Salvar alterações" : "Criar cedente"}
-            </Button>
+          <DialogFooter className="sm:justify-between gap-2">
+            <DraftIndicator
+              lastSavedAt={lastSavedAt}
+              restored={restored}
+              onDiscard={() => discardDraft({ status: "prospect", razao_social: "", cnpj: "", ...initial })}
+            />
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+              <Button type="submit" disabled={saving}>
+                {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isEdit ? "Salvar alterações" : "Criar cedente"}
+              </Button>
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>

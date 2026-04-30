@@ -8,6 +8,8 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useFormDraft } from "@/hooks/useFormDraft";
+import { DraftIndicator } from "@/components/ui/draft-indicator";
 
 interface FormData {
   cnpj: string;
@@ -49,8 +51,17 @@ export function CedenteNovoSheet({ open, onOpenChange, onCreated }: Props) {
   const [saving, setSaving] = useState(false);
   const [validatingCNPJ, setValidatingCNPJ] = useState(false);
 
+  const draftKey = user?.id ? `cedente-novo:${user.id}` : null;
+  const { restored, lastSavedAt, clearDraft, discardDraft } = useFormDraft({
+    key: draftKey,
+    value: form,
+    setValue: setForm,
+    enabled: open,
+  });
+
   useEffect(() => {
-    if (open) setForm(empty);
+    if (open && !restored) setForm(empty);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const set = <K extends keyof FormData>(k: K, v: FormData[K]) =>
@@ -142,6 +153,7 @@ export function CedenteNovoSheet({ open, onOpenChange, onCreated }: Props) {
       return;
     }
     toast.success("Cedente criado");
+    clearDraft();
     onOpenChange(false);
     onCreated?.(data.id);
   };
@@ -255,12 +267,19 @@ export function CedenteNovoSheet({ open, onOpenChange, onCreated }: Props) {
           </section>
         </div>
 
-        <div className="px-6 py-3 border-t flex justify-end gap-2 bg-card">
-          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={saving}>Cancelar</Button>
-          <Button onClick={save} disabled={saving}>
-            {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            Salvar
-          </Button>
+        <div className="px-6 py-3 border-t flex items-center justify-between gap-2 bg-card">
+          <DraftIndicator
+            lastSavedAt={lastSavedAt}
+            restored={restored}
+            onDiscard={() => discardDraft(empty)}
+          />
+          <div className="flex gap-2">
+            <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={saving}>Cancelar</Button>
+            <Button onClick={save} disabled={saving}>
+              {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Salvar
+            </Button>
+          </div>
         </div>
       </SheetContent>
     </Sheet>

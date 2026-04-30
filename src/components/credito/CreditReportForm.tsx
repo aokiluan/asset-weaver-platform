@@ -11,6 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { CheckCircle2, Circle, Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
+import { useFormDraft } from "@/hooks/useFormDraft";
+import { DraftIndicator } from "@/components/ui/draft-indicator";
 import {
   SECTION_ORDER,
   SECTION_LABEL,
@@ -65,6 +67,13 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
+
+  const { restored, lastSavedAt, clearDraft, discardDraft } = useFormDraft<Partial<ReportRow>>({
+    key: `credit-report:${cedenteId}`,
+    value: report,
+    setValue: (v) => { setReport(v); setDirty(true); },
+    enabled: !loading,
+  });
 
   const canEdit =
     hasRole("admin") || hasRole("analista_credito") ||
@@ -123,6 +132,7 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
     if (error) { toast.error("Erro ao salvar", { description: error.message }); return; }
     setReport(data as ReportRow);
     setDirty(false);
+    clearDraft();
     toast.success("Relatório salvo");
   };
 
@@ -154,6 +164,11 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
           </div>
         </div>
         <Progress value={(completude / 8) * 100} className="h-2" />
+        <DraftIndicator
+          lastSavedAt={lastSavedAt}
+          restored={restored}
+          onDiscard={() => discardDraft(emptyReport(cedenteId, proposalId))}
+        />
       </div>
 
       {/* Acordeão das 8 seções */}
