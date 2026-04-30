@@ -292,7 +292,7 @@ export default function CedenteDetail() {
           { v: "historico", label: "Histórico" },
         ];
         return (
-          <div className="flex gap-1 border-b overflow-x-auto">
+          <div className="flex flex-wrap gap-x-1 border-b">
             {TABS.map((t) => {
               const Icon = t.icon;
               const active = tab === t.v;
