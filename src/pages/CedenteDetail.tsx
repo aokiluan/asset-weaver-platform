@@ -14,8 +14,8 @@ import { CedenteVisitReportForm } from "@/components/cedentes/CedenteVisitReport
 import { CedenteRepresentantesTab } from "@/components/cedentes/CedenteRepresentantesTab";
 import { DocumentosUploadKanban } from "@/components/cedentes/DocumentosUploadKanban";
 import { EnviarAnaliseDialog } from "@/components/cedentes/EnviarAnaliseDialog";
-import { RevisarCadastroActions } from "@/components/cedentes/RevisarCadastroActions";
 import { CedenteStageStepper } from "@/components/cedentes/CedenteStageStepper";
+import { CedenteStageActions } from "@/components/cedentes/CedenteStageActions";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -245,15 +245,21 @@ export default function CedenteDetail() {
             <p className="text-sm text-muted-foreground font-mono mt-1">CNPJ: {cedente.cnpj}</p>
           </div>
           <div className="flex items-center gap-2 flex-wrap justify-end">
-            {podeRevisarCadastro && (
-              <RevisarCadastroActions
-                cedenteId={cedente.id}
-                canApprove={podeAprovarCadastro}
-                pendencias={pendenciasAnalise}
-                onChanged={load}
-                onlyDevolver
-              />
-            )}
+            <CedenteStageActions
+              cedenteId={cedente.id}
+              stage={cedente.stage}
+              isOwner={isOwner}
+              gateInfo={{
+                hasVisitReport,
+                hasPleito,
+                obrigatoriosFaltando,
+                docsRejeitados,
+                hasParecer,
+                comiteDecidido,
+                minutaAssinada,
+              }}
+              onChanged={load}
+            />
           </div>
         </div>
 
@@ -269,13 +275,7 @@ export default function CedenteDetail() {
             comiteDecidido,
             minutaAssinada,
           }}
-          onAdvance={(target) => {
-            if (cedente.stage === "novo" && target === "cadastro") {
-              setEnviarOpen(true);
-            } else {
-              setConfirmAdvance(target);
-            }
-          }}
+          onAdvance={() => { /* stepper agora é apenas visual; avanço é feito pelos botões acima */ }}
         />
       </div>
 
