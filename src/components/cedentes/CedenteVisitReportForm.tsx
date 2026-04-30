@@ -454,7 +454,12 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
         </AccordionItem>
       </Accordion>
 
-      <div className="flex justify-end pt-2">
+      <div className="flex items-center justify-between pt-2 gap-3 flex-wrap">
+        <DraftIndicator
+          lastSavedAt={lastSavedAt}
+          restored={restored}
+          onDiscard={() => discardDraft(empty())}
+        />
         <Button onClick={handleSave} disabled={saving}>
           {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
           {existingId ? "Atualizar relatório" : "Salvar relatório"}
