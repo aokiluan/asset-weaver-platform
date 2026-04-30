@@ -16,7 +16,7 @@ import {
 import {
   CheckCircle2, XCircle, Download, Trash2, Upload, Loader2, FileText,
   Sparkles, ChevronDown, ChevronRight, FolderInput, Image as ImageIcon,
-  LayoutList, LayoutGrid,
+  LayoutList, LayoutGrid, Inbox, AlertCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
