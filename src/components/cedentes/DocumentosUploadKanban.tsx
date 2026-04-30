@@ -291,6 +291,11 @@ export function DocumentosUploadKanban({
     e.dataTransfer.setData("text/documento-ids", JSON.stringify(ids));
     e.dataTransfer.setData("text/documento-id", docId); // compat
     e.dataTransfer.effectAllowed = "move";
+    setIsAnyDragging(true);
+  };
+  const onCardDragEnd = () => {
+    setIsAnyDragging(false);
+    setDragOverCat(null);
   };
   const onCategoryDragOver = (e: React.DragEvent, catId: string) => {
     if (
