@@ -246,6 +246,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
     setSaving(false);
     if (error) { toast.error("Erro ao salvar", { description: error.message }); return; }
     toast.success("Relatório comercial salvo");
+    clearDraft();
     onSaved?.();
   };
 
