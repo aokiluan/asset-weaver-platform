@@ -1,91 +1,91 @@
 
-# Melhorias na tela de conciliação de documentos
+## Objetivo
 
-## 1. Permissões (botão "Conciliar documentos")
+Tornar a tela de Documentos mais compacta e óbvia para o comercial classificar:
 
-**Hoje**: botão fica desabilitado para qualquer um sem `admin`, `gestor_comercial` ou `analista_cadastro`.
+1. A área tracejada de upload passa a abrigar também os arquivos **"Sem categoria"** (bandeja única de entrada).
+2. Substituir o modo **Quadro** (kanban com colunas largas) por uma **Tabela Compacta** inspirada na "Central de Documentos" da imagem 2 — cada linha (categoria) é uma drop-zone.
 
-**Mudança**: a conciliação/validação é responsabilidade exclusiva do back-office de cadastro. Novos papéis permitidos:
-
-- `admin` (master)
-- `analista_cadastro`
-- *(adicionar)* `gestor_cadastro` se existir — hoje não há esse papel em `roles.ts`, então uso `admin` como "master"
-
-**Removidos** da permissão de conciliar:
-- `gestor_comercial` → vê o botão **inativo** (cinza, com tooltip explicando)
-- Qualquer perfil comercial (`comercial`) ou crédito (`analista_credito`, `gestor_credito`, `comite`) → também botão inativo
-
-Resultado visual:
-- Cadastro/Admin → botão clicável, abre o sheet de conciliação
-- Comercial/Crédito/Outros → botão visível mas desabilitado, com tooltip: *"Apenas o time de cadastro pode conciliar documentos."*
-
-## 2. Nova dinâmica: Comercial distribui, Cadastro valida
-
-Hoje tudo acontece num único fluxo. A proposta separa claramente as duas etapas:
-
-### Etapa A — Distribuição (perfil comercial)
-O comercial faz upload e **arrasta cada documento para a categoria correta**. Já existe drag-and-drop hoje, mas é discreto (lista colapsada). Vou transformá-lo no modo principal de trabalho do comercial.
-
-**Melhorias propostas:**
-
-1. **Modo "Organizar documentos"** — novo toggle no topo do kanban (ao lado dos filtros) que troca entre:
-   - **Lista** (atual, compacta) — bom para revisar
-   - **Quadro** (novo) — cada categoria vira uma **coluna kanban larga** com zona de drop bem visível, cards maiores mostrando miniatura/ícone, nome do arquivo e badge da sugestão da IA
-
-2. **Coluna "Sem categoria" sempre em destaque** no topo/esquerda, com badge contador. É a "caixa de entrada" do comercial.
-
-3. **Drop zone visualmente clara**:
-   - Borda tracejada quando vazia: *"Arraste documentos de [categoria] aqui"*
-   - Highlight com cor primária ao arrastar por cima
-   - Categorias **obrigatórias** ganham contorno destacado e selo "obrigatório" mais visível quando vazias
-
-4. **Sugestão da IA mais ativa**: quando a IA sugere categoria, mostro um botão **"Aceitar sugestão →"** direto no card, e a categoria sugerida pisca brevemente para guiar o olho.
-
-5. **Multi-seleção + arrastar em lote**: selecionar vários cards e arrastar todos juntos para uma categoria (já temos checkbox + dropdown "Mover", falta o drag em lote).
-
-6. **Indicador de progresso da distribuição**: barra/contador no topo *"8 de 12 categorias obrigatórias preenchidas"* — dá ao comercial uma meta clara antes de "passar o bastão".
-
-7. **Botão "Enviar para conciliação"** (novo, perfil comercial): quando todas as obrigatórias estão preenchidas, libera um botão que notifica o cadastro de que está pronto para validar. (Opcional — pode ser só visual por enquanto, sem notificação real.)
-
-### Etapa B — Conciliação/Validação (perfil cadastro)
-
-O sheet atual de conciliação já está bom (preview lado a lado, atalhos V/R, observações). Pequenos ajustes:
-
-1. **Filtro inicial da fila**: hoje pega todos `status=pendente`. Adicionar opção *"Apenas com categoria definida"* — assim o cadastro não perde tempo com docs ainda não classificados pelo comercial.
-
-2. **Aviso quando há documentos sem categoria na fila**: banner no topo do sheet *"3 documentos ainda estão sem categoria. Peça ao comercial para classificar antes de validar."*
-
-3. **Atalho para devolver ao comercial**: além de Verificar/Reprovar, um terceiro estado leve *"Devolver para reclassificar"* (move volta para "sem categoria" e adiciona observação automática).
-
-## 3. Detalhes técnicos
-
-### Arquivos afetados
-- `src/components/cedentes/DocumentosUploadKanban.tsx` — permissões do botão, novo modo "Quadro", drag-and-drop melhorado, contador de progresso
-- `src/components/cedentes/ConciliacaoDocumentosSheet.tsx` — filtro da fila, banner de aviso, ação "devolver"
-
-### Mudança de permissão (código)
-```tsx
-const canReview = hasRole("admin") || hasRole("analista_cadastro");
-// (removido gestor_comercial)
-```
-
-### Modo Quadro (esboço)
-```text
-┌─ Sem categoria (3) ─┐ ┌─ Contrato Social * ─┐ ┌─ Cartão CNPJ * ─┐
-│ [card] [card]       │ │ vazio — arraste     │ │ [card]          │
-│ [card]              │ │ aqui                │ │                 │
-└─────────────────────┘ └─────────────────────┘ └─────────────────┘
-```
-Layout horizontal com scroll, colunas de ~280px, cards arrastáveis entre colunas. Reaproveita os handlers `onCardDragStart` / `onCategoryDrop` existentes.
-
-### Multi-drag
-Usar `dataTransfer.setData("text/documento-ids", JSON.stringify([...checked]))` quando houver seleção, fallback para o id único atual.
-
-## Fora de escopo (perguntar depois se quiser)
-- Notificação real ao cadastro quando comercial finaliza distribuição (precisaria de tabela de notificações)
-- Histórico de "quem moveu o quê" entre categorias
-- Permitir ao gestor_comercial **ver** a fila de conciliação em modo somente-leitura
+Sem mudanças de banco. Mudanças isoladas em `src/components/cedentes/DocumentosUploadKanban.tsx`.
 
 ---
 
-**Confirma essa direção?** Se sim, eu implemento os 3 blocos (permissões, modo Quadro com drag-and-drop, ajustes no sheet) numa única passada. Se preferir começar só por um deles (ex.: "só permissões + modo Quadro, deixa o sheet pra depois"), me diz.
+## 1. Bandeja de entrada unificada (Upload + Sem categoria)
+
+Hoje o "Sem categoria" é só mais um grupo na lista/quadro. Vamos fundi-lo com o dropzone de upload no topo:
+
+```text
+┌──────────────────────────────────────────────────────────────┐
+│ ⬆  Arraste arquivos aqui ou clique para selecionar           │
+│                              PDF/JPG/PNG • IA sugere categoria│
+├──────────────────────────────────────────────────────────────┤
+│ 3 arquivos sem categoria — arraste para uma linha abaixo      │
+│ ┌────────────────────────┬───────────────────────┬─────────┐ │
+│ │ ☐ contrato_v2.pdf      │ IA: Contrato Social ✓ │ ↓ ✕    │ │
+│ │ ☐ comprovante.jpg      │ IA: Comprov. End.  ✓ │ ↓ ✕    │ │
+│ │ ☐ doc_misterio.pdf     │ — sem sugestão —      │ ↓ ✕    │ │
+│ └────────────────────────┴───────────────────────┴─────────┘ │
+└──────────────────────────────────────────────────────────────┘
+```
+
+Comportamento:
+- Quando **não há** docs sem categoria, só o dropzone aparece (estado atual).
+- Quando há, expande mostrando lista compacta interna: nome + chip da sugestão de IA + botão "Aceitar" + dropdown para mover manualmente + remover.
+- O dropzone continua aceitando upload por drag (de arquivos do SO) **e** por click — não conflita com drag interno (que é entre cards e linhas da tabela).
+- Cards desta bandeja são `draggable` para arrastar até a tabela de categorias.
+- Removemos o grupo "Sem categoria" da lista/tabela principal abaixo (evita duplicação).
+
+## 2. Tabela compacta de categorias (substitui o modo Quadro)
+
+Inspirada na "Central de Documentos" mas otimizada para drag-and-drop. Cada **linha = uma categoria** = uma drop-zone.
+
+```text
+┌────┬─────────┬────────────────────────────────┬──────────┬──────────┬─────┐
+│ ●  │ OBRIG.  │ CATEGORIA                      │ ANEXADOS │ VERIFIC. │ ▾   │
+├────┼─────────┼────────────────────────────────┼──────────┼──────────┼─────┤
+│ ✓  │  SIM    │ Contrato Social                │   2      │  2/2 ✓   │  ▸  │
+│ ✗  │  SIM    │ Comprovante de Endereço        │   0      │   —      │  ▸  │ ← drop aqui
+│ ✓  │  NÃO    │ Procuração                     │   1      │  0/1     │  ▸  │
+│ ✓  │  SIM    │ Declaração de Faturamento      │   3      │  1/3     │  ▾  │
+│    │         │   ↳ ☐ fat_jan.pdf  …  ✓ verif. │          │          │     │
+│    │         │   ↳ ☐ fat_fev.pdf  …  ⏳ pend. │          │          │     │
+└────┴─────────┴────────────────────────────────┴──────────┴──────────┴─────┘
+```
+
+Características:
+- **Densidade alta**: linhas de ~36px, sem cards grandes. Toda a página de categorias cabe sem rolagem horizontal.
+- **Coluna "●"**: bolinha de status (verde se completo, vermelho vazio, cinza opcional vazio).
+- **Coluna "OBRIG."**: chip "SIM" verde / "NÃO" cinza (estilo da imagem).
+- **Coluna ANEXADOS / VERIFICADOS**: contagens.
+- **Linha inteira é drop-zone**: ao arrastar um doc da bandeja (ou de outra categoria) para qualquer ponto da linha, a linha realça (ring-primary) e ao soltar move o(s) documento(s).
+- **Expansão inline (▸/▾)**: clicar na linha (ou no chevron) revela sub-linhas com cada documento daquela categoria — checkbox, nome, selo de status, mover/baixar/remover. Todas começam **colapsadas** por padrão (visão executiva).
+- **Multi-seleção continua funcionando**: checkbox nas sub-linhas e na bandeja; arrastar 1 = arrasta o(s) selecionado(s) (já implementado em `onCardDragStart`).
+- Linhas obrigatórias vazias ganham borda esquerda destacada (accent-destructive sutil) — substitui o "faltando" verboso.
+
+### Toggle de visualização
+
+- Renomear modos: **"Compacto"** (a nova tabela, default) e **"Detalhado"** (lista atual com grupos colapsáveis e cards). Removemos o modo "Quadro" (kanban largo).
+- O ícone `LayoutGrid` é reaproveitado para "Compacto"; `LayoutList` para "Detalhado".
+
+## 3. Detalhes técnicos
+
+Arquivo único: `src/components/cedentes/DocumentosUploadKanban.tsx`.
+
+- `ViewMode = "compacto" | "detalhado"` (default `"compacto"`).
+- Novo componente interno `<EntradaSemCategoria>`:
+  - Recebe os docs com `categoria_id === null`, renderiza dropzone + lista interna (quando `docs.length > 0`).
+  - Reusa `uploadFiles`, `onCardDragStart`, `moveTo`, `handleDelete`.
+  - Quando o usuário solta um arquivo do SO no dropzone: continua como upload; quando solta um card interno (que já está sem categoria), nada acontece (drop-zone interna ignora `text/documento-ids`).
+- Novo `<TabelaCategorias>` (modo compacto):
+  - `grupos` filtrado para excluir `SEM_CAT` (já mostrado na bandeja).
+  - Cada `<tr>` aplica `onDragOver/onDrop` chamando `onCategoryDragOver/onCategoryDrop` existentes.
+  - Estado `expanded: Set<string>` (independente de `collapsed` do modo detalhado).
+  - Sub-linhas usam variante simplificada do `renderCard` (sem o card grande do board) — basicamente o mesmo HTML do variant `"list"` atual mas dentro de `<tr>`.
+- O modo "Detalhado" reaproveita o renderizador atual de lista, mas também sem o grupo `SEM_CAT` (movido p/ bandeja).
+- Filtros (`Todos`, `Pendentes`, etc.) continuam funcionando — o filtro `"sem_categoria"` passa a focar/destacar a bandeja (rolar até ela e abrir um anel) em vez de filtrar a tabela; alternativa simples: manter como está mas escondendo a tabela quando o filtro for `sem_categoria`.
+
+## 4. Fora de escopo
+
+- Sem mudanças de schema, RLS, ou edge functions.
+- Permissões de conciliação (admin / analista_cadastro) permanecem como já implementado.
+- `ConciliacaoDocumentosSheet` não muda nesta passada.
