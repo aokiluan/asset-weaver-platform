@@ -331,6 +331,14 @@ export function DocumentosUploadKanban({
     });
   };
 
+  const toggleExpanded = (key: string) => {
+    setExpanded((s) => {
+      const n = new Set(s);
+      if (n.has(key)) n.delete(key); else n.add(key);
+      return n;
+    });
+  };
+
   const filterButtons: { key: Filter; label: string }[] = [
     { key: "todos", label: "Todos" },
     { key: "pendentes", label: "Pendentes" },
