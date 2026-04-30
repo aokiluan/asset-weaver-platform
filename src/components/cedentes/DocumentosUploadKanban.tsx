@@ -72,7 +72,7 @@ const fmtDate = (s: string | null) => {
 };
 
 type Filter = "todos" | "pendentes" | "aprovados" | "reprovados" | "sem_categoria";
-type ViewMode = "lista" | "quadro";
+type ViewMode = "compacto" | "detalhado";
 const SEM_CAT = "__sem_categoria__";
 
 function StatusSelo({ d }: { d: Documento }) {
