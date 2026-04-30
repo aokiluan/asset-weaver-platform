@@ -153,6 +153,7 @@ export function CedenteNovoSheet({ open, onOpenChange, onCreated }: Props) {
       return;
     }
     toast.success("Cedente criado");
+    clearDraft();
     onOpenChange(false);
     onCreated?.(data.id);
   };
