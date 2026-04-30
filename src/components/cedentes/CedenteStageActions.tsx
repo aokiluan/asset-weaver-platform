@@ -37,8 +37,8 @@ const TRANSITIONS: Transition[] = [
     key: "to-comercial",
     label: "Enviar para Comercial",
     target: "novo",
-    fromStages: ["cadastro", "analise"],
-    roles: ["analista_cadastro", "analista_credito", "gestor_credito", "admin"],
+    fromStages: ["cadastro", "analise", "comite", "formalizacao"],
+    roles: ["analista_cadastro", "analista_credito", "gestor_credito", "comite", "gestor_risco", "admin"],
     variant: "outline",
     icon: Undo2,
     isReturn: true,
@@ -48,8 +48,8 @@ const TRANSITIONS: Transition[] = [
     key: "to-cadastro",
     label: "Enviar para Cadastro",
     target: "cadastro",
-    fromStages: ["novo"],
-    roles: ["comercial", "gestor_comercial", "admin"],
+    fromStages: ["novo", "analise", "comite"],
+    roles: ["comercial", "gestor_comercial", "analista_cadastro", "admin"],
     variant: "default",
     icon: Send,
   },
@@ -57,8 +57,8 @@ const TRANSITIONS: Transition[] = [
     key: "to-credito",
     label: "Enviar para Crédito",
     target: "analise",
-    fromStages: ["cadastro"],
-    roles: ["analista_cadastro", "admin"],
+    fromStages: ["cadastro", "comite"],
+    roles: ["analista_cadastro", "analista_credito", "gestor_credito", "admin"],
     variant: "default",
     icon: Send,
   },
@@ -92,9 +92,9 @@ export function CedenteStageActions({ cedenteId, stage, isOwner, gateInfo, onCha
   const gate = useMemo(() => evaluateGates({ stage, ...gateInfo }), [stage, gateInfo]);
 
   const visible = TRANSITIONS.filter((t) => {
+    if (t.target === stage) return false;
     if (!t.fromStages.includes(stage)) return false;
     const hasAnyRole = t.roles.some((r) => hasRole(r));
-    // Owner do cedente também pode "Enviar para Cadastro" a partir de "novo"
     const ownerOverride = t.key === "to-cadastro" && stage === "novo" && isOwner;
     return hasAnyRole || ownerOverride;
   });
