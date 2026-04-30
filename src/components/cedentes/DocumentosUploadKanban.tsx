@@ -778,14 +778,12 @@ export function DocumentosUploadKanban({
         {viewMode === "compacto" ? (
           <div className="rounded-lg border bg-card overflow-hidden">
             <table className="w-full text-xs">
-              <thead className="bg-muted/40 text-muted-foreground">
+              <thead className="bg-muted/30 text-muted-foreground">
                 <tr className="text-left">
-                  <th className="w-8 px-2 py-2"></th>
-                  <th className="w-16 px-2 py-2 font-medium uppercase tracking-wide text-[10px]">Obrig.</th>
-                  <th className="px-2 py-2 font-medium uppercase tracking-wide text-[10px]">Categoria</th>
-                  <th className="w-20 px-2 py-2 font-medium uppercase tracking-wide text-[10px] text-center">Anexados</th>
-                  <th className="w-24 px-2 py-2 font-medium uppercase tracking-wide text-[10px] text-center">Verificados</th>
-                  <th className="w-8 px-2 py-2"></th>
+                  <th className="w-6 px-2 py-1.5"></th>
+                  <th className="px-2 py-1.5 font-medium uppercase tracking-wide text-[10px]">Categoria</th>
+                  <th className="w-32 px-2 py-1.5 font-medium uppercase tracking-wide text-[10px] text-right">Status</th>
+                  <th className="w-40 px-2 py-1.5"></th>
                 </tr>
               </thead>
               <tbody>
@@ -796,6 +794,16 @@ export function DocumentosUploadKanban({
                   const isHover = dragOverCat === g.key;
                   const completo = total > 0 && aprovados === total;
                   const obrigVazio = g.obrigatorio && total === 0;
+
+                  let statusTxt: React.ReactNode;
+                  if (total === 0) {
+                    statusTxt = <span className="text-muted-foreground/60">0 anexos</span>;
+                  } else if (completo) {
+                    statusTxt = <span className="text-green-600 font-medium tabular-nums">{total} · {aprovados} verif. ✓</span>;
+                  } else {
+                    statusTxt = <span className="text-muted-foreground tabular-nums">{total} · {aprovados} verif.</span>;
+                  }
+
                   return (
                     <React.Fragment key={g.key}>
                       <tr
@@ -805,72 +813,56 @@ export function DocumentosUploadKanban({
                         onClick={() => total > 0 && toggleExpanded(g.key)}
                         className={cn(
                           "border-t transition-colors",
-                          total > 0 && "cursor-pointer hover:bg-muted/30",
-                          isHover && "bg-primary/10 ring-2 ring-inset ring-primary/40",
-                          obrigVazio && !isHover && "bg-destructive/5",
+                          total > 0 && "cursor-pointer hover:bg-muted/20",
                         )}
                       >
-                        <td className="px-2 py-2">
+                        <td className="px-2 py-1.5">
                           <span
                             className={cn(
-                              "inline-block h-2 w-2 rounded-full",
+                              "inline-block h-1.5 w-1.5 rounded-full",
                               completo ? "bg-green-600"
                                 : obrigVazio ? "bg-destructive"
                                 : total > 0 ? "bg-amber-500"
-                                : "bg-muted-foreground/30",
+                                : "bg-muted-foreground/25",
                             )}
                           />
                         </td>
-                        <td className="px-2 py-2">
-                          <span className={cn(
-                            "inline-flex items-center justify-center px-1.5 h-5 rounded-full text-[10px] font-medium",
-                            g.obrigatorio
-                              ? "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300"
-                              : "bg-muted text-muted-foreground",
-                          )}>
-                            {g.obrigatorio ? "SIM" : "NÃO"}
-                          </span>
-                        </td>
-                        <td className="px-2 py-2">
-                          <div className="flex items-center gap-1.5">
+                        <td className="px-2 py-1.5">
+                          <div className="flex items-center gap-1.5 min-w-0">
                             {total > 0 ? (
-                              isExp ? <ChevronDown className="h-3 w-3 text-muted-foreground" />
-                                : <ChevronRight className="h-3 w-3 text-muted-foreground" />
+                              isExp ? <ChevronDown className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                                : <ChevronRight className="h-3 w-3 text-muted-foreground flex-shrink-0" />
                             ) : (
-                              <span className="inline-block w-3" />
+                              <span className="inline-block w-3 flex-shrink-0" />
                             )}
-                            <span className="font-medium truncate" title={g.label}>{g.label}</span>
-                            {obrigVazio && (
-                              <span className="inline-flex items-center gap-1 text-[10px] text-destructive ml-1">
-                                <AlertCircle className="h-3 w-3" /> faltando
-                              </span>
-                            )}
+                            <span className="text-sm truncate" title={g.label}>
+                              {g.label}
+                              {g.obrigatorio && <span className="text-destructive ml-0.5" aria-label="obrigatório">*</span>}
+                            </span>
                           </div>
                         </td>
-                        <td className="px-2 py-2 text-center">
-                          <Badge variant="secondary" className="h-5 text-[10px] px-1.5 min-w-[28px] justify-center">
-                            {total}
-                          </Badge>
+                        <td className="px-2 py-1.5 text-right text-xs">
+                          {statusTxt}
                         </td>
-                        <td className="px-2 py-2 text-center">
-                          {total > 0 ? (
-                            <span className={cn(
-                              "text-[11px] tabular-nums",
-                              completo ? "text-green-600 font-medium" : "text-muted-foreground",
-                            )}>
-                              {aprovados}/{total}{completo && " ✓"}
-                            </span>
-                          ) : (
-                            <span className="text-[10px] text-muted-foreground">—</span>
-                          )}
-                        </td>
-                        <td className="px-2 py-2 text-right text-[10px] text-muted-foreground">
-                          {total === 0 && !isHover && "drop"}
+                        <td className="px-2 py-1.5 text-right">
+                          <span
+                            className={cn(
+                              "inline-flex items-center justify-center gap-1.5 px-2 h-6 rounded-md text-[10px] uppercase tracking-wide transition-all border border-dashed",
+                              isHover
+                                ? "border-primary bg-primary/10 text-primary font-medium"
+                                : isAnyDragging
+                                  ? "border-border text-muted-foreground"
+                                  : "border-transparent text-muted-foreground/40",
+                            )}
+                          >
+                            <Inbox className="h-3 w-3" />
+                            {isHover ? "soltar aqui" : isAnyDragging ? "soltar" : ""}
+                          </span>
                         </td>
                       </tr>
                       {isExp && total > 0 && (
                         <tr className="bg-muted/10">
-                          <td colSpan={6} className="p-0">
+                          <td colSpan={4} className="p-0">
                             <ul className="divide-y border-t">
                               {g.docs.map((d) => renderCard(d, "list"))}
                             </ul>
