@@ -13,6 +13,8 @@ import {
 import { Loader2, RefreshCw, Users, Plus, Save } from "lucide-react";
 import { toast } from "sonner";
 import { SocioFormCard, type Socio } from "./SocioFormCard";
+import { useFormDraft } from "@/hooks/useFormDraft";
+import { DraftIndicator } from "@/components/ui/draft-indicator";
 
 interface Representante extends Socio {
   qualificacao?: string;
