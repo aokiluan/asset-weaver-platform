@@ -14,8 +14,8 @@ import { CedenteVisitReportForm } from "@/components/cedentes/CedenteVisitReport
 import { CedenteRepresentantesTab } from "@/components/cedentes/CedenteRepresentantesTab";
 import { DocumentosUploadKanban } from "@/components/cedentes/DocumentosUploadKanban";
 import { EnviarAnaliseDialog } from "@/components/cedentes/EnviarAnaliseDialog";
-import { RevisarCadastroActions } from "@/components/cedentes/RevisarCadastroActions";
 import { CedenteStageStepper } from "@/components/cedentes/CedenteStageStepper";
+import { CedenteStageActions } from "@/components/cedentes/CedenteStageActions";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
