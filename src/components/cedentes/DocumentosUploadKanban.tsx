@@ -756,8 +756,117 @@ export function DocumentosUploadKanban({
           )}
         </div>
 
-        {/* Conteúdo principal: Lista ou Quadro */}
-        {viewMode === "lista" ? (
+        {/* Conteúdo principal: Compacto (tabela) ou Detalhado (lista) */}
+        {viewMode === "compacto" ? (
+          <div className="rounded-lg border bg-card overflow-hidden">
+            <table className="w-full text-xs">
+              <thead className="bg-muted/40 text-muted-foreground">
+                <tr className="text-left">
+                  <th className="w-8 px-2 py-2"></th>
+                  <th className="w-16 px-2 py-2 font-medium uppercase tracking-wide text-[10px]">Obrig.</th>
+                  <th className="px-2 py-2 font-medium uppercase tracking-wide text-[10px]">Categoria</th>
+                  <th className="w-20 px-2 py-2 font-medium uppercase tracking-wide text-[10px] text-center">Anexados</th>
+                  <th className="w-24 px-2 py-2 font-medium uppercase tracking-wide text-[10px] text-center">Verificados</th>
+                  <th className="w-8 px-2 py-2"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {grupos.map((g) => {
+                  const isExp = expanded.has(g.key);
+                  const total = g.docs.length;
+                  const aprovados = g.docs.filter((d) => d.status === "aprovado").length;
+                  const isHover = dragOverCat === g.key;
+                  const completo = total > 0 && aprovados === total;
+                  const obrigVazio = g.obrigatorio && total === 0;
+                  return (
+                    <React.Fragment key={g.key}>
+                      <tr
+                        onDragOver={(e) => onCategoryDragOver(e, g.key)}
+                        onDragLeave={() => setDragOverCat(null)}
+                        onDrop={(e) => onCategoryDrop(e, g.key)}
+                        onClick={() => total > 0 && toggleExpanded(g.key)}
+                        className={cn(
+                          "border-t transition-colors",
+                          total > 0 && "cursor-pointer hover:bg-muted/30",
+                          isHover && "bg-primary/10 ring-2 ring-inset ring-primary/40",
+                          obrigVazio && !isHover && "bg-destructive/5",
+                        )}
+                      >
+                        <td className="px-2 py-2">
+                          <span
+                            className={cn(
+                              "inline-block h-2 w-2 rounded-full",
+                              completo ? "bg-green-600"
+                                : obrigVazio ? "bg-destructive"
+                                : total > 0 ? "bg-amber-500"
+                                : "bg-muted-foreground/30",
+                            )}
+                          />
+                        </td>
+                        <td className="px-2 py-2">
+                          <span className={cn(
+                            "inline-flex items-center justify-center px-1.5 h-5 rounded-full text-[10px] font-medium",
+                            g.obrigatorio
+                              ? "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300"
+                              : "bg-muted text-muted-foreground",
+                          )}>
+                            {g.obrigatorio ? "SIM" : "NÃO"}
+                          </span>
+                        </td>
+                        <td className="px-2 py-2">
+                          <div className="flex items-center gap-1.5">
+                            {total > 0 ? (
+                              isExp ? <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                                : <ChevronRight className="h-3 w-3 text-muted-foreground" />
+                            ) : (
+                              <span className="inline-block w-3" />
+                            )}
+                            <span className="font-medium truncate" title={g.label}>{g.label}</span>
+                            {obrigVazio && (
+                              <span className="inline-flex items-center gap-1 text-[10px] text-destructive ml-1">
+                                <AlertCircle className="h-3 w-3" /> faltando
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-2 py-2 text-center">
+                          <Badge variant="secondary" className="h-5 text-[10px] px-1.5 min-w-[28px] justify-center">
+                            {total}
+                          </Badge>
+                        </td>
+                        <td className="px-2 py-2 text-center">
+                          {total > 0 ? (
+                            <span className={cn(
+                              "text-[11px] tabular-nums",
+                              completo ? "text-green-600 font-medium" : "text-muted-foreground",
+                            )}>
+                              {aprovados}/{total}{completo && " ✓"}
+                            </span>
+                          ) : (
+                            <span className="text-[10px] text-muted-foreground">—</span>
+                          )}
+                        </td>
+                        <td className="px-2 py-2 text-right text-[10px] text-muted-foreground">
+                          {total === 0 && !isHover && "drop"}
+                        </td>
+                      </tr>
+                      {isExp && total > 0 && (
+                        <tr className="bg-muted/10">
+                          <td colSpan={6} className="p-0">
+                            <ul className="divide-y border-t">
+                              {g.docs.map((d) => renderCard(d, "list"))}
+                            </ul>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          // Modo Detalhado: cabeçalhos de grupo + cards expandidos
           <div className="rounded-lg border bg-card overflow-hidden">
             {grupos.map((g) => {
               const isOpen = !collapsed.has(g.key);
@@ -802,63 +911,6 @@ export function DocumentosUploadKanban({
                 </div>
               );
             })}
-          </div>
-        ) : (
-          // Modo Quadro: colunas kanban com drop-zone
-          <div className="overflow-x-auto pb-2">
-            <div className="flex gap-3 min-w-max">
-              {grupos.map((g) => {
-                const isSemCat = g.key === SEM_CAT;
-                const aprovados = g.docs.filter((d) => d.status === "aprovado").length;
-                const isHover = dragOverCat === g.key;
-                const isEmpty = g.docs.length === 0;
-                return (
-                  <div
-                    key={g.key}
-                    onDragOver={(e) => onCategoryDragOver(e, g.key)}
-                    onDragLeave={() => setDragOverCat(null)}
-                    onDrop={(e) => onCategoryDrop(e, g.key)}
-                    className={cn(
-                      "w-[280px] flex-shrink-0 rounded-lg border bg-card flex flex-col",
-                      isHover && "border-primary ring-2 ring-primary/30 bg-primary/5",
-                      isSemCat && "border-amber-500/40 bg-amber-50/30 dark:bg-amber-950/10",
-                      g.obrigatorio && isEmpty && !isHover && "border-destructive/40",
-                    )}
-                  >
-                    <div className="px-3 py-2 border-b flex items-center gap-2">
-                      <span className="text-xs font-medium flex-1 truncate" title={g.label}>
-                        {g.label}
-                      </span>
-                      {g.obrigatorio && (
-                        <span className="text-[10px] text-destructive">obrigatório</span>
-                      )}
-                      <Badge variant="secondary" className="h-4 text-[10px] px-1.5">
-                        {g.docs.length}
-                      </Badge>
-                    </div>
-                    {g.docs.length > 0 && (
-                      <div className="px-3 pt-1 pb-0.5 text-[10px] text-muted-foreground">
-                        {aprovados}/{g.docs.length} verificados
-                      </div>
-                    )}
-                    <div className="p-2 space-y-2 flex-1 min-h-[120px]">
-                      {isEmpty ? (
-                        <div className={cn(
-                          "h-full min-h-[100px] rounded-md border-2 border-dashed flex items-center justify-center text-[11px] text-muted-foreground text-center px-3",
-                          isHover ? "border-primary text-primary" : "border-muted-foreground/20",
-                        )}>
-                          {isSemCat
-                            ? "Documentos sem categoria aparecem aqui"
-                            : `Arraste documentos de ${g.label} aqui`}
-                        </div>
-                      ) : (
-                        g.docs.map((d) => renderCard(d, "board"))
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
           </div>
         )}
 
