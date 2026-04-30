@@ -521,7 +521,7 @@ function ComiteTabContent({
   const [provisioning, setProvisioning] = useState(false);
 
   useEffect(() => {
-    if (cedenteStage === "comite" && !latestProposal && !provisioning) {
+    if (!latestProposal && !provisioning) {
       setProvisioning(true);
       supabase
         .rpc("ensure_proposal_for_cedente", { _cedente_id: cedenteId })
@@ -535,7 +535,7 @@ function ComiteTabContent({
         .then(() => setProvisioning(false));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cedenteStage, latestProposal?.id]);
+  }, [latestProposal?.id]);
 
   if (latestProposal) {
     return (
@@ -549,23 +549,10 @@ function ComiteTabContent({
     );
   }
 
-  if (cedenteStage === "comite") {
-    return (
-      <div className="mt-4 rounded-lg border bg-card p-10 text-center space-y-2">
-        <Loader2 className="h-6 w-6 mx-auto animate-spin text-muted-foreground" />
-        <p className="text-sm text-muted-foreground">Preparando sessão do comitê…</p>
-      </div>
-    );
-  }
-
   return (
     <div className="mt-4 rounded-lg border bg-card p-10 text-center space-y-2">
-      <Vote className="h-10 w-10 mx-auto text-muted-foreground" />
-      <h3 className="text-base font-semibold">Comitê ainda não habilitado</h3>
-      <p className="text-sm text-muted-foreground max-w-md mx-auto">
-        O comitê é habilitado quando o cedente avança para a etapa <strong>Comitê</strong>.
-        Etapa atual: <strong>{STAGE_LABEL[cedenteStage]}</strong>.
-      </p>
+      <Loader2 className="h-6 w-6 mx-auto animate-spin text-muted-foreground" />
+      <p className="text-sm text-muted-foreground">Preparando sessão do comitê…</p>
     </div>
   );
 }
