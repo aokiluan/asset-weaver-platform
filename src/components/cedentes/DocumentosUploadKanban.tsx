@@ -309,6 +309,7 @@ export function DocumentosUploadKanban({
   const onCategoryDrop = (e: React.DragEvent, catId: string) => {
     e.preventDefault();
     setDragOverCat(null);
+    setIsAnyDragging(false);
     const target = catId === SEM_CAT ? null : catId;
     const idsRaw = e.dataTransfer.getData("text/documento-ids");
     if (idsRaw) {
