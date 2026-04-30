@@ -95,14 +95,6 @@ const App = () => (
                   </RoleGuard>
                 }
               />
-              <Route
-                path="/cadastro/fila"
-                element={
-                  <RoleGuard role={["admin", "analista_cadastro", "gestor_comercial"]}>
-                    <FilaCadastros />
-                  </RoleGuard>
-                }
-              />
 
               {/* Configurações (consolida o antigo /admin/*) */}
               <Route
