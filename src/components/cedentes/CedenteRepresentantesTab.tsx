@@ -52,6 +52,28 @@ export function CedenteRepresentantesTab({ cedenteId, jaSincronizado, onSynced }
   const [savingId, setSavingId] = useState<string | null>(null);
   const [autoTried, setAutoTried] = useState(false);
 
+  // Autosave: persiste apenas itens não-salvos ou com edições pendentes (dirty),
+  // mesclando com os dados do servidor ao restaurar para não sobrescrever o que já está no banco.
+  const { restored, lastSavedAt, clearDraft, discardDraft } = useFormDraft<Representante[]>({
+    key: cedenteId ? `representantes:${cedenteId}` : null,
+    value: items.filter((r) => r.dirty || !r.persisted),
+    setValue: (draftItems) => {
+      if (!Array.isArray(draftItems) || draftItems.length === 0) return;
+      setItems((prev) => {
+        const byId = new Map(prev.map((r) => [r.id, r]));
+        for (const d of draftItems) {
+          if (byId.has(d.id)) {
+            byId.set(d.id, { ...byId.get(d.id)!, ...d, dirty: true });
+          } else if (!d.persisted) {
+            byId.set(d.id, { ...d, dirty: true });
+          }
+        }
+        return Array.from(byId.values());
+      });
+    },
+    enabled: !loading,
+  });
+
   const load = async () => {
     setLoading(true);
     const { data, error } = await supabase
