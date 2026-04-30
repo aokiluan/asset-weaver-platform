@@ -209,12 +209,19 @@ export function LeadFormDialog({ open, onOpenChange, initial, onSaved }: Props) 
             <Textarea id="observacoes" rows={3} {...register("observacoes")} />
           </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-            <Button type="submit" disabled={saving}>
-              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isEdit ? "Salvar alterações" : "Criar lead"}
-            </Button>
+          <DialogFooter className="sm:justify-between gap-2">
+            <DraftIndicator
+              lastSavedAt={lastSavedAt}
+              restored={restored}
+              onDiscard={() => discardDraft({ tipo: "cedente", ...initial })}
+            />
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+              <Button type="submit" disabled={saving}>
+                {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isEdit ? "Salvar alterações" : "Criar lead"}
+              </Button>
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>
