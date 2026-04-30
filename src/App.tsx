@@ -13,8 +13,6 @@ import Pipeline from "./pages/Pipeline.tsx";
 import Cedentes from "./pages/Cedentes.tsx";
 import CedenteDetail from "./pages/CedenteDetail.tsx";
 import CedenteCadastro from "./pages/CedenteCadastro.tsx";
-import Credito from "./pages/Credito.tsx";
-import CreditoDetail from "./pages/CreditoDetail.tsx";
 import Financeiro from "./pages/Financeiro.tsx";
 import Configuracoes from "./pages/Configuracoes.tsx";
 import BI from "./pages/BI.tsx";
@@ -32,7 +30,6 @@ import GestaoFinanceiro from "./pages/gestao/GestaoFinanceiro.tsx";
 import GestaoDiario from "./pages/gestao/GestaoDiario.tsx";
 import Comite from "./pages/Comite.tsx";
 import Formalizacao from "./pages/Formalizacao.tsx";
-import FilaCadastros from "./pages/cadastro/FilaCadastros.tsx";
 import RoleGuard from "@/components/RoleGuard";
 import NotFound from "./pages/NotFound.tsx";
 
@@ -62,8 +59,10 @@ const App = () => (
               <Route path="/cedentes/novo" element={<CedenteCadastro />} />
               <Route path="/cedentes/:id/editar" element={<CedenteCadastro />} />
               <Route path="/cedentes/:id" element={<CedenteDetail />} />
-              <Route path="/credito" element={<Credito />} />
-              <Route path="/credito/:id" element={<CreditoDetail />} />
+              {/* Rotas legadas redirecionam para a tela do cedente */}
+              <Route path="/credito" element={<Navigate to="/cedentes" replace />} />
+              <Route path="/credito/:id" element={<Navigate to="/cedentes" replace />} />
+              <Route path="/cadastro/fila" element={<Navigate to="/cedentes" replace />} />
               <Route
                 path="/financeiro"
                 element={
@@ -93,14 +92,6 @@ const App = () => (
                 element={
                   <RoleGuard role={["admin", "analista_cadastro", "gestor_comercial"]}>
                     <Formalizacao />
-                  </RoleGuard>
-                }
-              />
-              <Route
-                path="/cadastro/fila"
-                element={
-                  <RoleGuard role={["admin", "analista_cadastro", "gestor_comercial"]}>
-                    <FilaCadastros />
                   </RoleGuard>
                 }
               />

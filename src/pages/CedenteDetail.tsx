@@ -432,23 +432,12 @@ export default function CedenteDetail() {
       )}
 
       {tab === "comite" && (
-        <div className="mt-4 space-y-4">
-          {latestProposal ? (
-            <ComiteGameSession
-              proposalId={latestProposal.id}
-              votosMinimos={latestProposal.votos_minimos}
-              proposalStage={latestProposal.stage as any}
-            />
-          ) : (
-            <div className="rounded-lg border bg-card p-10 text-center space-y-2">
-              <Vote className="h-10 w-10 mx-auto text-muted-foreground" />
-              <h3 className="text-base font-semibold">Comitê ainda não disponível</h3>
-              <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                Nenhuma proposta de crédito encaminhada para este cedente. O comitê é habilitado quando a proposta atinge a alçada do colegiado.
-              </p>
-            </div>
-          )}
-        </div>
+        <ComiteTabContent
+          cedenteId={cedente.id}
+          cedenteStage={cedente.stage}
+          latestProposal={latestProposal}
+          onProvisioned={load}
+        />
       )}
 
       {tab === "historico" && (
@@ -514,6 +503,69 @@ export default function CedenteDetail() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+    </div>
+  );
+}
+
+function ComiteTabContent({
+  cedenteId,
+  cedenteStage,
+  latestProposal,
+  onProvisioned,
+}: {
+  cedenteId: string;
+  cedenteStage: CedenteStage;
+  latestProposal: { id: string; stage: string; approver: string | null; votos_minimos: number } | null;
+  onProvisioned: () => void;
+}) {
+  const [provisioning, setProvisioning] = useState(false);
+
+  useEffect(() => {
+    if (cedenteStage === "comite" && !latestProposal && !provisioning) {
+      setProvisioning(true);
+      supabase
+        .rpc("ensure_proposal_for_cedente", { _cedente_id: cedenteId })
+        .then(({ error }) => {
+          if (error) {
+            toast.error("Não foi possível abrir o comitê", { description: error.message });
+          } else {
+            onProvisioned();
+          }
+        })
+        .then(() => setProvisioning(false));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cedenteStage, latestProposal?.id]);
+
+  if (latestProposal) {
+    return (
+      <div className="mt-4 space-y-4">
+        <ComiteGameSession
+          proposalId={latestProposal.id}
+          votosMinimos={latestProposal.votos_minimos}
+          proposalStage={latestProposal.stage as any}
+        />
+      </div>
+    );
+  }
+
+  if (cedenteStage === "comite") {
+    return (
+      <div className="mt-4 rounded-lg border bg-card p-10 text-center space-y-2">
+        <Loader2 className="h-6 w-6 mx-auto animate-spin text-muted-foreground" />
+        <p className="text-sm text-muted-foreground">Preparando sessão do comitê…</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-4 rounded-lg border bg-card p-10 text-center space-y-2">
+      <Vote className="h-10 w-10 mx-auto text-muted-foreground" />
+      <h3 className="text-base font-semibold">Comitê ainda não habilitado</h3>
+      <p className="text-sm text-muted-foreground max-w-md mx-auto">
+        O comitê é habilitado quando o cedente avança para a etapa <strong>Comitê</strong>.
+        Etapa atual: <strong>{STAGE_LABEL[cedenteStage]}</strong>.
+      </p>
     </div>
   );
 }
