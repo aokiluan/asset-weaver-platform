@@ -126,6 +126,13 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
   const [existingId, setExistingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(empty());
 
+  const { restored, lastSavedAt, clearDraft, discardDraft } = useFormDraft<FormState>({
+    key: `visit-report:${cedenteId}`,
+    value: form,
+    setValue: setForm,
+    enabled: !loading,
+  });
+
   useEffect(() => {
     (async () => {
       setLoading(true);
