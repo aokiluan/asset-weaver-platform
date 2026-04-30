@@ -122,7 +122,8 @@ export function DocumentosUploadKanban({
   const [filter, setFilter] = useState<Filter>("todos");
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [conciliarOpen, setConciliarOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<ViewMode>("lista");
+  const [viewMode, setViewMode] = useState<ViewMode>("compacto");
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   const pendentesCount = useMemo(
     () => documentos.filter((d) => d.status === "pendente").length,
