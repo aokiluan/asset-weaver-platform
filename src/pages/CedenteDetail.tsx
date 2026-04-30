@@ -441,6 +441,16 @@ export default function CedenteDetail() {
         />
       )}
 
+      {tab === "formalizacao" && (
+        <FormalizacaoTabContent
+          cedente={cedente}
+          latestProposalId={latestProposal?.id ?? null}
+          minutaAssinada={minutaAssinada}
+          canSign={hasRole("admin") || hasRole("gestor_financeiro") || hasRole("financeiro")}
+          onChanged={load}
+        />
+      )}
+
       {tab === "historico" && (
         <div className="mt-4">
           <div className="rounded-lg border bg-card p-6">
