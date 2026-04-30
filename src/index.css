@@ -149,4 +149,15 @@
     font-weight: 600;
     letter-spacing: 0.01em;
   }
+
+  /* Remove spinners (setinhas) de todos os inputs numéricos no projeto */
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
 }
