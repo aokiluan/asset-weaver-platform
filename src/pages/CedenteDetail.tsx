@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
-import { ArrowLeft, Pencil, FileText, Loader2, ClipboardList, Vote } from "lucide-react";
+import { ArrowLeft, Pencil, FileText, Loader2, ClipboardList, Vote, FileSignature, Download, Upload, Trash2, CheckCircle2, AlertCircle } from "lucide-react";
 import { CreditReportForm } from "@/components/credito/CreditReportForm";
 import { ComiteGameSession } from "@/components/credito/ComiteGameSession";
 import { toast } from "sonner";
@@ -288,6 +288,7 @@ export default function CedenteDetail() {
           { v: "visita", label: "Relatório comercial" },
           { v: "credito", label: "Análise de crédito", icon: ClipboardList },
           { v: "comite", label: "Comitê", icon: Vote },
+          { v: "formalizacao", label: "Formalização", icon: FileSignature },
           { v: "historico", label: "Histórico" },
         ];
         return (
@@ -440,6 +441,16 @@ export default function CedenteDetail() {
         />
       )}
 
+      {tab === "formalizacao" && (
+        <FormalizacaoTabContent
+          cedente={cedente}
+          latestProposalId={latestProposal?.id ?? null}
+          minutaAssinada={minutaAssinada}
+          canSign={hasRole("admin") || hasRole("gestor_financeiro") || hasRole("financeiro")}
+          onChanged={load}
+        />
+      )}
+
       {tab === "historico" && (
         <div className="mt-4">
           <div className="rounded-lg border bg-card p-6">
@@ -553,6 +564,277 @@ function ComiteTabContent({
     <div className="mt-4 rounded-lg border bg-card p-10 text-center space-y-2">
       <Loader2 className="h-6 w-6 mx-auto animate-spin text-muted-foreground" />
       <p className="text-sm text-muted-foreground">Preparando sessão do comitê…</p>
+    </div>
+  );
+}
+
+function FormalizacaoTabContent({
+  cedente,
+  latestProposalId,
+  minutaAssinada,
+  canSign,
+  onChanged,
+}: {
+  cedente: Cedente;
+  latestProposalId: string | null;
+  minutaAssinada: boolean;
+  canSign: boolean;
+  onChanged: () => void;
+}) {
+  const [generating, setGenerating] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [signing, setSigning] = useState(false);
+  const [categoriaId, setCategoriaId] = useState<string | null>(null);
+  const [contratoDocs, setContratoDocs] = useState<Array<{ id: string; nome_arquivo: string; storage_path: string; created_at: string }>>([]);
+  const [repsCount, setRepsCount] = useState(0);
+  const [assinatura, setAssinatura] = useState<{ em: string | null; por: string | null }>({ em: null, por: null });
+
+  const reload = async () => {
+    const { data: cat } = await supabase
+      .from("documento_categorias")
+      .select("id")
+      .eq("nome", "Contrato de cessão assinado")
+      .maybeSingle();
+    const catId = cat?.id ?? null;
+    setCategoriaId(catId);
+    if (catId) {
+      const { data: docs } = await supabase
+        .from("documentos")
+        .select("id,nome_arquivo,storage_path,created_at")
+        .eq("cedente_id", cedente.id)
+        .eq("categoria_id", catId)
+        .order("created_at", { ascending: false });
+      setContratoDocs((docs as any) ?? []);
+    }
+    const { count } = await supabase
+      .from("cedente_representantes")
+      .select("*", { count: "exact", head: true })
+      .eq("cedente_id", cedente.id);
+    setRepsCount(count ?? 0);
+
+    const ced: any = cedente;
+    if (ced.minuta_assinada_por) {
+      const { data: prof } = await supabase.from("profiles").select("nome").eq("id", ced.minuta_assinada_por).maybeSingle();
+      setAssinatura({ em: ced.minuta_assinada_em, por: prof?.nome ?? null });
+    } else {
+      setAssinatura({ em: ced.minuta_assinada_em ?? null, por: null });
+    }
+  };
+
+  useEffect(() => { reload(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [cedente.id, minutaAssinada]);
+
+  const handleGerar = async () => {
+    setGenerating(true);
+    try {
+      const { downloadMinutaPDF } = await import("@/lib/minuta-pdf");
+
+      const [{ data: reps }, { data: visit }, { data: prop }] = await Promise.all([
+        supabase.from("cedente_representantes").select("*").eq("cedente_id", cedente.id),
+        supabase.from("cedente_visit_reports").select("avalistas_solidarios").eq("cedente_id", cedente.id).maybeSingle(),
+        latestProposalId
+          ? supabase.from("credit_proposals").select("codigo,valor_aprovado,prazo_dias,taxa_sugerida,finalidade,garantias,decided_at").eq("id", latestProposalId).maybeSingle()
+          : Promise.resolve({ data: null } as any),
+      ]);
+
+      const fiadoresRaw = (visit?.avalistas_solidarios as any[]) ?? [];
+      const fiadores = fiadoresRaw
+        .map((f: any) => ({
+          nome: f?.nome ?? f?.name ?? "",
+          cpf: f?.cpf ?? null,
+          qualificacao: f?.qualificacao ?? f?.cargo ?? null,
+        }))
+        .filter((f) => f.nome);
+
+      downloadMinutaPDF({
+        cedente: cedente as any,
+        representantes: (reps as any) ?? [],
+        fiadores,
+        proposta: (prop as any) ?? null,
+      });
+      toast.success("Minuta gerada", { description: "Envie o PDF à plataforma de assinatura externa." });
+    } catch (e: any) {
+      toast.error("Erro ao gerar minuta", { description: e?.message });
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleUpload = async (file: File) => {
+    if (!categoriaId || !file) return;
+    setUploading(true);
+    const path = `${cedente.id}/contratos/${Date.now()}_${file.name}`;
+    const { error: upErr } = await supabase.storage.from("cedente-docs").upload(path, file, { upsert: false });
+    if (upErr) { toast.error("Erro no upload", { description: upErr.message }); setUploading(false); return; }
+    const { data: u } = await supabase.auth.getUser();
+    const { error: insErr } = await supabase.from("documentos").insert({
+      cedente_id: cedente.id,
+      categoria_id: categoriaId,
+      nome_arquivo: file.name,
+      storage_path: path,
+      mime_type: file.type || null,
+      tamanho_bytes: file.size,
+      uploaded_by: u.user!.id,
+      status: "aprovado" as any,
+    });
+    setUploading(false);
+    if (insErr) { toast.error("Erro ao registrar", { description: insErr.message }); return; }
+    toast.success("Contrato assinado anexado");
+    reload();
+  };
+
+  const handleDownloadDoc = async (path: string, nome: string) => {
+    const { data, error } = await supabase.storage.from("cedente-docs").createSignedUrl(path, 60);
+    if (error) { toast.error("Erro", { description: error.message }); return; }
+    const a = document.createElement("a");
+    a.href = data.signedUrl; a.download = nome; a.click();
+  };
+
+  const handleRemoveDoc = async (id: string, path: string) => {
+    await supabase.storage.from("cedente-docs").remove([path]);
+    await supabase.from("documentos").delete().eq("id", id);
+    reload();
+  };
+
+  const handleMarcarAssinado = async () => {
+    setSigning(true);
+    const { data: u } = await supabase.auth.getUser();
+    const { error } = await supabase
+      .from("cedentes")
+      .update({ minuta_assinada: true, minuta_assinada_em: new Date().toISOString(), minuta_assinada_por: u.user!.id } as any)
+      .eq("id", cedente.id);
+    setSigning(false);
+    if (error) { toast.error("Erro", { description: error.message }); return; }
+    toast.success("Contrato marcado como assinado");
+    onChanged();
+  };
+
+  const handleDesfazer = async () => {
+    setSigning(true);
+    const { error } = await supabase
+      .from("cedentes")
+      .update({ minuta_assinada: false, minuta_assinada_em: null, minuta_assinada_por: null } as any)
+      .eq("id", cedente.id);
+    setSigning(false);
+    if (error) { toast.error("Erro", { description: error.message }); return; }
+    toast.success("Assinatura desfeita");
+    onChanged();
+  };
+
+  return (
+    <div className="mt-4 space-y-4">
+      {/* 1. Geração da minuta */}
+      <div className="rounded-lg border bg-card p-6 space-y-4">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <FileSignature className="h-5 w-5" /> Minuta padrão (Contrato de Fomento Mercantil)
+            </h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Gera o PDF padrão da S3 Capital preenchido com a qualificação do cedente, dos representantes legais e dos fiadores.
+            </p>
+          </div>
+          <Button onClick={handleGerar} disabled={generating}>
+            {generating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
+            Gerar minuta (PDF)
+          </Button>
+        </div>
+        {repsCount === 0 && (
+          <div className="rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-700 p-3 text-sm flex items-start gap-2">
+            <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+            <span className="text-amber-900 dark:text-amber-200">
+              Nenhum representante legal cadastrado. A minuta sairá com o bloco da CONTRATANTE genérico — recomendamos preencher a aba <strong>Representantes legais</strong> antes.
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* 2. Upload do contrato assinado */}
+      <div className="rounded-lg border bg-card p-6 space-y-4">
+        <div>
+          <h2 className="text-lg font-semibold flex items-center gap-2">
+            <Upload className="h-5 w-5" /> Contrato assinado
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Após a assinatura na plataforma externa, anexe aqui o PDF assinado pelas partes.
+          </p>
+        </div>
+        <div>
+          <label className="inline-flex">
+            <input
+              type="file"
+              accept="application/pdf,image/*"
+              className="hidden"
+              disabled={uploading || !categoriaId}
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUpload(f); e.currentTarget.value = ""; }}
+            />
+            <span className={`inline-flex items-center px-3 py-2 rounded-md border text-sm cursor-pointer hover:bg-accent ${uploading ? "opacity-50 pointer-events-none" : ""}`}>
+              {uploading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
+              Anexar contrato assinado
+            </span>
+          </label>
+        </div>
+        {contratoDocs.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Nenhum contrato anexado ainda.</p>
+        ) : (
+          <ul className="divide-y border rounded-md">
+            {contratoDocs.map((d) => (
+              <li key={d.id} className="flex items-center justify-between gap-3 px-3 py-2 text-sm">
+                <div className="min-w-0">
+                  <div className="truncate font-medium">{d.nome_arquivo}</div>
+                  <div className="text-xs text-muted-foreground">{new Date(d.created_at).toLocaleString("pt-BR")}</div>
+                </div>
+                <div className="flex gap-1 shrink-0">
+                  <Button size="sm" variant="ghost" onClick={() => handleDownloadDoc(d.storage_path, d.nome_arquivo)}>
+                    <Download className="h-4 w-4" />
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => handleRemoveDoc(d.id, d.storage_path)}>
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {/* 3. Confirmação de assinatura */}
+      <div className="rounded-lg border bg-card p-6 space-y-3">
+        <h2 className="text-lg font-semibold flex items-center gap-2">
+          <CheckCircle2 className="h-5 w-5" /> Status da formalização
+        </h2>
+        {minutaAssinada ? (
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-sm">
+              <Badge variant="default" className="bg-green-600 hover:bg-green-600">Assinado</Badge>
+              <span className="text-muted-foreground">
+                {assinatura.em ? `em ${new Date(assinatura.em).toLocaleString("pt-BR")}` : ""}
+                {assinatura.por ? ` por ${assinatura.por}` : ""}
+              </span>
+            </div>
+            {canSign && (
+              <Button variant="outline" size="sm" onClick={handleDesfazer} disabled={signing}>
+                Desfazer assinatura
+              </Button>
+            )}
+          </div>
+        ) : (
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm text-muted-foreground">
+              {contratoDocs.length === 0
+                ? "Anexe o contrato assinado acima antes de confirmar."
+                : canSign
+                  ? "Confirme abaixo para liberar o avanço para a etapa Ativo."
+                  : "Aguardando confirmação do time financeiro."}
+            </p>
+            {canSign && (
+              <Button onClick={handleMarcarAssinado} disabled={signing || contratoDocs.length === 0}>
+                {signing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
+                Marcar como assinado
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
