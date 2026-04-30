@@ -125,7 +125,7 @@ export default function Cedentes() {
             Cadastro de cedentes, status de análise e limites aprovados.
           </p>
         </div>
-        <Button onClick={() => navigate("/cedentes/novo")}>
+        <Button onClick={() => setNovoOpen(true)}>
           <Plus className="h-4 w-4 mr-2" /> Novo cadastro
         </Button>
       </div>
