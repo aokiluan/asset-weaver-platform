@@ -200,20 +200,46 @@ export function ConciliacaoDocumentosSheet({
         className="w-screen sm:max-w-none lg:max-w-[95vw] p-0 flex flex-col gap-0"
       >
         {/* Header */}
-        <div className="flex items-center justify-between gap-3 px-4 py-3 border-b bg-card">
-          <div className="min-w-0">
-            <h2 className="text-base font-semibold truncate">
-              Conciliação de documentos · {cedenteRazaoSocial}
-            </h2>
-            <p className="text-xs text-muted-foreground font-mono">{cedenteCnpj}</p>
+        <div className="flex flex-col gap-2 px-4 py-3 border-b bg-card">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <h2 className="text-base font-semibold truncate">
+                Conciliação de documentos · {cedenteRazaoSocial}
+              </h2>
+              <p className="text-xs text-muted-foreground font-mono">{cedenteCnpj}</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={somenteComCategoria}
+                  onChange={(e) => { setSomenteComCategoria(e.target.checked); setIdx(0); }}
+                  className="h-3 w-3 accent-primary"
+                />
+                Apenas com categoria
+              </label>
+              {fila.length > 0 && (
+                <span className="text-sm text-muted-foreground whitespace-nowrap">
+                  {Math.min(idx + 1, fila.length)} de {fila.length}
+                </span>
+              )}
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            {fila.length > 0 && (
-              <span className="text-sm text-muted-foreground">
-                {Math.min(idx + 1, fila.length)} de {fila.length}
+          {somenteComCategoria && pendentesSemCategoria > 0 && (
+            <div className="flex items-center gap-2 rounded-md border border-amber-500/40 bg-amber-50/40 dark:bg-amber-950/20 px-2.5 py-1.5 text-xs">
+              <AlertTriangle className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+              <span className="flex-1">
+                <span className="font-medium">{pendentesSemCategoria}</span> documento(s) ainda sem categoria —
+                peça ao comercial para classificar antes de validar.
               </span>
-            )}
-          </div>
+              <button
+                onClick={() => { setSomenteComCategoria(false); setIdx(0); }}
+                className="text-amber-700 dark:text-amber-300 hover:underline font-medium whitespace-nowrap"
+              >
+                Ver mesmo assim
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Conteúdo */}
