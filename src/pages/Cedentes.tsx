@@ -12,6 +12,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { CedenteNovoSheet } from "@/components/cedentes/CedenteNovoSheet";
 
 interface Cedente {
   id: string;
@@ -64,6 +65,7 @@ export default function Cedentes() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [novoOpen, setNovoOpen] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -123,7 +125,7 @@ export default function Cedentes() {
             Cadastro de cedentes, status de análise e limites aprovados.
           </p>
         </div>
-        <Button onClick={() => navigate("/cedentes/novo")}>
+        <Button onClick={() => setNovoOpen(true)}>
           <Plus className="h-4 w-4 mr-2" /> Novo cadastro
         </Button>
       </div>
@@ -322,6 +324,15 @@ export default function Cedentes() {
           )}
         </div>
       </div>
+
+      <CedenteNovoSheet
+        open={novoOpen}
+        onOpenChange={setNovoOpen}
+        onCreated={async (id) => {
+          await load();
+          setSelectedId(id);
+        }}
+      />
     </div>
   );
 }
