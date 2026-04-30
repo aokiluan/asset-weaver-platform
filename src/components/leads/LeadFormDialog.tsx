@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -159,7 +160,11 @@ export function LeadFormDialog({ open, onOpenChange, initial, onSaved }: Props) 
 
             <div className="space-y-2">
               <Label htmlFor="valor_estimado">Valor estimado (R$)</Label>
-              <Input id="valor_estimado" type="number" step="0.01" {...register("valor_estimado")} />
+              <CurrencyInput
+                id="valor_estimado"
+                value={watch("valor_estimado") ?? null}
+                onValueChange={(v) => setValue("valor_estimado", v, { shouldDirty: true })}
+              />
             </div>
 
             <div className="space-y-2">

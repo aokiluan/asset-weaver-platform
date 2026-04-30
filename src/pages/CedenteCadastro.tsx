@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Save, ArrowLeft, Plus, Building2, Users, FileText } from "lucide-react";
 import { toast } from "sonner";
@@ -315,10 +316,9 @@ export default function CedenteCadastro() {
               </div>
               <div>
                 <Label>Capital Social</Label>
-                <Input
-                  type="number"
-                  value={form.capital_social ?? ""}
-                  onChange={(e) => set("capital_social", e.target.value ? Number(e.target.value) : null)}
+                <CurrencyInput
+                  value={form.capital_social}
+                  onValueChange={(v) => set("capital_social", v)}
                 />
               </div>
               <div className="md:col-span-2">
@@ -339,10 +339,9 @@ export default function CedenteCadastro() {
               </div>
               <div>
                 <Label>Faturamento Médio (mensal)</Label>
-                <Input
-                  type="number"
-                  value={form.faturamento_medio ?? ""}
-                  onChange={(e) => set("faturamento_medio", e.target.value ? Number(e.target.value) : null)}
+                <CurrencyInput
+                  value={form.faturamento_medio}
+                  onValueChange={(v) => set("faturamento_medio", v)}
                 />
               </div>
             </CardContent>

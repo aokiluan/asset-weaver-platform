@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -182,7 +183,7 @@ export function CedenteNovoSheet({ open, onOpenChange, onCreated }: Props) {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label>Capital Social</Label>
-                <Input type="number" value={form.capital_social ?? ""} onChange={(e) => set("capital_social", e.target.value ? Number(e.target.value) : null)} />
+                <CurrencyInput value={form.capital_social} onValueChange={(v) => set("capital_social", v)} />
               </div>
               <div className="space-y-2">
                 <Label>Data de Abertura</Label>
@@ -200,7 +201,7 @@ export function CedenteNovoSheet({ open, onOpenChange, onCreated }: Props) {
               </div>
               <div className="space-y-2">
                 <Label>Faturamento médio (mensal)</Label>
-                <Input type="number" value={form.faturamento_medio ?? ""} onChange={(e) => set("faturamento_medio", e.target.value ? Number(e.target.value) : null)} />
+                <CurrencyInput value={form.faturamento_medio} onValueChange={(v) => set("faturamento_medio", v)} />
               </div>
             </div>
           </section>
