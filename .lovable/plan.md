@@ -1,71 +1,21 @@
-## Diagnóstico
+## Mudança em `src/components/cedentes/DocumentosUploadKanban.tsx`
 
-Hoje o fluxo dos representantes legais tem dois problemas reais:
+### 1. Remover botão azul grande do topo
+- Excluir o bloco do botão "Conciliar documentos" (linhas ~338–371), incluindo as variantes habilitada e desabilitada com `Tooltip`.
+- Como esse era o único item ao lado do uploader, simplificar a `div` do topo (linha 315) removendo `flex-col sm:flex-row gap-2` — fica apenas o drop area ocupando 100%.
+- Remover o ícone `Scale` do import (linha 18).
 
-### 1. "Atualizar da Receita" apaga campos preenchidos manualmente
+### 2. Reposicionar filtros e adicionar "Conciliar documentos" no mesmo alinhamento
+- Manter o grupo dos filtros (`bg-muted` pill) **alinhado à esquerda** da barra.
+- Logo ao lado, no **mesmo alinhamento** (mesma linha, mesma altura), adicionar o botão "Conciliar documentos" usando outro container `bg-muted p-0.5 rounded-md` com um único `<button>` no mesmo estilo dos filtros (`px-2.5 py-1 text-xs rounded text-muted-foreground hover:text-foreground`), aspecto cinza, sem ícone de balança.
+- Manter o badge de `pendentesCount` ao lado do texto.
+- Manter a regra `canReview`: se o usuário não pode conciliar, o botão fica `disabled` com `Tooltip` explicando.
+- O bloco de ações em massa (quando há `checked.size > 0`) continua aparecendo à direita via `ml-auto`.
 
-A edge function `sync-representantes` faz um `DELETE` em todos os registros com `fonte = 'receita'` e depois reinsere o que vem da BrasilAPI:
-
-```ts
-// supabase/functions/sync-representantes/index.ts
-await adminClient
-  .from("cedente_representantes")
-  .delete()
-  .eq("cedente_id", cedente_id)
-  .eq("fonte", "receita");
+### Layout resultante da barra
 ```
-
-Como os representantes vêm originalmente da Receita (`fonte = 'receita'`), qualquer dado complementar que o usuário preenche depois (RG, endereço, estado civil, cônjuge, qualificação, etc.) é apagado quando ele clica em "Atualizar da Receita". Só sobrevivem os criados manualmente.
-
-Além disso, a sincronização automática roda sozinha quando o cedente ainda não foi sincronizado:
-
-```ts
-useEffect(() => {
-  if (!loading && !jaSincronizado && !autoTried && !syncing) {
-    setAutoTried(true);
-    sync();   // dispara automaticamente
-  }
-}, [loading, jaSincronizado]);
+[ Todos | Pendentes | Verificados | Reprovados | Sem categoria ]  [ Conciliar documentos (N) ]            [ações em massa →]
 ```
+Tudo encostado à esquerda, mesmo alinhamento vertical, mesma estética pill cinza.
 
-Ou seja, na prática a busca já acontece uma vez automaticamente — o botão manual existe apenas para reexecutar, e é justamente o que destrói os dados.
-
-### 2. "Salvamento incorreto" do formulário
-
-No `save()` o payload é montado a partir de `...rest` (espalhamento de todos os campos do representante). Isso funciona, mas qualquer campo `undefined` no estado simplesmente não vai no UPDATE — então parece que o form salvou, mas valores antigos persistem. Mais grave: depois do save, se o usuário rodar "Atualizar da Receita", o registro inteiro é deletado e recriado só com nome/cpf/qualificacao/participacao, dando a impressão de que "não salvou".
-
-A causa raiz dos dois sintomas é a mesma: o sync destrói registros existentes.
-
-## Plano
-
-Concordo com a sua proposta: a busca na Receita deve acontecer **uma única vez** (a primeira), e depois os representantes passam a ser editáveis sem risco de serem sobrescritos.
-
-### Mudanças
-
-**1. `src/components/cedentes/CedenteRepresentantesTab.tsx`**
-- Remover o botão "Atualizar da Receita" do cabeçalho (e o ícone `RefreshCw` do import).
-- Manter o auto-sync inicial que roda quando `!jaSincronizado` — é assim que os dados da Receita entram na primeira vez.
-- Remover a função `sync()` manual e o estado `syncing` (a chamada da edge function continua existindo, mas embutida no efeito de auto-sync inicial).
-- Ajustar a mensagem do estado vazio para não mencionar mais o botão ("Nenhum representante encontrado. Adicione manualmente.").
-
-**2. `supabase/functions/sync-representantes/index.ts`**
-- Trocar a estratégia destrutiva (`DELETE` + `INSERT`) por **upsert idempotente baseado em CPF**:
-  - Para cada item do QSA da BrasilAPI, verificar se já existe um representante com o mesmo `cedente_id` + `cpf`.
-  - Se existir: **não tocar** no registro (preserva qualquer dado já preenchido pelo usuário).
-  - Se não existir: inserir com `fonte = 'receita'` e os campos básicos vindos da Receita.
-- Isso torna a função segura mesmo se um dia precisar ser chamada de novo, e elimina o bug de "apagou tudo".
-- Continuar atualizando `cedentes.representantes_sincronizado_em` para o stepper saber que já houve sincronização.
-
-**3. Salvamento robusto em `save()`**
-- Garantir que campos opcionais não preenchidos sejam enviados como `null` explicitamente (não `undefined`), para que o UPDATE realmente limpe valores que o usuário apagou. Hoje só as datas são tratadas; vou estender para os demais campos textuais opcionais (rg, orgao_emissor, endereço, dados do cônjuge, etc.) usando `?? null`.
-
-### O que NÃO muda
-- Estrutura do banco e RLS.
-- Auto-sync na primeira visita ao cedente (continua sendo a forma de trazer os dados da Receita inicialmente).
-- Autosave de rascunho local (`useFormDraft`) e indicador "Rascunho salvo".
-- Layout geral da aba.
-
-### Resultado esperado
-- Os representantes vêm automaticamente da Receita na primeira vez que a aba é aberta.
-- Não existe mais botão para "reatualizar" — o usuário edita à vontade sem medo de perder dados.
-- O "Salvar representante" passa a persistir corretamente todos os campos, inclusive os que foram limpos.
+Nada mais muda: estado, `ConciliacaoDocumentosSheet`, permissões e contagem de pendentes permanecem iguais.

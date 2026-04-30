@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/tooltip";
 import {
   CheckCircle2, XCircle, Download, Trash2, Upload, Loader2, FileText,
-  Sparkles, ChevronDown, ChevronRight, FolderInput, Image as ImageIcon, Scale,
+  Sparkles, ChevronDown, ChevronRight, FolderInput, Image as ImageIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -311,67 +311,30 @@ export function DocumentosUploadKanban({
   return (
     <TooltipProvider delayDuration={200}>
       <div className="space-y-3">
-        {/* Top bar: upload + conciliar */}
-        <div className="flex flex-col sm:flex-row gap-2">
-          <div
-            onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
-            onDragLeave={() => setDragActive(false)}
-            onDrop={handleDrop}
-            onClick={() => fileInputRef.current?.click()}
-            className={cn(
-              "flex-1 rounded-md border-2 border-dashed px-4 py-3 cursor-pointer transition-all flex items-center gap-3",
-              dragActive
-                ? "border-primary bg-primary/10"
-                : "border-muted-foreground/30 hover:border-primary/50 bg-muted/20",
-            )}
-          >
-            <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleSelect} accept=".pdf,.jpg,.jpeg,.png,.webp" />
-            <Upload className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm">
-              {uploading ? "Enviando..." : "Arraste arquivos aqui ou clique para selecionar"}
-            </span>
-            <span className="text-xs text-muted-foreground ml-auto hidden md:inline">
-              PDF/JPG/PNG • IA sugere a categoria
-            </span>
-          </div>
-
-          {canReview ? (
-            <Button
-              size="lg"
-              onClick={() => setConciliarOpen(true)}
-              className="gap-2 relative"
-            >
-              <Scale className="h-4 w-4" />
-              Conciliar documentos
-              {pendentesCount > 0 && (
-                <Badge variant="destructive" className="ml-1 h-5 min-w-5 px-1.5 rounded-full">
-                  {pendentesCount}
-                </Badge>
-              )}
-            </Button>
-          ) : (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span tabIndex={0}>
-                  <Button size="lg" disabled className="gap-2 relative">
-                    <Scale className="h-4 w-4" />
-                    Conciliar documentos
-                    {pendentesCount > 0 && (
-                      <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1.5 rounded-full">
-                        {pendentesCount}
-                      </Badge>
-                    )}
-                  </Button>
-                </span>
-              </TooltipTrigger>
-              <TooltipContent className="text-xs max-w-xs">
-                Apenas analistas de cadastro, gestor comercial ou admin podem conciliar.
-              </TooltipContent>
-            </Tooltip>
+        {/* Top bar: upload */}
+        <div
+          onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
+          onDragLeave={() => setDragActive(false)}
+          onDrop={handleDrop}
+          onClick={() => fileInputRef.current?.click()}
+          className={cn(
+            "rounded-md border-2 border-dashed px-4 py-3 cursor-pointer transition-all flex items-center gap-3",
+            dragActive
+              ? "border-primary bg-primary/10"
+              : "border-muted-foreground/30 hover:border-primary/50 bg-muted/20",
           )}
+        >
+          <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleSelect} accept=".pdf,.jpg,.jpeg,.png,.webp" />
+          <Upload className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm">
+            {uploading ? "Enviando..." : "Arraste arquivos aqui ou clique para selecionar"}
+          </span>
+          <span className="text-xs text-muted-foreground ml-auto hidden md:inline">
+            PDF/JPG/PNG • IA sugere a categoria
+          </span>
         </div>
 
-        {/* Filtros + ações em massa */}
+        {/* Filtros + conciliar + ações em massa */}
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex gap-1 rounded-md bg-muted p-0.5">
             {filterButtons.map((f) => (
@@ -387,6 +350,43 @@ export function DocumentosUploadKanban({
               </button>
             ))}
           </div>
+
+          {canReview ? (
+            <div className="flex gap-1 rounded-md bg-muted p-0.5">
+              <button
+                onClick={() => setConciliarOpen(true)}
+                className="px-2.5 py-1 text-xs rounded transition-colors text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5"
+              >
+                Conciliar documentos
+                {pendentesCount > 0 && (
+                  <Badge variant="destructive" className="h-4 min-w-4 px-1 text-[10px] rounded-full">
+                    {pendentesCount}
+                  </Badge>
+                )}
+              </button>
+            </div>
+          ) : (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span tabIndex={0} className="flex gap-1 rounded-md bg-muted p-0.5">
+                  <button
+                    disabled
+                    className="px-2.5 py-1 text-xs rounded transition-colors text-muted-foreground/60 inline-flex items-center gap-1.5 cursor-not-allowed"
+                  >
+                    Conciliar documentos
+                    {pendentesCount > 0 && (
+                      <Badge variant="secondary" className="h-4 min-w-4 px-1 text-[10px] rounded-full">
+                        {pendentesCount}
+                      </Badge>
+                    )}
+                  </button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent className="text-xs max-w-xs">
+                Apenas analistas de cadastro, gestor comercial ou admin podem conciliar.
+              </TooltipContent>
+            </Tooltip>
+          )}
           {checked.size > 0 && canReview && (
             <div className="flex items-center gap-1 ml-auto">
               <span className="text-xs text-muted-foreground">{checked.size} selecionado(s)</span>
