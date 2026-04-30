@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -98,14 +99,18 @@ export default function AdminAlcadas() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label>Valor mínimo (R$)</Label>
-                  <Input type="number" step="0.01" value={editing.valor_min ?? 0}
-                    onChange={(e) => setEditing({ ...editing, valor_min: Number(e.target.value) })} />
+                  <CurrencyInput
+                    value={editing.valor_min ?? 0}
+                    onValueChange={(v) => setEditing({ ...editing, valor_min: v ?? 0 })}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Valor máximo (R$)</Label>
-                  <Input type="number" step="0.01" placeholder="vazio = sem teto"
-                    value={editing.valor_max ?? ""}
-                    onChange={(e) => setEditing({ ...editing, valor_max: e.target.value ? Number(e.target.value) : null })} />
+                  <CurrencyInput
+                    placeholder="vazio = sem teto"
+                    value={editing.valor_max}
+                    onValueChange={(v) => setEditing({ ...editing, valor_max: v })}
+                  />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">

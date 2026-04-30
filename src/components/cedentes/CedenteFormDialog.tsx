@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -150,7 +151,11 @@ export function CedenteFormDialog({ open, onOpenChange, initial, onSaved }: Prop
 
             <div className="space-y-2">
               <Label htmlFor="faturamento_medio">Faturamento médio mensal (R$)</Label>
-              <Input id="faturamento_medio" type="number" step="0.01" {...register("faturamento_medio")} />
+              <CurrencyInput
+                id="faturamento_medio"
+                value={watch("faturamento_medio") ?? null}
+                onValueChange={(v) => setValue("faturamento_medio", v, { shouldDirty: true })}
+              />
             </div>
 
             <div className="space-y-2 md:col-span-2">
@@ -189,7 +194,11 @@ export function CedenteFormDialog({ open, onOpenChange, initial, onSaved }: Prop
 
             <div className="space-y-2">
               <Label htmlFor="limite_aprovado">Limite aprovado (R$)</Label>
-              <Input id="limite_aprovado" type="number" step="0.01" {...register("limite_aprovado")} />
+              <CurrencyInput
+                id="limite_aprovado"
+                value={watch("limite_aprovado") ?? null}
+                onValueChange={(v) => setValue("limite_aprovado", v, { shouldDirty: true })}
+              />
             </div>
 
             <div className="space-y-2 md:col-span-2">
