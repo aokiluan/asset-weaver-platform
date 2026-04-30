@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import {
   CheckCircle2, XCircle, ChevronLeft, ChevronRight, Loader2, FileText,
-  Sparkles, Download, PartyPopper,
+  Sparkles, Download, PartyPopper, AlertTriangle, Undo2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -34,10 +34,22 @@ export function ConciliacaoDocumentosSheet({
   open, onOpenChange, cedenteId, cedenteRazaoSocial, cedenteCnpj,
   documentos, categorias, onChanged,
 }: Props) {
-  // Fila = pendentes (status=pendente). Reprovados podem ser revisitados via "Todos" abaixo.
-  const fila = useMemo(
+  // Filtros da fila
+  const [somenteComCategoria, setSomenteComCategoria] = useState(true);
+
+  const pendentesTodos = useMemo(
     () => documentos.filter((d) => d.status === "pendente"),
     [documentos],
+  );
+  const pendentesSemCategoria = useMemo(
+    () => pendentesTodos.filter((d) => !d.categoria_id).length,
+    [pendentesTodos],
+  );
+  const fila = useMemo(
+    () => somenteComCategoria
+      ? pendentesTodos.filter((d) => !!d.categoria_id)
+      : pendentesTodos,
+    [pendentesTodos, somenteComCategoria],
   );
 
   const [idx, setIdx] = useState(0);
@@ -129,6 +141,21 @@ export function ConciliacaoDocumentosSheet({
     onChanged();
   };
 
+  const devolverReclassificar = async () => {
+    if (!current) return;
+    const obsAtual = (obs ?? "").trim();
+    const aviso = "Devolvido ao comercial para reclassificação";
+    const novaObs = obsAtual ? `${obsAtual}\n\n${aviso}` : aviso;
+    const { error } = await supabase.from("documentos").update({
+      categoria_id: null,
+      categoria_sugerida_id: null,
+      observacoes: novaObs,
+    }).eq("id", current.id);
+    if (error) { toast.error("Erro", { description: error.message }); return; }
+    toast.success("Devolvido para o comercial reclassificar");
+    onChanged();
+  };
+
   const aceitarSugestao = async () => {
     if (!current?.categoria_sugerida_id) return;
     const { error } = await supabase.from("documentos").update({
@@ -173,20 +200,46 @@ export function ConciliacaoDocumentosSheet({
         className="w-screen sm:max-w-none lg:max-w-[95vw] p-0 flex flex-col gap-0"
       >
         {/* Header */}
-        <div className="flex items-center justify-between gap-3 px-4 py-3 border-b bg-card">
-          <div className="min-w-0">
-            <h2 className="text-base font-semibold truncate">
-              Conciliação de documentos · {cedenteRazaoSocial}
-            </h2>
-            <p className="text-xs text-muted-foreground font-mono">{cedenteCnpj}</p>
+        <div className="flex flex-col gap-2 px-4 py-3 border-b bg-card">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <h2 className="text-base font-semibold truncate">
+                Conciliação de documentos · {cedenteRazaoSocial}
+              </h2>
+              <p className="text-xs text-muted-foreground font-mono">{cedenteCnpj}</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={somenteComCategoria}
+                  onChange={(e) => { setSomenteComCategoria(e.target.checked); setIdx(0); }}
+                  className="h-3 w-3 accent-primary"
+                />
+                Apenas com categoria
+              </label>
+              {fila.length > 0 && (
+                <span className="text-sm text-muted-foreground whitespace-nowrap">
+                  {Math.min(idx + 1, fila.length)} de {fila.length}
+                </span>
+              )}
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            {fila.length > 0 && (
-              <span className="text-sm text-muted-foreground">
-                {Math.min(idx + 1, fila.length)} de {fila.length}
+          {somenteComCategoria && pendentesSemCategoria > 0 && (
+            <div className="flex items-center gap-2 rounded-md border border-amber-500/40 bg-amber-50/40 dark:bg-amber-950/20 px-2.5 py-1.5 text-xs">
+              <AlertTriangle className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+              <span className="flex-1">
+                <span className="font-medium">{pendentesSemCategoria}</span> documento(s) ainda sem categoria —
+                peça ao comercial para classificar antes de validar.
               </span>
-            )}
-          </div>
+              <button
+                onClick={() => { setSomenteComCategoria(false); setIdx(0); }}
+                className="text-amber-700 dark:text-amber-300 hover:underline font-medium whitespace-nowrap"
+              >
+                Ver mesmo assim
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Conteúdo */}
@@ -329,7 +382,15 @@ export function ConciliacaoDocumentosSheet({
             <Button variant="ghost" size="sm" onClick={prev} disabled={idx === 0}>
               <ChevronLeft className="h-4 w-4 mr-1" /> Anterior
             </Button>
-            <div className="flex-1 flex items-center justify-center gap-2">
+            <div className="flex-1 flex items-center justify-center gap-2 flex-wrap">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={devolverReclassificar}
+                title="Tira a categoria e adiciona observação para o comercial reclassificar"
+              >
+                <Undo2 className="h-4 w-4 mr-2" /> Devolver para reclassificar
+              </Button>
               <Button
                 variant="outline"
                 onClick={reprovar}
