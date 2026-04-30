@@ -91,15 +91,27 @@ export function CedenteStageActions({ cedenteId, stage, isOwner, gateInfo, onCha
   // Pendências da etapa atual (somente para botões "para frente")
   const gate = useMemo(() => evaluateGates({ stage, ...gateInfo }), [stage, gateInfo]);
 
-  const visible = TRANSITIONS.filter((t) => {
-    if (t.target === stage) return false;
-    if (!t.fromStages.includes(stage)) return false;
+  // Mostramos sempre os 4 botões; cada um habilita conforme regras
+  const evaluations = TRANSITIONS.map((t) => {
+    const isCurrent = t.target === stage;
+    const stageOk = t.fromStages.includes(stage);
     const hasAnyRole = t.roles.some((r) => hasRole(r));
     const ownerOverride = t.key === "to-cadastro" && stage === "novo" && isOwner;
-    return hasAnyRole || ownerOverride;
-  });
+    const roleOk = hasAnyRole || ownerOverride;
+    const gatesOk = t.skipGates ? true : gate.pendentes.length === 0;
 
-  if (visible.length === 0) return null;
+    let reason: string | null = null;
+    if (isCurrent) reason = `Cedente já está na etapa ${STAGE_LABEL[stage]}`;
+    else if (!stageOk) reason = `Não disponível na etapa atual (${STAGE_LABEL[stage]})`;
+    else if (!roleOk) {
+      const labels = t.roles.map((r) => ROLE_LABEL[r]).join(", ");
+      reason = `Apenas ${labels} podem executar esta ação`;
+    } else if (!gatesOk) {
+      reason = `Pendências:\n• ${gate.pendentes.join("\n• ")}`;
+    }
+
+    return { t, enabled: reason === null, reason };
+  });
 
   const doAdvance = async (target: CedenteStage, extraObs?: string) => {
     setSaving(true);
@@ -121,15 +133,12 @@ export function CedenteStageActions({ cedenteId, stage, isOwner, gateInfo, onCha
   return (
     <TooltipProvider delayDuration={200}>
       <div className="flex flex-wrap gap-2 justify-end">
-        {visible.map((t) => {
+        {evaluations.map(({ t, enabled, reason }) => {
           const Icon = t.icon;
-          // Para botões "para frente", checa pendências de gate da etapa atual
-          const blockedByGates = !t.skipGates && gate.pendentes.length > 0;
-          const disabled = saving || blockedByGates;
+          const disabled = saving || !enabled;
 
           const btn = (
             <Button
-              key={t.key}
               variant={t.variant}
               disabled={disabled}
               onClick={() => {
@@ -142,19 +151,19 @@ export function CedenteStageActions({ cedenteId, stage, isOwner, gateInfo, onCha
             </Button>
           );
 
-          if (blockedByGates) {
+          if (reason) {
             return (
               <Tooltip key={t.key}>
                 <TooltipTrigger asChild>
-                  <span tabIndex={0}>{btn}</span>
+                  <span tabIndex={0} className="inline-flex">{btn}</span>
                 </TooltipTrigger>
                 <TooltipContent side="bottom" className="max-w-xs whitespace-pre-line text-xs">
-                  Pendências:{"\n"}• {gate.pendentes.join("\n• ")}
+                  {reason}
                 </TooltipContent>
               </Tooltip>
             );
           }
-          return btn;
+          return <span key={t.key} className="inline-flex">{btn}</span>;
         })}
       </div>
 
