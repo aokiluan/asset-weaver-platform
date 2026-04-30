@@ -432,23 +432,12 @@ export default function CedenteDetail() {
       )}
 
       {tab === "comite" && (
-        <div className="mt-4 space-y-4">
-          {latestProposal ? (
-            <ComiteGameSession
-              proposalId={latestProposal.id}
-              votosMinimos={latestProposal.votos_minimos}
-              proposalStage={latestProposal.stage as any}
-            />
-          ) : (
-            <div className="rounded-lg border bg-card p-10 text-center space-y-2">
-              <Vote className="h-10 w-10 mx-auto text-muted-foreground" />
-              <h3 className="text-base font-semibold">Comitê ainda não disponível</h3>
-              <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                Nenhuma proposta de crédito encaminhada para este cedente. O comitê é habilitado quando a proposta atinge a alçada do colegiado.
-              </p>
-            </div>
-          )}
-        </div>
+        <ComiteTabContent
+          cedenteId={cedente.id}
+          cedenteStage={cedente.stage}
+          latestProposal={latestProposal}
+          onProvisioned={load}
+        />
       )}
 
       {tab === "historico" && (
