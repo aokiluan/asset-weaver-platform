@@ -231,6 +231,7 @@ export function CedenteRepresentantesTab({ cedenteId, jaSincronizado, onSynced }
                   socio={rep}
                   index={idx}
                   title={`Representante ${idx + 1}`}
+                  hideDataExpedicao
                   onChange={(s) => updateLocal(rep.id, { ...rep, ...s })}
                   onRemove={() => removeOne(rep)}
                   headerExtra={
