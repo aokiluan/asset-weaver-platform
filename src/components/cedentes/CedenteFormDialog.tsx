@@ -114,6 +114,7 @@ export function CedenteFormDialog({ open, onOpenChange, initial, onSaved }: Prop
       return;
     }
     toast.success(isEdit ? "Cedente atualizado" : "Cedente criado");
+    clearDraft();
     onSaved();
     onOpenChange(false);
   };
