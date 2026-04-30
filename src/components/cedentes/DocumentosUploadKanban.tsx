@@ -16,6 +16,7 @@ import {
 import {
   CheckCircle2, XCircle, Download, Trash2, Upload, Loader2, FileText,
   Sparkles, ChevronDown, ChevronRight, FolderInput, Image as ImageIcon,
+  LayoutList, LayoutGrid,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -71,6 +72,7 @@ const fmtDate = (s: string | null) => {
 };
 
 type Filter = "todos" | "pendentes" | "aprovados" | "reprovados" | "sem_categoria";
+type ViewMode = "lista" | "quadro";
 const SEM_CAT = "__sem_categoria__";
 
 function StatusSelo({ d }: { d: Documento }) {
@@ -109,8 +111,8 @@ export function DocumentosUploadKanban({
   cedenteId, cedenteRazaoSocial, cedenteCnpj, categorias, documentos, onChanged,
 }: Props) {
   const { hasRole } = useAuth();
-  const canReview =
-    hasRole("admin") || hasRole("gestor_comercial") || hasRole("analista_cadastro");
+  // Conciliação/validação: somente time de cadastro (admin = master)
+  const canReview = hasRole("admin") || hasRole("analista_cadastro");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
@@ -120,11 +122,22 @@ export function DocumentosUploadKanban({
   const [filter, setFilter] = useState<Filter>("todos");
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [conciliarOpen, setConciliarOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>("lista");
 
   const pendentesCount = useMemo(
     () => documentos.filter((d) => d.status === "pendente").length,
     [documentos],
   );
+
+  // Progresso: categorias obrigatórias com ao menos 1 documento associado
+  const obrigatoriasProgress = useMemo(() => {
+    const obrigatorias = categorias.filter((c) => c.obrigatorio);
+    const total = obrigatorias.length;
+    const preenchidas = obrigatorias.filter((c) =>
+      documentos.some((d) => d.categoria_id === c.id),
+    ).length;
+    return { total, preenchidas };
+  }, [categorias, documentos]);
 
   // Polling enquanto houver docs em "analisando"
   useEffect(() => {
@@ -219,27 +232,23 @@ export function DocumentosUploadKanban({
     if (dt?.files?.length) uploadFiles(Array.from(dt.files));
   };
 
-  const moveTo = async (documentoId: string, categoriaId: string | null) => {
-    const { error } = await supabase.from("documentos").update({
-      categoria_id: categoriaId,
-      categoria_sugerida_id: null,
-    }).eq("id", documentoId);
-    if (error) { toast.error("Erro ao mover", { description: error.message }); return; }
-    onChanged();
-  };
-
-  const moveSelectedTo = async (categoriaId: string | null) => {
-    if (checked.size === 0) return;
-    const ids = Array.from(checked);
+  const moveManyTo = async (ids: string[], categoriaId: string | null) => {
+    if (ids.length === 0) return;
     const { error } = await supabase.from("documentos").update({
       categoria_id: categoriaId,
       categoria_sugerida_id: null,
     }).in("id", ids);
-    if (error) { toast.error("Erro", { description: error.message }); return; }
-    toast.success(`${ids.length} movido(s)`);
+    if (error) { toast.error("Erro ao mover", { description: error.message }); return; }
+    if (ids.length > 1) toast.success(`${ids.length} documento(s) movido(s)`);
     setChecked(new Set());
     onChanged();
   };
+
+  const moveTo = (documentoId: string, categoriaId: string | null) =>
+    moveManyTo([documentoId], categoriaId);
+
+  const moveSelectedTo = (categoriaId: string | null) =>
+    moveManyTo(Array.from(checked), categoriaId);
 
   const reviewSelected = async (status: "aprovado" | "reprovado") => {
     if (checked.size === 0) return;
@@ -267,12 +276,20 @@ export function DocumentosUploadKanban({
     onChanged();
   };
 
+  // Drag-and-drop com suporte a multi-seleção
   const onCardDragStart = (e: React.DragEvent, docId: string) => {
-    e.dataTransfer.setData("text/documento-id", docId);
+    const ids = checked.has(docId) && checked.size > 1
+      ? Array.from(checked)
+      : [docId];
+    e.dataTransfer.setData("text/documento-ids", JSON.stringify(ids));
+    e.dataTransfer.setData("text/documento-id", docId); // compat
     e.dataTransfer.effectAllowed = "move";
   };
   const onCategoryDragOver = (e: React.DragEvent, catId: string) => {
-    if (e.dataTransfer.types.includes("text/documento-id")) {
+    if (
+      e.dataTransfer.types.includes("text/documento-id") ||
+      e.dataTransfer.types.includes("text/documento-ids")
+    ) {
       e.preventDefault();
       setDragOverCat(catId);
     }
@@ -280,8 +297,16 @@ export function DocumentosUploadKanban({
   const onCategoryDrop = (e: React.DragEvent, catId: string) => {
     e.preventDefault();
     setDragOverCat(null);
-    const id = e.dataTransfer.getData("text/documento-id");
-    if (id) moveTo(id, catId === SEM_CAT ? null : catId);
+    const target = catId === SEM_CAT ? null : catId;
+    const idsRaw = e.dataTransfer.getData("text/documento-ids");
+    if (idsRaw) {
+      try {
+        const ids = JSON.parse(idsRaw) as string[];
+        if (Array.isArray(ids) && ids.length) { moveManyTo(ids, target); return; }
+      } catch { /* ignore */ }
+    }
+    const single = e.dataTransfer.getData("text/documento-id");
+    if (single) moveTo(single, target);
   };
 
   const toggleCheck = (id: string) => {
@@ -308,6 +333,152 @@ export function DocumentosUploadKanban({
     { key: "sem_categoria", label: "Sem categoria" },
   ];
 
+  // Card compartilhado (lista e quadro usam variantes diferentes)
+  const renderCard = (d: Documento, variant: "list" | "board") => {
+    const isChk = checked.has(d.id);
+    const sug = categorias.find((c) => c.id === d.categoria_sugerida_id);
+    if (variant === "board") {
+      return (
+        <div
+          key={d.id}
+          draggable
+          onDragStart={(e) => onCardDragStart(e, d.id)}
+          className={cn(
+            "rounded-md border bg-card p-2 text-xs cursor-grab active:cursor-grabbing hover:border-primary/40 transition-colors space-y-1.5",
+            isChk && "ring-2 ring-primary border-primary",
+          )}
+        >
+          <div className="flex items-start gap-1.5">
+            <Checkbox
+              checked={isChk}
+              onCheckedChange={() => toggleCheck(d.id)}
+              className="h-3.5 w-3.5 mt-0.5"
+            />
+            {d.mime_type?.startsWith("image/")
+              ? <ImageIcon className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0 mt-0.5" />
+              : <FileText className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0 mt-0.5" />}
+            <p className="flex-1 break-words leading-tight" title={d.nome_arquivo}>
+              {d.nome_arquivo}
+            </p>
+          </div>
+          <div className="flex items-center gap-1 flex-wrap">
+            <span className="text-[10px] text-muted-foreground">{fmtBytes(d.tamanho_bytes)}</span>
+            {d.classificacao_status === "analisando" && (
+              <Badge variant="outline" className="h-4 text-[9px] px-1 gap-1">
+                <Loader2 className="h-2 w-2 animate-spin" /> IA
+              </Badge>
+            )}
+            <StatusSelo d={d} />
+          </div>
+          {sug && !d.categoria_id && (
+            <button
+              onClick={() => moveTo(d.id, sug.id)}
+              className="w-full flex items-center gap-1 px-1.5 py-1 rounded bg-primary/10 text-primary hover:bg-primary/20 text-[10px]"
+              title={`Aceitar sugestão: ${sug.nome}`}
+            >
+              <Sparkles className="h-2.5 w-2.5 flex-shrink-0" />
+              <span className="truncate">IA: {sug.nome}</span>
+            </button>
+          )}
+          <div className="flex items-center justify-end gap-0.5 pt-0.5">
+            <Button
+              size="icon" variant="ghost" className="h-6 w-6"
+              onClick={() => handleDownload(d)} title="Baixar"
+            >
+              <Download className="h-3 w-3" />
+            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button size="icon" variant="ghost" className="h-6 w-6" title="Remover">
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Remover documento?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    O arquivo será excluído permanentemente.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => handleDelete(d)}>Remover</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </div>
+      );
+    }
+    return (
+      <li
+        key={d.id}
+        draggable
+        onDragStart={(e) => onCardDragStart(e, d.id)}
+        className="flex items-center gap-2 px-3 py-2 hover:bg-muted/40 transition-colors"
+      >
+        <Checkbox
+          checked={isChk}
+          onCheckedChange={() => toggleCheck(d.id)}
+          className="h-3.5 w-3.5"
+        />
+        {d.mime_type?.startsWith("image/")
+          ? <ImageIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+          : <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />}
+        <div className="flex-1 min-w-0">
+          <p className="text-sm truncate" title={d.nome_arquivo}>
+            {d.nome_arquivo}
+          </p>
+          <p className="text-[11px] text-muted-foreground">
+            {fmtBytes(d.tamanho_bytes)}
+          </p>
+        </div>
+        {d.classificacao_status === "analisando" && (
+          <Badge variant="outline" className="h-5 text-[10px] px-1.5 gap-1">
+            <Loader2 className="h-2.5 w-2.5 animate-spin" /> IA
+          </Badge>
+        )}
+        {sug && !d.categoria_id && (
+          <button
+            onClick={() => moveTo(d.id, sug.id)}
+            className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-primary/10 text-primary hover:bg-primary/20 text-[10px] flex-shrink-0"
+            title={`Aceitar sugestão: ${sug.nome}`}
+          >
+            <Sparkles className="h-2.5 w-2.5" />
+            <span className="max-w-[80px] truncate">{sug.nome}</span>
+          </button>
+        )}
+        <StatusSelo d={d} />
+        <Button
+          size="icon" variant="ghost" className="h-7 w-7"
+          onClick={() => handleDownload(d)}
+          title="Baixar"
+        >
+          <Download className="h-3.5 w-3.5" />
+        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button size="icon" variant="ghost" className="h-7 w-7" title="Remover">
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Remover documento?</AlertDialogTitle>
+              <AlertDialogDescription>
+                O arquivo será excluído permanentemente.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={() => handleDelete(d)}>Remover</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </li>
+    );
+  };
+
   return (
     <TooltipProvider delayDuration={200}>
       <div className="space-y-3">
@@ -333,6 +504,36 @@ export function DocumentosUploadKanban({
             PDF/JPG/PNG • IA sugere a categoria
           </span>
         </div>
+
+        {/* Progresso de obrigatórias */}
+        {obrigatoriasProgress.total > 0 && (
+          <div className="flex items-center gap-3 rounded-md border bg-muted/20 px-3 py-2">
+            <span className="text-xs text-muted-foreground whitespace-nowrap">
+              <span className="font-medium text-foreground">
+                {obrigatoriasProgress.preenchidas}/{obrigatoriasProgress.total}
+              </span>{" "}
+              categorias obrigatórias preenchidas
+            </span>
+            <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+              <div
+                className={cn(
+                  "h-full transition-all",
+                  obrigatoriasProgress.preenchidas === obrigatoriasProgress.total
+                    ? "bg-green-600"
+                    : "bg-primary",
+                )}
+                style={{
+                  width: `${(obrigatoriasProgress.preenchidas / obrigatoriasProgress.total) * 100}%`,
+                }}
+              />
+            </div>
+            {obrigatoriasProgress.preenchidas === obrigatoriasProgress.total && (
+              <Badge className="bg-green-600 hover:bg-green-600 text-white h-5 text-[10px]">
+                <CheckCircle2 className="h-2.5 w-2.5 mr-1" /> Pronto para conciliar
+              </Badge>
+            )}
+          </div>
+        )}
 
         {/* Filtros + conciliar + ações em massa */}
         <div className="flex flex-wrap items-center gap-2">
@@ -368,10 +569,34 @@ export function DocumentosUploadKanban({
                 </span>
               </TooltipTrigger>
               <TooltipContent className="text-xs max-w-xs">
-                Apenas analistas de cadastro, gestor comercial ou admin podem conciliar.
+                Apenas o time de cadastro pode conciliar documentos.
               </TooltipContent>
             </Tooltip>
           )}
+
+          {/* Toggle de modo de visualização */}
+          <div className="flex gap-1 rounded-md bg-muted p-0.5">
+            <button
+              onClick={() => setViewMode("lista")}
+              className={cn(
+                "px-2 py-1 text-xs rounded transition-colors inline-flex items-center gap-1",
+                viewMode === "lista" ? "bg-background shadow-sm font-medium" : "text-muted-foreground hover:text-foreground",
+              )}
+              title="Modo lista"
+            >
+              <LayoutList className="h-3 w-3" /> Lista
+            </button>
+            <button
+              onClick={() => setViewMode("quadro")}
+              className={cn(
+                "px-2 py-1 text-xs rounded transition-colors inline-flex items-center gap-1",
+                viewMode === "quadro" ? "bg-background shadow-sm font-medium" : "text-muted-foreground hover:text-foreground",
+              )}
+              title="Modo quadro (drag-and-drop)"
+            >
+              <LayoutGrid className="h-3 w-3" /> Quadro
+            </button>
+          </div>
 
           <div className="flex gap-1 rounded-md bg-muted p-0.5 ml-auto">
             {filterButtons.map((f) => (
@@ -387,15 +612,19 @@ export function DocumentosUploadKanban({
               </button>
             ))}
           </div>
-          {checked.size > 0 && canReview && (
+          {checked.size > 0 && (
             <div className="flex items-center gap-1 ml-auto">
               <span className="text-xs text-muted-foreground">{checked.size} selecionado(s)</span>
-              <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => reviewSelected("aprovado")}>
-                <CheckCircle2 className="h-3 w-3 mr-1 text-green-600" /> Verificar
-              </Button>
-              <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => reviewSelected("reprovado")}>
-                <XCircle className="h-3 w-3 mr-1 text-destructive" /> Reprovar
-              </Button>
+              {canReview && (
+                <>
+                  <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => reviewSelected("aprovado")}>
+                    <CheckCircle2 className="h-3 w-3 mr-1 text-green-600" /> Verificar
+                  </Button>
+                  <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => reviewSelected("reprovado")}>
+                    <XCircle className="h-3 w-3 mr-1 text-destructive" /> Reprovar
+                  </Button>
+                </>
+              )}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button size="sm" variant="outline" className="h-7 text-xs">
@@ -418,122 +647,111 @@ export function DocumentosUploadKanban({
           )}
         </div>
 
-        {/* Lista por categoria */}
-        <div className="rounded-lg border bg-card overflow-hidden">
-          {grupos.map((g) => {
-            const isOpen = !collapsed.has(g.key);
-            const aprovadosNoGrupo = g.docs.filter((d) => d.status === "aprovado").length;
-            const totalGrupo = g.docs.length;
-            return (
-              <div
-                key={g.key}
-                onDragOver={(e) => onCategoryDragOver(e, g.key)}
-                onDragLeave={() => setDragOverCat(null)}
-                onDrop={(e) => onCategoryDrop(e, g.key)}
-                className={cn(
-                  "border-b last:border-b-0",
-                  dragOverCat === g.key && "bg-primary/5",
-                )}
-              >
-                <button
-                  onClick={() => toggleCollapsed(g.key)}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium bg-muted/30 hover:bg-muted/60 transition-colors"
-                >
-                  {isOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-                  <span className="flex-1 text-left truncate">{g.label}</span>
-                  {g.obrigatorio && <span className="text-destructive text-xs">obrigatório</span>}
-                  {totalGrupo > 0 ? (
-                    <span className="text-xs text-muted-foreground">
-                      {aprovadosNoGrupo}/{totalGrupo} verificados
-                    </span>
-                  ) : g.obrigatorio ? (
-                    <Badge variant="outline" className="h-5 text-[10px] px-1.5 border-destructive/40 text-destructive">
-                      faltando
-                    </Badge>
-                  ) : (
-                    <span className="text-[10px] text-muted-foreground">vazio</span>
+        {/* Conteúdo principal: Lista ou Quadro */}
+        {viewMode === "lista" ? (
+          <div className="rounded-lg border bg-card overflow-hidden">
+            {grupos.map((g) => {
+              const isOpen = !collapsed.has(g.key);
+              const aprovadosNoGrupo = g.docs.filter((d) => d.status === "aprovado").length;
+              const totalGrupo = g.docs.length;
+              return (
+                <div
+                  key={g.key}
+                  onDragOver={(e) => onCategoryDragOver(e, g.key)}
+                  onDragLeave={() => setDragOverCat(null)}
+                  onDrop={(e) => onCategoryDrop(e, g.key)}
+                  className={cn(
+                    "border-b last:border-b-0",
+                    dragOverCat === g.key && "bg-primary/5",
                   )}
-                </button>
+                >
+                  <button
+                    onClick={() => toggleCollapsed(g.key)}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium bg-muted/30 hover:bg-muted/60 transition-colors"
+                  >
+                    {isOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                    <span className="flex-1 text-left truncate">{g.label}</span>
+                    {g.obrigatorio && <span className="text-destructive text-xs">obrigatório</span>}
+                    {totalGrupo > 0 ? (
+                      <span className="text-xs text-muted-foreground">
+                        {aprovadosNoGrupo}/{totalGrupo} verificados
+                      </span>
+                    ) : g.obrigatorio ? (
+                      <Badge variant="outline" className="h-5 text-[10px] px-1.5 border-destructive/40 text-destructive">
+                        faltando
+                      </Badge>
+                    ) : (
+                      <span className="text-[10px] text-muted-foreground">vazio</span>
+                    )}
+                  </button>
 
-                {isOpen && g.docs.length > 0 && (
-                  <ul className="divide-y">
-                    {g.docs.map((d) => {
-                      const isChk = checked.has(d.id);
-                      const sug = categorias.find((c) => c.id === d.categoria_sugerida_id);
-                      return (
-                        <li
-                          key={d.id}
-                          draggable
-                          onDragStart={(e) => onCardDragStart(e, d.id)}
-                          className="flex items-center gap-2 px-3 py-2 hover:bg-muted/40 transition-colors"
-                        >
-                          <Checkbox
-                            checked={isChk}
-                            onCheckedChange={() => toggleCheck(d.id)}
-                            className="h-3.5 w-3.5"
-                          />
-                          {d.mime_type?.startsWith("image/")
-                            ? <ImageIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                            : <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />}
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm truncate" title={d.nome_arquivo}>
-                              {d.nome_arquivo}
-                            </p>
-                            <p className="text-[11px] text-muted-foreground">
-                              {fmtBytes(d.tamanho_bytes)}
-                            </p>
-                          </div>
-                          {d.classificacao_status === "analisando" && (
-                            <Badge variant="outline" className="h-5 text-[10px] px-1.5 gap-1">
-                              <Loader2 className="h-2.5 w-2.5 animate-spin" /> IA
-                            </Badge>
-                          )}
-                          {sug && !d.categoria_id && (
-                            <button
-                              onClick={() => moveTo(d.id, sug.id)}
-                              className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-primary/10 text-primary hover:bg-primary/20 text-[10px] flex-shrink-0"
-                              title={`Aceitar sugestão: ${sug.nome}`}
-                            >
-                              <Sparkles className="h-2.5 w-2.5" />
-                              <span className="max-w-[80px] truncate">{sug.nome}</span>
-                            </button>
-                          )}
-                          <StatusSelo d={d} />
-                          <Button
-                            size="icon" variant="ghost" className="h-7 w-7"
-                            onClick={() => handleDownload(d)}
-                            title="Baixar"
-                          >
-                            <Download className="h-3.5 w-3.5" />
-                          </Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button size="icon" variant="ghost" className="h-7 w-7" title="Remover">
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Remover documento?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  O arquivo será excluído permanentemente.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDelete(d)}>Remover</AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </div>
-            );
-          })}
-        </div>
+                  {isOpen && g.docs.length > 0 && (
+                    <ul className="divide-y">
+                      {g.docs.map((d) => renderCard(d, "list"))}
+                    </ul>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          // Modo Quadro: colunas kanban com drop-zone
+          <div className="overflow-x-auto pb-2">
+            <div className="flex gap-3 min-w-max">
+              {grupos.map((g) => {
+                const isSemCat = g.key === SEM_CAT;
+                const aprovados = g.docs.filter((d) => d.status === "aprovado").length;
+                const isHover = dragOverCat === g.key;
+                const isEmpty = g.docs.length === 0;
+                return (
+                  <div
+                    key={g.key}
+                    onDragOver={(e) => onCategoryDragOver(e, g.key)}
+                    onDragLeave={() => setDragOverCat(null)}
+                    onDrop={(e) => onCategoryDrop(e, g.key)}
+                    className={cn(
+                      "w-[280px] flex-shrink-0 rounded-lg border bg-card flex flex-col",
+                      isHover && "border-primary ring-2 ring-primary/30 bg-primary/5",
+                      isSemCat && "border-amber-500/40 bg-amber-50/30 dark:bg-amber-950/10",
+                      g.obrigatorio && isEmpty && !isHover && "border-destructive/40",
+                    )}
+                  >
+                    <div className="px-3 py-2 border-b flex items-center gap-2">
+                      <span className="text-xs font-medium flex-1 truncate" title={g.label}>
+                        {g.label}
+                      </span>
+                      {g.obrigatorio && (
+                        <span className="text-[10px] text-destructive">obrigatório</span>
+                      )}
+                      <Badge variant="secondary" className="h-4 text-[10px] px-1.5">
+                        {g.docs.length}
+                      </Badge>
+                    </div>
+                    {g.docs.length > 0 && (
+                      <div className="px-3 pt-1 pb-0.5 text-[10px] text-muted-foreground">
+                        {aprovados}/{g.docs.length} verificados
+                      </div>
+                    )}
+                    <div className="p-2 space-y-2 flex-1 min-h-[120px]">
+                      {isEmpty ? (
+                        <div className={cn(
+                          "h-full min-h-[100px] rounded-md border-2 border-dashed flex items-center justify-center text-[11px] text-muted-foreground text-center px-3",
+                          isHover ? "border-primary text-primary" : "border-muted-foreground/20",
+                        )}>
+                          {isSemCat
+                            ? "Documentos sem categoria aparecem aqui"
+                            : `Arraste documentos de ${g.label} aqui`}
+                        </div>
+                      ) : (
+                        g.docs.map((d) => renderCard(d, "board"))
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <ConciliacaoDocumentosSheet
           open={conciliarOpen}
