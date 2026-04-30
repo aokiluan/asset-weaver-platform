@@ -6,7 +6,7 @@ import {
   KanbanSquare,
   Settings,
   Building2,
-  Scale,
+  
   Gavel,
   ListChecks,
   Tags,
