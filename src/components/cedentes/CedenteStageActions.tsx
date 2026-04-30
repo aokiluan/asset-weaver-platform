@@ -92,9 +92,9 @@ export function CedenteStageActions({ cedenteId, stage, isOwner, gateInfo, onCha
   const gate = useMemo(() => evaluateGates({ stage, ...gateInfo }), [stage, gateInfo]);
 
   const visible = TRANSITIONS.filter((t) => {
+    if (t.target === stage) return false;
     if (!t.fromStages.includes(stage)) return false;
     const hasAnyRole = t.roles.some((r) => hasRole(r));
-    // Owner do cedente também pode "Enviar para Cadastro" a partir de "novo"
     const ownerOverride = t.key === "to-cadastro" && stage === "novo" && isOwner;
     return hasAnyRole || ownerOverride;
   });
