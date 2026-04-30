@@ -364,6 +364,7 @@ export function DocumentosUploadKanban({
           key={d.id}
           draggable
           onDragStart={(e) => onCardDragStart(e, d.id)}
+                      onDragEnd={onCardDragEnd}
           className={cn(
             "rounded-md border bg-card p-2 text-xs cursor-grab active:cursor-grabbing hover:border-primary/40 transition-colors space-y-1.5",
             isChk && "ring-2 ring-primary border-primary",
@@ -436,6 +437,7 @@ export function DocumentosUploadKanban({
         key={d.id}
         draggable
         onDragStart={(e) => onCardDragStart(e, d.id)}
+                      onDragEnd={onCardDragEnd}
         className="flex items-center gap-2 px-3 py-2 hover:bg-muted/40 transition-colors"
       >
         <Checkbox
@@ -553,6 +555,7 @@ export function DocumentosUploadKanban({
                       key={d.id}
                       draggable
                       onDragStart={(e) => onCardDragStart(e, d.id)}
+                      onDragEnd={onCardDragEnd}
                       className="flex items-center gap-2 px-3 py-1.5 text-xs hover:bg-muted/40 cursor-grab active:cursor-grabbing"
                     >
                       <Checkbox
