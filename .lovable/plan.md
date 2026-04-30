@@ -1,59 +1,109 @@
-## Objetivo
 
-Evitar perda de dados digitados em caso de refresh, queda de conexão ou fechamento acidental. Vou implementar **autosave de rascunho local** (localStorage) com restauração automática nos formulários longos do projeto.
+# Redesign visual estilo Nibo
 
-## Como funciona
+Trocar o tema atual ("Navy Trust" + dourado) por um tema **azul corporativo limpo** inspirado no Nibo, mantendo TODA a estrutura funcional, rotas, componentes, tabelas e formulários intactos. A mudança é puramente de **design system + ajustes finos de layout**.
 
-1. **Salva enquanto digita**: a cada alteração, com debounce de ~600ms, o estado do formulário é serializado em `localStorage` sob uma chave única por usuário.
-2. **Restaura ao abrir**: quando o form monta, se existir rascunho válido, o conteúdo é carregado automaticamente e mostra um aviso discreto: *"Rascunho restaurado · há X min"* com botão **"Descartar"**.
-3. **Limpa após salvar com sucesso**: assim que o `INSERT`/`UPDATE` no banco volta sem erro, a chave do rascunho é removida.
-4. **Indicador visual**: pequeno texto no rodapé do form: *"Rascunho salvo · 14:02"*.
-5. **Escopo por usuário**: chave inclui o `user.id` para não vazar entre contas no mesmo navegador.
-6. **TTL de 7 dias**: rascunhos mais antigos são descartados automaticamente.
-7. **Sem arquivos**: uploads de documento ficam fora do rascunho (apenas campos de texto/número/data/select).
+## 1. Novo design system (`src/index.css` + `tailwind.config.ts`)
 
-## O que vou criar
+Substituir os tokens HSL atuais pela paleta Nibo:
 
-### 1. Hook `src/hooks/useFormDraft.ts`
+| Token | Valor | Uso |
+|---|---|---|
+| `--background` | `210 20% 97%` (#F5F7FA) | fundo geral da app |
+| `--card` | `0 0% 100%` | cards, tabelas, modais |
+| `--foreground` | `220 26% 14%` (#1F2937) | texto principal |
+| `--muted-foreground` | `220 9% 46%` (#6B7280) | texto secundário |
+| `--border` / `--input` | `220 13% 91%` (#E5E7EB) | bordas suaves |
+| `--primary` | `218 73% 52%` (#2D6CDF) | ações primárias, links, item ativo |
+| `--primary-hover` | `220 71% 42%` (#1E4DB7) | hover de primary |
+| `--accent` | `212 100% 65%` (#4DA3FF) | destaques, foco, badges informativos |
+| `--success` | `142 71% 45%` (#22C55E) | valores positivos, status ok |
+| `--warning` | `38 92% 50%` (#F59E0B) | alertas |
+| `--destructive` | `0 84% 60%` (#EF4444) | erros, valores negativos |
+| `--ring` | `218 73% 52%` | focus ring azul |
+| `--radius` | `0.625rem` | cantos um pouco mais suaves |
 
-```ts
-const { restored, lastSavedAt, discardDraft, clearDraft } = useFormDraft({
-  key: `cedente-novo:${user.id}`,
-  value: form,
-  setValue: setForm,
-  enabled: open, // só ativa enquanto o form está visível
-});
-```
+**Sidebar (variante "clara estilo Nibo")**:
+- `--sidebar-background`: `0 0% 100%` (branco) com borda direita `#E5E7EB`
+- `--sidebar-foreground`: `220 15% 30%`
+- `--sidebar-accent` (hover): `210 40% 96%` (cinza-azulado bem claro)
+- `--sidebar-accent-foreground`: `218 73% 52%` (texto azul no hover)
+- Item **ativo**: fundo `#EAF1FE` (azul-claro 8%), texto e ícone em `--primary`, borda esquerda 3px em `--primary`
 
-### 2. Componente `src/components/ui/draft-indicator.tsx`
+Remover tokens dourados (`--gold`, `--gold-soft`, `--gradient-gold`, `--shadow-gold`) — ainda mapeados no Tailwind mas re-apontados para `accent` para não quebrar nada que ainda use `bg-gold` durante a transição.
 
-Bloco compacto exibido no rodapé dos forms com timestamp do último rascunho salvo e botão "Descartar rascunho".
+**Tipografia**: manter `Inter` como `--font-sans`. Trocar `--font-display` (Cormorant serif → Inter semibold). Remover uso de `font-display` em headings; títulos passam a ser `Inter 600/700`.
 
-### 3. Aplicar nos 6 formulários
+**Sombras**:
+- `--shadow-card`: `0 1px 2px hsl(220 13% 20% / 0.04), 0 1px 3px hsl(220 13% 20% / 0.06)` (sutil)
+- `--shadow-elegant`: removida/aliasada para card
 
-| Formulário | Chave do rascunho |
-|---|---|
-| `CedenteNovoSheet` | `draft:cedente-novo:<userId>` |
-| `CedenteFormDialog` | `draft:cedente-edit:<cedenteId>` |
-| `CedenteRepresentantesTab` (estado dos cards não persistidos / em edição) | `draft:representantes:<cedenteId>` |
-| `CedenteVisitReportForm` | `draft:visit-report:<cedenteId>` |
-| `CreditReportForm` | `draft:credit-report:<cedenteId>` |
-| `LeadFormDialog` | `draft:lead:<leadId\|new>:<userId>` |
+**Dark mode**: ajustado proporcionalmente (azul escuro `218 35% 12%` de fundo, primary mais claro `212 100% 65%`).
 
-## Por que localStorage e não banco?
+## 2. AppLayout (`src/components/AppLayout.tsx`)
 
-Salvar a cada tecla no Supabase geraria escrita excessiva, custos e ruído de histórico/triggers. O rascunho local é instantâneo, gratuito, e cobre exatamente o caso "fechei sem querer / atualizei a página". O save oficial no banco continua acontecendo via botão **Salvar**.
+- Topbar: altura mantida (h-16), fundo branco, borda inferior `--border`. Adicionar **campo de busca global** centralizado (placeholder "Buscar em todos…") com ícone de lupa, estilo pill com fundo `--muted` — só visual, sem lógica.
+- Logo + nome da empresa à esquerda (mantido), com tipografia `text-[14px] font-semibold` e CNPJ em `text-[12px] text-muted-foreground`.
+- Ícone de notificação ganha bolinha vermelha (`--destructive`) quando houver — placeholder visual.
+- Avatar circular com iniciais do usuário ao lado do email (substitui o texto puro).
 
-## Arquivos afetados
+## 3. AppSidebar (`src/components/AppSidebar.tsx`)
 
-**Novos**:
-- `src/hooks/useFormDraft.ts`
-- `src/components/ui/draft-indicator.tsx`
+- Fundo branco (via novos tokens), largura expandida `248px` (era 240).
+- Cabeçalho da sidebar: trocar "Painel de Gestão" por logo pequeno + nome da empresa truncado (estilo Nibo).
+- Labels de grupo (`Gestão`, `Operação`, `Configurações`): `text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground`, sem ícone à esquerda (ou ícone bem discreto).
+- Item ativo: fundo `bg-primary/8`, texto `text-primary`, borda esquerda de 3px em `--primary` (via pseudo elemento ou `border-l-[3px]`), ícone na cor primária.
+- Item hover: `bg-muted`, texto `text-foreground`.
+- Aumentar altura dos itens para `h-10`, gap entre ícone/texto para `gap-3`, fonte `text-[13.5px]`.
 
-**Editados**:
-- `src/components/cedentes/CedenteNovoSheet.tsx`
-- `src/components/cedentes/CedenteFormDialog.tsx`
-- `src/components/cedentes/CedenteRepresentantesTab.tsx`
-- `src/components/cedentes/CedenteVisitReportForm.tsx`
-- `src/components/credito/CreditReportForm.tsx`
-- `src/components/leads/LeadFormDialog.tsx`
+## 4. Componentes base (`src/components/ui/*`)
+
+Sem reescrever — apenas garantir que os tokens novos cobrem o uso atual. Pequenos ajustes:
+
+- **Button** variant `default` (primary): já usa `bg-primary` → fica azul automaticamente.
+- **Card**: garantir `border` + `shadow-sm` (já é o padrão shadcn).
+- **Input**: focus ring em `--primary` (azul) já vem do `--ring`.
+- **Table**: ajustar `<thead>` para fundo `bg-muted/40`, texto `text-[12px] font-semibold uppercase tracking-wide text-muted-foreground`; linhas com `hover:bg-muted/50`; bordas `border-border`. Editar `src/components/ui/table.tsx`.
+- **Badge**: variantes `success`, `warning`, `destructive` ganham versões soft (fundo claro + texto colorido) para status financeiros.
+
+## 5. Cards de KPI / dashboards existentes
+
+Sem alterar lógica. Apenas garantir:
+- Padding `p-5` ou `p-6`, borda `border border-border`, sombra `shadow-card`.
+- Título do KPI: `text-[13px] text-muted-foreground font-medium`.
+- Valor: `text-2xl font-semibold tabular-nums text-foreground`.
+- Variação (Δ%): pill `text-[12px]` em `success`/`destructive` soft.
+
+(Aplicado nos componentes de dashboard que já existem em `src/pages/gestao/*` — apenas troca de classes utilitárias quando necessário, sem refatorar lógica.)
+
+## 6. Telas com tabela financeira (Cedentes, Pipeline, Financeiro)
+
+Aplicar padrão Nibo:
+- Container externo com `bg-card rounded-lg border shadow-card`.
+- Linha de filtros no topo: input de busca pill + selects compactos.
+- Valores monetários sempre `tabular-nums text-right`.
+- Status como badges soft.
+
+Sem mudar colunas, dados ou comportamento.
+
+## Escopo do que NÃO muda
+
+- Rotas, hooks, integração Supabase, lógica de formulários, autosave, RLS, edge functions.
+- Estrutura de pastas e nomes de componentes.
+- Funcionalidades de qualquer tela.
+
+## Detalhes técnicos
+
+Arquivos editados:
+- `src/index.css` — substituição completa de `:root` e `.dark` com nova paleta.
+- `tailwind.config.ts` — manter mapeamento atual; `gold` reaponta para `accent` (compat).
+- `src/components/AppLayout.tsx` — busca global + avatar.
+- `src/components/AppSidebar.tsx` — estilo claro estilo Nibo, item ativo com barra azul.
+- `src/components/ui/table.tsx` — header e hover.
+- `src/components/ui/badge.tsx` — variantes soft (success/warning/destructive).
+
+Após as edições, validar visualmente em: `/`, `/cedentes`, `/cedentes/:id`, `/pipeline`, `/gestao/financeiro`, `/financeiro` e Configurações para garantir contraste e legibilidade.
+
+## Resultado esperado
+
+Interface visualmente alinhada ao Nibo: fundo cinza-claro, sidebar branca com item ativo em azul, topbar branca com busca central, cards brancos com sombra sutil, tabelas limpas, paleta azul corporativa, tipografia Inter consistente — sem nenhuma quebra funcional.
