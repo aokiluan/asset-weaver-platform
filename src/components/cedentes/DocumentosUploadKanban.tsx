@@ -336,21 +336,6 @@ export function DocumentosUploadKanban({
 
         {/* Filtros + conciliar + ações em massa */}
         <div className="flex flex-wrap items-center gap-2">
-          <div className="flex gap-1 rounded-md bg-muted p-0.5">
-            {filterButtons.map((f) => (
-              <button
-                key={f.key}
-                onClick={() => setFilter(f.key)}
-                className={cn(
-                  "px-2.5 py-1 text-xs rounded transition-colors",
-                  filter === f.key ? "bg-background shadow-sm font-medium" : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
-
           {canReview ? (
             <div className="flex gap-1 rounded-md bg-muted p-0.5">
               <button
@@ -387,6 +372,21 @@ export function DocumentosUploadKanban({
               </TooltipContent>
             </Tooltip>
           )}
+
+          <div className="flex gap-1 rounded-md bg-muted p-0.5 ml-auto">
+            {filterButtons.map((f) => (
+              <button
+                key={f.key}
+                onClick={() => setFilter(f.key)}
+                className={cn(
+                  "px-2.5 py-1 text-xs rounded transition-colors",
+                  filter === f.key ? "bg-background shadow-sm font-medium" : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
           {checked.size > 0 && canReview && (
             <div className="flex items-center gap-1 ml-auto">
               <span className="text-xs text-muted-foreground">{checked.size} selecionado(s)</span>
