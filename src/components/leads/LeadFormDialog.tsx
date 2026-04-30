@@ -113,13 +113,10 @@ export function LeadFormDialog({ open, onOpenChange, initial, onSaved }: Props) 
       return;
     }
     toast.success(isEdit ? "Lead atualizado" : "Lead criado");
+    clearDraft();
     onSaved();
     onOpenChange(false);
   };
-
-  const tipo = watch("tipo");
-  const stageId = watch("stage_id");
-  const ownerId = watch("owner_id");
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
