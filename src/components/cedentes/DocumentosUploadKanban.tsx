@@ -157,10 +157,15 @@ export function DocumentosUploadKanban({
     return true;
   };
 
+  // Documentos sem categoria (bandeja de entrada — não passam pelo filtro de status)
+  const semCategoria = useMemo(
+    () => documentos.filter((d) => !d.categoria_id),
+    [documentos],
+  );
+
+  // Grupos das categorias cadastradas (a bandeja "sem categoria" virou bloco próprio acima)
   const grupos = useMemo(() => {
     const out: { key: string; label: string; obrigatorio: boolean; docs: Documento[] }[] = [];
-    const semCat = documentos.filter((d) => !d.categoria_id && passesFilter(d));
-    out.push({ key: SEM_CAT, label: "Sem categoria", obrigatorio: false, docs: semCat });
     for (const c of categorias) {
       const docs = documentos.filter((d) => d.categoria_id === c.id && passesFilter(d));
       out.push({ key: c.id, label: c.nome, obrigatorio: c.obrigatorio, docs });
