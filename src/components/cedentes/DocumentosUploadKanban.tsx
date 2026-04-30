@@ -686,24 +686,24 @@ export function DocumentosUploadKanban({
           {/* Toggle de modo de visualização */}
           <div className="flex gap-1 rounded-md bg-muted p-0.5">
             <button
-              onClick={() => setViewMode("lista")}
+              onClick={() => setViewMode("compacto")}
               className={cn(
                 "px-2 py-1 text-xs rounded transition-colors inline-flex items-center gap-1",
-                viewMode === "lista" ? "bg-background shadow-sm font-medium" : "text-muted-foreground hover:text-foreground",
+                viewMode === "compacto" ? "bg-background shadow-sm font-medium" : "text-muted-foreground hover:text-foreground",
               )}
-              title="Modo lista"
+              title="Tabela compacta com drag-and-drop"
             >
-              <LayoutList className="h-3 w-3" /> Lista
+              <LayoutGrid className="h-3 w-3" /> Compacto
             </button>
             <button
-              onClick={() => setViewMode("quadro")}
+              onClick={() => setViewMode("detalhado")}
               className={cn(
                 "px-2 py-1 text-xs rounded transition-colors inline-flex items-center gap-1",
-                viewMode === "quadro" ? "bg-background shadow-sm font-medium" : "text-muted-foreground hover:text-foreground",
+                viewMode === "detalhado" ? "bg-background shadow-sm font-medium" : "text-muted-foreground hover:text-foreground",
               )}
-              title="Modo quadro (drag-and-drop)"
+              title="Lista detalhada (todos os arquivos visíveis)"
             >
-              <LayoutGrid className="h-3 w-3" /> Quadro
+              <LayoutList className="h-3 w-3" /> Detalhado
             </button>
           </div>
 
