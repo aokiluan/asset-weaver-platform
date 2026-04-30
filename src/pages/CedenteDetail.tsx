@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
-import { ArrowLeft, Pencil, FileText, Loader2, ClipboardList, Vote } from "lucide-react";
+import { ArrowLeft, Pencil, FileText, Loader2, ClipboardList, Vote, FileSignature, Download, Upload, Trash2, CheckCircle2, AlertCircle } from "lucide-react";
 import { CreditReportForm } from "@/components/credito/CreditReportForm";
 import { ComiteGameSession } from "@/components/credito/ComiteGameSession";
 import { toast } from "sonner";
