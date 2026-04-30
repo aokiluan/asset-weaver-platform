@@ -51,8 +51,17 @@ export function CedenteNovoSheet({ open, onOpenChange, onCreated }: Props) {
   const [saving, setSaving] = useState(false);
   const [validatingCNPJ, setValidatingCNPJ] = useState(false);
 
+  const draftKey = user?.id ? `cedente-novo:${user.id}` : null;
+  const { restored, lastSavedAt, clearDraft, discardDraft } = useFormDraft({
+    key: draftKey,
+    value: form,
+    setValue: setForm,
+    enabled: open,
+  });
+
   useEffect(() => {
-    if (open) setForm(empty);
+    if (open && !restored) setForm(empty);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const set = <K extends keyof FormData>(k: K, v: FormData[K]) =>
