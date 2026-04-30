@@ -10,7 +10,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Loader2, RefreshCw, Users, Plus, Save } from "lucide-react";
+import { Loader2, Users, Plus, Save } from "lucide-react";
 import { toast } from "sonner";
 import { SocioFormCard, type Socio } from "./SocioFormCard";
 import { useFormDraft } from "@/hooks/useFormDraft";
@@ -33,6 +33,38 @@ interface Props {
 
 const fmtPct = (v: number | null | undefined) =>
   v == null ? "—" : `${Number(v).toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%`;
+
+// Campos opcionais que devem ser enviados como null quando vazios,
+// para que o UPDATE realmente limpe valores no banco.
+const NULLABLE_FIELDS: (keyof Representante)[] = [
+  "sexo",
+  "data_nascimento",
+  "cpf",
+  "rg",
+  "orgao_emissor",
+  "data_expedicao",
+  "naturalidade",
+  "nacionalidade",
+  "nome_pai",
+  "nome_mae",
+  "endereco_logradouro",
+  "endereco_numero",
+  "endereco_bairro",
+  "endereco_cidade",
+  "endereco_estado",
+  "endereco_cep",
+  "estado_civil",
+  "conjuge_nome",
+  "conjuge_sexo",
+  "conjuge_data_nascimento",
+  "conjuge_cpf",
+  "conjuge_rg",
+  "conjuge_orgao_emissor",
+  "conjuge_data_expedicao",
+  "conjuge_naturalidade",
+  "conjuge_nacionalidade",
+  "qualificacao",
+];
 
 const newEmptyRepresentante = (cedenteId: string): Representante => ({
   id: `tmp-${crypto.randomUUID()}`,
@@ -91,7 +123,9 @@ export function CedenteRepresentantesTab({ cedenteId, jaSincronizado, onSynced }
     );
   };
 
-  const sync = async () => {
+  // Sync inicial — chamado uma única vez quando o cedente ainda não tem
+  // representantes sincronizados da Receita. Depois disso a edição é manual.
+  const initialSync = async () => {
     setSyncing(true);
     const { data, error } = await supabase.functions.invoke("sync-representantes", {
       body: { cedente_id: cedenteId },
@@ -103,7 +137,10 @@ export function CedenteRepresentantesTab({ cedenteId, jaSincronizado, onSynced }
       });
       return;
     }
-    toast.success(`Representantes atualizados (${(data as any).total})`);
+    const inseridos = (data as any)?.inseridos ?? (data as any)?.total ?? 0;
+    if (inseridos > 0) {
+      toast.success(`Representantes carregados da Receita (${inseridos})`);
+    }
     await load();
     onSynced();
   };
@@ -115,7 +152,7 @@ export function CedenteRepresentantesTab({ cedenteId, jaSincronizado, onSynced }
   useEffect(() => {
     if (!loading && !jaSincronizado && !autoTried && !syncing) {
       setAutoTried(true);
-      sync();
+      initialSync();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, jaSincronizado]);
@@ -150,16 +187,20 @@ export function CedenteRepresentantesTab({ cedenteId, jaSincronizado, onSynced }
     }
     setSavingId(rep.id);
     const { id, persisted, dirty, sincronizado_em, ...rest } = rep;
+
+    // Normaliza campos opcionais: string vazia / undefined => null,
+    // garantindo que o UPDATE realmente persista as alterações.
     const payload: any = {
       ...rest,
       cedente_id: cedenteId,
+      nome: rep.nome.trim(),
+      fonte: rep.fonte || "manual",
       participacao_capital: rep.participacao_capital ?? null,
-      // datas vazias devem virar null pra evitar erro
-      data_nascimento: (rep as any).data_nascimento || null,
-      data_expedicao: (rep as any).data_expedicao || null,
-      conjuge_data_nascimento: (rep as any).conjuge_data_nascimento || null,
-      conjuge_data_expedicao: (rep as any).conjuge_data_expedicao || null,
     };
+    for (const f of NULLABLE_FIELDS) {
+      const v = (rep as any)[f];
+      payload[f] = v === undefined || v === null || v === "" ? null : v;
+    }
 
     let error;
     let savedId = id;
@@ -201,7 +242,7 @@ export function CedenteRepresentantesTab({ cedenteId, jaSincronizado, onSynced }
           <div>
             <h2 className="text-lg font-semibold">Representantes legais</h2>
             <p className="text-xs text-muted-foreground">
-              Sócios e administradores conforme dados da Receita Federal (BrasilAPI). Expanda para completar os dados cadastrais.
+              Sócios e administradores carregados da Receita Federal (BrasilAPI) na primeira abertura. Expanda para completar os dados cadastrais.
             </p>
           </div>
         </div>
@@ -211,14 +252,12 @@ export function CedenteRepresentantesTab({ cedenteId, jaSincronizado, onSynced }
             lastSavedAt={lastSavedAt}
             onDiscard={() => discardDraft()}
           />
-          <Button onClick={sync} disabled={syncing} variant="outline" size="sm">
-            {syncing ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <RefreshCw className="h-4 w-4 mr-2" />
-            )}
-            Atualizar da Receita
-          </Button>
+          {syncing && (
+            <span className="flex items-center text-xs text-muted-foreground">
+              <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+              Buscando na Receita...
+            </span>
+          )}
         </div>
       </div>
 
@@ -230,7 +269,7 @@ export function CedenteRepresentantesTab({ cedenteId, jaSincronizado, onSynced }
         <div className="text-center text-sm text-muted-foreground py-12">
           {syncing
             ? "Buscando representantes na Receita..."
-            : "Nenhum representante encontrado. Clique em \"Atualizar da Receita\" ou adicione manualmente."}
+            : "Nenhum representante encontrado. Adicione manualmente."}
         </div>
       ) : (
         <Accordion type="multiple" className="space-y-2">

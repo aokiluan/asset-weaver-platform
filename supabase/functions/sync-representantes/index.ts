@@ -1,4 +1,7 @@
 // Sincroniza representantes legais (QSA) de um cedente via BrasilAPI
+// Estratégia idempotente: NÃO apaga registros existentes. Apenas insere
+// representantes novos (por CPF) que ainda não existam para o cedente.
+// Isso preserva qualquer dado complementar já preenchido pelo usuário.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
@@ -15,6 +18,9 @@ interface QsaItem {
   percentual_capital_social?: number;
   data_entrada_sociedade?: string;
 }
+
+const normalizeCpf = (v?: string | null) =>
+  (v ?? "").toString().replace(/\D/g, "");
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -95,34 +101,71 @@ Deno.serve(async (req) => {
     const cnpjData = await brResp.json();
     const qsa: QsaItem[] = Array.isArray(cnpjData?.qsa) ? cnpjData.qsa : [];
 
-    // Cliente service-role para apagar/inserir contornando RLS
+    // Cliente service-role para ler/inserir contornando RLS
     const adminClient = createClient(supabaseUrl, serviceKey);
 
-    // Remove apenas registros oriundos da Receita (preserva manuais)
-    await adminClient
+    // Busca representantes já existentes para deduplicar por CPF (ou por nome,
+    // quando o CPF do QSA não está disponível).
+    const { data: existentes, error: exErr } = await adminClient
       .from("cedente_representantes")
-      .delete()
-      .eq("cedente_id", cedente_id)
-      .eq("fonte", "receita");
+      .select("id, cpf, nome")
+      .eq("cedente_id", cedente_id);
+
+    if (exErr) {
+      return new Response(
+        JSON.stringify({ error: "Erro ao ler existentes", detalhe: exErr.message }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
+
+    const cpfsExistentes = new Set(
+      (existentes ?? [])
+        .map((r) => normalizeCpf(r.cpf as string | null))
+        .filter((v) => v.length > 0),
+    );
+    const nomesExistentes = new Set(
+      (existentes ?? [])
+        .map((r) => (r.nome ?? "").trim().toUpperCase())
+        .filter((v) => v.length > 0),
+    );
 
     const now = new Date().toISOString();
-    const rows = qsa.map((s) => ({
-      cedente_id,
-      nome: s.nome_socio || "—",
-      cpf: s.cnpj_cpf_do_socio || null,
-      qualificacao: s.qualificacao_socio || null,
-      participacao_capital:
-        typeof s.percentual_capital_social === "number"
-          ? s.percentual_capital_social
-          : null,
-      fonte: "receita",
-      sincronizado_em: now,
-    }));
+    const novos = qsa
+      .map((s) => {
+        const cpfLimpo = normalizeCpf(s.cnpj_cpf_do_socio);
+        const nomeNorm = (s.nome_socio ?? "").trim().toUpperCase();
+        return {
+          row: {
+            cedente_id,
+            nome: s.nome_socio || "—",
+            cpf: s.cnpj_cpf_do_socio || null,
+            qualificacao: s.qualificacao_socio || null,
+            participacao_capital:
+              typeof s.percentual_capital_social === "number"
+                ? s.percentual_capital_social
+                : null,
+            fonte: "receita",
+            sincronizado_em: now,
+          },
+          cpfLimpo,
+          nomeNorm,
+        };
+      })
+      .filter(({ cpfLimpo, nomeNorm }) => {
+        if (cpfLimpo && cpfsExistentes.has(cpfLimpo)) return false;
+        if (!cpfLimpo && nomeNorm && nomesExistentes.has(nomeNorm)) return false;
+        return true;
+      })
+      .map(({ row }) => row);
 
-    if (rows.length > 0) {
+    let inseridos = 0;
+    if (novos.length > 0) {
       const { error: insErr } = await adminClient
         .from("cedente_representantes")
-        .insert(rows);
+        .insert(novos);
       if (insErr) {
         return new Response(
           JSON.stringify({ error: "Erro ao salvar", detalhe: insErr.message }),
@@ -132,6 +175,7 @@ Deno.serve(async (req) => {
           },
         );
       }
+      inseridos = novos.length;
     }
 
     await adminClient
@@ -140,7 +184,13 @@ Deno.serve(async (req) => {
       .eq("id", cedente_id);
 
     return new Response(
-      JSON.stringify({ success: true, total: rows.length, sincronizado_em: now }),
+      JSON.stringify({
+        success: true,
+        total: qsa.length,
+        inseridos,
+        preservados: (existentes ?? []).length,
+        sincronizado_em: now,
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (e) {
