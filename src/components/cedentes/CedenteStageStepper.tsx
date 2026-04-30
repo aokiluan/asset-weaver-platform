@@ -61,14 +61,13 @@ export function CedenteStageStepper({ stage, isOwner, gateInfo, onAdvance }: Pro
           const showConnector = idx < STAGE_ORDER.length - 1;
           const connectorActive = idx < currentIdx;
 
-          const dotInteractive = isNext && canAdvance;
-          const dotBlocked = isNext && !canAdvance;
+          // Stepper agora é apenas visual; o avanço é feito pelos botões dedicados
+          const dotInteractive = false;
+          const dotBlocked = false;
 
           const dot = (
-            <button
-              type="button"
-              disabled={!dotInteractive}
-              onClick={() => dotInteractive && next && onAdvance(next)}
+            <div
+              role="presentation"
               className={cn(
                 "relative flex items-center justify-center rounded-full border-2 transition-all",
                 "h-3 w-3 sm:h-3.5 sm:w-3.5",
