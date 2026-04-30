@@ -69,6 +69,15 @@ export function CedenteFormDialog({ open, onOpenChange, initial, onSaved }: Prop
 
   const status = watch("status");
   const ownerId = watch("owner_id");
+  const allValues = watch();
+
+  const draftKey = open ? `cedente-${initial?.id ?? "new"}` : null;
+  const { restored, lastSavedAt, clearDraft, discardDraft } = useFormDraft<CedenteFormValues>({
+    key: draftKey,
+    value: allValues,
+    setValue: (v) => reset(v),
+    enabled: open,
+  });
 
   const onSubmit = async (values: CedenteFormValues) => {
     setSaving(true);
