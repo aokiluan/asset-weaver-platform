@@ -488,27 +488,130 @@ export function DocumentosUploadKanban({
   return (
     <TooltipProvider delayDuration={200}>
       <div className="space-y-3">
-        {/* Top bar: upload */}
+        {/* Bandeja de entrada: upload + arquivos sem categoria */}
         <div
-          onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
-          onDragLeave={() => setDragActive(false)}
-          onDrop={handleDrop}
-          onClick={() => fileInputRef.current?.click()}
           className={cn(
-            "rounded-md border-2 border-dashed px-4 py-3 cursor-pointer transition-all flex items-center gap-3",
+            "rounded-md border-2 border-dashed transition-all overflow-hidden",
             dragActive
               ? "border-primary bg-primary/10"
-              : "border-muted-foreground/30 hover:border-primary/50 bg-muted/20",
+              : semCategoria.length > 0
+                ? "border-amber-500/50 bg-amber-50/30 dark:bg-amber-950/10"
+                : "border-muted-foreground/30 hover:border-primary/50 bg-muted/20",
           )}
         >
-          <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleSelect} accept=".pdf,.jpg,.jpeg,.png,.webp" />
-          <Upload className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm">
-            {uploading ? "Enviando..." : "Arraste arquivos aqui ou clique para selecionar"}
-          </span>
-          <span className="text-xs text-muted-foreground ml-auto hidden md:inline">
-            PDF/JPG/PNG • IA sugere a categoria
-          </span>
+          <div
+            onDragOver={(e) => {
+              // Só ativa highlight para arquivos do SO; ignora drag interno (cards)
+              if (e.dataTransfer.types.includes("Files")) {
+                e.preventDefault();
+                setDragActive(true);
+              }
+            }}
+            onDragLeave={() => setDragActive(false)}
+            onDrop={handleDrop}
+            onClick={() => fileInputRef.current?.click()}
+            className="px-4 py-3 cursor-pointer flex items-center gap-3"
+          >
+            <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleSelect} accept=".pdf,.jpg,.jpeg,.png,.webp" />
+            <Upload className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm">
+              {uploading ? "Enviando..." : "Arraste arquivos aqui ou clique para selecionar"}
+            </span>
+            <span className="text-xs text-muted-foreground ml-auto hidden md:inline">
+              PDF/JPG/PNG • IA sugere a categoria
+            </span>
+          </div>
+
+          {semCategoria.length > 0 && (
+            <div className="border-t border-amber-500/30 bg-background/60">
+              <div className="flex items-center gap-2 px-3 py-1.5 text-[11px] text-amber-800 dark:text-amber-300 bg-amber-100/40 dark:bg-amber-900/20">
+                <Inbox className="h-3.5 w-3.5" />
+                <span className="font-medium">{semCategoria.length}</span>
+                <span>arquivo(s) sem categoria — arraste para uma linha abaixo ou aceite a sugestão da IA</span>
+              </div>
+              <ul className="divide-y">
+                {semCategoria.map((d) => {
+                  const isChk = checked.has(d.id);
+                  const sug = categorias.find((c) => c.id === d.categoria_sugerida_id);
+                  return (
+                    <li
+                      key={d.id}
+                      draggable
+                      onDragStart={(e) => onCardDragStart(e, d.id)}
+                      className="flex items-center gap-2 px-3 py-1.5 text-xs hover:bg-muted/40 cursor-grab active:cursor-grabbing"
+                    >
+                      <Checkbox
+                        checked={isChk}
+                        onCheckedChange={() => toggleCheck(d.id)}
+                        className="h-3.5 w-3.5"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                      {d.mime_type?.startsWith("image/")
+                        ? <ImageIcon className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                        : <FileText className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />}
+                      <span className="flex-1 truncate" title={d.nome_arquivo}>{d.nome_arquivo}</span>
+                      <span className="text-[10px] text-muted-foreground hidden sm:inline">{fmtBytes(d.tamanho_bytes)}</span>
+                      {d.classificacao_status === "analisando" && (
+                        <Badge variant="outline" className="h-4 text-[9px] px-1 gap-1">
+                          <Loader2 className="h-2 w-2 animate-spin" /> IA
+                        </Badge>
+                      )}
+                      {sug ? (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); moveTo(d.id, sug.id); }}
+                          className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-primary/10 text-primary hover:bg-primary/20 text-[10px]"
+                          title={`Aceitar sugestão: ${sug.nome}`}
+                        >
+                          <Sparkles className="h-2.5 w-2.5" />
+                          <span className="max-w-[120px] truncate">{sug.nome}</span>
+                        </button>
+                      ) : (
+                        <span className="text-[10px] text-muted-foreground italic">sem sugestão</span>
+                      )}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button size="icon" variant="ghost" className="h-6 w-6" title="Mover para...">
+                            <FolderInput className="h-3 w-3" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="max-h-72 overflow-y-auto">
+                          {categorias.map((c) => (
+                            <DropdownMenuItem key={c.id} onClick={() => moveTo(d.id, c.id)}>
+                              {c.nome}{c.obrigatorio ? " *" : ""}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                      <Button
+                        size="icon" variant="ghost" className="h-6 w-6"
+                        onClick={(e) => { e.stopPropagation(); handleDownload(d); }}
+                        title="Baixar"
+                      >
+                        <Download className="h-3 w-3" />
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button size="icon" variant="ghost" className="h-6 w-6" title="Remover" onClick={(e) => e.stopPropagation()}>
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Remover documento?</AlertDialogTitle>
+                            <AlertDialogDescription>O arquivo será excluído permanentemente.</AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDelete(d)}>Remover</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
         </div>
 
         {/* Progresso de obrigatórias */}
