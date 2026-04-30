@@ -200,14 +200,21 @@ export function CedenteRepresentantesTab({ cedenteId, jaSincronizado, onSynced }
             </p>
           </div>
         </div>
-        <Button onClick={sync} disabled={syncing} variant="outline" size="sm">
-          {syncing ? (
-            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-          ) : (
-            <RefreshCw className="h-4 w-4 mr-2" />
-          )}
-          Atualizar da Receita
-        </Button>
+        <div className="flex items-center gap-2">
+          <DraftIndicator
+            restored={restored}
+            lastSavedAt={lastSavedAt}
+            onDiscard={() => discardDraft()}
+          />
+          <Button onClick={sync} disabled={syncing} variant="outline" size="sm">
+            {syncing ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4 mr-2" />
+            )}
+            Atualizar da Receita
+          </Button>
+        </div>
       </div>
 
       {loading ? (
