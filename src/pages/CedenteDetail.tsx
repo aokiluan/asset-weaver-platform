@@ -288,6 +288,7 @@ export default function CedenteDetail() {
           { v: "visita", label: "Relatório comercial" },
           { v: "credito", label: "Análise de crédito", icon: ClipboardList },
           { v: "comite", label: "Comitê", icon: Vote },
+          { v: "formalizacao", label: "Formalização", icon: FileSignature },
           { v: "historico", label: "Histórico" },
         ];
         return (
