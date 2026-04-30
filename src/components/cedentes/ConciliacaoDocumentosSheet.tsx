@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import {
   CheckCircle2, XCircle, ChevronLeft, ChevronRight, Loader2, FileText,
-  Sparkles, Download, PartyPopper,
+  Sparkles, Download, PartyPopper, AlertTriangle, Undo2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -34,10 +34,22 @@ export function ConciliacaoDocumentosSheet({
   open, onOpenChange, cedenteId, cedenteRazaoSocial, cedenteCnpj,
   documentos, categorias, onChanged,
 }: Props) {
-  // Fila = pendentes (status=pendente). Reprovados podem ser revisitados via "Todos" abaixo.
-  const fila = useMemo(
+  // Filtros da fila
+  const [somenteComCategoria, setSomenteComCategoria] = useState(true);
+
+  const pendentesTodos = useMemo(
     () => documentos.filter((d) => d.status === "pendente"),
     [documentos],
+  );
+  const pendentesSemCategoria = useMemo(
+    () => pendentesTodos.filter((d) => !d.categoria_id).length,
+    [pendentesTodos],
+  );
+  const fila = useMemo(
+    () => somenteComCategoria
+      ? pendentesTodos.filter((d) => !!d.categoria_id)
+      : pendentesTodos,
+    [pendentesTodos, somenteComCategoria],
   );
 
   const [idx, setIdx] = useState(0);
@@ -126,6 +138,21 @@ export function ConciliacaoDocumentosSheet({
     }).eq("id", current.id);
     if (error) { toast.error("Erro", { description: error.message }); return; }
     toast.success("Documento reprovado");
+    onChanged();
+  };
+
+  const devolverReclassificar = async () => {
+    if (!current) return;
+    const obsAtual = (obs ?? "").trim();
+    const aviso = "Devolvido ao comercial para reclassificação";
+    const novaObs = obsAtual ? `${obsAtual}\n\n${aviso}` : aviso;
+    const { error } = await supabase.from("documentos").update({
+      categoria_id: null,
+      categoria_sugerida_id: null,
+      observacoes: novaObs,
+    }).eq("id", current.id);
+    if (error) { toast.error("Erro", { description: error.message }); return; }
+    toast.success("Devolvido para o comercial reclassificar");
     onChanged();
   };
 
