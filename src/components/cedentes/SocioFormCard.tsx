@@ -235,6 +235,8 @@ export function SocioFormCard({ socio, index, onChange, onRemove, title, headerE
           </div>
         </div>
       )}
+
+      {footerExtra}
     </div>
   );
 }
