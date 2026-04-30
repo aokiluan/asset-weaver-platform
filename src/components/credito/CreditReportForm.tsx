@@ -68,6 +68,13 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
 
+  const { restored, lastSavedAt, clearDraft, discardDraft } = useFormDraft<Partial<ReportRow>>({
+    key: `credit-report:${cedenteId}`,
+    value: report,
+    setValue: (v) => { setReport(v); setDirty(true); },
+    enabled: !loading,
+  });
+
   const canEdit =
     hasRole("admin") || hasRole("analista_credito") ||
     hasRole("gestor_credito") || hasRole("gestor_risco");
