@@ -85,7 +85,7 @@ export function CedenteStageStepper({ stage, isOwner, gateInfo, onAdvance }: Pro
               aria-label={`${STAGE_LABEL[s]}${isCurrent ? " (atual)" : ""}`}
             >
               {isDone && <Check className="h-2 w-2 text-white" strokeWidth={4} />}
-            </button>
+            </div>
           );
 
           return (
