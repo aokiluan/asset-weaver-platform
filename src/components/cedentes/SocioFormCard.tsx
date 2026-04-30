@@ -43,9 +43,12 @@ interface Props {
   index: number;
   onChange: (s: Socio) => void;
   onRemove: () => void;
+  title?: string;
+  headerExtra?: React.ReactNode;
+  footerExtra?: React.ReactNode;
 }
 
-export function SocioFormCard({ socio, index, onChange, onRemove }: Props) {
+export function SocioFormCard({ socio, index, onChange, onRemove, title, headerExtra, footerExtra }: Props) {
   const set = <K extends keyof Socio>(k: K, v: Socio[K]) => onChange({ ...socio, [k]: v });
 
   const handleCEP = async (cep: string) => {
@@ -72,11 +75,13 @@ export function SocioFormCard({ socio, index, onChange, onRemove }: Props) {
   return (
     <div className="rounded-lg border bg-card p-4 space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold">Sócio {index + 1}</h3>
+        <h3 className="font-semibold">{title ?? `Sócio ${index + 1}`}</h3>
         <Button variant="ghost" size="sm" onClick={onRemove} className="text-destructive">
           <Trash2 className="h-4 w-4 mr-1" /> Remover
         </Button>
       </div>
+
+      {headerExtra}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div className="md:col-span-2">
@@ -230,6 +235,8 @@ export function SocioFormCard({ socio, index, onChange, onRemove }: Props) {
           </div>
         </div>
       )}
+
+      {footerExtra}
     </div>
   );
 }
