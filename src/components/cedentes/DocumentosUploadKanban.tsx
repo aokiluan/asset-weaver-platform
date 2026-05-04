@@ -385,7 +385,7 @@ export function DocumentosUploadKanban({
           </div>
           <div className="flex items-center gap-1 flex-wrap">
             <span className="text-[10px] text-muted-foreground">{fmtBytes(d.tamanho_bytes)}</span>
-            {d.classificacao_status === "analisando" && (
+            {d.classificacao_status === "analisando" && !d.categoria_id && (
               <Badge variant="outline" className="h-4 text-[9px] px-1 gap-1">
                 <Loader2 className="h-2 w-2 animate-spin" /> IA
               </Badge>
@@ -456,7 +456,7 @@ export function DocumentosUploadKanban({
             {fmtBytes(d.tamanho_bytes)}
           </p>
         </div>
-        {d.classificacao_status === "analisando" && (
+        {d.classificacao_status === "analisando" && !d.categoria_id && (
           <Badge variant="outline" className="h-5 text-[10px] px-1.5 gap-1">
             <Loader2 className="h-2.5 w-2.5 animate-spin" /> IA
           </Badge>
