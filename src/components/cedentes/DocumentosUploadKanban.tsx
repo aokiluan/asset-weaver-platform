@@ -798,7 +798,6 @@ export function DocumentosUploadKanban({
                   <th className="w-6 px-2 py-1.5"></th>
                   <th className="px-2 py-1.5 font-medium uppercase tracking-wide text-[10px]">
                     <span className="inline-flex items-center gap-1.5">
-                      Categoria
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <button
@@ -827,6 +826,7 @@ export function DocumentosUploadKanban({
                               : "Opcionais primeiro"}
                         </TooltipContent>
                       </Tooltip>
+                      Categoria
                     </span>
                   </th>
                   <th className="w-32 px-2 py-1.5 font-medium uppercase tracking-wide text-[10px] text-right">Status</th>
