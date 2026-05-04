@@ -179,9 +179,16 @@ export function DocumentosUploadKanban({
       }
       out.push({ key: c.id, label: c.nome, obrigatorio: c.obrigatorio, docs });
     }
+    if (sortObrig !== "none") {
+      out.sort((a, b) => {
+        if (a.obrigatorio === b.obrigatorio) return 0;
+        if (sortObrig === "obrig") return a.obrigatorio ? -1 : 1;
+        return a.obrigatorio ? 1 : -1;
+      });
+    }
     return out;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [documentos, categorias, filter]);
+  }, [documentos, categorias, filter, sortObrig]);
 
   const uploadFiles = async (files: File[]) => {
     if (files.length === 0) return;
