@@ -212,6 +212,7 @@ export function DocumentosUploadKanban({
           cedente_id: cedenteId,
           categoria_id: null,
           nome_arquivo: file.name,
+          nome_arquivo_original: file.name,
           storage_path: path,
           tamanho_bytes: file.size,
           mime_type: file.type || null,
