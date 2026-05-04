@@ -37,6 +37,7 @@ export interface Documento {
   categoria_sugerida_id: string | null;
   classificacao_status: "pendente" | "analisando" | "sugerido" | "erro";
   nome_arquivo: string;
+  nome_arquivo_original?: string | null;
   storage_path: string;
   tamanho_bytes: number | null;
   mime_type: string | null;
