@@ -169,9 +169,13 @@ export function DocumentosUploadKanban({
     const out: { key: string; label: string; obrigatorio: boolean; docs: Documento[] }[] = [];
     for (const c of categorias) {
       const docs = documentos.filter((d) => d.categoria_id === c.id && passesFilter(d));
-      // Em filtros específicos (pendentes/verificados/reprovados/sem categoria),
-      // só mostra categorias que possuem documentos correspondentes.
-      if (filter !== "todos" && docs.length === 0) continue;
+      const todosDocs = documentos.filter((d) => d.categoria_id === c.id);
+      // Em "Pendentes", inclui também categorias obrigatórias ainda sem nenhum upload.
+      if (filter === "pendentes" && docs.length === 0) {
+        if (!c.obrigatorio || todosDocs.length > 0) continue;
+      } else if (filter !== "todos" && filter !== "pendentes" && docs.length === 0) {
+        continue;
+      }
       out.push({ key: c.id, label: c.nome, obrigatorio: c.obrigatorio, docs });
     }
     return out;
