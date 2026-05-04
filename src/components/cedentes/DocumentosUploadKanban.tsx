@@ -330,7 +330,7 @@ export function DocumentosUploadKanban({
       for (const doc of docsAlvo) {
         const ext = getExt(doc.nome_arquivo);
         const seq = String(next).padStart(2, "0");
-        const novoNome = `${dateStr}_${slug}_${seq}${ext ? "." + ext : ""}`;
+        const novoNome = `${dateStr}_${slugCedente}_${slug}_${seq}${ext ? "." + ext : ""}`;
         const newPath = await renameInStorage(doc.storage_path, novoNome);
         const { error } = await supabase
           .from("documentos")
