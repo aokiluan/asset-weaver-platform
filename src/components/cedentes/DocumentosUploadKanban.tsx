@@ -312,6 +312,7 @@ export function DocumentosUploadKanban({
     } else {
       const cat = categorias.find((c) => c.id === categoriaId);
       const slug = cat ? slugifyCategoria(cat.nome) : "categoria";
+      const slugCedente = slugifyCategoria(cedenteRazaoSocial || "cedente");
       const today = new Date();
       const yyyy = today.getFullYear();
       const mm = String(today.getMonth() + 1).padStart(2, "0");
