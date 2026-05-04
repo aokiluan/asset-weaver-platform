@@ -796,7 +796,39 @@ export function DocumentosUploadKanban({
               <thead className="bg-muted/30 text-muted-foreground">
                 <tr className="text-left">
                   <th className="w-6 px-2 py-1.5"></th>
-                  <th className="px-2 py-1.5 font-medium uppercase tracking-wide text-[10px]">Categoria</th>
+                  <th className="px-2 py-1.5 font-medium uppercase tracking-wide text-[10px]">
+                    <span className="inline-flex items-center gap-1.5">
+                      Categoria
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setSortObrig((s) =>
+                                s === "none" ? "obrig" : s === "obrig" ? "opc" : "none",
+                              )
+                            }
+                            className={cn(
+                              "inline-flex items-center justify-center h-4 w-4 rounded transition-colors",
+                              sortObrig === "none"
+                                ? "text-muted-foreground/50 hover:text-foreground"
+                                : "text-foreground",
+                            )}
+                            aria-label="Ordenar por obrigatoriedade"
+                          >
+                            <ArrowUpDown className="h-3 w-3" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="text-xs">
+                          {sortObrig === "none"
+                            ? "Ordenar por obrigatoriedade"
+                            : sortObrig === "obrig"
+                              ? "Obrigatórios primeiro"
+                              : "Opcionais primeiro"}
+                        </TooltipContent>
+                      </Tooltip>
+                    </span>
+                  </th>
                   <th className="w-32 px-2 py-1.5 font-medium uppercase tracking-wide text-[10px] text-right">Status</th>
                   <th className="w-40 px-2 py-1.5"></th>
                 </tr>
