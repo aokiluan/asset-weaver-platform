@@ -828,34 +828,6 @@ export function DocumentosUploadKanban({
                       </Tooltip>
                       Categoria
                     </span>
-                        <TooltipTrigger asChild>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setSortObrig((s) =>
-                                s === "none" ? "obrig" : s === "obrig" ? "opc" : "none",
-                              )
-                            }
-                            className={cn(
-                              "inline-flex items-center justify-center h-4 w-4 rounded transition-colors",
-                              sortObrig === "none"
-                                ? "text-muted-foreground/50 hover:text-foreground"
-                                : "text-foreground",
-                            )}
-                            aria-label="Ordenar por obrigatoriedade"
-                          >
-                            <ArrowUpDown className="h-3 w-3" />
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent side="top" className="text-xs">
-                          {sortObrig === "none"
-                            ? "Ordenar por obrigatoriedade"
-                            : sortObrig === "obrig"
-                              ? "Obrigatórios primeiro"
-                              : "Opcionais primeiro"}
-                        </TooltipContent>
-                      </Tooltip>
-                    </span>
                   </th>
                   <th className="w-32 px-2 py-1.5 font-medium uppercase tracking-wide text-[10px] text-right">Status</th>
                   <th className="w-40 px-2 py-1.5"></th>
