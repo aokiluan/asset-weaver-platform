@@ -358,7 +358,7 @@ export function DocumentosUploadKanban({
     { key: "pendentes", label: "Pendentes" },
     { key: "aprovados", label: "Verificados" },
     { key: "reprovados", label: "Reprovados" },
-    { key: "sem_categoria", label: "Sem categoria" },
+    
   ];
 
   // Card compartilhado (lista e quadro usam variantes diferentes)
