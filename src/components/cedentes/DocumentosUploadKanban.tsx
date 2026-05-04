@@ -256,13 +256,98 @@ export function DocumentosUploadKanban({
     if (dt?.files?.length) uploadFiles(Array.from(dt.files));
   };
 
+  const slugifyCategoria = (nome: string) =>
+    nome
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "");
+
+  const getExt = (name: string) => {
+    const m = name.match(/\.([^.]+)$/);
+    return m ? m[1].toLowerCase() : "";
+  };
+
+  const renameInStorage = async (
+    oldPath: string,
+    newName: string,
+  ): Promise<string | null> => {
+    const rand = Math.random().toString(36).slice(2, 6);
+    const newPath = `${cedenteId}/${Date.now()}-${rand}-${newName}`;
+    const { error } = await supabase.storage
+      .from("cedente-docs")
+      .move(oldPath, newPath);
+    if (error) {
+      console.warn("storage.move falhou", error);
+      return null;
+    }
+    return newPath;
+  };
+
   const moveManyTo = async (ids: string[], categoriaId: string | null) => {
     if (ids.length === 0) return;
-    const { error } = await supabase.from("documentos").update({
-      categoria_id: categoriaId,
-      categoria_sugerida_id: null,
-    }).in("id", ids);
-    if (error) { toast.error("Erro ao mover", { description: error.message }); return; }
+    const docsAlvo = documentos.filter((d) => ids.includes(d.id));
+
+    if (categoriaId === null) {
+      // Descategorizar: restaura o nome original do upload
+      for (const doc of docsAlvo) {
+        const original = doc.nome_arquivo_original ?? doc.nome_arquivo;
+        const newPath = await renameInStorage(doc.storage_path, original);
+        const { error } = await supabase
+          .from("documentos")
+          .update({
+            categoria_id: null,
+            categoria_sugerida_id: null,
+            nome_arquivo: original,
+            ...(newPath ? { storage_path: newPath } : {}),
+          })
+          .eq("id", doc.id);
+        if (error) {
+          toast.error("Erro ao mover", { description: error.message });
+          return;
+        }
+      }
+    } else {
+      const cat = categorias.find((c) => c.id === categoriaId);
+      const slug = cat ? slugifyCategoria(cat.nome) : "categoria";
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, "0");
+      const dd = String(today.getDate()).padStart(2, "0");
+      const dateStr = `${yyyy}.${mm}.${dd}`;
+
+      // Conta documentos já existentes nessa categoria neste cedente
+      const { count: baseCount } = await supabase
+        .from("documentos")
+        .select("id", { count: "exact", head: true })
+        .eq("cedente_id", cedenteId)
+        .eq("categoria_id", categoriaId);
+      let next = (baseCount ?? 0) + 1;
+
+      for (const doc of docsAlvo) {
+        const ext = getExt(doc.nome_arquivo);
+        const seq = String(next).padStart(2, "0");
+        const novoNome = `${dateStr}_${slug}_${seq}${ext ? "." + ext : ""}`;
+        const newPath = await renameInStorage(doc.storage_path, novoNome);
+        const { error } = await supabase
+          .from("documentos")
+          .update({
+            categoria_id: categoriaId,
+            categoria_sugerida_id: null,
+            nome_arquivo: novoNome,
+            ...(newPath ? { storage_path: newPath } : {}),
+          })
+          .eq("id", doc.id);
+        if (error) {
+          toast.error("Erro ao mover", { description: error.message });
+          return;
+        }
+        next++;
+      }
+    }
+
     if (ids.length > 1) toast.success(`${ids.length} documento(s) movido(s)`);
     setChecked(new Set());
     onChanged();
