@@ -829,6 +829,7 @@ export type Database = {
           id: string
           mime_type: string | null
           nome_arquivo: string
+          nome_arquivo_original: string | null
           observacoes: string | null
           reviewed_at: string | null
           reviewed_by: string | null
@@ -847,6 +848,7 @@ export type Database = {
           id?: string
           mime_type?: string | null
           nome_arquivo: string
+          nome_arquivo_original?: string | null
           observacoes?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -865,6 +867,7 @@ export type Database = {
           id?: string
           mime_type?: string | null
           nome_arquivo?: string
+          nome_arquivo_original?: string | null
           observacoes?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
