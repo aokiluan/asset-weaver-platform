@@ -1,19 +1,9 @@
-## Adicionar ordenação por obrigatoriedade
+## Alinhar botão de ordenação com a coluna das bolinhas de status
 
-Adicionar um botão discreto (ícone `ArrowUpDown` da lucide) ao lado do título da coluna **CATEGORIA** no header da tabela compacta. Ele alterna entre 3 estados:
+Hoje o botão `ArrowUpDown` está dentro da célula "Categoria", deslocado à direita das bolinhas. Mover o botão para a primeira coluna (a coluna de 24px que contém as bolinhas verde/vermelha por linha), centralizado.
 
-1. **nenhum** (padrão) — ordem original do banco (`ordem` da categoria)
-2. **obrigatórios primeiro**
-3. **opcionais primeiro**
+### Mudança em `src/components/cedentes/DocumentosUploadKanban.tsx`
 
-### Mudanças em `src/components/cedentes/DocumentosUploadKanban.tsx`
-
-1. Importar `ArrowUpDown` de `lucide-react`.
-2. Novo estado: `const [sortObrig, setSortObrig] = useState<"none" | "obrig" | "opc">("none")`.
-3. No `useMemo` `grupos`, após montar `out`, aplicar sort estável quando `sortObrig !== "none"`:
-   - `"obrig"`: obrigatórios no topo
-   - `"opc"`: opcionais no topo
-4. No `<th>` da coluna Categoria, adicionar um `<button>` minúsculo (ícone 12px, `text-muted-foreground hover:text-foreground`, sem borda) que cicla os 3 estados ao clicar. Quando ativo, ícone fica em `text-foreground` para indicar que há ordenação.
-5. Tooltip curto: "Ordenar por obrigatoriedade".
-
-Sem mudanças em outros arquivos, sem schema, sem novas dependências.
+No `<thead>` da tabela compacta:
+- Mover o `<button>` com o ícone `ArrowUpDown` (e seu Tooltip) do `<th>` da Categoria para o primeiro `<th className="w-6 ...">`, com `text-center`.
+- O `<th>` de Categoria volta a ter apenas o texto "Categoria" sem o wrapper `<span>` flex.
