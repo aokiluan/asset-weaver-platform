@@ -228,7 +228,10 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
                       cedenteId={cedenteId}
                       attachments={getAtt((report as any)[key], f.key)}
                       onAttachmentsChange={(list) => setSectionAttachments(key, f.key, list)}
-                      allowAttachments={key !== "identificacao" && key !== "empresa"}
+                      allowAttachments={
+                        key !== "identificacao" &&
+                        (key !== "empresa" || ["socios", "respaldo_patrimonial", "atividade", "infraestrutura", "management"].includes(f.key))
+                      }
                     />
                   ))}
                 </div>
