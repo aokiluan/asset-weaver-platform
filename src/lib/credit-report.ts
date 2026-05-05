@@ -174,14 +174,21 @@ export const SECTION_FIELDS: Record<SectionKey, FieldDef[]> = {
 export function isSectionComplete(data: Record<string, any> | undefined | null, key: SectionKey): boolean {
   const fields = SECTION_FIELDS[key];
   const required = fields.filter((f) => f.required);
+  const att = (data as any)?.__attachments ?? {};
+  const hasValue = (fieldKey: string) => {
+    const v = data?.[fieldKey];
+    if (v !== null && v !== undefined && String(v).trim() !== "") return true;
+    return Array.isArray(att[fieldKey]) && att[fieldKey].length > 0;
+  };
   if (required.length === 0) {
-    // sem obrigatórios: completo se tiver pelo menos 1 campo preenchido
-    return Object.values(data ?? {}).some((v) => v !== null && v !== undefined && String(v).trim() !== "");
+    // sem obrigatórios: completo se tiver ao menos um campo (texto ou anexo) preenchido
+    const anyText = Object.entries(data ?? {})
+      .filter(([k]) => k !== "__attachments")
+      .some(([, v]) => v !== null && v !== undefined && String(v).trim() !== "");
+    const anyAtt = Object.values(att).some((arr: any) => Array.isArray(arr) && arr.length > 0);
+    return anyText || anyAtt;
   }
-  return required.every((f) => {
-    const v = data?.[f.key];
-    return v !== null && v !== undefined && String(v).trim() !== "";
-  });
+  return required.every((f) => hasValue(f.key));
 }
 
 export function computeCompletude(report: Partial<Record<SectionKey, any>>): number {

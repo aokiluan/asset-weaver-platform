@@ -24,6 +24,15 @@ import {
   RECOMENDACAO_OPTIONS,
   FieldDef,
 } from "@/lib/credit-report";
+import { FieldAttachments, Attachment } from "./FieldAttachments";
+
+const ATT_KEY = "__attachments";
+function getAtt(section: any, fieldKey: string): Attachment[] {
+  return (section?.[ATT_KEY]?.[fieldKey] ?? []) as Attachment[];
+}
+function getTopAtt(top: any, fieldKey: string): Attachment[] {
+  return (top?.[fieldKey] ?? []) as Attachment[];
+}
 
 interface Props {
   cedenteId: string;
@@ -51,6 +60,7 @@ type ReportRow = {
   conclusao: string | null;
   recomendacao: string | null;
   completude: number;
+  attachments_top: any;
   updated_at: string;
 };
 
@@ -59,7 +69,13 @@ const emptyReport = (cedenteId: string, proposalId?: string | null): Partial<Rep
   cedente_id: cedenteId,
   identificacao: {}, empresa: {}, rede_societaria: {}, carteira: {},
   restritivos: {}, financeiro: {}, due_diligence: {}, pleito: {},
+  attachments_top: {},
 });
+
+function setSectionAtt(section: any, fieldKey: string, list: Attachment[]) {
+  const att = { ...(section?.[ATT_KEY] ?? {}), [fieldKey]: list };
+  return { ...(section ?? {}), [ATT_KEY]: att };
+}
 
 export function CreditReportForm({ cedenteId, proposalId }: Props) {
   const { user, hasRole } = useAuth();
@@ -104,8 +120,18 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
     setDirty(true);
   };
 
+  const setSectionAttachments = (key: SectionKey, fieldKey: string, list: Attachment[]) => {
+    setReport((r) => ({ ...r, [key]: setSectionAtt(r[key], fieldKey, list) }));
+    setDirty(true);
+  };
+
   const setTopField = (key: keyof ReportRow, value: any) => {
     setReport((r) => ({ ...r, [key]: value }));
+    setDirty(true);
+  };
+
+  const setTopAttachments = (fieldKey: string, list: Attachment[]) => {
+    setReport((r) => ({ ...r, attachments_top: { ...((r as any).attachments_top ?? {}), [fieldKey]: list } }));
     setDirty(true);
   };
 
@@ -199,6 +225,9 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
                       value={(report as any)[key]?.[f.key] ?? ""}
                       onChange={(v) => setSection(key, f.key, v)}
                       disabled={!canEdit}
+                      cedenteId={cedenteId}
+                      attachments={getAtt((report as any)[key], f.key)}
+                      onAttachmentsChange={(list) => setSectionAttachments(key, f.key, list)}
                     />
                   ))}
                 </div>
@@ -212,16 +241,54 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
       <div className="rounded-lg border bg-card p-4 space-y-4">
         <h3 className="text-base font-semibold">Pareceres em camadas e conclusão</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <TextareaField label="Parecer comercial (executivo)" value={report.parecer_comercial ?? ""} onChange={(v) => setTopField("parecer_comercial", v)} disabled={!canEdit} />
-          <TextareaField label="Parecer regional (gerência)" value={report.parecer_regional ?? ""} onChange={(v) => setTopField("parecer_regional", v)} disabled={!canEdit} />
-          <TextareaField label="Parecer compliance" value={report.parecer_compliance ?? ""} onChange={(v) => setTopField("parecer_compliance", v)} disabled={!canEdit} />
-          <TextareaField label="Parecer analista de crédito" value={report.parecer_analista ?? ""} onChange={(v) => setTopField("parecer_analista", v)} disabled={!canEdit} />
+          {[
+            ["parecer_comercial", "Parecer comercial (executivo)"],
+            ["parecer_regional", "Parecer regional (gerência)"],
+            ["parecer_compliance", "Parecer compliance"],
+            ["parecer_analista", "Parecer analista de crédito"],
+          ].map(([key, label]) => (
+            <TextareaField
+              key={key}
+              label={label}
+              value={(report as any)[key] ?? ""}
+              onChange={(v) => setTopField(key as keyof ReportRow, v)}
+              disabled={!canEdit}
+              cedenteId={cedenteId}
+              fieldKey={key}
+              attachments={getTopAtt((report as any).attachments_top, key)}
+              onAttachmentsChange={(list) => setTopAttachments(key, list)}
+            />
+          ))}
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <TextareaField label="🟢 Pontos positivos" value={report.pontos_positivos ?? ""} onChange={(v) => setTopField("pontos_positivos", v)} disabled={!canEdit} />
-          <TextareaField label="🟡 Pontos de atenção" value={report.pontos_atencao ?? ""} onChange={(v) => setTopField("pontos_atencao", v)} disabled={!canEdit} />
+          {[
+            ["pontos_positivos", "🟢 Pontos positivos"],
+            ["pontos_atencao", "🟡 Pontos de atenção"],
+          ].map(([key, label]) => (
+            <TextareaField
+              key={key}
+              label={label}
+              value={(report as any)[key] ?? ""}
+              onChange={(v) => setTopField(key as keyof ReportRow, v)}
+              disabled={!canEdit}
+              cedenteId={cedenteId}
+              fieldKey={key}
+              attachments={getTopAtt((report as any).attachments_top, key)}
+              onAttachmentsChange={(list) => setTopAttachments(key, list)}
+            />
+          ))}
         </div>
-        <TextareaField label="📌 Conclusão" value={report.conclusao ?? ""} onChange={(v) => setTopField("conclusao", v)} disabled={!canEdit} rows={3} />
+        <TextareaField
+          label="📌 Conclusão"
+          value={report.conclusao ?? ""}
+          onChange={(v) => setTopField("conclusao", v)}
+          disabled={!canEdit}
+          rows={3}
+          cedenteId={cedenteId}
+          fieldKey="conclusao"
+          attachments={getTopAtt((report as any).attachments_top, "conclusao")}
+          onAttachmentsChange={(list) => setTopAttachments("conclusao", list)}
+        />
         <div className="space-y-2 max-w-xs">
           <Label>Recomendação final</Label>
           <Select value={report.recomendacao ?? ""} onValueChange={(v) => setTopField("recomendacao", v)} disabled={!canEdit}>
@@ -245,8 +312,9 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
   );
 }
 
-function FieldRenderer({ field, value, onChange, disabled }: {
+function FieldRenderer({ field, value, onChange, disabled, cedenteId, attachments, onAttachmentsChange }: {
   field: FieldDef; value: any; onChange: (v: any) => void; disabled?: boolean;
+  cedenteId: string; attachments: Attachment[]; onAttachmentsChange: (list: Attachment[]) => void;
 }) {
   const wrapper = field.full || field.type === "textarea" ? "md:col-span-2" : "";
   return (
@@ -271,17 +339,32 @@ function FieldRenderer({ field, value, onChange, disabled }: {
           disabled={disabled}
         />
       )}
+      <FieldAttachments
+        cedenteId={cedenteId}
+        fieldKey={field.key}
+        value={attachments}
+        onChange={onAttachmentsChange}
+        disabled={disabled}
+      />
     </div>
   );
 }
 
-function TextareaField({ label, value, onChange, disabled, rows = 2 }: {
+function TextareaField({ label, value, onChange, disabled, rows = 2, cedenteId, fieldKey, attachments, onAttachmentsChange }: {
   label: string; value: string; onChange: (v: string) => void; disabled?: boolean; rows?: number;
+  cedenteId: string; fieldKey: string; attachments: Attachment[]; onAttachmentsChange: (list: Attachment[]) => void;
 }) {
   return (
     <div className="space-y-1.5">
       <Label className="text-xs">{label}</Label>
       <Textarea rows={rows} value={value} onChange={(e) => onChange(e.target.value)} disabled={disabled} />
+      <FieldAttachments
+        cedenteId={cedenteId}
+        fieldKey={fieldKey}
+        value={attachments}
+        onChange={onAttachmentsChange}
+        disabled={disabled}
+      />
     </div>
   );
 }

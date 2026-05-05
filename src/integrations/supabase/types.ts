@@ -663,6 +663,7 @@ export type Database = {
       }
       credit_reports: {
         Row: {
+          attachments_top: Json
           carteira: Json
           cedente_id: string
           completude: number
@@ -689,6 +690,7 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
+          attachments_top?: Json
           carteira?: Json
           cedente_id: string
           completude?: number
@@ -715,6 +717,7 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
+          attachments_top?: Json
           carteira?: Json
           cedente_id?: string
           completude?: number
