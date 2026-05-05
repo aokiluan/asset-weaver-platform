@@ -126,10 +126,28 @@ export function FieldAttachments({ cedenteId, fieldKey, value, onChange, disable
           {uploading ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <ImagePlus className="h-3 w-3 mr-1" />}
           Anexar imagem
         </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          className="h-7 px-2 text-[11px] text-muted-foreground"
+          onClick={() => setSnipOpen(true)}
+          disabled={disabled || uploading}
+        >
+          <Crop className="h-3 w-3 mr-1" />
+          Capturar do documento
+        </Button>
         {value.length > 0 && (
           <span className="text-[11px] text-muted-foreground">{value.length} anexada(s)</span>
         )}
       </div>
+
+      <DocumentSnipDialog
+        cedenteId={cedenteId}
+        open={snipOpen}
+        onOpenChange={setSnipOpen}
+        onCaptured={handleSnipped}
+      />
 
       {value.length > 0 && (
         <div className="flex flex-wrap gap-2">
