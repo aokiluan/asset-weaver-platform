@@ -73,6 +73,7 @@ interface FormState {
   pct_vendas_boleto: string;
   pct_vendas_cartao: string;
   pct_vendas_outros: string;
+  pct_fat_debito: string;
   // adicionais
   parceiros_financeiros: string;
   empresas_ligadas: EmpresaLigada[];
