@@ -228,6 +228,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
       pct_vendas_boleto: num(form.pct_vendas_boleto),
       pct_vendas_cartao: num(form.pct_vendas_cartao),
       pct_vendas_outros: num(form.pct_vendas_outros),
+      pct_fat_debito: num(form.pct_fat_debito),
       parceiros_financeiros: form.parceiros_financeiros || null,
       empresas_ligadas: form.empresas_ligadas,
       limite_global_solicitado: num(form.limite_global_solicitado),
