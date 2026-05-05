@@ -11,7 +11,7 @@
 @layer base {
   :root {
     /* Surfaces — Nibo */
-    --background: 210 25% 98%;            /* #F7F9FB */
+    --background: 0 0% 100%;              /* #FFFFFF */
     --foreground: 215 25% 18%;            /* #232E3D */
 
     --card: 0 0% 100%;
@@ -59,14 +59,14 @@
 
     --gradient-primary: linear-gradient(135deg, hsl(210 100% 50%), hsl(212 100% 42%));
     --gradient-gold: linear-gradient(135deg, hsl(210 100% 50%), hsl(208 100% 62%));
-    --gradient-subtle: linear-gradient(180deg, hsl(210 25% 98%), hsl(210 25% 96%));
+    --gradient-subtle: linear-gradient(180deg, hsl(0 0% 100%), hsl(210 20% 98%));
     --shadow-elegant: 0 1px 2px hsl(215 25% 18% / 0.04);
     --shadow-card: 0 1px 2px hsl(215 25% 18% / 0.04);
     --shadow-gold: 0 4px 12px -4px hsl(210 100% 50% / 0.18);
 
-    /* Sidebar — branca pura Nibo */
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 215 18% 35%;
+    /* Sidebar — cinza leve estilo Nibo */
+    --sidebar-background: 210 20% 97%;    /* #F4F6F8 */
+    --sidebar-foreground: 215 12% 42%;    /* #5F6A78 */
     --sidebar-primary: 210 100% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 210 100% 96%;
