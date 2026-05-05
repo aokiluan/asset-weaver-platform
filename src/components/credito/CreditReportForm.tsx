@@ -184,6 +184,25 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
             <Badge variant={completude === 8 ? "default" : "outline"}>
               {completude}/8 seções
             </Badge>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={generating}
+              onClick={async () => {
+                setGenerating(true);
+                try {
+                  await generateCreditReportPdf(report, cedenteNome);
+                  toast.success("PDF gerado");
+                } catch (e: any) {
+                  toast.error("Falha ao gerar PDF", { description: e?.message });
+                } finally {
+                  setGenerating(false);
+                }
+              }}
+            >
+              {generating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileDown className="h-4 w-4 mr-2" />}
+              Gerar PDF
+            </Button>
             {canEdit && (
               <Button onClick={save} disabled={saving || !dirty} size="sm">
                 {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
