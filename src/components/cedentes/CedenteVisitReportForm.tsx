@@ -459,6 +459,12 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
 
   return (
     <div className="space-y-4">
+      <div className="flex justify-end">
+        <Button variant="outline" onClick={gerarPdf} disabled={generatingPdf}>
+          {generatingPdf ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileDown className="h-4 w-4 mr-2" />}
+          Gerar PDF
+        </Button>
+      </div>
       <Accordion type="multiple" defaultValue={["cabecalho"]} className="space-y-2">
         {/* 1. Cabeçalho */}
         <AccordionItem value="cabecalho" className="border rounded-md px-4">
@@ -702,10 +708,6 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
           onDiscard={() => discardDraft(empty())}
         />
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={gerarPdf} disabled={generatingPdf}>
-            {generatingPdf ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileDown className="h-4 w-4 mr-2" />}
-            Gerar PDF
-          </Button>
           <Button onClick={handleSave} disabled={saving}>
             {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
             {existingId ? "Atualizar relatório" : "Salvar relatório"}
