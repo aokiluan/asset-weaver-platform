@@ -262,7 +262,7 @@ export default function AdminDashboardWidgets() {
               <TableHead>Tipo</TableHead>
               <TableHead>Dataset</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="w-[120px]">Ações</TableHead>
+              <TableHead className="w-px text-right pr-3">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -271,7 +271,7 @@ export default function AdminDashboardWidgets() {
             ) : items.length === 0 ? (
               <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Nenhum widget configurado.</TableCell></TableRow>
             ) : items.map((w) => (
-              <TableRow key={w.id}>
+              <TableRow key={w.id} className="group">
                 <TableCell>{w.ordem}</TableCell>
                 <TableCell className="font-medium">{w.titulo}</TableCell>
                 <TableCell className="uppercase">{w.tipo}</TableCell>
@@ -279,14 +279,14 @@ export default function AdminDashboardWidgets() {
                   {datasets.find((d) => d.id === w.dataset_id)?.nome ?? "—"}
                 </TableCell>
                 <TableCell>{w.ativo ? "Ativo" : "Inativo"}</TableCell>
-                <TableCell>
-                  <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" onClick={() => { setEditing(w); setOpen(true); }}>
-                      <Pencil className="h-4 w-4" />
+                <TableCell className="text-right pr-3">
+                  <div className="flex justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { setEditing(w); setOpen(true); }}>
+                      <Pencil className="h-3.5 w-3.5" />
                     </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon"><Trash2 className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" className="h-6 w-6"><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>

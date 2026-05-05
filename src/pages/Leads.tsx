@@ -153,12 +153,12 @@ export default function Leads() {
                     <TableHead>Estágio</TableHead>
                     <TableHead>Responsável</TableHead>
                     <TableHead className="text-right">Valor</TableHead>
-                    <TableHead className="w-24 text-right">Ações</TableHead>
+                    <TableHead className="w-px text-right pr-3">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filtered.map((l) => (
-                    <TableRow key={l.id}>
+                    <TableRow key={l.id} className="group">
                       <TableCell className="font-medium">
                         {l.nome}
                         {l.email && <div className="text-xs text-muted-foreground">{l.email}</div>}
@@ -177,14 +177,14 @@ export default function Leads() {
                       </TableCell>
                       <TableCell>{(l as any).owner?.nome ?? "—"}</TableCell>
                       <TableCell className="text-right tabular-nums">{fmt(l.valor_estimado)}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button variant="ghost" size="icon" onClick={() => { setEditing(l as any); setDialogOpen(true); }}>
-                            <Pencil className="h-4 w-4" />
+                      <TableCell className="text-right pr-3">
+                        <div className="flex justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { setEditing(l as any); setDialogOpen(true); }}>
+                            <Pencil className="h-3.5 w-3.5" />
                           </Button>
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="icon"><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                              <Button variant="ghost" size="icon" className="h-6 w-6"><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                               <AlertDialogHeader>

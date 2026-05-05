@@ -163,25 +163,25 @@ export default function AdminAlcadas() {
               <TableHead>Aprovador</TableHead>
               <TableHead>Votos mín.</TableHead>
               <TableHead>Ativo</TableHead>
-              <TableHead className="w-[100px] text-right">Ações</TableHead>
+              <TableHead className="w-px text-right pr-3">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading && <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>}
             {items.map(l => (
-              <TableRow key={l.id}>
+              <TableRow key={l.id} className="group">
                 <TableCell>{l.ordem}</TableCell>
                 <TableCell className="font-medium">{l.nome}</TableCell>
                 <TableCell>{fmtBRL(l.valor_min)} → {fmtBRL(l.valor_max)}</TableCell>
                 <TableCell>{APPROVER_LABEL[l.approver]}</TableCell>
                 <TableCell>{l.votos_minimos}</TableCell>
                 <TableCell>{l.ativo ? "Sim" : "Não"}</TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-1">
-                    <Button size="icon" variant="ghost" onClick={() => { setEditing(l); setOpen(true); }}><Pencil className="h-4 w-4" /></Button>
+                <TableCell className="text-right pr-3">
+                  <div className="flex justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => { setEditing(l); setOpen(true); }}><Pencil className="h-3.5 w-3.5" /></Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button size="icon" variant="ghost"><Trash2 className="h-4 w-4" /></Button>
+                        <Button size="icon" variant="ghost" className="h-6 w-6"><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
