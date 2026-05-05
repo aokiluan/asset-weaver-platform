@@ -102,14 +102,13 @@ export default function AdminUsuarios() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Usuários</h1>
-          <p className="text-sm text-muted-foreground">Gerencie usuários, papéis, equipes e status de acesso.</p>
-        </div>
-        <Dialog open={assignOpen} onOpenChange={setAssignOpen}>
-          <DialogTrigger asChild>
-            <Button><UserPlus className="h-4 w-4 mr-2" /> Atribuir função</Button>
-          </DialogTrigger>
+        <h1 className="text-[20px] font-medium tracking-tight">Usuários</h1>
+        <div className="flex items-center gap-3">
+          <span className="text-[12px] text-muted-foreground">{users.length} usuários</span>
+          <Dialog open={assignOpen} onOpenChange={setAssignOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm"><UserPlus className="h-4 w-4 mr-2" /> Atribuir função</Button>
+            </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Atribuir função a usuário</DialogTitle>
