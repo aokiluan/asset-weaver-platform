@@ -446,7 +446,7 @@ export default function CedenteDetail() {
           cedente={cedente}
           latestProposalId={latestProposal?.id ?? null}
           minutaAssinada={minutaAssinada}
-          canSign={hasRole("admin") || hasRole("gestor_financeiro") || hasRole("financeiro")}
+          canSign={hasRole("admin") || hasRole("formalizacao") || hasRole("financeiro")}
           onChanged={load}
         />
       )}
