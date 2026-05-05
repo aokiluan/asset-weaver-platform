@@ -107,7 +107,7 @@ export default function Leads() {
       <header className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Leads</h1>
-          <p className="text-sm text-muted-foreground">Cedentes e investidores no pipeline comercial.</p>
+          <p className="text-muted-foreground">Cedentes e investidores no pipeline comercial.</p>
         </div>
         <Button onClick={() => { setEditing(undefined); setDialogOpen(true); }}>
           <Plus className="h-4 w-4 mr-2" /> Novo lead
@@ -175,7 +175,7 @@ export default function Leads() {
                           </span>
                         ) : "—"}
                       </TableCell>
-                      <TableCell className="text-sm">{(l as any).owner?.nome ?? "—"}</TableCell>
+                      <TableCell>{(l as any).owner?.nome ?? "—"}</TableCell>
                       <TableCell className="text-right tabular-nums">{fmt(l.valor_estimado)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">

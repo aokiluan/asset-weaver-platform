@@ -66,7 +66,7 @@ export default function AdminCategorias() {
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Categorias de Documento</h1>
-          <p className="text-sm text-muted-foreground">Tipos de documento aceitos no cadastro de cedentes.</p>
+          <p className="text-muted-foreground">Tipos de documento aceitos no cadastro de cedentes.</p>
         </div>
         <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setEditing(empty); }}>
           <DialogTrigger asChild>
@@ -125,7 +125,7 @@ export default function AdminCategorias() {
               <TableRow key={c.id}>
                 <TableCell>{c.ordem}</TableCell>
                 <TableCell className="font-medium">{c.nome}</TableCell>
-                <TableCell className="text-sm text-muted-foreground">{c.descricao ?? "—"}</TableCell>
+                <TableCell className="text-muted-foreground">{c.descricao ?? "—"}</TableCell>
                 <TableCell>{c.obrigatorio ? "Sim" : "Não"}</TableCell>
                 <TableCell>{c.ativo ? "Sim" : "Não"}</TableCell>
                 <TableCell className="text-right">

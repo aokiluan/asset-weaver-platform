@@ -249,9 +249,9 @@ export default function Financeiro() {
                 <Table>
                   <TableHeader className="sticky top-0 bg-background z-10">
                     <TableRow>
-                      <TableHead className="w-12 text-xs">#</TableHead>
+                      <TableHead className="w-12">#</TableHead>
                       {headerRow.map((h, i) => (
-                        <TableHead key={i} className="text-xs whitespace-nowrap">
+                        <TableHead key={i} className="whitespace-nowrap">
                           {formatCell(h)}
                         </TableHead>
                       ))}
@@ -260,9 +260,9 @@ export default function Financeiro() {
                   <TableBody>
                     {dataRows.slice(0, 500).map((row, ri) => (
                       <TableRow key={ri}>
-                        <TableCell className="text-xs text-muted-foreground">{ri + 2}</TableCell>
+                        <TableCell className="text-muted-foreground">{ri + 2}</TableCell>
                         {row.map((c, ci) => (
-                          <TableCell key={ci} className="text-xs whitespace-nowrap">
+                          <TableCell key={ci} className="whitespace-nowrap">
                             {formatCell(c)}
                           </TableCell>
                         ))}

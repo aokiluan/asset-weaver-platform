@@ -66,7 +66,7 @@ export default function AdminPipeline() {
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Estágios do Pipeline</h1>
-          <p className="text-sm text-muted-foreground">Configure as colunas do funil comercial.</p>
+          <p className="text-muted-foreground">Configure as colunas do funil comercial.</p>
         </div>
         <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setEditing(empty); }}>
           <DialogTrigger asChild>
@@ -131,7 +131,7 @@ export default function AdminPipeline() {
                 <TableCell>{s.ordem}</TableCell>
                 <TableCell className="font-medium">{s.nome}</TableCell>
                 <TableCell><span className="inline-block h-4 w-8 rounded" style={{ backgroundColor: s.cor ?? "#ccc" }} /></TableCell>
-                <TableCell className="text-sm">{s.is_ganho ? "Ganho" : s.is_perdido ? "Perdido" : "Em andamento"}</TableCell>
+                <TableCell>{s.is_ganho ? "Ganho" : s.is_perdido ? "Perdido" : "Em andamento"}</TableCell>
                 <TableCell>{s.ativo ? "Sim" : "Não"}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1">
