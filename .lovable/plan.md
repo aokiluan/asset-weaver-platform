@@ -1,38 +1,29 @@
-## Componentes ultracompactos: Button, Select, Switch
+## Aglutinar ações e switches no canto direito
 
-A tabela já está em ~22–24px por linha, mas botões (h-10/h-9), selects (h-10) e switches (h-6 / w-11) continuam grandes demais e quebram a densidade visual. Vou reduzir os defaults globais nesses três componentes — assim toda a aplicação herda o novo padrão sem precisar editar página por página.
+Inspirado no print: ícones de ação só aparecem no hover da linha, encostados na borda direita. Switches/colunas de status também ficam encostados na direita.
 
-### 1. `src/components/ui/button.tsx`
+### Padrão a aplicar
 
-Reduzir todos os tamanhos e o texto base:
+Para cada coluna de "Ações" / "Ativo" / "Gestor geral":
 
-- Base: `text-sm` → `text-[12px]`, `[&_svg]:size-4` → `[&_svg]:size-3.5`, `gap-2` → `gap-1.5`, `rounded-md` mantém.
-- `size.default`: `h-10 px-4 py-2` → `h-7 px-3`.
-- `size.sm`: `h-9 px-3` → `h-6 px-2.5 text-[11px]`.
-- `size.lg`: `h-11 px-8` → `h-9 px-5`.
-- `size.icon`: `h-10 w-10` → `h-7 w-7`.
+- `<TableHead>` da coluna: `w-[100px] text-right` → `w-px text-right pr-3` (largura mínima, padding direito reduzido).
+- Botões de ícone na linha: `size="icon"` (h-7 w-7) → `className="h-6 w-6"` + ícones `h-4 w-4` → `h-3.5 w-3.5`.
+- Wrapper de ações: `gap-1` → `gap-0.5` + `opacity-0 group-hover:opacity-100 transition-opacity` (revelados no hover).
+- `<TableRow>` ganha `className="group"` para o hover funcionar.
+- Trash usa `text-destructive` para clareza visual.
 
-### 2. `src/components/ui/select.tsx`
+### Arquivos editados
 
-- `SelectTrigger`: `h-10 px-3 py-2 text-sm` → `h-7 px-2.5 text-[12px]`; ícone `h-4 w-4` → `h-3.5 w-3.5`.
-- `SelectItem`: `py-1.5 pl-8 pr-2 text-sm` → `py-1 pl-7 pr-2 text-[12px]`; check `h-4 w-4` → `h-3.5 w-3.5`; indicador `left-2` mantém.
-- `SelectLabel`: `py-1.5 text-sm` → `py-1 text-[11px]`.
+1. **`src/pages/admin/AdminCategorias.tsx`** — coluna Ações: hover-reveal, h-6 w-6, pr-3.
+2. **`src/pages/admin/AdminAlcadas.tsx`** — idem.
+3. **`src/pages/admin/AdminPipeline.tsx`** — idem.
+4. **`src/pages/admin/AdminEquipes.tsx`** — idem.
+5. **`src/pages/admin/AdminDashboardWidgets.tsx`** — idem (coluna sem `text-right` antes, agora alinhada).
+6. **`src/pages/Leads.tsx`** — idem (`w-24` → `w-px`).
+7. **`src/pages/admin/AdminUsuarios.tsx`** — colunas "Gestor geral" (`w-[140px]`) e "Ativo" (`w-[100px]`) viram `w-px text-right pr-3`; `<TableHead>` ganha `text-right`; switches recebem `className="ml-auto"` (ou wrapper `flex justify-end`) para encostar à direita. A coluna Equipe permanece como está.
 
-Efeito: triggers de select dentro das tabelas (ex.: coluna Equipe) ficam alinhados em altura com as linhas.
+### Resultado
 
-### 3. `src/components/ui/switch.tsx`
-
-- Root: `h-6 w-11` → `h-4 w-7`, `border-2` → `border` (mais delicado).
-- Thumb: `h-5 w-5` → `h-3 w-3`, `data-[state=checked]:translate-x-5` → `translate-x-3`.
-
-Switches passam a ~16×28px, compatíveis com linhas de 22–24px.
-
-### 4. Ajuste pontual em `AdminUsuarios.tsx`
-
-- Trigger de equipe: `h-8 w-[160px]` → remover `h-8` (herda h-7), manter largura.
-- Botão "Atribuir função" mantém `size="sm"` — agora sai naturalmente compacto.
-
-### Riscos / observações
-
-- Há muitos `<Button size="sm">`, `<SelectTrigger className="h-...">` e `<Switch>` espalhados. A maioria não força altura customizada e vai se beneficiar imediatamente. Onde houver override explícito (`h-8`, `h-9`, `h-10`) o componente continua com a altura forçada — varremos pontualmente se você notar inconsistência.
-- Inputs (`input.tsx`, `textarea.tsx`) **não** estão no escopo agora — formulários grandes (dialogs de cadastro) costumam pedir alvo de toque maior. Se quiser que eu inclua, é só dizer.
+- Ações somem por padrão e aparecem só ao passar o mouse → linha mais limpa, como no print.
+- Switches e ícones encostados na borda direita do card.
+- Largura das colunas de ação encolhe ao mínimo, devolvendo espaço para as colunas de conteúdo.

@@ -148,7 +148,7 @@ export default function AdminEquipes() {
               <TableHead>Gestor</TableHead>
               <TableHead><Users className="h-4 w-4 inline mr-1" /> Membros</TableHead>
               <TableHead>Ativa</TableHead>
-              <TableHead className="w-[100px] text-right">Ações</TableHead>
+              <TableHead className="w-px text-right pr-3">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -158,18 +158,18 @@ export default function AdminEquipes() {
               const gestor = t.gestor_id ? profilesById[t.gestor_id] : null;
               const members = membersByTeam[t.id] ?? [];
               return (
-                <TableRow key={t.id}>
+                <TableRow key={t.id} className="group">
                   <TableCell className="font-medium">{t.nome}</TableCell>
                   <TableCell><Badge variant="outline">{ROLE_LABEL[t.papel_principal]}</Badge></TableCell>
                   <TableCell>{gestor ? gestor.nome : <span className="text-muted-foreground">—</span>}</TableCell>
                   <TableCell>{members.length}</TableCell>
                   <TableCell>{t.ativo ? "Sim" : "Não"}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-1">
-                      <Button size="icon" variant="ghost" onClick={() => { setEditing(t); setOpen(true); }}><Pencil className="h-4 w-4" /></Button>
+                  <TableCell className="text-right pr-3">
+                    <div className="flex justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => { setEditing(t); setOpen(true); }}><Pencil className="h-3.5 w-3.5" /></Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button size="icon" variant="ghost"><Trash2 className="h-4 w-4" /></Button>
+                          <Button size="icon" variant="ghost" className="h-6 w-6"><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>

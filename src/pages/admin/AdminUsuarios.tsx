@@ -149,8 +149,8 @@ export default function AdminUsuarios() {
               <TableHead>E-mail</TableHead>
               <TableHead>Funções</TableHead>
               <TableHead>Equipe</TableHead>
-              <TableHead className="w-[140px]">Gestor geral</TableHead>
-              <TableHead className="w-[100px]">Ativo</TableHead>
+              <TableHead className="w-px text-right pr-3 whitespace-nowrap">Gestor geral</TableHead>
+              <TableHead className="w-px text-right pr-3">Ativo</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -188,11 +188,11 @@ export default function AdminUsuarios() {
                       </SelectContent>
                     </Select>
                   </TableCell>
-                  <TableCell>
-                    <Switch checked={isGestorGeral} onCheckedChange={(v) => toggleGestorGeral(u, v)} />
+                  <TableCell className="text-right pr-3">
+                    <Switch className="ml-auto" checked={isGestorGeral} onCheckedChange={(v) => toggleGestorGeral(u, v)} />
                   </TableCell>
-                  <TableCell>
-                    <Switch checked={u.ativo} onCheckedChange={() => toggleAtivo(u)} />
+                  <TableCell className="text-right pr-3">
+                    <Switch className="ml-auto" checked={u.ativo} onCheckedChange={() => toggleAtivo(u)} />
                   </TableCell>
                 </TableRow>
               );
