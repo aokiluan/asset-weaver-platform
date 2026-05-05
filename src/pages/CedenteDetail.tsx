@@ -324,7 +324,7 @@ export default function CedenteDetail() {
         <div className="mt-4">
           <div className="rounded-lg border bg-card p-6 space-y-6">
             <section className="space-y-3">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Identificação</h3>
+              <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.08em]">Identificação</h3>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                 <div><div className="text-xs text-muted-foreground">Razão social</div><div>{cedente.razao_social}</div></div>
                 <div><div className="text-xs text-muted-foreground">Nome fantasia</div><div>{cedente.nome_fantasia ?? "—"}</div></div>
@@ -333,7 +333,7 @@ export default function CedenteDetail() {
             </section>
 
             <section className="space-y-3 pt-4 border-t">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Contato</h3>
+              <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.08em]">Contato</h3>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                 <div><div className="text-xs text-muted-foreground">E-mail</div><div>{cedente.email ?? "—"}</div></div>
                 <div><div className="text-xs text-muted-foreground">Telefone</div><div>{cedente.telefone ?? "—"}</div></div>
@@ -341,7 +341,7 @@ export default function CedenteDetail() {
             </section>
 
             <section className="space-y-3 pt-4 border-t">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Endereço</h3>
+              <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.08em]">Endereço</h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                 <div className="md:col-span-2"><div className="text-xs text-muted-foreground">Endereço</div><div>{cedente.endereco ?? "—"}</div></div>
                 <div><div className="text-xs text-muted-foreground">Cidade</div><div>{cedente.cidade ?? "—"}</div></div>
@@ -351,7 +351,7 @@ export default function CedenteDetail() {
             </section>
 
             <section className="space-y-3 pt-4 border-t">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Comercial</h3>
+              <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.08em]">Comercial</h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                 <div><div className="text-xs text-muted-foreground">Setor</div><div>{cedente.setor ?? "—"}</div></div>
                 <div><div className="text-xs text-muted-foreground">Faturamento médio</div><div>{fmtBRL(cedente.faturamento_medio)}</div></div>
@@ -363,7 +363,7 @@ export default function CedenteDetail() {
 
             {cedente.observacoes && (
               <section className="space-y-2 pt-4 border-t">
-                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Observações</h3>
+                <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.08em]">Observações</h3>
                 <p className="text-sm whitespace-pre-wrap">{cedente.observacoes}</p>
               </section>
             )}
