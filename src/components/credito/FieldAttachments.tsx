@@ -28,6 +28,7 @@ export function FieldAttachments({ cedenteId, fieldKey, value, onChange, disable
   const [uploading, setUploading] = useState(false);
   const [urls, setUrls] = useState<Record<string, string>>({});
   const [preview, setPreview] = useState<string | null>(null);
+  const [snipOpen, setSnipOpen] = useState(false);
 
   useEffect(() => {
     let alive = true;
