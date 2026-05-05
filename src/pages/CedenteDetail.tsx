@@ -286,9 +286,9 @@ export default function CedenteDetail() {
           { v: "representantes", label: "Representantes legais" },
           { v: "documentos", label: "Documentos", badge: pendentesCount },
           { v: "visita", label: "Relatório comercial" },
-          { v: "credito", label: "Análise de crédito", icon: ClipboardList },
-          { v: "comite", label: "Comitê", icon: Vote },
-          { v: "formalizacao", label: "Formalização", icon: FileSignature },
+          { v: "credito", label: "Análise de crédito" },
+          { v: "comite", label: "Comitê" },
+          { v: "formalizacao", label: "Formalização" },
           { v: "historico", label: "Histórico" },
         ];
         return (
