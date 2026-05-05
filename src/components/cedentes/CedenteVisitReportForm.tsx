@@ -168,6 +168,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
           pct_vendas_boleto: d.pct_vendas_boleto != null ? String(d.pct_vendas_boleto) : "",
           pct_vendas_cartao: d.pct_vendas_cartao != null ? String(d.pct_vendas_cartao) : "",
           pct_vendas_outros: d.pct_vendas_outros != null ? String(d.pct_vendas_outros) : "",
+          pct_fat_debito: (d as any).pct_fat_debito != null ? String((d as any).pct_fat_debito) : "",
           parceiros_financeiros: d.parceiros_financeiros ?? "",
           empresas_ligadas: Array.isArray(d.empresas_ligadas) ? d.empresas_ligadas : [],
           limite_global_solicitado: d.limite_global_solicitado != null ? String(d.limite_global_solicitado) : "",
