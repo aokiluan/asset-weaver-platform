@@ -102,15 +102,15 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
     let active = true;
     (async () => {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("credit_reports")
-        .select("*")
-        .eq("cedente_id", cedenteId)
-        .maybeSingle();
+      const [{ data, error }, ced] = await Promise.all([
+        supabase.from("credit_reports").select("*").eq("cedente_id", cedenteId).maybeSingle(),
+        supabase.from("cedentes").select("razao_social").eq("id", cedenteId).maybeSingle(),
+      ]);
       if (!active) return;
       if (error) toast.error("Erro ao carregar relatório", { description: error.message });
       if (data) setReport(data as ReportRow);
       else setReport(emptyReport(cedenteId, proposalId));
+      setCedenteNome((ced.data as any)?.razao_social ?? "");
       setLoading(false);
     })();
     return () => { active = false; };
