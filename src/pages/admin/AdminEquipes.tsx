@@ -85,7 +85,7 @@ export default function AdminEquipes() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Equipes</h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground">
             Organize usuários em equipes. O gestor da equipe vê apenas os membros dela; gestores gerais veem tudo do papel.
           </p>
         </div>
@@ -161,8 +161,8 @@ export default function AdminEquipes() {
                 <TableRow key={t.id}>
                   <TableCell className="font-medium">{t.nome}</TableCell>
                   <TableCell><Badge variant="outline">{ROLE_LABEL[t.papel_principal]}</Badge></TableCell>
-                  <TableCell className="text-sm">{gestor ? gestor.nome : <span className="text-muted-foreground">—</span>}</TableCell>
-                  <TableCell className="text-sm">{members.length}</TableCell>
+                  <TableCell>{gestor ? gestor.nome : <span className="text-muted-foreground">—</span>}</TableCell>
+                  <TableCell>{members.length}</TableCell>
                   <TableCell>{t.ativo ? "Sim" : "Não"}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">

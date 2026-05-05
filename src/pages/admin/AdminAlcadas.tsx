@@ -81,7 +81,7 @@ export default function AdminAlcadas() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Alçadas de aprovação</h1>
-          <p className="text-sm text-muted-foreground">Faixas de valor que definem quem aprova cada proposta.</p>
+          <p className="text-muted-foreground">Faixas de valor que definem quem aprova cada proposta.</p>
         </div>
         <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setEditing(empty); }}>
           <DialogTrigger asChild>
@@ -172,7 +172,7 @@ export default function AdminAlcadas() {
               <TableRow key={l.id}>
                 <TableCell>{l.ordem}</TableCell>
                 <TableCell className="font-medium">{l.nome}</TableCell>
-                <TableCell className="text-sm">{fmtBRL(l.valor_min)} → {fmtBRL(l.valor_max)}</TableCell>
+                <TableCell>{fmtBRL(l.valor_min)} → {fmtBRL(l.valor_max)}</TableCell>
                 <TableCell>{APPROVER_LABEL[l.approver]}</TableCell>
                 <TableCell>{l.votos_minimos}</TableCell>
                 <TableCell>{l.ativo ? "Sim" : "Não"}</TableCell>
