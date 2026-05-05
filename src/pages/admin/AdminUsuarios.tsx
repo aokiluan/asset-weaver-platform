@@ -109,37 +109,39 @@ export default function AdminUsuarios() {
             <DialogTrigger asChild>
               <Button size="sm"><UserPlus className="h-4 w-4 mr-2" /> Atribuir função</Button>
             </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Atribuir função a usuário</DialogTitle>
-              <DialogDescription>O usuário precisa ter criado uma conta no sistema (login feito ao menos uma vez).</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>E-mail do usuário</Label>
-                <Input type="email" value={emailLookup} onChange={(e) => setEmailLookup(e.target.value)} placeholder="usuario@empresa.com" />
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Atribuir função a usuário</DialogTitle>
+                <DialogDescription>O usuário precisa ter criado uma conta no sistema (login feito ao menos uma vez).</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>E-mail do usuário</Label>
+                  <Input type="email" value={emailLookup} onChange={(e) => setEmailLookup(e.target.value)} placeholder="usuario@empresa.com" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Função</Label>
+                  <Select value={roleToAdd} onValueChange={(v) => setRoleToAdd(v as AppRole)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {ALL_ROLES.map(r => <SelectItem key={r} value={r}>{ROLE_LABEL[r]}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label>Função</Label>
-                <Select value={roleToAdd} onValueChange={(v) => setRoleToAdd(v as AppRole)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {ALL_ROLES.map(r => <SelectItem key={r} value={r}>{ROLE_LABEL[r]}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setAssignOpen(false)}>Cancelar</Button>
-              <Button onClick={assignRole} disabled={adding}>
-                {adding && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} Atribuir
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setAssignOpen(false)}>Cancelar</Button>
+                <Button onClick={assignRole} disabled={adding}>
+                  {adding && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} Atribuir
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
-      <div className="rounded-lg border bg-card overflow-hidden">
+      <div className="rounded-md border bg-card mt-4">
+
         <Table>
           <TableHeader>
             <TableRow>
