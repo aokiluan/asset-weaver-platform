@@ -181,7 +181,7 @@ export default function AdminUsuarios() {
                   </TableCell>
                   <TableCell>
                     <Select value={u.team_id ?? "none"} onValueChange={(v) => setTeam(u, v === "none" ? null : v)}>
-                      <SelectTrigger className="h-8 w-[160px]"><SelectValue /></SelectTrigger>
+                      <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="none">— Sem equipe —</SelectItem>
                         {teams.map(t => <SelectItem key={t.id} value={t.id}>{t.nome} ({ROLE_LABEL[t.papel_principal]})</SelectItem>)}
