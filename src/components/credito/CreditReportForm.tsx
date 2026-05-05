@@ -354,21 +354,24 @@ function FieldRenderer({ field, value, onChange, disabled, cedenteId, attachment
   );
 }
 
-function TextareaField({ label, value, onChange, disabled, rows = 2, cedenteId, fieldKey, attachments, onAttachmentsChange }: {
+function TextareaField({ label, value, onChange, disabled, rows = 2, cedenteId, fieldKey, attachments, onAttachmentsChange, allowAttachments = false }: {
   label: string; value: string; onChange: (v: string) => void; disabled?: boolean; rows?: number;
   cedenteId: string; fieldKey: string; attachments: Attachment[]; onAttachmentsChange: (list: Attachment[]) => void;
+  allowAttachments?: boolean;
 }) {
   return (
     <div className="space-y-1.5">
       <Label className="text-xs">{label}</Label>
       <Textarea rows={rows} value={value} onChange={(e) => onChange(e.target.value)} disabled={disabled} />
-      <FieldAttachments
-        cedenteId={cedenteId}
-        fieldKey={fieldKey}
-        value={attachments}
-        onChange={onAttachmentsChange}
-        disabled={disabled}
-      />
+      {allowAttachments && (
+        <FieldAttachments
+          cedenteId={cedenteId}
+          fieldKey={fieldKey}
+          value={attachments}
+          onChange={onAttachmentsChange}
+          disabled={disabled}
+        />
+      )}
     </div>
   );
 }
