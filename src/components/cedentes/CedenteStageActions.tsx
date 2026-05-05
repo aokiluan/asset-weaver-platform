@@ -49,7 +49,7 @@ const TRANSITIONS: Transition[] = [
     label: "Enviar para Cadastro",
     target: "cadastro",
     fromStages: ["novo", "analise", "comite"],
-    roles: ["comercial", "gestor_comercial", "analista_cadastro", "admin"],
+    roles: ["comercial", "cadastro", "admin"],
     variant: "default",
     icon: Send,
   },
