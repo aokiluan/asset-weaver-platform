@@ -225,6 +225,9 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
                       value={(report as any)[key]?.[f.key] ?? ""}
                       onChange={(v) => setSection(key, f.key, v)}
                       disabled={!canEdit}
+                      cedenteId={cedenteId}
+                      attachments={getAtt((report as any)[key], f.key)}
+                      onAttachmentsChange={(list) => setSectionAttachments(key, f.key, list)}
                     />
                   ))}
                 </div>
