@@ -274,7 +274,7 @@ export default function AdminDashboardWidgets() {
               <TableRow key={w.id}>
                 <TableCell>{w.ordem}</TableCell>
                 <TableCell className="font-medium">{w.titulo}</TableCell>
-                <TableCell className="uppercase text-xs">{w.tipo}</TableCell>
+                <TableCell className="uppercase">{w.tipo}</TableCell>
                 <TableCell className="text-muted-foreground">
                   {datasets.find((d) => d.id === w.dataset_id)?.nome ?? "—"}
                 </TableCell>
