@@ -313,9 +313,10 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
   );
 }
 
-function FieldRenderer({ field, value, onChange, disabled, cedenteId, attachments, onAttachmentsChange }: {
+function FieldRenderer({ field, value, onChange, disabled, cedenteId, attachments, onAttachmentsChange, allowAttachments = true }: {
   field: FieldDef; value: any; onChange: (v: any) => void; disabled?: boolean;
   cedenteId: string; attachments: Attachment[]; onAttachmentsChange: (list: Attachment[]) => void;
+  allowAttachments?: boolean;
 }) {
   const wrapper = field.full || field.type === "textarea" ? "md:col-span-2" : "";
   return (
@@ -340,13 +341,15 @@ function FieldRenderer({ field, value, onChange, disabled, cedenteId, attachment
           disabled={disabled}
         />
       )}
-      <FieldAttachments
-        cedenteId={cedenteId}
-        fieldKey={field.key}
-        value={attachments}
-        onChange={onAttachmentsChange}
-        disabled={disabled}
-      />
+      {allowAttachments && (
+        <FieldAttachments
+          cedenteId={cedenteId}
+          fieldKey={field.key}
+          value={attachments}
+          onChange={onAttachmentsChange}
+          disabled={disabled}
+        />
+      )}
     </div>
   );
 }
