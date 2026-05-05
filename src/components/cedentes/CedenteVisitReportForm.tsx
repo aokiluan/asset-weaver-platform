@@ -11,7 +11,7 @@ import {
 import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Loader2, Save, Plus, Trash2 } from "lucide-react";
+import { Loader2, Save, Plus, Trash2, Upload, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { useFormDraft } from "@/hooks/useFormDraft";
 import { DraftIndicator } from "@/components/ui/draft-indicator";
@@ -82,6 +82,7 @@ interface FormState {
   // parecer
   parecer_comercial: string;
   pontos_atencao: string;
+  fotos: { path: string; name: string }[];
 }
 
 const empty = (): FormState => ({
@@ -113,6 +114,7 @@ const empty = (): FormState => ({
   assinatura_digital_observacao: "",
   parecer_comercial: "",
   pontos_atencao: "",
+  fotos: [],
 });
 
 const num = (v: string) => (v.trim() === "" ? null : Number(v.replace(",", ".")));
@@ -174,6 +176,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
           assinatura_digital_observacao: d.assinatura_digital_observacao ?? "",
           parecer_comercial: d.parecer_comercial ?? d.percepcoes ?? "",
           pontos_atencao: d.pontos_atencao ?? "",
+          fotos: Array.isArray((d as any).fotos) ? (d as any).fotos : [],
         });
       }
       setLoading(false);
@@ -195,6 +198,38 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
 
   const setMod = <K extends keyof Modalidades>(k: K, patch: Partial<Modalidades[K]>) =>
     setForm((f) => ({ ...f, modalidades: { ...f.modalidades, [k]: { ...f.modalidades[k], ...patch } } }));
+
+  const [uploadingFotos, setUploadingFotos] = useState(false);
+
+  const uploadFotos = async (files: FileList | null) => {
+    if (!files || !files.length) return;
+    setUploadingFotos(true);
+    try {
+      const novos: { path: string; name: string }[] = [];
+      for (const file of Array.from(files)) {
+        const ext = file.name.split(".").pop() || "jpg";
+        const path = `${cedenteId}/visita-fotos/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+        const { error } = await supabase.storage.from("cedente-docs").upload(path, file, { upsert: false });
+        if (error) { toast.error(`Falha ao enviar ${file.name}`, { description: error.message }); continue; }
+        novos.push({ path, name: file.name });
+      }
+      if (novos.length) setForm((f) => ({ ...f, fotos: [...f.fotos, ...novos] }));
+    } finally {
+      setUploadingFotos(false);
+    }
+  };
+
+  const removerFoto = async (idx: number) => {
+    const foto = form.fotos[idx];
+    if (!foto) return;
+    await supabase.storage.from("cedente-docs").remove([foto.path]);
+    setForm((f) => ({ ...f, fotos: f.fotos.filter((_, i) => i !== idx) }));
+  };
+
+  const abrirFoto = async (path: string) => {
+    const { data } = await supabase.storage.from("cedente-docs").createSignedUrl(path, 300);
+    if (data?.signedUrl) window.open(data.signedUrl, "_blank");
+  };
 
   const handleSave = async () => {
     if (!form.data_visita) { toast.error("Informe a data da visita"); return; }
@@ -234,6 +269,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
       assinatura_digital_observacao: form.assinatura_digital_observacao || null,
       parecer_comercial: form.parecer_comercial,
       pontos_atencao: form.pontos_atencao || null,
+      fotos: form.fotos,
       // legados — preservar contrato (NULLáveis agora)
       percepcoes: form.parecer_comercial,
       recomendacao: form.parecer_comercial.slice(0, 1000),
@@ -448,6 +484,48 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
             <div className="space-y-2">
               <Label>Pontos de atenção</Label>
               <Textarea rows={3} placeholder="Riscos, alertas, dependências..." value={form.pontos_atencao} onChange={(e) => set("pontos_atencao", e.target.value)} />
+            </div>
+
+            <div className="space-y-2 pt-2 border-t">
+              <div className="flex items-center justify-between">
+                <Label>Fotos</Label>
+                <Button size="sm" variant="outline" asChild disabled={uploadingFotos}>
+                  <label className="cursor-pointer">
+                    {uploadingFotos ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Upload className="h-4 w-4 mr-1" />}
+                    Adicionar fotos
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={(e) => { uploadFotos(e.target.files); e.target.value = ""; }}
+                    />
+                  </label>
+                </Button>
+              </div>
+              {form.fotos.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhuma foto adicionada.</p>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                  {form.fotos.map((f, i) => (
+                    <div key={i} className="border rounded-md p-2 space-y-1 bg-muted/30">
+                      <button
+                        type="button"
+                        onClick={() => abrirFoto(f.path)}
+                        className="w-full aspect-square rounded bg-background flex items-center justify-center hover:bg-accent transition-colors"
+                      >
+                        <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                      </button>
+                      <div className="flex items-center justify-between gap-1">
+                        <span className="text-xs truncate flex-1" title={f.name}>{f.name}</span>
+                        <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => removerFoto(i)}>
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </AccordionContent>
         </AccordionItem>

@@ -225,6 +225,7 @@ export type Database = {
           entrevistado_nome: string | null
           entrevistado_telefone: string | null
           faturamento_mensal: number | null
+          fotos: Json
           id: string
           limite_global_solicitado: number | null
           modalidades: Json
@@ -264,6 +265,7 @@ export type Database = {
           entrevistado_nome?: string | null
           entrevistado_telefone?: string | null
           faturamento_mensal?: number | null
+          fotos?: Json
           id?: string
           limite_global_solicitado?: number | null
           modalidades?: Json
@@ -303,6 +305,7 @@ export type Database = {
           entrevistado_nome?: string | null
           entrevistado_telefone?: string | null
           faturamento_mensal?: number | null
+          fotos?: Json
           id?: string
           limite_global_solicitado?: number | null
           modalidades?: Json
