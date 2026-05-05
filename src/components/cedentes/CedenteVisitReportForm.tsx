@@ -401,19 +401,14 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
               <Input inputMode="decimal" value={form.limite_global_solicitado} onChange={(e) => set("limite_global_solicitado", e.target.value)} />
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-2">
               <p className="text-sm font-medium">Modalidades operacionais</p>
-
-              {/* Desconto convencional */}
-              <ModFull title="Desconto convencional" v={form.modalidades.desconto_convencional} onChange={(p) => setMod("desconto_convencional", p)} />
-              {/* Cheques */}
-              <ModFull title="Cheques" v={form.modalidades.cheques} onChange={(p) => setMod("cheques", p)} />
-              {/* Conta escrow */}
-              <ModSimple title="Conta escrow" v={form.modalidades.conta_escrow} onChange={(p) => setMod("conta_escrow", p)} />
-              {/* Comissária */}
-              <ModSimple title="Comissária" v={form.modalidades.comissaria} onChange={(p) => setMod("comissaria", p)} />
-              {/* Fluxo futuro */}
-              <ModSimple title="Fluxo futuro" v={form.modalidades.fluxo_futuro} onChange={(p) => setMod("fluxo_futuro", p)} />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <ModFull title="Desconto convencional" v={form.modalidades.desconto_convencional} onChange={(p) => setMod("desconto_convencional", p)} />
+                <ModFull title="Comissária" v={form.modalidades.comissaria} onChange={(p) => setMod("comissaria", p)} />
+                <ModFull title="Comissária com conta escrow" v={form.modalidades.comissaria_escrow} onChange={(p) => setMod("comissaria_escrow", p)} />
+                <ModFull title="Nota comercial" v={form.modalidades.nota_comercial} onChange={(p) => setMod("nota_comercial", p)} />
+              </div>
             </div>
 
             <div className="space-y-2 pt-2 border-t">
