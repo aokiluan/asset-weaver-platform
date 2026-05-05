@@ -67,7 +67,7 @@ const TRANSITIONS: Transition[] = [
     label: "Enviar para Comitê",
     target: "comite",
     fromStages: ["analise"],
-    roles: ["analista_credito", "gestor_credito", "admin"],
+    roles: ["credito", "admin"],
     variant: "default",
     icon: Send,
   },
