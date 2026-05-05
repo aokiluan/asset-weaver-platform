@@ -488,34 +488,17 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
 
 function ModFull({ title, v, onChange }: { title: string; v: ModalidadeFull; onChange: (p: Partial<ModalidadeFull>) => void }) {
   return (
-    <div className="border rounded-md p-3 space-y-3">
+    <div className="border rounded-md p-2.5 space-y-2">
       <label className="flex items-center gap-2 cursor-pointer">
         <Checkbox checked={v.ativo} onCheckedChange={(c) => onChange({ ativo: !!c })} />
         <span className="font-medium text-sm">{title}</span>
       </label>
       {v.ativo && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div className="space-y-1"><Label className="text-xs">Limite (R$)</Label><Input inputMode="decimal" value={v.limite} onChange={(e) => onChange({ limite: e.target.value })} /></div>
-          <div className="space-y-1"><Label className="text-xs">Prazo médio (dias)</Label><Input inputMode="numeric" value={v.prazo_medio} onChange={(e) => onChange({ prazo_medio: e.target.value })} /></div>
-          <div className="space-y-1"><Label className="text-xs">Taxa (% a.m.)</Label><Input inputMode="decimal" value={v.taxa} onChange={(e) => onChange({ taxa: e.target.value })} /></div>
-          <div className="space-y-1 md:col-span-3"><Label className="text-xs">Observação</Label><Input value={v.observacao} onChange={(e) => onChange({ observacao: e.target.value })} /></div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function ModSimple({ title, v, onChange }: { title: string; v: ModalidadeSimple; onChange: (p: Partial<ModalidadeSimple>) => void }) {
-  return (
-    <div className="border rounded-md p-3 space-y-3">
-      <label className="flex items-center gap-2 cursor-pointer">
-        <Checkbox checked={v.ativo} onCheckedChange={(c) => onChange({ ativo: !!c })} />
-        <span className="font-medium text-sm">{title}</span>
-      </label>
-      {v.ativo && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="space-y-1"><Label className="text-xs">Limite (R$)</Label><Input inputMode="decimal" value={v.limite} onChange={(e) => onChange({ limite: e.target.value })} /></div>
-          <div className="space-y-1"><Label className="text-xs">Observação</Label><Input value={v.observacao} onChange={(e) => onChange({ observacao: e.target.value })} /></div>
+        <div className="grid grid-cols-3 gap-2">
+          <div className="space-y-1"><Label className="text-[11px]">Limite (R$)</Label><Input className="h-8" inputMode="decimal" value={v.limite} onChange={(e) => onChange({ limite: e.target.value })} /></div>
+          <div className="space-y-1"><Label className="text-[11px]">Prazo (dias)</Label><Input className="h-8" inputMode="numeric" value={v.prazo_medio} onChange={(e) => onChange({ prazo_medio: e.target.value })} /></div>
+          <div className="space-y-1"><Label className="text-[11px]">Taxa (% a.m.)</Label><Input className="h-8" inputMode="decimal" value={v.taxa} onChange={(e) => onChange({ taxa: e.target.value })} /></div>
+          <div className="space-y-1 col-span-3"><Label className="text-[11px]">Observação</Label><Input className="h-8" value={v.observacao} onChange={(e) => onChange({ observacao: e.target.value })} /></div>
         </div>
       )}
     </div>
