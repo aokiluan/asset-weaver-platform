@@ -10,74 +10,69 @@
 
 @layer base {
   :root {
-    /* Surfaces */
-    --background: 210 20% 97%;            /* #F5F7FA */
-    --foreground: 220 26% 14%;            /* #1F2937 */
+    /* Surfaces — Nibo */
+    --background: 210 25% 98%;            /* #F7F9FB */
+    --foreground: 215 25% 18%;            /* #232E3D */
 
     --card: 0 0% 100%;
-    --card-foreground: 220 26% 14%;
+    --card-foreground: 215 25% 18%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 26% 14%;
+    --popover-foreground: 215 25% 18%;
 
     /* Brand: Nibo Blue */
-    --primary: 218 73% 52%;               /* #2D6CDF */
+    --primary: 210 100% 50%;              /* #0080FF */
     --primary-foreground: 0 0% 100%;
-    --primary-hover: 220 71% 42%;         /* #1E4DB7 */
-    --primary-glow: 212 100% 65%;         /* #4DA3FF */
+    --primary-hover: 212 100% 42%;        /* #006FD6 */
+    --primary-glow: 208 100% 62%;         /* #3DA5FF */
 
-    /* Secondary: azul escuro */
-    --secondary: 220 71% 42%;             /* #1E4DB7 */
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 210 40% 96%;             /* #EEF3F8 */
+    --secondary-foreground: 215 25% 18%;
 
-    --muted: 210 20% 94%;
-    --muted-foreground: 220 9% 46%;       /* #6B7280 */
+    --muted: 210 30% 96%;                 /* #EEF2F6 */
+    --muted-foreground: 215 14% 50%;      /* #6B7785 */
 
-    /* Accent: azul claro para destaques */
-    --accent: 212 100% 65%;               /* #4DA3FF */
-    --accent-foreground: 0 0% 100%;
+    --accent: 210 100% 96%;               /* #EAF4FF */
+    --accent-foreground: 210 100% 50%;
 
-    /* Compat: tokens "gold" reapontados para accent (transição suave) */
-    --gold: 218 73% 52%;
+    --gold: 210 100% 50%;
     --gold-foreground: 0 0% 100%;
-    --gold-soft: 214 95% 93%;             /* azul muito claro */
+    --gold-soft: 210 100% 96%;
 
-    --success: 142 71% 45%;               /* #22C55E */
+    --success: 145 63% 42%;               /* #28A745 */
     --success-foreground: 0 0% 100%;
 
-    --warning: 38 92% 50%;                /* #F59E0B */
-    --warning-foreground: 220 26% 14%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 215 25% 18%;
 
-    --destructive: 0 84% 60%;             /* #EF4444 */
+    --destructive: 354 70% 54%;           /* #DC3545 */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 13% 91%;                /* #E5E7EB */
-    --input: 220 13% 91%;
-    --ring: 218 73% 52%;
+    --border: 214 20% 91%;                /* #E1E6EC */
+    --input: 214 20% 91%;
+    --ring: 210 100% 50%;
 
-    --radius: 0.625rem;
+    --radius: 0.375rem;
 
-    /* Brand fonts — Inter para tudo */
-    --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    --font-display: "Inter", system-ui, -apple-system, sans-serif;
+    --font-sans: "Inter", "Roboto", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-display: "Inter", "Roboto", system-ui, -apple-system, sans-serif;
 
-    /* Gradients & shadows */
-    --gradient-primary: linear-gradient(135deg, hsl(218 73% 52%), hsl(220 71% 42%));
-    --gradient-gold: linear-gradient(135deg, hsl(218 73% 52%), hsl(212 100% 65%));
-    --gradient-subtle: linear-gradient(180deg, hsl(210 20% 97%), hsl(210 20% 94%));
-    --shadow-elegant: 0 1px 2px hsl(220 13% 20% / 0.04), 0 1px 3px hsl(220 13% 20% / 0.06);
-    --shadow-card: 0 1px 2px hsl(220 13% 20% / 0.04), 0 1px 3px hsl(220 13% 20% / 0.06);
-    --shadow-gold: 0 4px 14px -4px hsl(218 73% 52% / 0.25);
+    --gradient-primary: linear-gradient(135deg, hsl(210 100% 50%), hsl(212 100% 42%));
+    --gradient-gold: linear-gradient(135deg, hsl(210 100% 50%), hsl(208 100% 62%));
+    --gradient-subtle: linear-gradient(180deg, hsl(210 25% 98%), hsl(210 25% 96%));
+    --shadow-elegant: 0 1px 2px hsl(215 25% 18% / 0.04);
+    --shadow-card: 0 1px 2px hsl(215 25% 18% / 0.04);
+    --shadow-gold: 0 4px 12px -4px hsl(210 100% 50% / 0.18);
 
-    /* Sidebar — branca estilo Nibo */
+    /* Sidebar — branca pura Nibo */
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 220 15% 30%;
-    --sidebar-primary: 218 73% 52%;
+    --sidebar-foreground: 215 18% 35%;
+    --sidebar-primary: 210 100% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 40% 96%;        /* hover bg cinza-azulado */
-    --sidebar-accent-foreground: 218 73% 52%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 218 73% 52%;
+    --sidebar-accent: 210 100% 96%;
+    --sidebar-accent-foreground: 210 100% 50%;
+    --sidebar-border: 214 20% 91%;
+    --sidebar-ring: 210 100% 50%;
   }
 
   .dark {

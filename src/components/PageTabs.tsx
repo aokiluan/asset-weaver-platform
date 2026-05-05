@@ -21,19 +21,19 @@ interface PageTabsProps {
  */
 export function PageTabs({ title, description, tabs, actions }: PageTabsProps) {
   return (
-    <div className="border-b bg-background -mx-6 -mt-6 px-6 pt-6 mb-6">
+    <div className="border-b bg-background -mx-8 -mt-7 px-8 pt-7 mb-7">
       <div className="flex flex-wrap items-end justify-between gap-4 max-w-7xl mx-auto">
-        <div className="flex items-center gap-8 min-w-0 flex-wrap">
+        <div className="flex items-center gap-10 min-w-0 flex-wrap">
           <div className="min-w-0">
-            <h1 className="text-2xl font-semibold text-foreground leading-tight">
+            <h1 className="text-[20px] font-medium text-foreground leading-tight tracking-tight">
               {title}
             </h1>
             {description && (
-              <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
+              <p className="text-[12px] text-muted-foreground mt-1">{description}</p>
             )}
           </div>
 
-          <nav className="flex items-end gap-1 -mb-px">
+          <nav className="flex items-end gap-6 -mb-px">
             {tabs.map((t) => (
               <NavLink
                 key={t.to}
@@ -41,10 +41,10 @@ export function PageTabs({ title, description, tabs, actions }: PageTabsProps) {
                 end={t.end}
                 className={({ isActive }) =>
                   cn(
-                    "px-3 pb-3 pt-2 text-[13px] font-medium border-b-2 transition-colors",
+                    "pb-3 pt-2 text-[14px] border-b-2 transition-colors",
                     isActive
-                      ? "border-primary text-foreground"
-                      : "border-transparent text-muted-foreground hover:text-foreground hover:border-border",
+                      ? "border-primary text-foreground font-medium"
+                      : "border-transparent text-muted-foreground font-normal hover:text-foreground",
                   )
                 }
               >

@@ -1,43 +1,63 @@
 ## Objetivo
 
-Adicionar ao `FieldAttachments` (já presente nos campos do relatório de crédito que aceitam imagem) um segundo botão **"Capturar do documento"**, que abre os documentos já anexados ao cedente, permite ao analista navegar/zoom e desenhar uma área retangular sobre o documento — esse recorte vira um anexo do campo, com o mesmo fluxo dos uploads atuais.
+Refinar o visual da aplicação para se aproximar do Nibo (referência da imagem): tipografia mais limpa, cores mais claras e neutras, espaçamentos mais arejados, hierarquia visual mais sutil, cantos suaves e sombras quase imperceptíveis.
 
-## Fluxo do usuário
+## O que muda (todo via tokens — sem refatorar componentes)
 
-1. No campo, ao lado de "Anexar imagem", aparece "Capturar do documento" (ícone de tesoura/recorte)
-2. Abre um Dialog grande (~85vh) dividido em duas colunas:
-   - **Esquerda (260px)**: lista dos documentos do cedente (nome + categoria). PDFs e imagens são selecionáveis; outros tipos ficam desabilitados.
-   - **Direita**: visualizador do documento selecionado, com paginação ◀ ▶ (PDFs), zoom + / − (50%–300%) e canvas
-3. Arrasta com o mouse sobre o documento → desenha retângulo translúcido azul
-4. Botão **"Recortar e anexar"** gera PNG da área selecionada, sobe para `report-files` e vira um attachment do campo (legenda automática: `Recorte de <arquivo> (pág. N)`)
+### 1. `src/index.css` — design tokens
 
-## Componentes
+**Cores (Nibo):**
+- Fundo geral: `#F7F9FB` (era `#F5F7FA`) — quase branco, levemente mais frio
+- Texto: `#232E3D` (mais escuro, alto contraste como Nibo)
+- Cinza secundário: `#6B7785` (era `#6B7280`)
+- Bordas: `#E1E6EC` (mais finas e suaves)
+- **Primary**: `#0080FF` (mais saturado/claro que o atual `#2D6CDF`) — exatamente o azul Nibo
+- Hover do primary: `#006FD6`
+- Accent (hover sidebar/links): `#EAF4FF` (azul muito claro, como o Nibo)
+- Sucesso: `#28A745` (verde Nibo do "Primeiros Passos")
+- Erro: `#DC3545`
 
-**Novo: `src/components/credito/DocumentSnipDialog.tsx`**
-- Props: `cedenteId`, `open`, `onOpenChange`, `onCaptured(blob, label)`
-- Lista documentos via `supabase.from("documentos").select("id, nome_arquivo, mime_type, storage_path, categoria:documento_categorias(nome)").eq("cedente_id", cedenteId)`
-- Signed URL (1h) para `cedente-docs`
-- Imagem → `<img>` desenhada num `<canvas>` (source)
-- PDF → `pdfjs-dist` (import dinâmico + worker via `?url`) renderiza página atual no canvas source
-- Segundo canvas sobreposto (overlay transparente) captura `mousedown/move/up` e desenha retângulo
-- "Recortar": canvas auxiliar copia região com `drawImage` e exporta `toBlob("image/png", 0.95)`
+**Forma:**
+- `--radius: 0.375rem` (era 0.625) — cantos suaves Nibo
+- Sombras quase nulas: `0 1px 2px rgba(0,0,0,0.04)`
 
-**Alterado: `src/components/credito/FieldAttachments.tsx`**
-- Adiciona estado `snipOpen` e botão "Capturar do documento" (ícone `Crop`) ao lado do botão de upload
-- `onCaptured(blob, label)` reusa exatamente o mesmo upload (path `cedentes/<cid>/credit-report/<fieldKey>/<uuid>.png`) e adiciona `{ path, name, caption: label }` ao array `value`
-- Sem mudança de schema, sem mudança de RLS — perfis de crédito já podem ler `documentos` e baixar de `cedente-docs`
+**Tipografia:**
+- Mantém Inter, mas adiciona feature settings + tracking levemente negativo
+- Pesos: ajusta para Nibo usar muito normal/medium (400/500), raramente 600
 
-## Detalhes técnicos
+### 2. `src/components/AppSidebar.tsx` — refinamentos
 
-- Dependência: instalar `pdfjs-dist` (~500KB, lazy)
-- Worker do pdf.js: `(await import("pdfjs-dist/build/pdf.worker.min.mjs?url")).default`
-- Render PDF: `getDocument({url}).promise` → `getPage(n).render({canvasContext, viewport, canvas})`
-- Conversão coords mouse→canvas considera ratio `canvas.width / boundingRect.width` para zoom correto
-- Reset de seleção/página ao trocar de documento; reset total ao fechar dialog
-- Validação mínima: rect ≥ 5×5 px
+- Aumenta padding lateral dos itens (mais arejado, como Nibo)
+- Item ativo: fundo `--sidebar-accent` claro (azul muito claro) + texto azul, **sem barra lateral** (Nibo não usa)
+- Header da seção (`FINANCEIRO`, `OPERAÇÃO`): cinza mais claro, tracking maior, peso normal
+- Tamanho do texto dos itens: 13px (era 13.5)
+- Largura expandida: 240px (mais próximo do Nibo)
 
-## Fora do escopo
+### 3. `src/components/PageTabs.tsx` — header de página
 
-- Anotações (setas, destaques) sobre a captura
-- OCR do recorte
-- Captura cross-page
+- Título: `text-[20px] font-medium` (mais leve, era `text-2xl font-semibold`)
+- Linha de tabs: spacing maior entre tabs (`gap-6`), texto `text-[14px] font-normal`, ativa com `font-medium` + underline mais grosso
+- Sublinhado da tab ativa: 2px sólido azul primary
+
+### 4. `src/components/AppLayout.tsx`
+
+- Padding global maior (`px-8 py-6` em vez de `px-6 py-4`) — mais respiração
+
+### 5. Cards genéricos (`Card` shadcn)
+
+- Sem mudança de classe — só herda os novos tokens (border mais suave, radius menor, sombra mais sutil)
+
+## O que NÃO muda
+
+- Estrutura de componentes
+- Fluxos / lógica
+- Layout dos formulários (apenas herdam novos tokens)
+- Dark mode (vamos ajustar tokens correspondentes para ficar coerente, mas sem mudar comportamento)
+
+## Como vai parecer
+
+- Sidebar branca pura, item ativo com fundo azul claríssimo e texto azul (sem barra lateral)
+- Cabeçalho das páginas mais leve, menos "pesado" no topo
+- Tudo com cantos um pouco menos arredondados (mais "técnico" como Nibo)
+- Cards com bordas quase invisíveis e zero sombra perceptível
+- Mais espaço entre elementos
