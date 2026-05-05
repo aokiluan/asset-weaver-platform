@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, Circle, Loader2, Save } from "lucide-react";
+import { CheckCircle2, Circle, Loader2, Save, FileDown } from "lucide-react";
 import { toast } from "sonner";
 import { useFormDraft } from "@/hooks/useFormDraft";
 import { DraftIndicator } from "@/components/ui/draft-indicator";
@@ -25,6 +25,7 @@ import {
   FieldDef,
 } from "@/lib/credit-report";
 import { FieldAttachments, Attachment } from "./FieldAttachments";
+import { generateCreditReportPdf } from "@/lib/credit-report-pdf";
 
 const ATT_KEY = "__attachments";
 function getAtt(section: any, fieldKey: string): Attachment[] {
@@ -83,6 +84,8 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [cedenteNome, setCedenteNome] = useState<string>("");
 
   const { restored, lastSavedAt, clearDraft, discardDraft } = useFormDraft<Partial<ReportRow>>({
     key: `credit-report:${cedenteId}`,
@@ -99,15 +102,15 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
     let active = true;
     (async () => {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("credit_reports")
-        .select("*")
-        .eq("cedente_id", cedenteId)
-        .maybeSingle();
+      const [{ data, error }, ced] = await Promise.all([
+        supabase.from("credit_reports").select("*").eq("cedente_id", cedenteId).maybeSingle(),
+        supabase.from("cedentes").select("razao_social").eq("id", cedenteId).maybeSingle(),
+      ]);
       if (!active) return;
       if (error) toast.error("Erro ao carregar relatório", { description: error.message });
       if (data) setReport(data as ReportRow);
       else setReport(emptyReport(cedenteId, proposalId));
+      setCedenteNome((ced.data as any)?.razao_social ?? "");
       setLoading(false);
     })();
     return () => { active = false; };
@@ -181,6 +184,25 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
             <Badge variant={completude === 8 ? "default" : "outline"}>
               {completude}/8 seções
             </Badge>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={generating}
+              onClick={async () => {
+                setGenerating(true);
+                try {
+                  await generateCreditReportPdf(report, cedenteNome);
+                  toast.success("PDF gerado");
+                } catch (e: any) {
+                  toast.error("Falha ao gerar PDF", { description: e?.message });
+                } finally {
+                  setGenerating(false);
+                }
+              }}
+            >
+              {generating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileDown className="h-4 w-4 mr-2" />}
+              Gerar PDF
+            </Button>
             {canEdit && (
               <Button onClick={save} disabled={saving || !dirty} size="sm">
                 {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
