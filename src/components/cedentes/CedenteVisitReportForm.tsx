@@ -199,6 +199,38 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
   const setMod = <K extends keyof Modalidades>(k: K, patch: Partial<Modalidades[K]>) =>
     setForm((f) => ({ ...f, modalidades: { ...f.modalidades, [k]: { ...f.modalidades[k], ...patch } } }));
 
+  const [uploadingFotos, setUploadingFotos] = useState(false);
+
+  const uploadFotos = async (files: FileList | null) => {
+    if (!files || !files.length) return;
+    setUploadingFotos(true);
+    try {
+      const novos: { path: string; name: string }[] = [];
+      for (const file of Array.from(files)) {
+        const ext = file.name.split(".").pop() || "jpg";
+        const path = `${cedenteId}/visita-fotos/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+        const { error } = await supabase.storage.from("cedente-docs").upload(path, file, { upsert: false });
+        if (error) { toast.error(`Falha ao enviar ${file.name}`, { description: error.message }); continue; }
+        novos.push({ path, name: file.name });
+      }
+      if (novos.length) setForm((f) => ({ ...f, fotos: [...f.fotos, ...novos] }));
+    } finally {
+      setUploadingFotos(false);
+    }
+  };
+
+  const removerFoto = async (idx: number) => {
+    const foto = form.fotos[idx];
+    if (!foto) return;
+    await supabase.storage.from("cedente-docs").remove([foto.path]);
+    setForm((f) => ({ ...f, fotos: f.fotos.filter((_, i) => i !== idx) }));
+  };
+
+  const abrirFoto = async (path: string) => {
+    const { data } = await supabase.storage.from("cedente-docs").createSignedUrl(path, 300);
+    if (data?.signedUrl) window.open(data.signedUrl, "_blank");
+  };
+
   const handleSave = async () => {
     if (!form.data_visita) { toast.error("Informe a data da visita"); return; }
     if (!form.parecer_comercial.trim()) { toast.error("Informe o parecer comercial"); return; }
