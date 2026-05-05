@@ -237,6 +237,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
       assinatura_digital_observacao: form.assinatura_digital_observacao || null,
       parecer_comercial: form.parecer_comercial,
       pontos_atencao: form.pontos_atencao || null,
+      fotos: form.fotos,
       // legados — preservar contrato (NULLáveis agora)
       percepcoes: form.parecer_comercial,
       recomendacao: form.parecer_comercial.slice(0, 1000),
