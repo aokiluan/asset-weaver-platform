@@ -324,11 +324,30 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
                   Total: {totalPct.toFixed(1)}%
                 </span>
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 {[
                   ["pct_vendas_pf", "PF"], ["pct_vendas_pj", "PJ"],
-                  ["pct_vendas_cheque", "Cheque"], ["pct_vendas_boleto", "Boleto"],
-                  ["pct_vendas_cartao", "Cartão"], ["pct_vendas_outros", "Outros"],
+                ].map(([k, lbl]) => (
+                  <div key={k} className="space-y-2">
+                    <Label>{lbl}</Label>
+                    <Input inputMode="decimal" value={(form as any)[k]} onChange={(e) => set(k as any, e.target.value)} />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="pt-2 border-t">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-medium">Forma de faturamento (%)</p>
+                <span className={`text-xs ${Math.abs(totalFat - 100) < 0.01 ? "text-green-600" : totalFat > 100 ? "text-destructive" : "text-muted-foreground"}`}>
+                  Total: {totalFat.toFixed(1)}%
+                </span>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {[
+                  ["pct_vendas_boleto", "Boleto"], ["pct_vendas_cartao", "Cartão"],
+                  ["pct_fat_debito", "Débito em conta"], ["pct_vendas_cheque", "Cheque"],
+                  ["pct_vendas_outros", "Outros"],
                 ].map(([k, lbl]) => (
                   <div key={k} className="space-y-2">
                     <Label>{lbl}</Label>
