@@ -241,16 +241,54 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
       <div className="rounded-lg border bg-card p-4 space-y-4">
         <h3 className="text-base font-semibold">Pareceres em camadas e conclusão</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <TextareaField label="Parecer comercial (executivo)" value={report.parecer_comercial ?? ""} onChange={(v) => setTopField("parecer_comercial", v)} disabled={!canEdit} />
-          <TextareaField label="Parecer regional (gerência)" value={report.parecer_regional ?? ""} onChange={(v) => setTopField("parecer_regional", v)} disabled={!canEdit} />
-          <TextareaField label="Parecer compliance" value={report.parecer_compliance ?? ""} onChange={(v) => setTopField("parecer_compliance", v)} disabled={!canEdit} />
-          <TextareaField label="Parecer analista de crédito" value={report.parecer_analista ?? ""} onChange={(v) => setTopField("parecer_analista", v)} disabled={!canEdit} />
+          {[
+            ["parecer_comercial", "Parecer comercial (executivo)"],
+            ["parecer_regional", "Parecer regional (gerência)"],
+            ["parecer_compliance", "Parecer compliance"],
+            ["parecer_analista", "Parecer analista de crédito"],
+          ].map(([key, label]) => (
+            <TextareaField
+              key={key}
+              label={label}
+              value={(report as any)[key] ?? ""}
+              onChange={(v) => setTopField(key as keyof ReportRow, v)}
+              disabled={!canEdit}
+              cedenteId={cedenteId}
+              fieldKey={key}
+              attachments={getTopAtt((report as any).attachments_top, key)}
+              onAttachmentsChange={(list) => setTopAttachments(key, list)}
+            />
+          ))}
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <TextareaField label="🟢 Pontos positivos" value={report.pontos_positivos ?? ""} onChange={(v) => setTopField("pontos_positivos", v)} disabled={!canEdit} />
-          <TextareaField label="🟡 Pontos de atenção" value={report.pontos_atencao ?? ""} onChange={(v) => setTopField("pontos_atencao", v)} disabled={!canEdit} />
+          {[
+            ["pontos_positivos", "🟢 Pontos positivos"],
+            ["pontos_atencao", "🟡 Pontos de atenção"],
+          ].map(([key, label]) => (
+            <TextareaField
+              key={key}
+              label={label}
+              value={(report as any)[key] ?? ""}
+              onChange={(v) => setTopField(key as keyof ReportRow, v)}
+              disabled={!canEdit}
+              cedenteId={cedenteId}
+              fieldKey={key}
+              attachments={getTopAtt((report as any).attachments_top, key)}
+              onAttachmentsChange={(list) => setTopAttachments(key, list)}
+            />
+          ))}
         </div>
-        <TextareaField label="📌 Conclusão" value={report.conclusao ?? ""} onChange={(v) => setTopField("conclusao", v)} disabled={!canEdit} rows={3} />
+        <TextareaField
+          label="📌 Conclusão"
+          value={report.conclusao ?? ""}
+          onChange={(v) => setTopField("conclusao", v)}
+          disabled={!canEdit}
+          rows={3}
+          cedenteId={cedenteId}
+          fieldKey="conclusao"
+          attachments={getTopAtt((report as any).attachments_top, "conclusao")}
+          onAttachmentsChange={(list) => setTopAttachments("conclusao", list)}
+        />
         <div className="space-y-2 max-w-xs">
           <Label>Recomendação final</Label>
           <Select value={report.recomendacao ?? ""} onValueChange={(v) => setTopField("recomendacao", v)} disabled={!canEdit}>
