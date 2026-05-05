@@ -206,7 +206,7 @@ export default function CedenteDetail() {
   const isOwner = !!user && cedente.owner_id === user.id;
   const podeRevisarCadastro =
     cedente.stage === "cadastro" &&
-    (hasRole("admin") || hasRole("analista_cadastro") || hasRole("gestor_comercial"));
+    (hasRole("admin") || hasRole("cadastro"));
 
   // Pendências para a etapa cadastro -> analise
   const docsRejeitados = documentos.filter((d) => d.status === "reprovado").length;
@@ -446,7 +446,7 @@ export default function CedenteDetail() {
           cedente={cedente}
           latestProposalId={latestProposal?.id ?? null}
           minutaAssinada={minutaAssinada}
-          canSign={hasRole("admin") || hasRole("gestor_financeiro") || hasRole("financeiro")}
+          canSign={hasRole("admin") || hasRole("formalizacao") || hasRole("financeiro")}
           onChanged={load}
         />
       )}

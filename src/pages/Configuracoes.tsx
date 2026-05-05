@@ -8,6 +8,7 @@ export default function Configuracoes() {
         title="Configurações"
         tabs={[
           { label: "Usuários", to: "/configuracoes/usuarios" },
+          { label: "Equipes", to: "/configuracoes/equipes" },
           { label: "Alçadas", to: "/configuracoes/alcadas" },
           { label: "Pipeline", to: "/configuracoes/pipeline" },
           { label: "Categorias de doc.", to: "/configuracoes/categorias" },

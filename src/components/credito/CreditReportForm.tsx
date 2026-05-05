@@ -94,9 +94,7 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
     enabled: !loading,
   });
 
-  const canEdit =
-    hasRole("admin") || hasRole("analista_credito") ||
-    hasRole("gestor_credito") || hasRole("gestor_risco");
+  const canEdit = hasRole("admin") || hasRole("credito");
 
   useEffect(() => {
     let active = true;

@@ -18,6 +18,7 @@ import Configuracoes from "./pages/Configuracoes.tsx";
 import BI from "./pages/BI.tsx";
 import BIIndicadores from "./pages/bi/BIIndicadores.tsx";
 import AdminUsuarios from "./pages/admin/AdminUsuarios.tsx";
+import AdminEquipes from "./pages/admin/AdminEquipes.tsx";
 import AdminAlcadas from "./pages/admin/AdminAlcadas.tsx";
 import AdminPipeline from "./pages/admin/AdminPipeline.tsx";
 import AdminCategorias from "./pages/admin/AdminCategorias.tsx";
@@ -66,7 +67,7 @@ const App = () => (
               <Route
                 path="/financeiro"
                 element={
-                  <RoleGuard role={["admin", "financeiro", "gestor_financeiro", "gestor_risco"]}>
+                  <RoleGuard role={["admin", "financeiro"]}>
                     <Financeiro />
                   </RoleGuard>
                 }
@@ -82,7 +83,7 @@ const App = () => (
               <Route
                 path="/comite"
                 element={
-                  <RoleGuard role={["admin", "comite", "gestor_credito", "analista_credito"]}>
+                  <RoleGuard role={["admin", "comite", "credito"]}>
                     <Comite />
                   </RoleGuard>
                 }
@@ -90,7 +91,7 @@ const App = () => (
               <Route
                 path="/formalizacao"
                 element={
-                  <RoleGuard role={["admin", "analista_cadastro", "gestor_comercial"]}>
+                  <RoleGuard role={["admin", "formalizacao", "cadastro"]}>
                     <Formalizacao />
                   </RoleGuard>
                 }
@@ -107,6 +108,7 @@ const App = () => (
               >
                 <Route index element={<Navigate to="usuarios" replace />} />
                 <Route path="usuarios" element={<AdminUsuarios />} />
+                <Route path="equipes" element={<AdminEquipes />} />
                 <Route path="alcadas" element={<AdminAlcadas />} />
                 <Route path="pipeline" element={<AdminPipeline />} />
                 <Route path="categorias" element={<AdminCategorias />} />

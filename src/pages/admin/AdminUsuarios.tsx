@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,56 +10,38 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Loader2, UserPlus, X } from "lucide-react";
 import { toast } from "sonner";
+import { AppRole, ROLE_LABEL, PRIMARY_ROLES } from "@/lib/roles";
 
-type AppRole =
-  | "admin" | "gestor_comercial" | "comercial" | "analista_credito"
-  | "comite" | "gestor_risco" | "financeiro" | "operacional"
-  | "gestor_credito" | "gestor_financeiro" | "relacao_investidor"
-  | "gestor_relacao_investidor" | "analista_cadastro";
+const ALL_ROLES: AppRole[] = [...PRIMARY_ROLES, "gestor_geral"];
 
+interface Team { id: string; nome: string; papel_principal: AppRole; }
 interface UserRow {
   id: string; nome: string; email: string; ativo: boolean; cargo: string | null;
+  team_id: string | null;
   roles: AppRole[]; created_at: string;
 }
 
-const ROLE_LABEL: Record<AppRole, string> = {
-  admin: "Administrador",
-  gestor_comercial: "Gestor Comercial",
-  comercial: "Comercial",
-  analista_cadastro: "Analista de Cadastro",
-  analista_credito: "Analista de Crédito",
-  gestor_credito: "Gestor de Crédito",
-  comite: "Comitê",
-  gestor_risco: "Gestor de Risco",
-  financeiro: "Financeiro",
-  gestor_financeiro: "Gestor Financeiro",
-  relacao_investidor: "Relação com Investidor",
-  gestor_relacao_investidor: "Gestor de RI",
-  operacional: "Operacional",
-};
-const ALL_ROLES: AppRole[] = [
-  "admin","gestor_comercial","comercial",
-  "analista_cadastro","analista_credito","gestor_credito",
-  "comite","gestor_risco",
-  "financeiro","gestor_financeiro",
-  "relacao_investidor","gestor_relacao_investidor",
-  "operacional",
-];
-
 export default function AdminUsuarios() {
   const [users, setUsers] = useState<UserRow[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
   const [assignOpen, setAssignOpen] = useState(false);
   const [emailLookup, setEmailLookup] = useState("");
   const [roleToAdd, setRoleToAdd] = useState<AppRole>("comercial");
   const [adding, setAdding] = useState(false);
 
+  const teamsById = useMemo(() => Object.fromEntries(teams.map(t => [t.id, t])), [teams]);
+
   const load = async () => {
     setLoading(true);
-    const { data, error } = await supabase.rpc("admin_list_users");
+    const [{ data, error }, { data: t }] = await Promise.all([
+      supabase.rpc("admin_list_users"),
+      supabase.from("teams").select("id,nome,papel_principal").eq("ativo", true).order("nome"),
+    ]);
     setLoading(false);
     if (error) { toast.error("Erro ao listar", { description: error.message }); return; }
     setUsers((data as UserRow[]) ?? []);
+    setTeams((t as Team[]) ?? []);
   };
 
   useEffect(() => { load(); }, []);
@@ -75,6 +57,25 @@ export default function AdminUsuarios() {
     const { error } = await supabase.from("user_roles").delete().eq("user_id", u.id).eq("role", role);
     if (error) { toast.error("Erro", { description: error.message }); return; }
     toast.success("Função removida");
+    load();
+  };
+
+  const toggleGestorGeral = async (u: UserRow, on: boolean) => {
+    if (on) {
+      const { error } = await supabase.from("user_roles").insert({ user_id: u.id, role: "gestor_geral" });
+      if (error && !error.message.includes("duplicate")) { toast.error("Erro", { description: error.message }); return; }
+    } else {
+      const { error } = await supabase.from("user_roles").delete().eq("user_id", u.id).eq("role", "gestor_geral");
+      if (error) { toast.error("Erro", { description: error.message }); return; }
+    }
+    toast.success(on ? "Marcado como gestor geral" : "Removido gestor geral");
+    load();
+  };
+
+  const setTeam = async (u: UserRow, teamId: string | null) => {
+    const { error } = await supabase.from("profiles").update({ team_id: teamId }).eq("id", u.id);
+    if (error) { toast.error("Erro", { description: error.message }); return; }
+    toast.success("Equipe atualizada");
     load();
   };
 
@@ -103,7 +104,7 @@ export default function AdminUsuarios() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Usuários</h1>
-          <p className="text-sm text-muted-foreground">Gerencie usuários, papéis e status de acesso.</p>
+          <p className="text-sm text-muted-foreground">Gerencie usuários, papéis, equipes e status de acesso.</p>
         </div>
         <Dialog open={assignOpen} onOpenChange={setAssignOpen}>
           <DialogTrigger asChild>
@@ -146,37 +147,55 @@ export default function AdminUsuarios() {
               <TableHead>Nome</TableHead>
               <TableHead>E-mail</TableHead>
               <TableHead>Funções</TableHead>
-              <TableHead className="w-[120px]">Ativo</TableHead>
+              <TableHead>Equipe</TableHead>
+              <TableHead className="w-[140px]">Gestor geral</TableHead>
+              <TableHead className="w-[100px]">Ativo</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {loading && <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">Carregando...</TableCell></TableRow>}
-            {!loading && users.length === 0 && <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">Nenhum usuário.</TableCell></TableRow>}
-            {users.map((u) => (
-              <TableRow key={u.id}>
-                <TableCell>
-                  <div className="font-medium">{u.nome}</div>
-                  {u.cargo && <div className="text-xs text-muted-foreground">{u.cargo}</div>}
-                </TableCell>
-                <TableCell className="text-sm">{u.email}</TableCell>
-                <TableCell>
-                  <div className="flex flex-wrap gap-1">
-                    {u.roles.length === 0 && <span className="text-xs text-muted-foreground">Sem função</span>}
-                    {u.roles.map(r => (
-                      <Badge key={r} variant="secondary" className="gap-1">
-                        {ROLE_LABEL[r]}
-                        <button onClick={() => removeRole(u, r)} className="hover:text-destructive">
-                          <X className="h-3 w-3" />
-                        </button>
-                      </Badge>
-                    ))}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Switch checked={u.ativo} onCheckedChange={() => toggleAtivo(u)} />
-                </TableCell>
-              </TableRow>
-            ))}
+            {loading && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Carregando...</TableCell></TableRow>}
+            {!loading && users.length === 0 && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Nenhum usuário.</TableCell></TableRow>}
+            {users.map((u) => {
+              const isGestorGeral = u.roles.includes("gestor_geral");
+              const primaryRoles = u.roles.filter(r => r !== "gestor_geral");
+              return (
+                <TableRow key={u.id}>
+                  <TableCell>
+                    <div className="font-medium">{u.nome}</div>
+                    {u.cargo && <div className="text-xs text-muted-foreground">{u.cargo}</div>}
+                  </TableCell>
+                  <TableCell className="text-sm">{u.email}</TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-1">
+                      {primaryRoles.length === 0 && <span className="text-xs text-muted-foreground">Sem função</span>}
+                      {primaryRoles.map(r => (
+                        <Badge key={r} variant="secondary" className="gap-1">
+                          {ROLE_LABEL[r]}
+                          <button onClick={() => removeRole(u, r)} className="hover:text-destructive">
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Select value={u.team_id ?? "none"} onValueChange={(v) => setTeam(u, v === "none" ? null : v)}>
+                      <SelectTrigger className="h-8 w-[180px]"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">— Sem equipe —</SelectItem>
+                        {teams.map(t => <SelectItem key={t.id} value={t.id}>{t.nome} ({ROLE_LABEL[t.papel_principal]})</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                  <TableCell>
+                    <Switch checked={isGestorGeral} onCheckedChange={(v) => toggleGestorGeral(u, v)} />
+                  </TableCell>
+                  <TableCell>
+                    <Switch checked={u.ativo} onCheckedChange={() => toggleAtivo(u)} />
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>

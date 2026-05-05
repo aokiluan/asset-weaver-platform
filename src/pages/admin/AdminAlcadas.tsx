@@ -23,8 +23,8 @@ interface Level {
 }
 
 const APPROVER_LABEL: Record<ApproverKind, string> = {
-  analista_credito: "Analista de Crédito",
-  gestor_risco: "Gestor de Risco",
+  analista_credito: "Crédito (analista)",
+  gestor_risco: "Crédito (gestor)",
   comite: "Comitê",
 };
 
@@ -119,8 +119,8 @@ export default function AdminAlcadas() {
                   <Select value={editing.approver} onValueChange={(v) => setEditing({ ...editing, approver: v as ApproverKind })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="analista_credito">Analista de Crédito</SelectItem>
-                      <SelectItem value="gestor_risco">Gestor de Risco</SelectItem>
+                      <SelectItem value="analista_credito">Crédito (analista)</SelectItem>
+                      <SelectItem value="gestor_risco">Crédito (gestor)</SelectItem>
                       <SelectItem value="comite">Comitê</SelectItem>
                     </SelectContent>
                   </Select>
