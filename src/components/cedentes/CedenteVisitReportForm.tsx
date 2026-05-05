@@ -129,7 +129,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
   const { restored, lastSavedAt, clearDraft, discardDraft } = useFormDraft<FormState>({
     key: `visit-report:${cedenteId}`,
     value: form,
-    setValue: (v: any) => setForm({ ...v, modalidades: { ...defaultModalidades(), ...(v?.modalidades || {}) } }),
+    setValue: (v: any) => setForm({ ...v, fotos: Array.isArray(v?.fotos) ? v.fotos : [], modalidades: { ...defaultModalidades(), ...(v?.modalidades || {}) } }),
     enabled: !loading,
   });
 
