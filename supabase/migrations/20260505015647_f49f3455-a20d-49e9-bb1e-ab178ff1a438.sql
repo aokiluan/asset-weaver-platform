@@ -1,0 +1,1 @@
+ALTER TABLE public.cedente_visit_reports ADD COLUMN IF NOT EXISTS pct_fat_debito numeric;
