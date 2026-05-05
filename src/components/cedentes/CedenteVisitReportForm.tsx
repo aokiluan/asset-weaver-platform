@@ -404,10 +404,10 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
             <div className="space-y-2">
               <p className="text-sm font-medium">Modalidades operacionais</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                <ModFull title="Desconto convencional" v={form.modalidades.desconto_convencional} onChange={(p) => setMod("desconto_convencional", p)} />
-                <ModFull title="Comissária" v={form.modalidades.comissaria} onChange={(p) => setMod("comissaria", p)} />
-                <ModFull title="Comissária com conta escrow" v={form.modalidades.comissaria_escrow} onChange={(p) => setMod("comissaria_escrow", p)} />
-                <ModFull title="Nota comercial" v={form.modalidades.nota_comercial} onChange={(p) => setMod("nota_comercial", p)} />
+                <ModFull title="Desconto convencional" v={form.modalidades.desconto_convencional ?? emptyFull()} onChange={(p) => setMod("desconto_convencional", p)} />
+                <ModFull title="Comissária" v={form.modalidades.comissaria ?? emptyFull()} onChange={(p) => setMod("comissaria", p)} />
+                <ModFull title="Comissária com conta escrow" v={form.modalidades.comissaria_escrow ?? emptyFull()} onChange={(p) => setMod("comissaria_escrow", p)} />
+                <ModFull title="Nota comercial" v={form.modalidades.nota_comercial ?? emptyFull()} onChange={(p) => setMod("nota_comercial", p)} />
               </div>
             </div>
 
