@@ -114,6 +114,7 @@ const empty = (): FormState => ({
   assinatura_digital_observacao: "",
   parecer_comercial: "",
   pontos_atencao: "",
+  fotos: [],
 });
 
 const num = (v: string) => (v.trim() === "" ? null : Number(v.replace(",", ".")));
