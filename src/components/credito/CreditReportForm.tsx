@@ -60,6 +60,7 @@ type ReportRow = {
   conclusao: string | null;
   recomendacao: string | null;
   completude: number;
+  attachments_top: any;
   updated_at: string;
 };
 
@@ -68,7 +69,13 @@ const emptyReport = (cedenteId: string, proposalId?: string | null): Partial<Rep
   cedente_id: cedenteId,
   identificacao: {}, empresa: {}, rede_societaria: {}, carteira: {},
   restritivos: {}, financeiro: {}, due_diligence: {}, pleito: {},
+  attachments_top: {},
 });
+
+function setSectionAtt(section: any, fieldKey: string, list: Attachment[]) {
+  const att = { ...(section?.[ATT_KEY] ?? {}), [fieldKey]: list };
+  return { ...(section ?? {}), [ATT_KEY]: att };
+}
 
 export function CreditReportForm({ cedenteId, proposalId }: Props) {
   const { user, hasRole } = useAuth();
