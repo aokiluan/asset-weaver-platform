@@ -1051,6 +1051,7 @@ export type Database = {
           email: string
           id: string
           nome: string
+          team_id: string | null
           telefone: string | null
           updated_at: string
         }
@@ -1061,6 +1062,7 @@ export type Database = {
           email: string
           id: string
           nome: string
+          team_id?: string | null
           telefone?: string | null
           updated_at?: string
         }
@@ -1071,10 +1073,19 @@ export type Database = {
           email?: string
           id?: string
           nome?: string
+          team_id?: string | null
           telefone?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       proposal_history: {
         Row: {
@@ -1248,6 +1259,44 @@ export type Database = {
           },
         ]
       }
+      teams: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          gestor_id: string | null
+          id: string
+          nome: string
+          papel_principal: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          gestor_id?: string | null
+          id?: string
+          nome: string
+          papel_principal: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          gestor_id?: string | null
+          id?: string
+          nome?: string
+          papel_principal?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teams_gestor_id_fkey"
+            columns: ["gestor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -1285,6 +1334,7 @@ export type Database = {
           id: string
           nome: string
           roles: Database["public"]["Enums"]["app_role"][]
+          team_id: string
         }[]
       }
       can_decide_proposal: { Args: { _user_id: string }; Returns: boolean }
@@ -1312,22 +1362,22 @@ export type Database = {
         Args: { _user_id: string }
         Returns: boolean
       }
+      is_gestor_geral: { Args: { _user_id: string }; Returns: boolean }
+      is_team_manager_of: {
+        Args: { _target: string; _viewer: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role:
         | "admin"
-        | "gestor_comercial"
         | "comercial"
-        | "analista_credito"
+        | "cadastro"
+        | "credito"
         | "comite"
-        | "gestor_risco"
+        | "formalizacao"
         | "financeiro"
-        | "operacional"
-        | "gestor_credito"
-        | "gestor_financeiro"
-        | "relacao_investidor"
-        | "gestor_relacao_investidor"
-        | "analista_cadastro"
+        | "gestor_geral"
       approver_kind: "analista_credito" | "gestor_risco" | "comite"
       cedente_stage:
         | "novo"
@@ -1489,18 +1539,13 @@ export const Constants = {
     Enums: {
       app_role: [
         "admin",
-        "gestor_comercial",
         "comercial",
-        "analista_credito",
+        "cadastro",
+        "credito",
         "comite",
-        "gestor_risco",
+        "formalizacao",
         "financeiro",
-        "operacional",
-        "gestor_credito",
-        "gestor_financeiro",
-        "relacao_investidor",
-        "gestor_relacao_investidor",
-        "analista_cadastro",
+        "gestor_geral",
       ],
       approver_kind: ["analista_credito", "gestor_risco", "comite"],
       cedente_stage: [
