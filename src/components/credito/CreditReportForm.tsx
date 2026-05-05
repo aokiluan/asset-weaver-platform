@@ -84,6 +84,8 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [cedenteNome, setCedenteNome] = useState<string>("");
 
   const { restored, lastSavedAt, clearDraft, discardDraft } = useFormDraft<Partial<ReportRow>>({
     key: `credit-report:${cedenteId}`,
