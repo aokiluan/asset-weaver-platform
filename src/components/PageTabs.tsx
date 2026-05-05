@@ -21,7 +21,7 @@ interface PageTabsProps {
  */
 export function PageTabs({ title, description, tabs, actions }: PageTabsProps) {
   return (
-    <div className="border-b bg-background -mx-6 -mt-6 px-8 pt-7 mb-7">
+    <div className="border-b bg-background -mx-8 -mt-7 px-8 pt-7 mb-7">
       <div className="flex flex-wrap items-end justify-between gap-4 max-w-7xl mx-auto">
         <div className="flex items-center gap-10 min-w-0 flex-wrap">
           <div className="min-w-0">
