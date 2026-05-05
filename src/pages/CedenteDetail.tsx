@@ -206,7 +206,7 @@ export default function CedenteDetail() {
   const isOwner = !!user && cedente.owner_id === user.id;
   const podeRevisarCadastro =
     cedente.stage === "cadastro" &&
-    (hasRole("admin") || hasRole("analista_cadastro") || hasRole("gestor_comercial"));
+    (hasRole("admin") || hasRole("cadastro"));
 
   // Pendências para a etapa cadastro -> analise
   const docsRejeitados = documentos.filter((d) => d.status === "reprovado").length;

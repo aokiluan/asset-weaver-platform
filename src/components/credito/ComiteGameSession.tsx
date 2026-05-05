@@ -64,7 +64,7 @@ export function ComiteGameSession({ proposalId, votosMinimos, proposalStage }: P
   const [voteJust, setVoteJust] = useState("");
 
   const canVote = hasRole("comite") || hasRole("admin");
-  const canManage = hasRole("admin") || hasRole("gestor_credito") || hasRole("gestor_risco") || hasRole("comite");
+  const canManage = hasRole("admin") || hasRole("credito") || hasRole("comite");
 
   // Initial load
   useEffect(() => {

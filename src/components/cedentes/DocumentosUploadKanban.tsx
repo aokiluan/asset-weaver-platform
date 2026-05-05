@@ -113,7 +113,7 @@ export function DocumentosUploadKanban({
 }: Props) {
   const { hasRole } = useAuth();
   // Conciliação/validação: somente time de cadastro (admin = master)
-  const canReview = hasRole("admin") || hasRole("analista_cadastro");
+  const canReview = hasRole("admin") || hasRole("cadastro");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
