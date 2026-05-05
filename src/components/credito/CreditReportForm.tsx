@@ -120,8 +120,18 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
     setDirty(true);
   };
 
+  const setSectionAttachments = (key: SectionKey, fieldKey: string, list: Attachment[]) => {
+    setReport((r) => ({ ...r, [key]: setSectionAtt(r[key], fieldKey, list) }));
+    setDirty(true);
+  };
+
   const setTopField = (key: keyof ReportRow, value: any) => {
     setReport((r) => ({ ...r, [key]: value }));
+    setDirty(true);
+  };
+
+  const setTopAttachments = (fieldKey: string, list: Attachment[]) => {
+    setReport((r) => ({ ...r, attachments_top: { ...((r as any).attachments_top ?? {}), [fieldKey]: list } }));
     setDirty(true);
   };
 
