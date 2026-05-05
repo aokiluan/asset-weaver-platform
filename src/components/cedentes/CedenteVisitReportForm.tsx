@@ -31,25 +31,21 @@ type ModalidadeFull = {
   taxa: string;
   observacao: string;
 };
-type ModalidadeSimple = { ativo: boolean; limite: string; observacao: string };
 
 interface Modalidades {
   desconto_convencional: ModalidadeFull;
-  cheques: ModalidadeFull;
-  conta_escrow: ModalidadeSimple;
-  comissaria: ModalidadeSimple;
-  fluxo_futuro: ModalidadeSimple;
+  comissaria: ModalidadeFull;
+  comissaria_escrow: ModalidadeFull;
+  nota_comercial: ModalidadeFull;
 }
 
 const emptyFull = (): ModalidadeFull => ({ ativo: false, limite: "", prazo_medio: "", taxa: "", observacao: "" });
-const emptySimple = (): ModalidadeSimple => ({ ativo: false, limite: "", observacao: "" });
 
 const defaultModalidades = (): Modalidades => ({
   desconto_convencional: emptyFull(),
-  cheques: emptyFull(),
-  conta_escrow: emptySimple(),
-  comissaria: emptySimple(),
-  fluxo_futuro: emptySimple(),
+  comissaria: emptyFull(),
+  comissaria_escrow: emptyFull(),
+  nota_comercial: emptyFull(),
 });
 
 interface FormState {
