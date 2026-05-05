@@ -86,6 +86,23 @@ export function FieldAttachments({ cedenteId, fieldKey, value, onChange, disable
     onChange(value.filter((a) => a.path !== att.path));
   };
 
+  const handleSnipped = async (blob: Blob, label: string) => {
+    setUploading(true);
+    const id = crypto.randomUUID();
+    const path = `cedentes/${cedenteId}/credit-report/${fieldKey}/${id}.png`;
+    const { error } = await supabase.storage.from("report-files").upload(path, blob, {
+      contentType: "image/png",
+      upsert: false,
+    });
+    setUploading(false);
+    if (error) {
+      toast.error("Falha ao salvar recorte", { description: error.message });
+      return;
+    }
+    onChange([...value, { path, name: `${label}.png`, caption: label }]);
+    toast.success("Recorte anexado");
+  };
+
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
