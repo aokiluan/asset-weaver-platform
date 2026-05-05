@@ -219,14 +219,14 @@ export function AppSidebar() {
                       setOpenGroups((s) => ({ ...s, [group.key]: !isOpen }))
                     }
                     className={cn(
-                      "w-full px-4 h-7 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.08em]",
-                      "text-muted-foreground hover:text-foreground transition-colors",
+                      "w-full px-4 h-7 flex items-center gap-2 text-[11px] font-normal uppercase tracking-[0.1em]",
+                      "text-muted-foreground/80 hover:text-foreground transition-colors",
                     )}
                   >
                     <span className="flex-1 text-left truncate">{group.label}</span>
                     <ChevronDown
                       className={cn(
-                        "h-3 w-3 transition-transform opacity-60",
+                        "h-3 w-3 transition-transform opacity-50",
                         !isOpen && "-rotate-90",
                       )}
                     />
