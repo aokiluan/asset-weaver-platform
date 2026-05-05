@@ -186,12 +186,12 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
 
   const totalPct = useMemo(() => {
     return [form.pct_vendas_pf, form.pct_vendas_pj]
-      .reduce((acc, v) => acc + (Number(v.replace(",", ".")) || 0), 0);
+      .reduce((acc, v) => acc + (Number((v ?? "").replace(",", ".")) || 0), 0);
   }, [form]);
 
   const totalFat = useMemo(() => {
     return [form.pct_vendas_boleto, form.pct_vendas_cartao, form.pct_fat_debito, form.pct_vendas_cheque, form.pct_vendas_outros]
-      .reduce((acc, v) => acc + (Number(v.replace(",", ".")) || 0), 0);
+      .reduce((acc, v) => acc + (Number((v ?? "").replace(",", ".")) || 0), 0);
   }, [form]);
 
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) =>
