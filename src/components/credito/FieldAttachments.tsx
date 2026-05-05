@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { ImagePlus, Loader2, X } from "lucide-react";
+import { ImagePlus, Loader2, X, Crop } from "lucide-react";
 import { toast } from "sonner";
+import { DocumentSnipDialog } from "./DocumentSnipDialog";
 
 export interface Attachment {
   path: string;
