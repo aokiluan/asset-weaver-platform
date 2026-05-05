@@ -288,16 +288,13 @@ function SidebarItem({
         end={end}
         title={!expanded ? label : undefined}
         className={cn(
-          "relative my-0.5 flex items-center gap-3 rounded-md h-10 text-[13.5px]",
-          "text-sidebar-foreground/85 hover:bg-sidebar-accent hover:text-foreground transition-colors",
-          active && [
-            "bg-primary/10 text-primary font-medium hover:bg-primary/10 hover:text-primary",
-            "before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-[3px] before:rounded-r before:bg-primary",
-          ],
+          "relative my-0.5 flex items-center gap-3 rounded-md h-9 text-[13px]",
+          "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors",
+          active && "bg-sidebar-accent text-sidebar-accent-foreground font-medium hover:bg-sidebar-accent",
           expanded ? (nested ? "mx-2 pl-5 pr-3" : "mx-2 px-3") : "mx-1.5 justify-center px-0",
         )}
       >
-        <Icon className={cn("h-4 w-4 shrink-0", active && "text-primary")} />
+        <Icon className={cn("h-4 w-4 shrink-0", active && "text-sidebar-accent-foreground")} />
         {expanded && <span className="truncate">{label}</span>}
       </NavLink>
     </li>
