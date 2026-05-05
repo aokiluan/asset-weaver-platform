@@ -176,6 +176,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
           assinatura_digital_observacao: d.assinatura_digital_observacao ?? "",
           parecer_comercial: d.parecer_comercial ?? d.percepcoes ?? "",
           pontos_atencao: d.pontos_atencao ?? "",
+          fotos: Array.isArray((d as any).fotos) ? (d as any).fotos : [],
         });
       }
       setLoading(false);
