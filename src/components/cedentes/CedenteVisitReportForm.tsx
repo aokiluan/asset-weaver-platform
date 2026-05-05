@@ -82,6 +82,7 @@ interface FormState {
   // parecer
   parecer_comercial: string;
   pontos_atencao: string;
+  fotos: { path: string; name: string }[];
 }
 
 const empty = (): FormState => ({
