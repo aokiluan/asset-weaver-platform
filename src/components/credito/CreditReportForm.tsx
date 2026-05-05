@@ -312,8 +312,9 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
   );
 }
 
-function FieldRenderer({ field, value, onChange, disabled }: {
+function FieldRenderer({ field, value, onChange, disabled, cedenteId, attachments, onAttachmentsChange }: {
   field: FieldDef; value: any; onChange: (v: any) => void; disabled?: boolean;
+  cedenteId: string; attachments: Attachment[]; onAttachmentsChange: (list: Attachment[]) => void;
 }) {
   const wrapper = field.full || field.type === "textarea" ? "md:col-span-2" : "";
   return (
@@ -338,17 +339,32 @@ function FieldRenderer({ field, value, onChange, disabled }: {
           disabled={disabled}
         />
       )}
+      <FieldAttachments
+        cedenteId={cedenteId}
+        fieldKey={field.key}
+        value={attachments}
+        onChange={onAttachmentsChange}
+        disabled={disabled}
+      />
     </div>
   );
 }
 
-function TextareaField({ label, value, onChange, disabled, rows = 2 }: {
+function TextareaField({ label, value, onChange, disabled, rows = 2, cedenteId, fieldKey, attachments, onAttachmentsChange }: {
   label: string; value: string; onChange: (v: string) => void; disabled?: boolean; rows?: number;
+  cedenteId: string; fieldKey: string; attachments: Attachment[]; onAttachmentsChange: (list: Attachment[]) => void;
 }) {
   return (
     <div className="space-y-1.5">
       <Label className="text-xs">{label}</Label>
       <Textarea rows={rows} value={value} onChange={(e) => onChange(e.target.value)} disabled={disabled} />
+      <FieldAttachments
+        cedenteId={cedenteId}
+        fieldKey={fieldKey}
+        value={attachments}
+        onChange={onAttachmentsChange}
+        disabled={disabled}
+      />
     </div>
   );
 }
