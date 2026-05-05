@@ -265,7 +265,7 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
 
       {/* Pareceres em camadas + conclusão */}
       <div className="rounded-lg border bg-card p-4 space-y-4">
-        <h3 className="text-base font-semibold">Pareceres em camadas e conclusão</h3>
+        <h3 className="text-base font-semibold">Parecer</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {[
             ["parecer_analista", "Parecer analista de crédito"],
