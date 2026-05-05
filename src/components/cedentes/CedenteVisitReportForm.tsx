@@ -434,24 +434,6 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
               ))}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t">
-              <div className="space-y-2">
-                <Label>Assinatura digital — tipo</Label>
-                <Select value={form.assinatura_digital_tipo} onValueChange={(v) => set("assinatura_digital_tipo", v)}>
-                  <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="icp_brasil">ICP-Brasil</SelectItem>
-                    <SelectItem value="eletronica_simples">Eletrônica simples</SelectItem>
-                    <SelectItem value="fisica">Física (papel)</SelectItem>
-                    <SelectItem value="outra">Outra</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Observação sobre assinatura</Label>
-                <Input value={form.assinatura_digital_observacao} onChange={(e) => set("assinatura_digital_observacao", e.target.value)} />
-              </div>
-            </div>
           </AccordionContent>
         </AccordionItem>
 
