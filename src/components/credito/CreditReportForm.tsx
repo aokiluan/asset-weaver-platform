@@ -246,9 +246,6 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
         <h3 className="text-base font-semibold">Pareceres em camadas e conclusão</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {[
-            ["parecer_comercial", "Parecer comercial (executivo)"],
-            ["parecer_regional", "Parecer regional (gerência)"],
-            ["parecer_compliance", "Parecer compliance"],
             ["parecer_analista", "Parecer analista de crédito"],
           ].map(([key, label]) => (
             <TextareaField
