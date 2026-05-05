@@ -73,6 +73,7 @@ interface FormState {
   pct_vendas_boleto: string;
   pct_vendas_cartao: string;
   pct_vendas_outros: string;
+  pct_fat_debito: string;
   // adicionais
   parceiros_financeiros: string;
   empresas_ligadas: EmpresaLigada[];
@@ -106,6 +107,7 @@ const empty = (): FormState => ({
   pct_vendas_boleto: "",
   pct_vendas_cartao: "",
   pct_vendas_outros: "",
+  pct_fat_debito: "",
   parceiros_financeiros: "",
   empresas_ligadas: [],
   limite_global_solicitado: "",
@@ -166,6 +168,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
           pct_vendas_boleto: d.pct_vendas_boleto != null ? String(d.pct_vendas_boleto) : "",
           pct_vendas_cartao: d.pct_vendas_cartao != null ? String(d.pct_vendas_cartao) : "",
           pct_vendas_outros: d.pct_vendas_outros != null ? String(d.pct_vendas_outros) : "",
+          pct_fat_debito: (d as any).pct_fat_debito != null ? String((d as any).pct_fat_debito) : "",
           parceiros_financeiros: d.parceiros_financeiros ?? "",
           empresas_ligadas: Array.isArray(d.empresas_ligadas) ? d.empresas_ligadas : [],
           limite_global_solicitado: d.limite_global_solicitado != null ? String(d.limite_global_solicitado) : "",
@@ -182,10 +185,13 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
   }, [cedenteId]);
 
   const totalPct = useMemo(() => {
-    return [
-      form.pct_vendas_pf, form.pct_vendas_pj, form.pct_vendas_cheque,
-      form.pct_vendas_boleto, form.pct_vendas_cartao, form.pct_vendas_outros,
-    ].reduce((acc, v) => acc + (Number(v.replace(",", ".")) || 0), 0);
+    return [form.pct_vendas_pf, form.pct_vendas_pj]
+      .reduce((acc, v) => acc + (Number(v.replace(",", ".")) || 0), 0);
+  }, [form]);
+
+  const totalFat = useMemo(() => {
+    return [form.pct_vendas_boleto, form.pct_vendas_cartao, form.pct_fat_debito, form.pct_vendas_cheque, form.pct_vendas_outros]
+      .reduce((acc, v) => acc + (Number(v.replace(",", ".")) || 0), 0);
   }, [form]);
 
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) =>
@@ -222,6 +228,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
       pct_vendas_boleto: num(form.pct_vendas_boleto),
       pct_vendas_cartao: num(form.pct_vendas_cartao),
       pct_vendas_outros: num(form.pct_vendas_outros),
+      pct_fat_debito: num(form.pct_fat_debito),
       parceiros_financeiros: form.parceiros_financeiros || null,
       empresas_ligadas: form.empresas_ligadas,
       limite_global_solicitado: num(form.limite_global_solicitado),
@@ -317,11 +324,30 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
                   Total: {totalPct.toFixed(1)}%
                 </span>
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 {[
                   ["pct_vendas_pf", "PF"], ["pct_vendas_pj", "PJ"],
-                  ["pct_vendas_cheque", "Cheque"], ["pct_vendas_boleto", "Boleto"],
-                  ["pct_vendas_cartao", "Cartão"], ["pct_vendas_outros", "Outros"],
+                ].map(([k, lbl]) => (
+                  <div key={k} className="space-y-2">
+                    <Label>{lbl}</Label>
+                    <Input inputMode="decimal" value={(form as any)[k]} onChange={(e) => set(k as any, e.target.value)} />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="pt-2 border-t">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-medium">Forma de faturamento (%)</p>
+                <span className={`text-xs ${Math.abs(totalFat - 100) < 0.01 ? "text-green-600" : totalFat > 100 ? "text-destructive" : "text-muted-foreground"}`}>
+                  Total: {totalFat.toFixed(1)}%
+                </span>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {[
+                  ["pct_vendas_boleto", "Boleto"], ["pct_vendas_cartao", "Cartão"],
+                  ["pct_fat_debito", "Débito em conta"], ["pct_vendas_cheque", "Cheque"],
+                  ["pct_vendas_outros", "Outros"],
                 ].map(([k, lbl]) => (
                   <div key={k} className="space-y-2">
                     <Label>{lbl}</Label>

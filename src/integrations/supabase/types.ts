@@ -231,6 +231,7 @@ export type Database = {
           parceiros_financeiros: string | null
           parecer_comercial: string | null
           participantes: string | null
+          pct_fat_debito: number | null
           pct_vendas_boleto: number | null
           pct_vendas_cartao: number | null
           pct_vendas_cheque: number | null
@@ -269,6 +270,7 @@ export type Database = {
           parceiros_financeiros?: string | null
           parecer_comercial?: string | null
           participantes?: string | null
+          pct_fat_debito?: number | null
           pct_vendas_boleto?: number | null
           pct_vendas_cartao?: number | null
           pct_vendas_cheque?: number | null
@@ -307,6 +309,7 @@ export type Database = {
           parceiros_financeiros?: string | null
           parecer_comercial?: string | null
           participantes?: string | null
+          pct_fat_debito?: number | null
           pct_vendas_boleto?: number | null
           pct_vendas_cartao?: number | null
           pct_vendas_cheque?: number | null
