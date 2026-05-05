@@ -24,6 +24,15 @@ import {
   RECOMENDACAO_OPTIONS,
   FieldDef,
 } from "@/lib/credit-report";
+import { FieldAttachments, Attachment } from "./FieldAttachments";
+
+const ATT_KEY = "__attachments";
+function getAtt(section: any, fieldKey: string): Attachment[] {
+  return (section?.[ATT_KEY]?.[fieldKey] ?? []) as Attachment[];
+}
+function getTopAtt(top: any, fieldKey: string): Attachment[] {
+  return (top?.[fieldKey] ?? []) as Attachment[];
+}
 
 interface Props {
   cedenteId: string;
