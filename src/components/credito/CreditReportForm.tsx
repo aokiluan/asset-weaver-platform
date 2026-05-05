@@ -25,6 +25,7 @@ import {
   FieldDef,
 } from "@/lib/credit-report";
 import { FieldAttachments, Attachment } from "./FieldAttachments";
+import { generateCreditReportPdf } from "@/lib/credit-report-pdf";
 
 const ATT_KEY = "__attachments";
 function getAtt(section: any, fieldKey: string): Attachment[] {
