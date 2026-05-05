@@ -107,6 +107,7 @@ const empty = (): FormState => ({
   pct_vendas_boleto: "",
   pct_vendas_cartao: "",
   pct_vendas_outros: "",
+  pct_fat_debito: "",
   parceiros_financeiros: "",
   empresas_ligadas: [],
   limite_global_solicitado: "",
