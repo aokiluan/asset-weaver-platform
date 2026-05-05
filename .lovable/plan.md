@@ -1,76 +1,43 @@
-
 ## Objetivo
 
-No relatório estruturado de crédito (`CreditReportForm`, aba "Análise de crédito"), permitir que o analista anexe **imagens** (prints de Serasa, BACEN SCR, balanço, Google Maps, redes sociais, etc.) em qualquer campo, complementando ou substituindo o texto.
+Adicionar ao `FieldAttachments` (já presente nos campos do relatório de crédito que aceitam imagem) um segundo botão **"Capturar do documento"**, que abre os documentos já anexados ao cedente, permite ao analista navegar/zoom e desenhar uma área retangular sobre o documento — esse recorte vira um anexo do campo, com o mesmo fluxo dos uploads atuais.
 
-## Como vai funcionar para o usuário
+## Fluxo do usuário
 
-Cada campo do formulário (textarea, input ou select) ganha um botão discreto **"Anexar imagem"** ao lado do label. Ao clicar:
+1. No campo, ao lado de "Anexar imagem", aparece "Capturar do documento" (ícone de tesoura/recorte)
+2. Abre um Dialog grande (~85vh) dividido em duas colunas:
+   - **Esquerda (260px)**: lista dos documentos do cedente (nome + categoria). PDFs e imagens são selecionáveis; outros tipos ficam desabilitados.
+   - **Direita**: visualizador do documento selecionado, com paginação ◀ ▶ (PDFs), zoom + / − (50%–300%) e canvas
+3. Arrasta com o mouse sobre o documento → desenha retângulo translúcido azul
+4. Botão **"Recortar e anexar"** gera PNG da área selecionada, sobe para `report-files` e vira um attachment do campo (legenda automática: `Recorte de <arquivo> (pág. N)`)
 
-1. Abre seletor de arquivo (aceita PNG/JPG/WEBP, múltiplas imagens)
-2. Upload imediato para o storage (bucket `report-files`, já existente)
-3. Aparece uma tira de miniaturas abaixo do campo, com:
-   - clique para abrir em tamanho grande (lightbox)
-   - botão `x` para remover
-   - legenda opcional editável
+## Componentes
 
-O analista pode então:
-- Preencher só o texto (como hoje)
-- Preencher só imagens (ex.: print do Serasa fala por si)
-- Misturar os dois
+**Novo: `src/components/credito/DocumentSnipDialog.tsx`**
+- Props: `cedenteId`, `open`, `onOpenChange`, `onCaptured(blob, label)`
+- Lista documentos via `supabase.from("documentos").select("id, nome_arquivo, mime_type, storage_path, categoria:documento_categorias(nome)").eq("cedente_id", cedenteId)`
+- Signed URL (1h) para `cedente-docs`
+- Imagem → `<img>` desenhada num `<canvas>` (source)
+- PDF → `pdfjs-dist` (import dinâmico + worker via `?url`) renderiza página atual no canvas source
+- Segundo canvas sobreposto (overlay transparente) captura `mousedown/move/up` e desenha retângulo
+- "Recortar": canvas auxiliar copia região com `drawImage` e exporta `toBlob("image/png", 0.95)`
 
-As imagens contam para "seção completa" — se a seção tem só campo obrigatório de texto vazio mas tem imagens anexadas, a seção é considerada preenchida.
-
-## Onde os dados ficam armazenados
-
-Não precisa nova tabela. As 8 seções já são `jsonb`. Adicionamos uma chave reservada `__attachments` dentro de cada seção:
-
-```json
-{
-  "serasa_pj": "Sem apontamentos",
-  "__attachments": {
-    "serasa_pj": [
-      { "path": "<cedente_id>/credit-report/<uuid>.png", "name": "serasa.png", "caption": "Consulta 02/05" }
-    ],
-    "bacen_scr": [...]
-  }
-}
-```
-
-Vantagens: zero migração, mantém histórico junto do dado, RLS já cobre via `credit_reports`.
-
-Os arquivos vão para o bucket privado **`report-files`** (já existe), em `cedentes/<cedente_id>/credit-report/<uuid>.<ext>`. Acesso via signed URL (1h) gerado on-demand.
-
-## Componentes a criar / alterar
-
-**Novo:** `src/components/credito/FieldAttachments.tsx`
-- Recebe `cedenteId`, `sectionKey`, `fieldKey`, `value: Attachment[]`, `onChange`
-- Renderiza botão de upload + grid de thumbnails + lightbox (Dialog) + remoção
-- Faz upload via `supabase.storage.from('report-files').upload(...)`
-- Gera signed URLs com cache local
-
-**Alterado:** `src/components/credito/CreditReportForm.tsx`
-- `FieldRenderer` recebe `cedenteId` e renderiza `<FieldAttachments>` abaixo do controle
-- Helpers `getAttachments(section, fieldKey)` e `setAttachments(section, fieldKey, list)` que leem/gravam em `section.__attachments[fieldKey]`
-- Pareceres em camadas (parecer_comercial, regional, compliance, analista, pontos_positivos, pontos_atencao, conclusao) também ganham anexos — guardados num novo campo top-level `attachments_top: jsonb` no `credit_reports` (default `{}`)
-
-**Alterado:** `src/lib/credit-report.ts`
-- `isSectionComplete` considera completo se houver pelo menos 1 anexo no campo obrigatório
-
-**Migração:** adicionar coluna `attachments_top jsonb not null default '{}'::jsonb` em `credit_reports` (para os campos de parecer fora das 8 seções).
-
-**Storage:** o bucket `report-files` já existe e é privado. Adicionar policies SQL para permitir aos perfis de crédito (`analista_credito`, `gestor_credito`, `gestor_risco`, `admin`) `INSERT/SELECT/DELETE` em objetos sob `cedentes/`. SELECT estendido para quem pode ver o cedente (via `can_view_cedente`).
+**Alterado: `src/components/credito/FieldAttachments.tsx`**
+- Adiciona estado `snipOpen` e botão "Capturar do documento" (ícone `Crop`) ao lado do botão de upload
+- `onCaptured(blob, label)` reusa exatamente o mesmo upload (path `cedentes/<cid>/credit-report/<fieldKey>/<uuid>.png`) e adiciona `{ path, name, caption: label }` ao array `value`
+- Sem mudança de schema, sem mudança de RLS — perfis de crédito já podem ler `documentos` e baixar de `cedente-docs`
 
 ## Detalhes técnicos
 
-- Limite por arquivo: 5 MB; tipos aceitos: `image/png`, `image/jpeg`, `image/webp`
-- Compressão client-side opcional (canvas → webp 0.85) se > 1.5 MB
-- Signed URL com `createSignedUrl(path, 3600)` — cacheado em estado do componente
-- Drag & drop opcional (nice-to-have, fácil com input hidden)
-- O `useFormDraft` continua salvando o JSON no localStorage normalmente — anexos já ficam no storage após upload, então o draft só precisa lembrar dos paths
+- Dependência: instalar `pdfjs-dist` (~500KB, lazy)
+- Worker do pdf.js: `(await import("pdfjs-dist/build/pdf.worker.min.mjs?url")).default`
+- Render PDF: `getDocument({url}).promise` → `getPage(n).render({canvasContext, viewport, canvas})`
+- Conversão coords mouse→canvas considera ratio `canvas.width / boundingRect.width` para zoom correto
+- Reset de seleção/página ao trocar de documento; reset total ao fechar dialog
+- Validação mínima: rect ≥ 5×5 px
 
 ## Fora do escopo
 
-- OCR automático das imagens (poderia vir depois via edge function + Lovable AI)
-- Anotações sobre a imagem (setas, destaques)
-- Substituição do PDF do parecer comercial (já existe noutro fluxo)
+- Anotações (setas, destaques) sobre a captura
+- OCR do recorte
+- Captura cross-page

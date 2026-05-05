@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { ImagePlus, Loader2, X } from "lucide-react";
+import { ImagePlus, Loader2, X, Crop } from "lucide-react";
 import { toast } from "sonner";
+import { DocumentSnipDialog } from "./DocumentSnipDialog";
 
 export interface Attachment {
   path: string;
@@ -27,6 +28,7 @@ export function FieldAttachments({ cedenteId, fieldKey, value, onChange, disable
   const [uploading, setUploading] = useState(false);
   const [urls, setUrls] = useState<Record<string, string>>({});
   const [preview, setPreview] = useState<string | null>(null);
+  const [snipOpen, setSnipOpen] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -84,6 +86,23 @@ export function FieldAttachments({ cedenteId, fieldKey, value, onChange, disable
     onChange(value.filter((a) => a.path !== att.path));
   };
 
+  const handleSnipped = async (blob: Blob, label: string) => {
+    setUploading(true);
+    const id = crypto.randomUUID();
+    const path = `cedentes/${cedenteId}/credit-report/${fieldKey}/${id}.png`;
+    const { error } = await supabase.storage.from("report-files").upload(path, blob, {
+      contentType: "image/png",
+      upsert: false,
+    });
+    setUploading(false);
+    if (error) {
+      toast.error("Falha ao salvar recorte", { description: error.message });
+      return;
+    }
+    onChange([...value, { path, name: `${label}.png`, caption: label }]);
+    toast.success("Recorte anexado");
+  };
+
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
@@ -107,10 +126,28 @@ export function FieldAttachments({ cedenteId, fieldKey, value, onChange, disable
           {uploading ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <ImagePlus className="h-3 w-3 mr-1" />}
           Anexar imagem
         </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          className="h-7 px-2 text-[11px] text-muted-foreground"
+          onClick={() => setSnipOpen(true)}
+          disabled={disabled || uploading}
+        >
+          <Crop className="h-3 w-3 mr-1" />
+          Capturar do documento
+        </Button>
         {value.length > 0 && (
           <span className="text-[11px] text-muted-foreground">{value.length} anexada(s)</span>
         )}
       </div>
+
+      <DocumentSnipDialog
+        cedenteId={cedenteId}
+        open={snipOpen}
+        onOpenChange={setSnipOpen}
+        onCaptured={handleSnipped}
+      />
 
       {value.length > 0 && (
         <div className="flex flex-wrap gap-2">
