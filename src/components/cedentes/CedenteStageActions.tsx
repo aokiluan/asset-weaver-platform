@@ -38,7 +38,7 @@ const TRANSITIONS: Transition[] = [
     label: "Enviar para Comercial",
     target: "novo",
     fromStages: ["cadastro", "analise", "comite", "formalizacao"],
-    roles: ["analista_cadastro", "analista_credito", "gestor_credito", "comite", "gestor_risco", "admin"],
+    roles: ["cadastro", "credito", "comite", "admin"],
     variant: "outline",
     icon: Undo2,
     isReturn: true,
