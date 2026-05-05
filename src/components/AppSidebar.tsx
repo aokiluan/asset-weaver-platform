@@ -102,7 +102,7 @@ const GROUPS: Group[] = [
 const PIN_KEY = "sidebar:pinned";
 const OPEN_KEY = "sidebar:openGroups";
 const COLLAPSED_W = 60;
-const EXPANDED_W = 248;
+const EXPANDED_W = 240;
 
 export function AppSidebar() {
   const { pathname } = useLocation();
