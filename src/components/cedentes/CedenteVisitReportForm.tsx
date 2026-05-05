@@ -485,6 +485,48 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
               <Label>Pontos de atenção</Label>
               <Textarea rows={3} placeholder="Riscos, alertas, dependências..." value={form.pontos_atencao} onChange={(e) => set("pontos_atencao", e.target.value)} />
             </div>
+
+            <div className="space-y-2 pt-2 border-t">
+              <div className="flex items-center justify-between">
+                <Label>Fotos</Label>
+                <Button size="sm" variant="outline" asChild disabled={uploadingFotos}>
+                  <label className="cursor-pointer">
+                    {uploadingFotos ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Upload className="h-4 w-4 mr-1" />}
+                    Adicionar fotos
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={(e) => { uploadFotos(e.target.files); e.target.value = ""; }}
+                    />
+                  </label>
+                </Button>
+              </div>
+              {form.fotos.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhuma foto adicionada.</p>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                  {form.fotos.map((f, i) => (
+                    <div key={i} className="border rounded-md p-2 space-y-1 bg-muted/30">
+                      <button
+                        type="button"
+                        onClick={() => abrirFoto(f.path)}
+                        className="w-full aspect-square rounded bg-background flex items-center justify-center hover:bg-accent transition-colors"
+                      >
+                        <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                      </button>
+                      <div className="flex items-center justify-between gap-1">
+                        <span className="text-xs truncate flex-1" title={f.name}>{f.name}</span>
+                        <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => removerFoto(i)}>
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </AccordionContent>
         </AccordionItem>
       </Accordion>
