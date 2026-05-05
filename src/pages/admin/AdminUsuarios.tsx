@@ -154,23 +154,23 @@ export default function AdminUsuarios() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {loading && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Carregando...</TableCell></TableRow>}
-            {!loading && users.length === 0 && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Nenhum usuário.</TableCell></TableRow>}
+            {loading && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-6 text-[12px]">Carregando...</TableCell></TableRow>}
+            {!loading && users.length === 0 && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-6 text-[12px]">Nenhum usuário.</TableCell></TableRow>}
             {users.map((u) => {
               const isGestorGeral = u.roles.includes("gestor_geral");
               const primaryRoles = u.roles.filter(r => r !== "gestor_geral");
               return (
-                <TableRow key={u.id}>
+                <TableRow key={u.id} className="group">
                   <TableCell>
                     <div className="font-medium">{u.nome}</div>
-                    {u.cargo && <div className="text-xs text-muted-foreground">{u.cargo}</div>}
+                    {u.cargo && <div className="text-[11px] text-muted-foreground">{u.cargo}</div>}
                   </TableCell>
-                  <TableCell className="text-sm">{u.email}</TableCell>
+                  <TableCell>{u.email}</TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
-                      {primaryRoles.length === 0 && <span className="text-xs text-muted-foreground">Sem função</span>}
+                      {primaryRoles.length === 0 && <span className="text-[11px] text-muted-foreground">Sem função</span>}
                       {primaryRoles.map(r => (
-                        <Badge key={r} variant="secondary" className="gap-1">
+                        <Badge key={r} variant="secondary" className="gap-1 h-5 px-2 text-[11px] font-normal">
                           {ROLE_LABEL[r]}
                           <button onClick={() => removeRole(u, r)} className="hover:text-destructive">
                             <X className="h-3 w-3" />
@@ -181,7 +181,7 @@ export default function AdminUsuarios() {
                   </TableCell>
                   <TableCell>
                     <Select value={u.team_id ?? "none"} onValueChange={(v) => setTeam(u, v === "none" ? null : v)}>
-                      <SelectTrigger className="h-8 w-[180px]"><SelectValue /></SelectTrigger>
+                      <SelectTrigger className="h-8 w-[160px]"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="none">— Sem equipe —</SelectItem>
                         {teams.map(t => <SelectItem key={t.id} value={t.id}>{t.nome} ({ROLE_LABEL[t.papel_principal]})</SelectItem>)}
