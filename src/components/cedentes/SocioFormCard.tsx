@@ -74,7 +74,7 @@ export function SocioFormCard({ socio, index, onChange, onRemove, title, headerE
   const casado = socio.estado_civil === "casado" || socio.estado_civil === "uniao_estavel";
 
   return (
-    <div className="rounded-lg border bg-card p-4 space-y-4">
+    <div className="rounded-lg border bg-card p-4 space-y-2.5">
       <div className="flex items-center justify-between">
         <h3 className="font-semibold">{title ?? `Sócio ${index + 1}`}</h3>
         <Button variant="ghost" size="sm" onClick={onRemove} className="text-destructive">

@@ -235,7 +235,7 @@ export function CedenteRepresentantesTab({ cedenteId, jaSincronizado, onSynced }
   };
 
   return (
-    <div className="rounded-lg border bg-card p-6 space-y-4">
+    <div className="rounded-lg border bg-card p-6 space-y-2.5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <Users className="h-5 w-5" />
@@ -272,7 +272,7 @@ export function CedenteRepresentantesTab({ cedenteId, jaSincronizado, onSynced }
             : "Nenhum representante encontrado. Adicione manualmente."}
         </div>
       ) : (
-        <Accordion type="multiple" className="space-y-2">
+        <Accordion type="multiple" className="space-y-1">
           {items.map((rep, idx) => (
             <AccordionItem
               key={rep.id}
@@ -280,7 +280,7 @@ export function CedenteRepresentantesTab({ cedenteId, jaSincronizado, onSynced }
               className="border rounded-md px-3 data-[state=open]:bg-muted/30"
             >
               <AccordionTrigger className="hover:no-underline py-3">
-                <div className="flex flex-1 items-center gap-4 text-left pr-3">
+                <div className="flex flex-1 items-center gap-2.5 text-left pr-3">
                   <span className="font-medium flex-1 truncate">
                     {rep.nome || <span className="text-muted-foreground italic">Novo representante</span>}
                   </span>
