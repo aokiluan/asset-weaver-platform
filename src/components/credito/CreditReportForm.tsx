@@ -502,7 +502,7 @@ function FieldRenderer({ field, value, onChange, disabled, cedenteId, attachment
         {field.label}{field.required && <span className="text-destructive"> *</span>}
       </Label>
       {field.type === "textarea" ? (
-        <Textarea rows={3} value={value ?? ""} onChange={(e) => onChange(e.target.value)} disabled={disabled} />
+        <Textarea rows={3} value={value ?? ""} onChange={(e) => onChange(e.target.value)} disabled={disabled} className="text-[12px] min-h-[60px]" />
       ) : field.type === "select" ? (
         <Select value={value ?? ""} onValueChange={onChange} disabled={disabled}>
           <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
@@ -516,6 +516,7 @@ function FieldRenderer({ field, value, onChange, disabled, cedenteId, attachment
           value={value ?? ""}
           onChange={(e) => onChange(field.type === "number" ? (e.target.value === "" ? "" : Number(e.target.value)) : e.target.value)}
           disabled={disabled}
+          className="h-7 text-[12px] px-2.5"
         />
       )}
       {allowAttachments && (

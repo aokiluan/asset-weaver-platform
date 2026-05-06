@@ -1,26 +1,24 @@
-## Objetivo
+## Ajuste de tamanho dos campos — Relatório de crédito
 
-Adicionar um botão **"Gerar PDF"** no dialog "Versão N" de `VisitReportVersionsPanel.tsx`, para baixar o PDF daquela versão específica do relatório comercial.
+### Problema
+Na seção "Identificação" (e demais seções), o campo `Select` (ex: "Tipo de análise") usa o trigger compacto do design system (`h-7`, `text-[12px]`), enquanto os campos `Input` (ex: "Regional", "Executivo comercial") herdam o padrão global (`h-10`, `text-base`). Resultado: inputs aparecem visivelmente maiores que selects na mesma linha — inconsistência visual.
 
-## Mudanças
+### Solução
+Padronizar a altura/tipografia do `Input` e do `Textarea` dentro do `FieldRenderer` (e do `TextareaField`) do `CreditReportForm` para o mesmo padrão compacto do `SelectTrigger` — sem mexer no componente global do design system (que é usado em outras telas).
 
-### 1. Extrair `gerarPdf` para módulo reutilizável
-Hoje a função vive dentro de `CedenteVisitReportForm.tsx` (linhas 264–421) e usa o `form` local. Vou extraí-la para um novo arquivo `src/lib/visit-report-pdf.ts` exportando `generateVisitReportPdf(snapshot, cedenteId)`, recebendo o snapshot (mesmo shape do `form`: data_visita, tipo_visita, visitante, entrevistado_*, modalidades, empresas_ligadas, avalistas_solidarios, parecer_comercial, pontos_atencao, fotos, etc.) e o `cedenteId` (para buscar razão social/CNPJ no header).
+### Mudanças
 
-`CedenteVisitReportForm.tsx` passa a chamar `generateVisitReportPdf(form, cedenteId)` — mesmo comportamento do botão atual, sem mudança visual.
+**`src/components/credito/CreditReportForm.tsx`** — único arquivo afetado:
 
-### 2. Botão no dialog de versão
-Em `VisitReportVersionsPanel.tsx`, dentro do `<DialogContent>` da versão aberta, adicionar um botão `"Gerar PDF"` (variant outline, ícone `FileDown`, com loading via `Loader2`) no topo do conteúdo, ao lado do título ou abaixo da linha de data/autor.
+1. No `FieldRenderer`, aplicar classes compactas:
+   - `<Input className="h-7 text-[12px] px-2.5" />`
+   - `<Textarea className="text-[12px] min-h-[60px]" />` (mantendo `rows={3}`)
+2. No `TextareaField`, aplicar `className="text-[12px] min-h-[60px]"` no `<Textarea>`.
+3. Os `<Label className="text-xs">` já estão compactos — sem mudança.
+4. Os `SelectTrigger` já estão compactos via componente base — sem mudança.
 
-Ao clicar: chama `generateVisitReportPdf(opened, cedenteId)`. O snapshot da versão já contém todos os campos necessários (estão sendo selecionados no `select("*")` do painel). Vou só garantir que o `VersionRow` inclua os campos extras usados pelo PDF (entrevistado_cargo/cpf/telefone/email, ramo_atividade, faturamento_mensal, principais_produtos, qtd_funcionarios, percentuais de venda, parceiros_financeiros) — adicionar à interface; o `select("*")` já traz tudo.
-
-### 3. Prop nova no painel
-`VisitReportVersionsPanel` precisa receber `cedenteId` como prop (hoje só recebe `reportId` e `refreshKey`) para passar ao gerador. Atualizar a chamada em `CedenteVisitReportForm.tsx` para passar `cedenteId`.
-
-## Arquivos
-
-- **Criado:** `src/lib/visit-report-pdf.ts` — função `generateVisitReportPdf(snapshot, cedenteId)` com a lógica atual movida.
-- **Editado:** `src/components/cedentes/CedenteVisitReportForm.tsx` — substituir a função inline por import; passar `cedenteId` ao `VisitReportVersionsPanel`.
-- **Editado:** `src/components/cedentes/VisitReportVersionsPanel.tsx` — nova prop `cedenteId`, botão "Gerar PDF" no dialog, estado de loading local.
-
-Sem migração nem mudança de schema.
+### Não afeta
+- Componentes globais (`src/components/ui/input.tsx`, `textarea.tsx`, `select.tsx`)
+- Outros formulários do projeto
+- Lógica de versionamento / save / PDF
+- Layout do grid (`md:grid-cols-2`)
