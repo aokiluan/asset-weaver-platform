@@ -323,47 +323,47 @@ export default function CedenteDetail() {
 
       {tab === "resumo" && (
         <div className="mt-4">
-          <div className="rounded-lg border bg-card p-6 space-y-6">
-            <section className="space-y-3">
+          <div className="rounded-lg border bg-card p-3 space-y-3">
+            <section className="space-y-1.5">
               <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.08em]">Identificação</h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-                <div><div className="text-xs text-muted-foreground">Razão social</div><div>{cedente.razao_social}</div></div>
-                <div><div className="text-xs text-muted-foreground">Nome fantasia</div><div>{cedente.nome_fantasia ?? "—"}</div></div>
-                <div><div className="text-xs text-muted-foreground">CNPJ</div><div className="font-mono">{cedente.cnpj}</div></div>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-x-3 gap-y-2 text-[13px]">
+                <div><div className="text-[11px] text-muted-foreground leading-tight">Razão social</div><div>{cedente.razao_social}</div></div>
+                <div><div className="text-[11px] text-muted-foreground leading-tight">Nome fantasia</div><div>{cedente.nome_fantasia ?? "—"}</div></div>
+                <div><div className="text-[11px] text-muted-foreground leading-tight">CNPJ</div><div className="font-mono">{cedente.cnpj}</div></div>
               </div>
             </section>
 
-            <section className="space-y-3 pt-4 border-t">
+            <section className="space-y-1.5 pt-3 border-t">
               <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.08em]">Contato</h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-                <div><div className="text-xs text-muted-foreground">E-mail</div><div>{cedente.email ?? "—"}</div></div>
-                <div><div className="text-xs text-muted-foreground">Telefone</div><div>{cedente.telefone ?? "—"}</div></div>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-x-3 gap-y-2 text-[13px]">
+                <div><div className="text-[11px] text-muted-foreground leading-tight">E-mail</div><div>{cedente.email ?? "—"}</div></div>
+                <div><div className="text-[11px] text-muted-foreground leading-tight">Telefone</div><div>{cedente.telefone ?? "—"}</div></div>
               </div>
             </section>
 
-            <section className="space-y-3 pt-4 border-t">
+            <section className="space-y-1.5 pt-3 border-t">
               <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.08em]">Endereço</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                <div className="md:col-span-2"><div className="text-xs text-muted-foreground">Endereço</div><div>{cedente.endereco ?? "—"}</div></div>
-                <div><div className="text-xs text-muted-foreground">Cidade</div><div>{cedente.cidade ?? "—"}</div></div>
-                <div><div className="text-xs text-muted-foreground">UF</div><div>{cedente.estado ?? "—"}</div></div>
-                <div><div className="text-xs text-muted-foreground">CEP</div><div>{cedente.cep ?? "—"}</div></div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-x-3 gap-y-2 text-[13px]">
+                <div className="md:col-span-2"><div className="text-[11px] text-muted-foreground leading-tight">Endereço</div><div>{cedente.endereco ?? "—"}</div></div>
+                <div><div className="text-[11px] text-muted-foreground leading-tight">Cidade</div><div>{cedente.cidade ?? "—"}</div></div>
+                <div><div className="text-[11px] text-muted-foreground leading-tight">UF</div><div>{cedente.estado ?? "—"}</div></div>
+                <div><div className="text-[11px] text-muted-foreground leading-tight">CEP</div><div>{cedente.cep ?? "—"}</div></div>
               </div>
             </section>
 
-            <section className="space-y-3 pt-4 border-t">
+            <section className="space-y-1.5 pt-3 border-t">
               <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.08em]">Comercial</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                <div><div className="text-xs text-muted-foreground">Setor</div><div>{cedente.setor ?? "—"}</div></div>
-                <div><div className="text-xs text-muted-foreground">Faturamento médio</div><div>{fmtBRL(cedente.faturamento_medio)}</div></div>
-                <div><div className="text-xs text-muted-foreground">Status</div><div className="capitalize">{cedente.status.replace("_", " ")}</div></div>
-                <div><div className="text-xs text-muted-foreground">Limite aprovado</div><div className="font-semibold">{fmtBRL(cedente.limite_aprovado)}</div></div>
-                <div className="md:col-span-2"><div className="text-xs text-muted-foreground">Responsável comercial</div><div>{ownerName ?? "—"}</div></div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-x-3 gap-y-2 text-[13px]">
+                <div><div className="text-[11px] text-muted-foreground leading-tight">Setor</div><div>{cedente.setor ?? "—"}</div></div>
+                <div><div className="text-[11px] text-muted-foreground leading-tight">Faturamento médio</div><div>{fmtBRL(cedente.faturamento_medio)}</div></div>
+                <div><div className="text-[11px] text-muted-foreground leading-tight">Status</div><div className="capitalize">{cedente.status.replace("_", " ")}</div></div>
+                <div><div className="text-[11px] text-muted-foreground leading-tight">Limite aprovado</div><div className="font-semibold">{fmtBRL(cedente.limite_aprovado)}</div></div>
+                <div className="md:col-span-2"><div className="text-[11px] text-muted-foreground leading-tight">Responsável comercial</div><div>{ownerName ?? "—"}</div></div>
               </div>
             </section>
 
             {cedente.observacoes && (
-              <section className="space-y-2 pt-4 border-t">
+              <section className="space-y-1.5 pt-3 border-t">
                 <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.08em]">Observações</h3>
                 <p className="text-sm whitespace-pre-wrap">{cedente.observacoes}</p>
               </section>
@@ -454,7 +454,7 @@ export default function CedenteDetail() {
                           ? <>Criado em <span className="text-primary">{STAGE_LABEL[h.stage_novo!]}</span></>
                           : <>{STAGE_LABEL[h.stage_anterior!]} → <span className="text-primary">{STAGE_LABEL[h.stage_novo!]}</span></>}
                       </div>
-                      <div className="text-xs text-muted-foreground">{new Date(h.created_at).toLocaleString("pt-BR")}</div>
+                      <div className="text-[11px] text-muted-foreground leading-tight">{new Date(h.created_at).toLocaleString("pt-BR")}</div>
                     </div>
                   </li>
                 ))}
@@ -769,7 +769,7 @@ function FormalizacaoTabContent({
               <li key={d.id} className="flex items-center justify-between gap-3 px-3 py-2 text-sm">
                 <div className="min-w-0">
                   <div className="truncate font-medium">{d.nome_arquivo}</div>
-                  <div className="text-xs text-muted-foreground">{new Date(d.created_at).toLocaleString("pt-BR")}</div>
+                  <div className="text-[11px] text-muted-foreground leading-tight">{new Date(d.created_at).toLocaleString("pt-BR")}</div>
                 </div>
                 <div className="flex gap-1 shrink-0">
                   <Button size="sm" variant="ghost" onClick={() => handleDownloadDoc(d.storage_path, d.nome_arquivo)}>
