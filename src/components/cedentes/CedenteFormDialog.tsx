@@ -127,41 +127,41 @@ export function CedenteFormDialog({ open, onOpenChange, initial, onSaved }: Prop
           <DialogDescription>Dados cadastrais e de status do cedente.</DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-2.5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="razao_social">Razão social *</Label>
               <Input id="razao_social" {...register("razao_social", { required: true })} />
               {errors.razao_social && <p className="text-xs text-destructive">Obrigatório</p>}
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label htmlFor="nome_fantasia">Nome fantasia</Label>
               <Input id="nome_fantasia" {...register("nome_fantasia")} />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label htmlFor="cnpj">CNPJ *</Label>
               <Input id="cnpj" {...register("cnpj", { required: true })} />
               {errors.cnpj && <p className="text-xs text-destructive">Obrigatório</p>}
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label htmlFor="email">E-mail</Label>
               <Input id="email" type="email" {...register("email")} />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label htmlFor="telefone">Telefone</Label>
               <Input id="telefone" {...register("telefone")} />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label htmlFor="setor">Setor</Label>
               <Input id="setor" {...register("setor")} />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label htmlFor="faturamento_medio">Faturamento médio mensal (R$)</Label>
               <CurrencyInput
                 id="faturamento_medio"
@@ -175,22 +175,22 @@ export function CedenteFormDialog({ open, onOpenChange, initial, onSaved }: Prop
               <Input id="endereco" {...register("endereco")} />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label htmlFor="cidade">Cidade</Label>
               <Input id="cidade" {...register("cidade")} />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label htmlFor="estado">UF</Label>
               <Input id="estado" maxLength={2} {...register("estado")} />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label htmlFor="cep">CEP</Label>
               <Input id="cep" {...register("cep")} />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label>Status</Label>
               <Select value={status} onValueChange={(v) => setValue("status", v as CedenteStatus)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -204,7 +204,7 @@ export function CedenteFormDialog({ open, onOpenChange, initial, onSaved }: Prop
               </Select>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label htmlFor="limite_aprovado">Limite aprovado (R$)</Label>
               <CurrencyInput
                 id="limite_aprovado"
@@ -226,7 +226,7 @@ export function CedenteFormDialog({ open, onOpenChange, initial, onSaved }: Prop
             </div>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-1">
             <Label htmlFor="observacoes">Observações</Label>
             <Textarea id="observacoes" rows={3} {...register("observacoes")} />
           </div>

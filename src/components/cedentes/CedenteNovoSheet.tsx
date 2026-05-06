@@ -166,10 +166,10 @@ export function CedenteNovoSheet({ open, onOpenChange, onCreated }: Props) {
           <SheetDescription>Preencha os dados do cedente. Sócios e documentos podem ser adicionados depois.</SheetDescription>
         </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
-          <section className="space-y-4">
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-3.5">
+          <section className="space-y-2.5">
             <h3 className="text-xs font-semibold uppercase text-muted-foreground tracking-wide">Identificação</h3>
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label>CNPJ *</Label>
               <div className="relative">
                 <Input
@@ -184,44 +184,44 @@ export function CedenteNovoSheet({ open, onOpenChange, onCreated }: Props) {
               </div>
               <p className="text-xs text-muted-foreground">Tab pra autopreencher via Receita</p>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label>Razão Social *</Label>
               <Input value={form.razao_social} onChange={(e) => set("razao_social", e.target.value)} />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label>Nome Fantasia</Label>
               <Input value={form.nome_fantasia} onChange={(e) => set("nome_fantasia", e.target.value)} />
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <Label>Capital Social</Label>
                 <CurrencyInput value={form.capital_social} onValueChange={(v) => set("capital_social", v)} />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <Label>Data de Abertura</Label>
                 <Input type="date" value={form.data_abertura} onChange={(e) => set("data_abertura", e.target.value)} />
               </div>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label>Natureza Jurídica</Label>
               <Input value={form.natureza_juridica} onChange={(e) => set("natureza_juridica", e.target.value)} />
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <Label>Setor</Label>
                 <Input value={form.setor} onChange={(e) => set("setor", e.target.value)} />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <Label>Faturamento médio (mensal)</Label>
                 <CurrencyInput value={form.faturamento_medio} onValueChange={(v) => set("faturamento_medio", v)} />
               </div>
             </div>
           </section>
 
-          <section className="space-y-4">
+          <section className="space-y-2.5">
             <h3 className="text-xs font-semibold uppercase text-muted-foreground tracking-wide">Endereço</h3>
             <div className="grid grid-cols-3 gap-3">
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <Label>CEP</Label>
                 <Input value={form.cep} onChange={(e) => set("cep", e.target.value)} onBlur={handleCEPBlur} />
               </div>
@@ -231,11 +231,11 @@ export function CedenteNovoSheet({ open, onOpenChange, onCreated }: Props) {
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <Label>Número</Label>
                 <Input value={form.numero} onChange={(e) => set("numero", e.target.value)} />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <Label>Bairro</Label>
                 <Input value={form.bairro} onChange={(e) => set("bairro", e.target.value)} />
               </div>
@@ -245,21 +245,21 @@ export function CedenteNovoSheet({ open, onOpenChange, onCreated }: Props) {
                 <Label>Cidade</Label>
                 <Input value={form.cidade} onChange={(e) => set("cidade", e.target.value)} />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <Label>UF</Label>
                 <Input maxLength={2} value={form.estado} onChange={(e) => set("estado", e.target.value.toUpperCase())} />
               </div>
             </div>
           </section>
 
-          <section className="space-y-4">
+          <section className="space-y-2.5">
             <h3 className="text-xs font-semibold uppercase text-muted-foreground tracking-wide">Contato</h3>
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <Label>Telefone</Label>
                 <Input value={form.telefone} onChange={(e) => set("telefone", e.target.value)} />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <Label>E-mail</Label>
                 <Input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} />
               </div>

@@ -418,7 +418,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2.5">
       {precisaRevisao && mode !== "edit" && (
         <div className="flex items-start gap-2 border border-amber-300 bg-amber-50 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200 rounded-md p-3 text-sm">
           <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
@@ -470,18 +470,18 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
       )}
 
       <div className={readOnly ? "opacity-90" : ""}>
-      <Accordion type="multiple" defaultValue={["cabecalho"]} className="space-y-2">
+      <Accordion type="multiple" defaultValue={["cabecalho"]} className="space-y-1">
 
         {/* 1. Cabeçalho */}
         <AccordionItem value="cabecalho" className="border rounded-md px-4">
           <AccordionTrigger>1. Cabeçalho da visita</AccordionTrigger>
-          <AccordionContent className="space-y-4 pt-2">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
+          <AccordionContent className="space-y-2.5 pt-1.5">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
+              <div className="space-y-1">
                 <Label>Data da visita *</Label>
                 <Input type="date" value={form.data_visita} onChange={(e) => set("data_visita", e.target.value)} />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <Label>Tipo de visita</Label>
                 <Select value={form.tipo_visita} onValueChange={(v) => set("tipo_visita", v)}>
                   <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
@@ -493,7 +493,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <Label>Visitante (executivo)</Label>
                 <Input value={form.visitante} onChange={(e) => set("visitante", e.target.value)} />
               </div>
@@ -501,11 +501,11 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
 
             <div className="pt-2 border-t">
               <p className="text-sm font-medium mb-2">Entrevistado</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2"><Label>Nome</Label><Input value={form.entrevistado_nome} onChange={(e) => set("entrevistado_nome", e.target.value)} /></div>
-                <div className="space-y-2"><Label>Cargo</Label><Input value={form.entrevistado_cargo} onChange={(e) => set("entrevistado_cargo", e.target.value)} /></div>
-                <div className="space-y-2"><Label>Telefone</Label><Input value={form.entrevistado_telefone} onChange={(e) => set("entrevistado_telefone", e.target.value)} /></div>
-                <div className="space-y-2"><Label>E-mail</Label><Input type="email" value={form.entrevistado_email} onChange={(e) => set("entrevistado_email", e.target.value)} /></div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                <div className="space-y-1"><Label>Nome</Label><Input value={form.entrevistado_nome} onChange={(e) => set("entrevistado_nome", e.target.value)} /></div>
+                <div className="space-y-1"><Label>Cargo</Label><Input value={form.entrevistado_cargo} onChange={(e) => set("entrevistado_cargo", e.target.value)} /></div>
+                <div className="space-y-1"><Label>Telefone</Label><Input value={form.entrevistado_telefone} onChange={(e) => set("entrevistado_telefone", e.target.value)} /></div>
+                <div className="space-y-1"><Label>E-mail</Label><Input type="email" value={form.entrevistado_email} onChange={(e) => set("entrevistado_email", e.target.value)} /></div>
               </div>
             </div>
           </AccordionContent>
@@ -514,13 +514,13 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
         {/* 2. Negócio */}
         <AccordionItem value="negocio" className="border rounded-md px-4">
           <AccordionTrigger>2. Dados do negócio</AccordionTrigger>
-          <AccordionContent className="space-y-4 pt-2">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2"><Label>Ramo de atividade</Label><Input value={form.ramo_atividade} onChange={(e) => set("ramo_atividade", e.target.value)} /></div>
-              <div className="space-y-2"><Label>Faturamento mensal (R$)</Label><Input inputMode="decimal" value={form.faturamento_mensal} onChange={(e) => set("faturamento_mensal", e.target.value)} /></div>
-              <div className="space-y-2"><Label>Nº de funcionários</Label><Input inputMode="numeric" value={form.qtd_funcionarios} onChange={(e) => set("qtd_funcionarios", e.target.value)} /></div>
+          <AccordionContent className="space-y-2.5 pt-1.5">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
+              <div className="space-y-1"><Label>Ramo de atividade</Label><Input value={form.ramo_atividade} onChange={(e) => set("ramo_atividade", e.target.value)} /></div>
+              <div className="space-y-1"><Label>Faturamento mensal (R$)</Label><Input inputMode="decimal" value={form.faturamento_mensal} onChange={(e) => set("faturamento_mensal", e.target.value)} /></div>
+              <div className="space-y-1"><Label>Nº de funcionários</Label><Input inputMode="numeric" value={form.qtd_funcionarios} onChange={(e) => set("qtd_funcionarios", e.target.value)} /></div>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label>Principais produtos / serviços</Label>
               <Textarea rows={2} value={form.principais_produtos} onChange={(e) => set("principais_produtos", e.target.value)} />
             </div>
@@ -532,11 +532,11 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
                   Total: {totalPct.toFixed(1)}%
                 </span>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-2.5">
                 {[
                   ["pct_vendas_pf", "PF"], ["pct_vendas_pj", "PJ"],
                 ].map(([k, lbl]) => (
-                  <div key={k} className="space-y-2">
+                  <div key={k} className="space-y-1">
                     <Label>{lbl}</Label>
                     <Input inputMode="decimal" value={(form as any)[k]} onChange={(e) => set(k as any, e.target.value)} />
                   </div>
@@ -551,13 +551,13 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
                   Total: {totalFat.toFixed(1)}%
                 </span>
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5">
                 {[
                   ["pct_vendas_boleto", "Boleto"], ["pct_vendas_cartao", "Cartão"],
                   ["pct_fat_debito", "Débito em conta"], ["pct_vendas_cheque", "Cheque"],
                   ["pct_vendas_outros", "Outros"],
                 ].map(([k, lbl]) => (
-                  <div key={k} className="space-y-2">
+                  <div key={k} className="space-y-1">
                     <Label>{lbl}</Label>
                     <Input inputMode="decimal" value={(form as any)[k]} onChange={(e) => set(k as any, e.target.value)} />
                   </div>
@@ -570,13 +570,13 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
         {/* 3. Adicionais */}
         <AccordionItem value="adicionais" className="border rounded-md px-4">
           <AccordionTrigger>3. Informações adicionais</AccordionTrigger>
-          <AccordionContent className="space-y-4 pt-2">
-            <div className="space-y-2">
+          <AccordionContent className="space-y-2.5 pt-1.5">
+            <div className="space-y-1">
               <Label>Parceiros financeiros (bancos/factorings com quem opera)</Label>
               <Textarea rows={2} value={form.parceiros_financeiros} onChange={(e) => set("parceiros_financeiros", e.target.value)} />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1">
               <div className="flex items-center justify-between">
                 <Label>Empresas ligadas / grupo econômico</Label>
                 <Button size="sm" variant="outline" onClick={() => set("empresas_ligadas", [...form.empresas_ligadas, { nome: "", cnpj: "", relacao: "" }])}>
@@ -607,13 +607,13 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
         {/* 4. Pleito */}
         <AccordionItem value="pleito" className="border rounded-md px-4">
           <AccordionTrigger>4. Pleito de crédito</AccordionTrigger>
-          <AccordionContent className="space-y-4 pt-2">
-            <div className="space-y-2">
+          <AccordionContent className="space-y-2.5 pt-1.5">
+            <div className="space-y-1">
               <Label>Limite global solicitado (R$)</Label>
               <Input inputMode="decimal" value={form.limite_global_solicitado} onChange={(e) => set("limite_global_solicitado", e.target.value)} />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1">
               <p className="text-sm font-medium">Modalidades operacionais</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 <ModFull title="Desconto convencional" v={form.modalidades.desconto_convencional ?? emptyFull()} onChange={(p) => setMod("desconto_convencional", p)} />
@@ -652,12 +652,12 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
         {/* 5. Parecer */}
         <AccordionItem value="parecer" className="border rounded-md px-4">
           <AccordionTrigger>5. Parecer comercial</AccordionTrigger>
-          <AccordionContent className="space-y-4 pt-2">
-            <div className="space-y-2">
+          <AccordionContent className="space-y-2.5 pt-1.5">
+            <div className="space-y-1">
               <Label>Parecer comercial *</Label>
               <Textarea rows={5} placeholder="Avaliação geral, recomendação, próximos passos..." value={form.parecer_comercial} onChange={(e) => set("parecer_comercial", e.target.value)} />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label>Pontos de atenção</Label>
               <Textarea rows={3} placeholder="Riscos, alertas, dependências..." value={form.pontos_atencao} onChange={(e) => set("pontos_atencao", e.target.value)} />
             </div>
@@ -736,7 +736,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
 
 function ModFull({ title, v, onChange }: { title: string; v: ModalidadeFull; onChange: (p: Partial<ModalidadeFull>) => void }) {
   return (
-    <div className="border rounded-md p-2.5 space-y-2">
+    <div className="border rounded-md p-2.5 space-y-1">
       <label className="flex items-center gap-2 cursor-pointer">
         <Checkbox checked={v.ativo} onCheckedChange={(c) => onChange({ ativo: !!c })} />
         <span className="font-medium text-sm">{title}</span>

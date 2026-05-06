@@ -255,7 +255,7 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3.5">
       {precisaRevisao && mode === "view" && (
         <div className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-950/30 p-3 text-sm">
           <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
@@ -268,7 +268,7 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
 
       {/* Header com progresso */}
       <div className="rounded-lg border bg-card p-4 space-y-3">
-        <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div className="flex items-center justify-between gap-2.5 flex-wrap">
           <div className="flex items-center gap-3 flex-wrap">
             <div>
               <h3 className="text-base font-semibold">Relatório estruturado de crédito</h3>
@@ -330,7 +330,7 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
       </div>
 
       {mode === "edit" && (
-        <div className="rounded-lg border bg-card p-4 space-y-2">
+        <div className="rounded-lg border bg-card p-4 space-y-1">
           <Label htmlFor="motivo-alteracao" className="text-sm">
             Motivo da alteração <span className="text-destructive">*</span>
           </Label>
@@ -344,9 +344,9 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
         </div>
       )}
 
-      <div className={`space-y-6 ${isReadOnly ? "opacity-90" : ""}`}>
+      <div className={`space-y-3.5 ${isReadOnly ? "opacity-90" : ""}`}>
       {/* Acordeão das 8 seções */}
-      <Accordion type="multiple" defaultValue={["identificacao"]} className="space-y-2">
+      <Accordion type="multiple" defaultValue={["identificacao"]} className="space-y-1">
         {SECTION_ORDER.map((key) => {
           const complete = isSectionComplete((report as any)[key], key);
           return (
@@ -396,7 +396,7 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
           (!!(report.parecer_analista && String(report.parecer_analista).trim()) ||
             !!(report.conclusao && String(report.conclusao).trim()));
         return (
-          <Accordion type="single" collapsible className="space-y-2">
+          <Accordion type="single" collapsible className="space-y-1">
             <AccordionItem value="parecer_credito" className="border rounded-lg bg-card px-4">
               <AccordionTrigger className="hover:no-underline">
                 <div className="flex items-center gap-3 text-left">
@@ -414,7 +414,7 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
                 </div>
               </AccordionTrigger>
               <AccordionContent>
-                <div className="space-y-4 pt-2">
+                <div className="space-y-2.5 pt-1.5">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {[["parecer_analista", "Parecer analista de crédito"]].map(([key, label]) => (
                       <TextareaField
