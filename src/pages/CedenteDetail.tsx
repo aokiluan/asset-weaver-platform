@@ -237,12 +237,13 @@ export default function CedenteDetail() {
         <Button variant="outline" size="sm" className="text-[13px]" onClick={() => setEditOpen(true)}><Pencil className="h-4 w-4 mr-2" /> Editar dados</Button>
       </div>
 
-      <div className="rounded-lg border bg-card p-5 space-y-4">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="text-[20px] font-medium tracking-tight">{cedente.razao_social}</h1>
-            {cedente.nome_fantasia && <p className="text-[13px] text-muted-foreground mt-0.5">{cedente.nome_fantasia}</p>}
-            <p className="text-[13px] text-muted-foreground mt-0.5">CNPJ: {cedente.cnpj}</p>
+      <div className="rounded-lg border bg-card p-3 space-y-2.5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="leading-tight">
+            <h1 className="text-[18px] font-medium tracking-tight">{cedente.razao_social}</h1>
+            <p className="text-[12px] text-muted-foreground mt-0.5">
+              {cedente.nome_fantasia ? `${cedente.nome_fantasia} · ` : ""}CNPJ: {cedente.cnpj}
+            </p>
           </div>
           <div className="flex items-center gap-2 flex-wrap justify-end">
             <CedenteStageActions
