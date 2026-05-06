@@ -567,13 +567,59 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
-        <Button variant="outline" onClick={gerarPdf} disabled={generatingPdf}>
-          {generatingPdf ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileDown className="h-4 w-4 mr-2" />}
-          Gerar PDF
-        </Button>
+      {precisaRevisao && mode !== "edit" && (
+        <div className="flex items-start gap-2 border border-amber-300 bg-amber-50 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200 rounded-md p-3 text-sm">
+          <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+          <div>
+            <p className="font-medium">Cadastro em revalidação</p>
+            <p className="text-xs">Crie uma nova versão do relatório antes de avançar.</p>
+          </div>
+        </div>
+      )}
+
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          {existingId && (
+            <>
+              <span className="px-2 py-0.5 rounded-md border bg-muted/40">Versão atual: v{versaoAtual || 1}</span>
+              {mode === "view" && <span className="text-green-700 dark:text-green-400">somente leitura</span>}
+              {mode === "edit" && <span className="text-amber-700 dark:text-amber-400">editando nova versão</span>}
+            </>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          {mode === "view" && existingId && (
+            <Button variant="default" onClick={enterEditMode}>
+              <Pencil className="h-4 w-4 mr-2" /> Alterar relatório
+            </Button>
+          )}
+          {mode === "edit" && (
+            <Button variant="ghost" onClick={cancelEdit} disabled={saving}>
+              <X className="h-4 w-4 mr-2" /> Cancelar
+            </Button>
+          )}
+          <Button variant="outline" onClick={gerarPdf} disabled={generatingPdf}>
+            {generatingPdf ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileDown className="h-4 w-4 mr-2" />}
+            Gerar PDF
+          </Button>
+        </div>
       </div>
+
+      {mode === "edit" && (
+        <div className="space-y-2 border rounded-md p-3 bg-muted/30">
+          <Label>Motivo da alteração *</Label>
+          <Textarea
+            rows={2}
+            placeholder="Descreva brevemente o que mudou e por quê..."
+            value={motivoAlteracao}
+            onChange={(e) => setMotivoAlteracao(e.target.value)}
+          />
+        </div>
+      )}
+
+      <fieldset disabled={readOnly} className={readOnly ? "opacity-90" : ""}>
       <Accordion type="multiple" defaultValue={["cabecalho"]} className="space-y-2">
+
         {/* 1. Cabeçalho */}
         <AccordionItem value="cabecalho" className="border rounded-md px-4">
           <AccordionTrigger>1. Cabeçalho da visita</AccordionTrigger>
