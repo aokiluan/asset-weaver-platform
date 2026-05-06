@@ -67,7 +67,7 @@ const VOTE_ICON: Record<VoteDecision, JSX.Element> = {
   abstencao: <MinusCircle className="h-4 w-4" />,
 };
 
-export function ComiteGameSession({ proposalId, votosMinimos, proposalStage }: Props) {
+export function ComiteGameSession({ proposalId, votosMinimos, proposalStage, cedenteId }: Props) {
   const { user, hasRole } = useAuth();
   const [session, setSession] = useState<CommitteeSession | null>(null);
   const [votes, setVotes] = useState<VoteRow[]>([]);
@@ -76,6 +76,8 @@ export function ComiteGameSession({ proposalId, votosMinimos, proposalStage }: P
   const [busy, setBusy] = useState(false);
   const [voteDec, setVoteDec] = useState<VoteDecision>("favoravel");
   const [voteJust, setVoteJust] = useState("");
+  const [checklistInfo, setChecklistInfo] = useState<{ completed: number; total: number; allDone: boolean }>({ completed: 0, total: 0, allDone: false });
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const canVote = hasRole("comite") || hasRole("admin");
   const canManage = hasRole("admin") || hasRole("credito") || hasRole("comite");
