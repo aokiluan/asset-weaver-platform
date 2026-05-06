@@ -178,7 +178,10 @@ export function AppSidebar() {
         )}
         style={{ width: expanded ? EXPANDED_W : COLLAPSED_W }}
       >
-        <div className="h-16 flex items-center justify-between border-b border-sidebar-border px-3 shrink-0">
+        <div className={cn(
+          "h-16 flex items-center justify-between border-b border-sidebar-border shrink-0",
+          expanded ? "px-3" : "px-1.5",
+        )}>
           {expanded ? (
             <>
               <span className="text-[14px] text-sidebar-foreground">
