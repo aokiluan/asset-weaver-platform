@@ -358,9 +358,9 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
                   ) : (
                     <Circle className="h-4 w-4 text-muted-foreground shrink-0" />
                   )}
-                  <div>
-                    <div className="text-sm font-medium">{SECTION_LABEL[key]}</div>
-                    <div className="text-xs text-muted-foreground">{SECTION_HINT[key]}</div>
+                  <div className="flex items-baseline gap-2 min-w-0">
+                    <span className="text-sm font-medium">{SECTION_LABEL[key]}</span>
+                    <span className="text-xs text-muted-foreground truncate">{SECTION_HINT[key]}</span>
                   </div>
                 </div>
               </AccordionTrigger>
@@ -405,11 +405,11 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
                   ) : (
                     <Circle className="h-4 w-4 text-muted-foreground shrink-0" />
                   )}
-                  <div>
-                    <div className="text-sm font-medium">Parecer do crédito</div>
-                    <div className="text-xs text-muted-foreground">
+                  <div className="flex items-baseline gap-2 min-w-0">
+                    <span className="text-sm font-medium">Parecer do crédito</span>
+                    <span className="text-xs text-muted-foreground truncate">
                       Parecer do analista, pontos positivos/atenção, conclusão e recomendação final.
-                    </div>
+                    </span>
                   </div>
                 </div>
               </AccordionTrigger>
