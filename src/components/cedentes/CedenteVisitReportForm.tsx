@@ -131,7 +131,8 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
     key: `visit-report:${cedenteId}`,
     value: form,
     setValue: (v: any) => setForm({ ...v, fotos: Array.isArray(v?.fotos) ? v.fotos : [], modalidades: { ...defaultModalidades(), ...(v?.modalidades || {}) } }),
-    enabled: !loading,
+    // Só auto-restaura rascunho quando NÃO há registro no banco — evita sobrescrever os dados salvos.
+    enabled: !loading && !existingId,
   });
 
   useEffect(() => {
@@ -478,7 +479,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
               <div className="space-y-2">
                 <Label>Tipo de visita</Label>
                 <Select value={form.tipo_visita} onValueChange={(v) => set("tipo_visita", v)}>
-                  <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                  <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="Selecione..." /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="prospeccao">Prospecção</SelectItem>
                     <SelectItem value="acompanhamento">Acompanhamento</SelectItem>
