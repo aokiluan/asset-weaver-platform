@@ -279,25 +279,25 @@ export function CedenteRepresentantesTab({ cedenteId, jaSincronizado, onSynced }
               value={rep.id}
               className="border rounded-md px-3 data-[state=open]:bg-muted/30"
             >
-              <AccordionTrigger className="hover:no-underline py-3">
+              <AccordionTrigger className="hover:no-underline py-2">
                 <div className="flex flex-1 items-center gap-2.5 text-left pr-3">
-                  <span className="font-medium flex-1 truncate">
+                  <span className="text-[13px] font-medium flex-1 truncate">
                     {rep.nome || <span className="text-muted-foreground italic">Novo representante</span>}
                   </span>
-                  <span className="hidden md:inline text-xs font-mono text-muted-foreground">
+                  <span className="hidden md:inline text-[11px] font-mono text-muted-foreground">
                     {rep.cpf ?? "—"}
                   </span>
-                  <span className="hidden md:inline text-xs text-muted-foreground min-w-[120px] truncate">
+                  <span className="hidden md:inline text-[11px] text-muted-foreground min-w-[120px] truncate">
                     {rep.qualificacao ?? "—"}
                   </span>
-                  <span className="hidden md:inline text-xs text-muted-foreground w-16 text-right">
+                  <span className="hidden md:inline text-[11px] text-muted-foreground w-16 text-right">
                     {fmtPct(rep.participacao_capital)}
                   </span>
-                  <Badge variant={rep.fonte === "receita" ? "default" : "secondary"}>
+                  <Badge variant={rep.fonte === "receita" ? "default" : "secondary"} className="text-[10px] px-1.5 py-0 h-[18px]">
                     {rep.fonte === "receita" ? "Receita" : "Manual"}
                   </Badge>
                   {rep.dirty && (
-                    <Badge variant="outline" className="text-xs">não salvo</Badge>
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-[18px]">não salvo</Badge>
                   )}
                 </div>
               </AccordionTrigger>
