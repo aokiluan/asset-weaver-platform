@@ -473,7 +473,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
       <Accordion type="multiple" defaultValue={["cabecalho"]} className="space-y-0.5">
 
         {/* 1. Cabeçalho */}
-        <AccordionItem value="cabecalho" className="border rounded-md px-4">
+        <AccordionItem value="cabecalho" className="border rounded-lg bg-card px-3">
           <AccordionTrigger>1. Cabeçalho da visita</AccordionTrigger>
           <AccordionContent className="space-y-2.5 pt-1.5">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
@@ -512,7 +512,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
         </AccordionItem>
 
         {/* 2. Negócio */}
-        <AccordionItem value="negocio" className="border rounded-md px-4">
+        <AccordionItem value="negocio" className="border rounded-lg bg-card px-3">
           <AccordionTrigger>2. Dados do negócio</AccordionTrigger>
           <AccordionContent className="space-y-2.5 pt-1.5">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
@@ -568,7 +568,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
         </AccordionItem>
 
         {/* 3. Adicionais */}
-        <AccordionItem value="adicionais" className="border rounded-md px-4">
+        <AccordionItem value="adicionais" className="border rounded-lg bg-card px-3">
           <AccordionTrigger>3. Informações adicionais</AccordionTrigger>
           <AccordionContent className="space-y-2.5 pt-1.5">
             <div className="space-y-0.5">
@@ -605,7 +605,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
         </AccordionItem>
 
         {/* 4. Pleito */}
-        <AccordionItem value="pleito" className="border rounded-md px-4">
+        <AccordionItem value="pleito" className="border rounded-lg bg-card px-3">
           <AccordionTrigger>4. Pleito de crédito</AccordionTrigger>
           <AccordionContent className="space-y-2.5 pt-1.5">
             <div className="space-y-0.5">
@@ -650,7 +650,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
         </AccordionItem>
 
         {/* 5. Parecer */}
-        <AccordionItem value="parecer" className="border rounded-md px-4">
+        <AccordionItem value="parecer" className="border rounded-lg bg-card px-3">
           <AccordionTrigger>5. Parecer comercial</AccordionTrigger>
           <AccordionContent className="space-y-2.5 pt-1.5">
             <div className="space-y-0.5">
