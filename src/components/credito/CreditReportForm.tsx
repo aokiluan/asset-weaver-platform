@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, Circle, Loader2, Save, FileDown } from "lucide-react";
+import { CheckCircle2, Circle, Loader2, Save, FileDown, Pencil, X, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { useFormDraft } from "@/hooks/useFormDraft";
 import { DraftIndicator } from "@/components/ui/draft-indicator";
@@ -26,6 +26,7 @@ import {
 } from "@/lib/credit-report";
 import { FieldAttachments, Attachment } from "./FieldAttachments";
 import { generateCreditReportPdf } from "@/lib/credit-report-pdf";
+import { CreditReportVersionsPanel } from "./CreditReportVersionsPanel";
 
 const ATT_KEY = "__attachments";
 function getAtt(section: any, fieldKey: string): Attachment[] {
@@ -62,6 +63,8 @@ type ReportRow = {
   recomendacao: string | null;
   completude: number;
   attachments_top: any;
+  versao_atual: number;
+  precisa_revisao: boolean;
   updated_at: string;
 };
 
@@ -78,6 +81,8 @@ function setSectionAtt(section: any, fieldKey: string, list: Attachment[]) {
   return { ...(section ?? {}), [ATT_KEY]: att };
 }
 
+type Mode = "create" | "view" | "edit";
+
 export function CreditReportForm({ cedenteId, proposalId }: Props) {
   const { user, hasRole } = useAuth();
   const [report, setReport] = useState<Partial<ReportRow>>(emptyReport(cedenteId, proposalId));
@@ -86,12 +91,18 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
   const [dirty, setDirty] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [cedenteNome, setCedenteNome] = useState<string>("");
+  const [mode, setMode] = useState<Mode>("create");
+  const [motivoAlteracao, setMotivoAlteracao] = useState("");
+  const [versionsRefresh, setVersionsRefresh] = useState(0);
+
+  const versaoAtual = (report as any).versao_atual ?? 1;
+  const draftKey = `credit-report:${cedenteId}:${mode === "edit" ? `edit:v${versaoAtual}` : "new"}`;
 
   const { restored, lastSavedAt, clearDraft, discardDraft } = useFormDraft<Partial<ReportRow>>({
-    key: `credit-report:${cedenteId}`,
+    key: draftKey,
     value: report,
     setValue: (v) => { setReport(v); setDirty(true); },
-    enabled: !loading,
+    enabled: !loading && (mode === "create" || mode === "edit"),
   });
 
   const canEdit = hasRole("admin") || hasRole("credito");
@@ -106,8 +117,13 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
       ]);
       if (!active) return;
       if (error) toast.error("Erro ao carregar relatório", { description: error.message });
-      if (data) setReport(data as ReportRow);
-      else setReport(emptyReport(cedenteId, proposalId));
+      if (data) {
+        setReport(data as ReportRow);
+        setMode("view");
+      } else {
+        setReport(emptyReport(cedenteId, proposalId));
+        setMode("create");
+      }
       setCedenteNome((ced.data as any)?.razao_social ?? "");
       setLoading(false);
     })();
@@ -115,6 +131,8 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
   }, [cedenteId, proposalId]);
 
   const completude = useMemo(() => computeCompletude(report as any), [report]);
+  const isReadOnly = mode === "view" || !canEdit;
+  const precisaRevisao = (report as any).precisa_revisao;
 
   const setSection = (key: SectionKey, fieldKey: string, value: any) => {
     setReport((r) => ({ ...r, [key]: { ...(r[key] ?? {}), [fieldKey]: value } }));
@@ -136,16 +154,41 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
     setDirty(true);
   };
 
+  const handleAlterar = () => {
+    setMode("edit");
+    setMotivoAlteracao("");
+    setDirty(false);
+  };
+
+  const handleCancelarEdicao = async () => {
+    setMode("view");
+    setMotivoAlteracao("");
+    setDirty(false);
+    clearDraft();
+    // recarregar versão atual
+    const { data } = await supabase.from("credit_reports").select("*").eq("cedente_id", cedenteId).maybeSingle();
+    if (data) setReport(data as ReportRow);
+  };
+
   const save = async () => {
     if (!user) return;
+    if (mode === "edit" && !motivoAlteracao.trim()) {
+      toast.error("Informe o motivo da alteração");
+      return;
+    }
     setSaving(true);
+
+    const novaVersao = mode === "edit" ? (versaoAtual || 1) + 1 : (versaoAtual || 1);
+    const completudeCalc = computeCompletude(report as any);
+
     const payload: any = {
       ...report,
       cedente_id: cedenteId,
-      completude: computeCompletude(report as any),
+      completude: completudeCalc,
       updated_by: user.id,
+      versao_atual: novaVersao,
+      precisa_revisao: false,
     };
-    // proposal_id é opcional: só envia se houver
     if (proposalId) payload.proposal_id = proposalId;
     else if (!report.proposal_id) delete payload.proposal_id;
     if (!report.id) payload.created_by = user.id;
@@ -155,12 +198,56 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
       .upsert(payload, { onConflict: "cedente_id" })
       .select()
       .single();
+    if (error) { setSaving(false); toast.error("Erro ao salvar", { description: error.message }); return; }
+    const saved = data as ReportRow;
+
+    // Marca versões anteriores como não-atual
+    if (mode === "edit") {
+      await supabase
+        .from("credit_report_versions" as any)
+        .update({ is_current: false })
+        .eq("report_id", saved.id);
+    }
+
+    // Insere snapshot da nova versão
+    const snapshot: any = {
+      report_id: saved.id,
+      cedente_id: saved.cedente_id,
+      proposal_id: saved.proposal_id,
+      versao: novaVersao,
+      is_current: true,
+      motivo_alteracao: mode === "edit" ? motivoAlteracao.trim() : null,
+      identificacao: saved.identificacao,
+      empresa: saved.empresa,
+      rede_societaria: saved.rede_societaria,
+      carteira: saved.carteira,
+      restritivos: saved.restritivos,
+      financeiro: saved.financeiro,
+      due_diligence: saved.due_diligence,
+      pleito: saved.pleito,
+      attachments_top: saved.attachments_top,
+      parecer_comercial: saved.parecer_comercial,
+      parecer_regional: saved.parecer_regional,
+      parecer_compliance: saved.parecer_compliance,
+      parecer_analista: saved.parecer_analista,
+      pontos_positivos: saved.pontos_positivos,
+      pontos_atencao: saved.pontos_atencao,
+      conclusao: saved.conclusao,
+      recomendacao: saved.recomendacao,
+      completude: saved.completude,
+      created_by: user.id,
+    };
+    const { error: vErr } = await supabase.from("credit_report_versions" as any).insert(snapshot);
     setSaving(false);
-    if (error) { toast.error("Erro ao salvar", { description: error.message }); return; }
-    setReport(data as ReportRow);
+    if (vErr) { toast.error("Erro ao registrar versão", { description: vErr.message }); return; }
+
+    setReport(saved);
     setDirty(false);
+    setMotivoAlteracao("");
+    setMode("view");
     clearDraft();
-    toast.success("Relatório salvo");
+    setVersionsRefresh((n) => n + 1);
+    toast.success(mode === "edit" ? `Versão v${novaVersao} salva` : "Relatório salvo");
   };
 
   if (loading) {
@@ -169,14 +256,33 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
 
   return (
     <div className="space-y-6">
+      {precisaRevisao && mode === "view" && (
+        <div className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-950/30 p-3 text-sm">
+          <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+          <div>
+            <p className="font-medium">Cadastro em revalidação</p>
+            <p className="text-xs text-muted-foreground">Crie uma nova versão do relatório antes de avançar.</p>
+          </div>
+        </div>
+      )}
+
       {/* Header com progresso */}
       <div className="rounded-lg border bg-card p-4 space-y-3">
         <div className="flex items-center justify-between gap-4 flex-wrap">
-          <div>
-            <h3 className="text-base font-semibold">Relatório estruturado de crédito</h3>
-            <p className="text-xs text-muted-foreground">
-              Preencha as 8 seções para liberar envio ao comitê.
-            </p>
+          <div className="flex items-center gap-3 flex-wrap">
+            <div>
+              <h3 className="text-base font-semibold">Relatório estruturado de crédito</h3>
+              <p className="text-xs text-muted-foreground">
+                Preencha as 8 seções para liberar envio ao comitê.
+              </p>
+            </div>
+            {report.id && (
+              <span className="px-2 py-0.5 rounded-md border bg-muted/40 text-xs">
+                Versão atual: v{versaoAtual || 1}
+              </span>
+            )}
+            {mode === "view" && <Badge variant="secondary" className="text-[10px]">Somente leitura</Badge>}
+            {mode === "edit" && <Badge className="text-[10px]">Editando nova versão</Badge>}
           </div>
           <div className="flex items-center gap-2">
             <Badge variant={completude === 8 ? "default" : "outline"}>
@@ -201,22 +307,44 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
               {generating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileDown className="h-4 w-4 mr-2" />}
               Gerar PDF
             </Button>
-            {canEdit && (
-              <Button onClick={save} disabled={saving || !dirty} size="sm">
-                {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-                Salvar
+            {canEdit && mode === "view" && report.id && (
+              <Button onClick={handleAlterar} size="sm" variant="outline">
+                <Pencil className="h-4 w-4 mr-2" /> Alterar relatório
+              </Button>
+            )}
+            {canEdit && mode === "edit" && (
+              <Button onClick={handleCancelarEdicao} size="sm" variant="ghost">
+                <X className="h-4 w-4 mr-2" /> Cancelar
               </Button>
             )}
           </div>
         </div>
         <Progress value={(completude / 8) * 100} className="h-2" />
-        <DraftIndicator
-          lastSavedAt={lastSavedAt}
-          restored={restored}
-          onDiscard={() => discardDraft(emptyReport(cedenteId, proposalId))}
-        />
+        {(mode === "create" || mode === "edit") && (
+          <DraftIndicator
+            lastSavedAt={lastSavedAt}
+            restored={restored}
+            onDiscard={() => discardDraft(emptyReport(cedenteId, proposalId))}
+          />
+        )}
       </div>
 
+      {mode === "edit" && (
+        <div className="rounded-lg border bg-card p-4 space-y-2">
+          <Label htmlFor="motivo-alteracao" className="text-sm">
+            Motivo da alteração <span className="text-destructive">*</span>
+          </Label>
+          <Textarea
+            id="motivo-alteracao"
+            rows={2}
+            placeholder="Descreva o que mudou e por quê (ex: revalidação, novos dados de balanço, correção de informação...)"
+            value={motivoAlteracao}
+            onChange={(e) => setMotivoAlteracao(e.target.value)}
+          />
+        </div>
+      )}
+
+      <fieldset disabled={isReadOnly} className="space-y-6 disabled:opacity-90">
       {/* Acordeão das 8 seções */}
       <Accordion type="multiple" defaultValue={["identificacao"]} className="space-y-2">
         {SECTION_ORDER.map((key) => {
@@ -244,7 +372,7 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
                       field={f}
                       value={(report as any)[key]?.[f.key] ?? ""}
                       onChange={(v) => setSection(key, f.key, v)}
-                      disabled={!canEdit}
+                      disabled={isReadOnly}
                       cedenteId={cedenteId}
                       attachments={getAtt((report as any)[key], f.key)}
                       onAttachmentsChange={(list) => setSectionAttachments(key, f.key, list)}
@@ -288,15 +416,13 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
               <AccordionContent>
                 <div className="space-y-4 pt-2">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {[
-                      ["parecer_analista", "Parecer analista de crédito"],
-                    ].map(([key, label]) => (
+                    {[["parecer_analista", "Parecer analista de crédito"]].map(([key, label]) => (
                       <TextareaField
                         key={key}
                         label={label}
                         value={(report as any)[key] ?? ""}
                         onChange={(v) => setTopField(key as keyof ReportRow, v)}
-                        disabled={!canEdit}
+                        disabled={isReadOnly}
                         cedenteId={cedenteId}
                         fieldKey={key}
                         attachments={getTopAtt((report as any).attachments_top, key)}
@@ -314,7 +440,7 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
                         label={label}
                         value={(report as any)[key] ?? ""}
                         onChange={(v) => setTopField(key as keyof ReportRow, v)}
-                        disabled={!canEdit}
+                        disabled={isReadOnly}
                         cedenteId={cedenteId}
                         fieldKey={key}
                         attachments={getTopAtt((report as any).attachments_top, key)}
@@ -326,7 +452,7 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
                     label="📌 Conclusão"
                     value={report.conclusao ?? ""}
                     onChange={(v) => setTopField("conclusao", v)}
-                    disabled={!canEdit}
+                    disabled={isReadOnly}
                     rows={3}
                     cedenteId={cedenteId}
                     fieldKey="conclusao"
@@ -335,7 +461,7 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
                   />
                   <div className="space-y-2 max-w-xs">
                     <Label>Recomendação final</Label>
-                    <Select value={report.recomendacao ?? ""} onValueChange={(v) => setTopField("recomendacao", v)} disabled={!canEdit}>
+                    <Select value={report.recomendacao ?? ""} onValueChange={(v) => setTopField("recomendacao", v)} disabled={isReadOnly}>
                       <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
                       <SelectContent>
                         {RECOMENDACAO_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
@@ -348,12 +474,15 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
           </Accordion>
         );
       })()}
+      </fieldset>
 
-      {canEdit && (
+      <CreditReportVersionsPanel reportId={report.id ?? null} cedenteNome={cedenteNome} refreshKey={versionsRefresh} />
+
+      {canEdit && (mode === "create" || mode === "edit") && (
         <div className="flex justify-end sticky bottom-4">
-          <Button onClick={save} disabled={saving || !dirty} size="lg" className="shadow-lg">
+          <Button onClick={save} disabled={saving} size="lg" className="shadow-lg">
             {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-            Salvar relatório
+            {mode === "edit" ? "Salvar nova versão" : "Salvar relatório"}
           </Button>
         </div>
       )}
