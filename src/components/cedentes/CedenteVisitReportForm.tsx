@@ -479,7 +479,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
               <div className="space-y-2">
                 <Label>Tipo de visita</Label>
                 <Select value={form.tipo_visita} onValueChange={(v) => set("tipo_visita", v)}>
-                  <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                  <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="Selecione..." /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="prospeccao">Prospecção</SelectItem>
                     <SelectItem value="acompanhamento">Acompanhamento</SelectItem>
