@@ -34,11 +34,25 @@ interface VersionRow {
   entrevistado_nome: string | null;
 }
 
-export function VisitReportVersionsPanel({ reportId, refreshKey }: Props) {
+export function VisitReportVersionsPanel({ reportId, cedenteId, refreshKey }: Props) {
   const [versions, setVersions] = useState<VersionRow[]>([]);
   const [authors, setAuthors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
+
+  const handleGerarPdf = async () => {
+    if (!opened) return;
+    setGeneratingPdf(true);
+    try {
+      await generateVisitReportPdf(opened as any, cedenteId, `v${opened.versao}`);
+      toast.success("PDF gerado");
+    } catch (e: any) {
+      toast.error("Erro ao gerar PDF", { description: e?.message });
+    } finally {
+      setGeneratingPdf(false);
+    }
+  };
 
   useEffect(() => {
     if (!reportId) { setVersions([]); return; }
