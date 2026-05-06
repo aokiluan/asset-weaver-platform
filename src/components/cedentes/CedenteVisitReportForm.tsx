@@ -272,8 +272,6 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
       setGeneratingPdf(false);
     }
   };
-    }
-  };
 
 
   const handleSave = async () => {
