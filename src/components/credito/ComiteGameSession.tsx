@@ -9,9 +9,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card } from "@/components/ui/card";
 import {
   Vote, ThumbsUp, ThumbsDown, MinusCircle, EyeOff, Eye,
-  Trophy, Loader2, Lock, Sparkles, Clock,
+  Trophy, Loader2, Lock, Sparkles, Clock, AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
+import { VoteBriefing } from "./VoteBriefing";
+import { ReadingChecklist, ChecklistItem } from "./ReadingChecklist";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type VoteDecision = "favoravel" | "desfavoravel" | "abstencao";
 
@@ -31,6 +37,8 @@ interface VoteRow {
   decisao: VoteDecision;
   justificativa: string | null;
   created_at: string;
+  checklist_completo?: boolean;
+  itens_revisados?: number;
 }
 
 interface Profile { id: string; nome: string; }
@@ -39,7 +47,15 @@ interface Props {
   proposalId: string;
   votosMinimos: number;
   proposalStage: string;
+  cedenteId?: string;
 }
+
+const CHECKLIST_ITEMS: ChecklistItem[] = [
+  { key: "pleito_comercial", label: "Revisei o pleito comercial", hint: "Valor, prazo e modalidades solicitados", tab: "visita" },
+  { key: "parecer_comercial", label: "Li o parecer e a recomendação comercial", hint: "Percepção do comercial sobre o cedente", tab: "visita" },
+  { key: "analise_credito", label: "Conferi a análise e o parecer do crédito", hint: "Recomendação, conclusão e justificativa do analista", tab: "credito" },
+  { key: "pontos_atencao", label: "Olhei os pontos de atenção e restritivos", hint: "Riscos levantados em ambos os relatórios", tab: "credito" },
+];
 
 const VOTE_LABEL: Record<VoteDecision, string> = {
   favoravel: "Favorável", desfavoravel: "Desfavorável", abstencao: "Abstenção",
@@ -53,7 +69,7 @@ const VOTE_ICON: Record<VoteDecision, JSX.Element> = {
   abstencao: <MinusCircle className="h-4 w-4" />,
 };
 
-export function ComiteGameSession({ proposalId, votosMinimos, proposalStage }: Props) {
+export function ComiteGameSession({ proposalId, votosMinimos, proposalStage, cedenteId }: Props) {
   const { user, hasRole } = useAuth();
   const [session, setSession] = useState<CommitteeSession | null>(null);
   const [votes, setVotes] = useState<VoteRow[]>([]);
@@ -62,6 +78,8 @@ export function ComiteGameSession({ proposalId, votosMinimos, proposalStage }: P
   const [busy, setBusy] = useState(false);
   const [voteDec, setVoteDec] = useState<VoteDecision>("favoravel");
   const [voteJust, setVoteJust] = useState("");
+  const [checklistInfo, setChecklistInfo] = useState<{ completed: number; total: number; allDone: boolean }>({ completed: 0, total: 0, allDone: false });
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const canVote = hasRole("comite") || hasRole("admin");
   const canManage = hasRole("admin") || hasRole("credito") || hasRole("comite");
@@ -163,12 +181,28 @@ export function ComiteGameSession({ proposalId, votosMinimos, proposalStage }: P
     if (!user || !session) return;
     setBusy(true);
     const { error } = await supabase.from("committee_votes").upsert(
-      { proposal_id: proposalId, voter_id: user.id, decisao: voteDec, justificativa: voteJust || null },
+      {
+        proposal_id: proposalId,
+        voter_id: user.id,
+        decisao: voteDec,
+        justificativa: voteJust || null,
+        checklist_completo: checklistInfo.allDone,
+        itens_revisados: checklistInfo.completed,
+      } as any,
       { onConflict: "proposal_id,voter_id" }
     );
     setBusy(false);
+    setConfirmOpen(false);
     if (error) { toast.error(error.message); return; }
-    toast.success("Voto registrado 🗳️");
+    toast.success(checklistInfo.allDone ? "Voto registrado 🗳️" : "Voto registrado (sem checklist completo)");
+  };
+
+  const handleVoteClick = () => {
+    if (!checklistInfo.allDone && checklistInfo.total > 0) {
+      setConfirmOpen(true);
+    } else {
+      votar();
+    }
   };
 
   if (loading) return <div className="flex items-center justify-center py-10 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin mr-2" /> Carregando comitê…</div>;
@@ -193,6 +227,9 @@ export function ComiteGameSession({ proposalId, votosMinimos, proposalStage }: P
 
   return (
     <div className="space-y-4">
+      {/* Briefing sintetizado dos pareceres */}
+      {cedenteId && <VoteBriefing cedenteId={cedenteId} proposalId={proposalId} />}
+
       {/* Header da sessão */}
       <Card className="p-4">
         <div className="flex items-center justify-between flex-wrap gap-3">
@@ -255,8 +292,17 @@ export function ComiteGameSession({ proposalId, votosMinimos, proposalStage }: P
                   {showDecision ? VOTE_ICON[v.decisao] : <EyeOff className="h-4 w-4 text-muted-foreground" />}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium truncate">
-                    {profiles[v.voter_id]?.nome ?? "Membro do comitê"} {isOwn && <span className="text-xs text-muted-foreground">(você)</span>}
+                  <div className="text-sm font-medium truncate flex items-center gap-1.5">
+                    {profiles[v.voter_id]?.nome ?? "Membro do comitê"} {isOwn && <span className="text-xs text-muted-foreground font-normal">(você)</span>}
+                    {v.checklist_completo ? (
+                      <span title="Revisou todo o briefing antes de votar">
+                        <Eye className="h-3 w-3 text-green-600" />
+                      </span>
+                    ) : (
+                      <span title="Votou sem completar o checklist de leitura">
+                        <EyeOff className="h-3 w-3 text-amber-600" />
+                      </span>
+                    )}
                   </div>
                   {showDecision ? (
                     <div className="text-xs text-muted-foreground">
@@ -273,36 +319,71 @@ export function ComiteGameSession({ proposalId, votosMinimos, proposalStage }: P
         </div>
       </Card>
 
-      {/* Form de voto */}
+      {/* Checklist de leitura + Form de voto */}
       {canVote && session.status === "aberta" && proposalStage === "comite" && (
-        <Card className="p-4 space-y-3 border-primary/30">
-          <h4 className="text-sm font-semibold">{ownVote ? "Atualizar meu voto" : "Registrar meu voto"}</h4>
-          <div className="grid grid-cols-3 gap-2">
-            {(["favoravel", "desfavoravel", "abstencao"] as VoteDecision[]).map((d) => (
-              <button
-                key={d}
-                onClick={() => setVoteDec(d)}
-                className={`rounded-md border p-3 flex flex-col items-center gap-1 transition ${voteDec === d ? `${VOTE_COLOR[d]} text-white border-transparent` : "hover:bg-muted"}`}
-                type="button"
-              >
-                {VOTE_ICON[d]}
-                <span className="text-xs font-medium">{VOTE_LABEL[d]}</span>
-              </button>
-            ))}
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs">Justificativa (opcional)</Label>
-            <Textarea rows={2} value={voteJust} onChange={(e) => setVoteJust(e.target.value)} />
-          </div>
-          <Button onClick={votar} disabled={busy} className="w-full">
-            {busy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Vote className="h-4 w-4 mr-2" />}
-            {ownVote ? "Atualizar voto" : "Confirmar voto"}
-          </Button>
-          {session.voto_secreto && !revealed && (
-            <p className="text-xs text-muted-foreground text-center"><Lock className="inline h-3 w-3 mr-1" /> Seu voto fica oculto até a revelação.</p>
+        <>
+          {cedenteId && (
+            <ReadingChecklist
+              proposalId={proposalId}
+              cedenteId={cedenteId}
+              items={CHECKLIST_ITEMS}
+              onProgress={setChecklistInfo}
+            />
           )}
-        </Card>
+
+          <Card className="p-4 space-y-3 border-primary/30">
+            <h4 className="text-sm font-semibold">{ownVote ? "Atualizar meu voto" : "Registrar meu voto"}</h4>
+            <div className="grid grid-cols-3 gap-2">
+              {(["favoravel", "desfavoravel", "abstencao"] as VoteDecision[]).map((d) => (
+                <button
+                  key={d}
+                  onClick={() => setVoteDec(d)}
+                  className={`rounded-md border p-3 flex flex-col items-center gap-1 transition ${voteDec === d ? `${VOTE_COLOR[d]} text-white border-transparent` : "hover:bg-muted"}`}
+                  type="button"
+                >
+                  {VOTE_ICON[d]}
+                  <span className="text-xs font-medium">{VOTE_LABEL[d]}</span>
+                </button>
+              ))}
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Justificativa (opcional)</Label>
+              <Textarea rows={2} value={voteJust} onChange={(e) => setVoteJust(e.target.value)} />
+            </div>
+            {!checklistInfo.allDone && checklistInfo.total > 0 && (
+              <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/5 p-2 text-xs text-amber-700 dark:text-amber-400">
+                <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                <span>
+                  Você revisou {checklistInfo.completed} de {checklistInfo.total} itens. Recomendamos completar antes de votar.
+                </span>
+              </div>
+            )}
+            <Button onClick={handleVoteClick} disabled={busy} className="w-full">
+              {busy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Vote className="h-4 w-4 mr-2" />}
+              {ownVote ? "Atualizar voto" : "Confirmar voto"}
+            </Button>
+            {session.voto_secreto && !revealed && (
+              <p className="text-xs text-muted-foreground text-center"><Lock className="inline h-3 w-3 mr-1" /> Seu voto fica oculto até a revelação.</p>
+            )}
+          </Card>
+        </>
       )}
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Votar sem revisar tudo?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você marcou apenas {checklistInfo.completed} de {checklistInfo.total} itens do checklist de leitura.
+              Seu voto será registrado com essa informação para fins de auditoria. Deseja continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Voltar e revisar</AlertDialogCancel>
+            <AlertDialogAction onClick={votar}>Votar mesmo assim</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -495,29 +495,59 @@ export type Database = {
         }
         Relationships: []
       }
+      committee_vote_checklist: {
+        Row: {
+          checked_at: string
+          id: string
+          item_key: string
+          proposal_id: string
+          voter_id: string
+        }
+        Insert: {
+          checked_at?: string
+          id?: string
+          item_key: string
+          proposal_id: string
+          voter_id: string
+        }
+        Update: {
+          checked_at?: string
+          id?: string
+          item_key?: string
+          proposal_id?: string
+          voter_id?: string
+        }
+        Relationships: []
+      }
       committee_votes: {
         Row: {
+          checklist_completo: boolean
           created_at: string
           decisao: Database["public"]["Enums"]["vote_decision"]
           id: string
+          itens_revisados: number
           justificativa: string | null
           proposal_id: string
           updated_at: string
           voter_id: string
         }
         Insert: {
+          checklist_completo?: boolean
           created_at?: string
           decisao: Database["public"]["Enums"]["vote_decision"]
           id?: string
+          itens_revisados?: number
           justificativa?: string | null
           proposal_id: string
           updated_at?: string
           voter_id: string
         }
         Update: {
+          checklist_completo?: boolean
           created_at?: string
           decisao?: Database["public"]["Enums"]["vote_decision"]
           id?: string
+          itens_revisados?: number
           justificativa?: string | null
           proposal_id?: string
           updated_at?: string
