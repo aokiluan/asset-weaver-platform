@@ -19,6 +19,7 @@ import {
   Pin,
   PinOff,
   ChevronDown,
+  Menu,
   TrendingUp,
   Activity,
   CalendarDays,
@@ -198,7 +199,15 @@ export function AppSidebar() {
               </button>
             </>
           ) : (
-            <div className="h-7 w-7" aria-hidden />
+            <button
+              type="button"
+              onClick={() => setPinned(true)}
+              className="h-7 w-7 mx-auto flex items-center justify-center rounded-md text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+              title="Abrir menu"
+              aria-label="Abrir menu"
+            >
+              <Menu className="h-4 w-4" />
+            </button>
           )}
         </div>
 
