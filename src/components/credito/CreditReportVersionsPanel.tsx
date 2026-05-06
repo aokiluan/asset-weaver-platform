@@ -90,47 +90,45 @@ export function CreditReportVersionsPanel({ reportId, cedenteNome, refreshKey }:
 
   return (
     <>
-      <div className="border rounded-md">
-        <Accordion type="single" collapsible>
-          <AccordionItem value="versoes" className="border-0 px-4">
-            <AccordionTrigger className="text-sm">
-              <div className="flex items-center gap-2">
-                <History className="h-4 w-4" />
-                Histórico de versões
-                <Badge variant="secondary" className="text-[10px]">{versions.length}</Badge>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent>
-              <div className="space-y-2 pt-1">
-                {versions.map((v) => (
-                  <div key={v.id} className="flex items-center justify-between border rounded-md px-3 py-2 text-sm">
-                    <div className="space-y-0.5 min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">v{v.versao}</span>
-                        {v.is_current && <Badge className="text-[10px]">atual</Badge>}
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(v.created_at).toLocaleString("pt-BR")}
-                        </span>
-                        {authors[v.created_by] && (
-                          <span className="text-xs text-muted-foreground">· {authors[v.created_by]}</span>
-                        )}
-                      </div>
-                      {v.motivo_alteracao && (
-                        <p className="text-xs text-muted-foreground truncate" title={v.motivo_alteracao}>
-                          Motivo: {v.motivo_alteracao}
-                        </p>
+      <Accordion type="single" collapsible className="space-y-0.5">
+        <AccordionItem value="versoes" className="border rounded-lg bg-card px-3">
+          <AccordionTrigger className="hover:no-underline">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <History className="h-3.5 w-3.5" />
+              Histórico de versões
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-[18px]">{versions.length}</Badge>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent>
+            <div className="space-y-1">
+              {versions.map((v) => (
+                <div key={v.id} className="flex items-center justify-between border rounded-md px-2.5 py-1.5">
+                  <div className="space-y-0.5 min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[13px] font-medium">v{v.versao}</span>
+                      {v.is_current && <Badge className="text-[10px] px-1.5 py-0 h-[18px]">atual</Badge>}
+                      <span className="text-[11px] text-muted-foreground">
+                        {new Date(v.created_at).toLocaleString("pt-BR")}
+                      </span>
+                      {authors[v.created_by] && (
+                        <span className="text-[11px] text-muted-foreground">· {authors[v.created_by]}</span>
                       )}
                     </div>
-                    <Button size="sm" variant="ghost" onClick={() => setOpenId(v.id)}>
-                      <Eye className="h-3.5 w-3.5 mr-1" /> Ver
-                    </Button>
+                    {v.motivo_alteracao && (
+                      <p className="text-[11px] text-muted-foreground truncate" title={v.motivo_alteracao}>
+                        Motivo: {v.motivo_alteracao}
+                      </p>
+                    )}
                   </div>
-                ))}
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
-      </div>
+                  <Button size="sm" variant="ghost" className="h-7 text-[11px]" onClick={() => setOpenId(v.id)}>
+                    <Eye className="h-3 w-3 mr-1" /> Ver
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
 
       <Dialog open={!!opened} onOpenChange={(o) => !o && setOpenId(null)}>
         <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
