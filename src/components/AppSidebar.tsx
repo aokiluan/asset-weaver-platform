@@ -1,31 +1,31 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import {
-  LayoutDashboard,
   Users,
-  KanbanSquare,
-  Settings,
-  Building2,
-  
+  Kanban,
+  Gear,
+  Buildings,
   Gavel,
   ListChecks,
-  Tags,
+  Tag,
   Wallet,
   Database,
-  FileSpreadsheet,
-  LayoutGrid,
-  BarChart3,
+  MicrosoftExcelLogo,
+  SquaresFour,
+  ChartBar,
   Briefcase,
-  Pin,
-  PinOff,
-  ChevronDown,
-  Menu,
-  TrendingUp,
-  Activity,
-  CalendarDays,
-  Vote,
-  FileSignature,
-} from "lucide-react";
+  PushPin,
+  PushPinSlash,
+  CaretDown,
+  List,
+  TrendUp,
+  Pulse,
+  CalendarBlank,
+  Scales,
+  NotePencil,
+  type Icon as PhosphorIcon,
+} from "@phosphor-icons/react";
+import { forwardRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 
