@@ -1,25 +1,17 @@
 ## Objetivo
-Reduzir ainda mais a distância entre label e campo de input em todo o projeto.
+Reduzir a largura máxima dos cards de seção (accordions) em todo o projeto para ficarem ultracompactos, mantendo legibilidade dos grids de 3 colunas.
+
+## Largura mínima recomendada
+`max-w-3xl` (768px). Abaixo disso, grids de 3 colunas começam a quebrar e os labels podem truncar. Esse é o limite prático "ultracompacto" sem prejudicar formulários.
 
 ## Mudanças
+Adicionar `max-w-3xl` ao container do `<Accordion>` em:
 
-### 1. `src/components/ui/label.tsx`
-- Remover `mb-0.5 inline-block` do `labelVariants` → label sem margem extra.
+- `src/components/credito/CreditReportForm.tsx` (linhas 349 e 399)
+- `src/components/cedentes/CedenteVisitReportForm.tsx` (linha 473)
+- `src/components/cedentes/CedenteRepresentantesTab.tsx` (linha 275)
 
-### 2. `src/components/ui/form.tsx`
-- `FormItem`: trocar `space-y-1` por `space-y-0.5` → ~2px entre label e input.
-
-### 3. Formulários (substituir `space-y-1` em wrappers de campo por `space-y-0.5`)
-Arquivos:
-- `src/components/cedentes/CedenteVisitReportForm.tsx`
-- `src/components/credito/CreditReportForm.tsx`
-- `src/components/cedentes/CedenteFormDialog.tsx`
-- `src/components/cedentes/CedenteNovoSheet.tsx`
-- `src/components/cedentes/SocioFormCard.tsx`
-- `src/components/cedentes/CedenteRepresentantesTab.tsx`
-- `src/components/leads/LeadFormDialog.tsx`
-
-Substituir `className="space-y-1"` (em wrappers Label+Input) por `className="space-y-0.5"`.
+Não alterar `CreditReportVersionsPanel.tsx` e `VisitReportVersionsPanel.tsx` — são painéis laterais de versões, não cards de formulário.
 
 ## Resultado
-Distância label↔input cai de ~6px para ~2px. Fontes e alturas permanecem iguais.
+Cards param de esticar até a borda da tela, ficando ~768px de largura máxima — visualmente muito mais compactos.
