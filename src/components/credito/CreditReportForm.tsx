@@ -330,7 +330,7 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
       </div>
 
       {mode === "edit" && (
-        <div className="rounded-lg border bg-card p-4 space-y-1">
+        <div className="rounded-lg border bg-card p-4 space-y-0.5">
           <Label htmlFor="motivo-alteracao" className="text-sm">
             Motivo da alteração <span className="text-destructive">*</span>
           </Label>
@@ -346,7 +346,7 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
 
       <div className={`space-y-3.5 ${isReadOnly ? "opacity-90" : ""}`}>
       {/* Acordeão das 8 seções */}
-      <Accordion type="multiple" defaultValue={["identificacao"]} className="space-y-1">
+      <Accordion type="multiple" defaultValue={["identificacao"]} className="space-y-0.5">
         {SECTION_ORDER.map((key) => {
           const complete = isSectionComplete((report as any)[key], key);
           return (
@@ -396,7 +396,7 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
           (!!(report.parecer_analista && String(report.parecer_analista).trim()) ||
             !!(report.conclusao && String(report.conclusao).trim()));
         return (
-          <Accordion type="single" collapsible className="space-y-1">
+          <Accordion type="single" collapsible className="space-y-0.5">
             <AccordionItem value="parecer_credito" className="border rounded-lg bg-card px-4">
               <AccordionTrigger className="hover:no-underline">
                 <div className="flex items-center gap-3 text-left">

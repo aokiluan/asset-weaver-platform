@@ -272,7 +272,7 @@ export function CedenteRepresentantesTab({ cedenteId, jaSincronizado, onSynced }
             : "Nenhum representante encontrado. Adicione manualmente."}
         </div>
       ) : (
-        <Accordion type="multiple" className="space-y-1">
+        <Accordion type="multiple" className="space-y-0.5">
           {items.map((rep, idx) => (
             <AccordionItem
               key={rep.id}

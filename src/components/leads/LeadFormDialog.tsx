@@ -128,7 +128,7 @@ export function LeadFormDialog({ open, onOpenChange, initial, onSaved }: Props) 
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-2.5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               <Label>Tipo *</Label>
               <Select value={tipo} onValueChange={(v) => setValue("tipo", v as LeadTipo)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -139,38 +139,38 @@ export function LeadFormDialog({ open, onOpenChange, initial, onSaved }: Props) 
               </Select>
             </div>
 
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               <Label htmlFor="nome">Nome *</Label>
               <Input id="nome" {...register("nome", { required: true })} />
               {errors.nome && <p className="text-xs text-destructive">Obrigatório</p>}
             </div>
 
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               <Label htmlFor="empresa">Empresa</Label>
               <Input id="empresa" {...register("empresa")} />
             </div>
 
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               <Label htmlFor="documento">CNPJ / CPF</Label>
               <Input id="documento" {...register("documento")} />
             </div>
 
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               <Label htmlFor="email">E-mail</Label>
               <Input id="email" type="email" {...register("email")} />
             </div>
 
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               <Label htmlFor="telefone">Telefone</Label>
               <Input id="telefone" {...register("telefone")} />
             </div>
 
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               <Label htmlFor="origem">Origem</Label>
               <Input id="origem" placeholder="Indicação, evento, inbound..." {...register("origem")} />
             </div>
 
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               <Label htmlFor="valor_estimado">Valor estimado (R$)</Label>
               <CurrencyInput
                 id="valor_estimado"
@@ -179,7 +179,7 @@ export function LeadFormDialog({ open, onOpenChange, initial, onSaved }: Props) 
               />
             </div>
 
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               <Label>Estágio</Label>
               <Select value={stageId ?? undefined} onValueChange={(v) => setValue("stage_id", v)}>
                 <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
@@ -191,7 +191,7 @@ export function LeadFormDialog({ open, onOpenChange, initial, onSaved }: Props) 
               </Select>
             </div>
 
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               <Label>Responsável</Label>
               <Select value={ownerId ?? undefined} onValueChange={(v) => setValue("owner_id", v)}>
                 <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
@@ -204,7 +204,7 @@ export function LeadFormDialog({ open, onOpenChange, initial, onSaved }: Props) 
             </div>
           </div>
 
-          <div className="space-y-1">
+          <div className="space-y-0.5">
             <Label htmlFor="observacoes">Observações</Label>
             <Textarea id="observacoes" rows={3} {...register("observacoes")} />
           </div>
