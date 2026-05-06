@@ -469,7 +469,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
         </div>
       )}
 
-      <fieldset disabled={readOnly} className={readOnly ? "opacity-90" : ""}>
+      <div className={readOnly ? "opacity-90" : ""}>
       <Accordion type="multiple" defaultValue={["cabecalho"]} className="space-y-2">
 
         {/* 1. Cabeçalho */}
@@ -706,7 +706,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
           </AccordionContent>
         </AccordionItem>
       </Accordion>
-      </fieldset>
+      </div>
 
       <VisitReportVersionsPanel reportId={existingId} cedenteId={cedenteId} refreshKey={versionsRefresh} />
 
