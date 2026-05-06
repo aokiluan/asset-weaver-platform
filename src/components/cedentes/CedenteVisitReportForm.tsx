@@ -126,65 +126,90 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [existingId, setExistingId] = useState<string | null>(null);
+  const [versaoAtual, setVersaoAtual] = useState<number>(0);
+  const [precisaRevisao, setPrecisaRevisao] = useState<boolean>(false);
+  const [mode, setMode] = useState<"view" | "edit" | "create">("create");
+  const [motivoAlteracao, setMotivoAlteracao] = useState<string>("");
+  const [versionsRefresh, setVersionsRefresh] = useState(0);
   const [form, setForm] = useState<FormState>(empty());
+  const readOnly = mode === "view";
 
+  // Draft só ativa em modo create (nunca em edit/view de versão existente).
   const { restored, lastSavedAt, clearDraft, discardDraft } = useFormDraft<FormState>({
     key: `visit-report:${cedenteId}`,
     value: form,
     setValue: (v: any) => setForm({ ...v, fotos: Array.isArray(v?.fotos) ? v.fotos : [], modalidades: { ...defaultModalidades(), ...(v?.modalidades || {}) } }),
-    // Só auto-restaura rascunho quando NÃO há registro no banco — evita sobrescrever os dados salvos.
-    enabled: !loading && !existingId,
+    enabled: !loading && mode === "create",
   });
 
+  const loadFromDb = async () => {
+    setLoading(true);
+    const { data } = await supabase
+      .from("cedente_visit_reports")
+      .select("*")
+      .eq("cedente_id", cedenteId)
+      .maybeSingle();
+    if (data) {
+      const d: any = data;
+      setExistingId(d.id);
+      setVersaoAtual(d.versao_atual ?? 1);
+      setPrecisaRevisao(!!d.precisa_revisao);
+      setMode("view");
+      const mods = (d.modalidades && typeof d.modalidades === "object")
+        ? { ...defaultModalidades(), ...d.modalidades }
+        : defaultModalidades();
+      setForm({
+        data_visita: d.data_visita ?? "",
+        tipo_visita: d.tipo_visita ?? "",
+        visitante: d.visitante ?? "",
+        entrevistado_nome: d.entrevistado_nome ?? "",
+        entrevistado_cargo: d.entrevistado_cargo ?? "",
+        entrevistado_cpf: d.entrevistado_cpf ?? "",
+        entrevistado_telefone: d.entrevistado_telefone ?? "",
+        entrevistado_email: d.entrevistado_email ?? "",
+        ramo_atividade: d.ramo_atividade ?? "",
+        faturamento_mensal: d.faturamento_mensal != null ? String(d.faturamento_mensal) : "",
+        principais_produtos: d.principais_produtos ?? "",
+        qtd_funcionarios: d.qtd_funcionarios != null ? String(d.qtd_funcionarios) : "",
+        pct_vendas_pf: d.pct_vendas_pf != null ? String(d.pct_vendas_pf) : "",
+        pct_vendas_pj: d.pct_vendas_pj != null ? String(d.pct_vendas_pj) : "",
+        pct_vendas_cheque: d.pct_vendas_cheque != null ? String(d.pct_vendas_cheque) : "",
+        pct_vendas_boleto: d.pct_vendas_boleto != null ? String(d.pct_vendas_boleto) : "",
+        pct_vendas_cartao: d.pct_vendas_cartao != null ? String(d.pct_vendas_cartao) : "",
+        pct_vendas_outros: d.pct_vendas_outros != null ? String(d.pct_vendas_outros) : "",
+        pct_fat_debito: (d as any).pct_fat_debito != null ? String((d as any).pct_fat_debito) : "",
+        parceiros_financeiros: d.parceiros_financeiros ?? "",
+        empresas_ligadas: Array.isArray(d.empresas_ligadas) ? d.empresas_ligadas : [],
+        limite_global_solicitado: d.limite_global_solicitado != null ? String(d.limite_global_solicitado) : "",
+        modalidades: mods,
+        avalistas_solidarios: Array.isArray(d.avalistas_solidarios) ? d.avalistas_solidarios : [],
+        assinatura_digital_tipo: d.assinatura_digital_tipo ?? "",
+        assinatura_digital_observacao: d.assinatura_digital_observacao ?? "",
+        parecer_comercial: d.parecer_comercial ?? d.percepcoes ?? "",
+        pontos_atencao: d.pontos_atencao ?? "",
+        fotos: Array.isArray((d as any).fotos) ? (d as any).fotos : [],
+      });
+    } else {
+      setMode("create");
+    }
+    setLoading(false);
+  };
+
   useEffect(() => {
-    (async () => {
-      setLoading(true);
-      const { data } = await supabase
-        .from("cedente_visit_reports")
-        .select("*")
-        .eq("cedente_id", cedenteId)
-        .maybeSingle();
-      if (data) {
-        const d: any = data;
-        setExistingId(d.id);
-        const mods = (d.modalidades && typeof d.modalidades === "object")
-          ? { ...defaultModalidades(), ...d.modalidades }
-          : defaultModalidades();
-        setForm({
-          data_visita: d.data_visita ?? "",
-          tipo_visita: d.tipo_visita ?? "",
-          visitante: d.visitante ?? "",
-          entrevistado_nome: d.entrevistado_nome ?? "",
-          entrevistado_cargo: d.entrevistado_cargo ?? "",
-          entrevistado_cpf: d.entrevistado_cpf ?? "",
-          entrevistado_telefone: d.entrevistado_telefone ?? "",
-          entrevistado_email: d.entrevistado_email ?? "",
-          ramo_atividade: d.ramo_atividade ?? "",
-          faturamento_mensal: d.faturamento_mensal != null ? String(d.faturamento_mensal) : "",
-          principais_produtos: d.principais_produtos ?? "",
-          qtd_funcionarios: d.qtd_funcionarios != null ? String(d.qtd_funcionarios) : "",
-          pct_vendas_pf: d.pct_vendas_pf != null ? String(d.pct_vendas_pf) : "",
-          pct_vendas_pj: d.pct_vendas_pj != null ? String(d.pct_vendas_pj) : "",
-          pct_vendas_cheque: d.pct_vendas_cheque != null ? String(d.pct_vendas_cheque) : "",
-          pct_vendas_boleto: d.pct_vendas_boleto != null ? String(d.pct_vendas_boleto) : "",
-          pct_vendas_cartao: d.pct_vendas_cartao != null ? String(d.pct_vendas_cartao) : "",
-          pct_vendas_outros: d.pct_vendas_outros != null ? String(d.pct_vendas_outros) : "",
-          pct_fat_debito: (d as any).pct_fat_debito != null ? String((d as any).pct_fat_debito) : "",
-          parceiros_financeiros: d.parceiros_financeiros ?? "",
-          empresas_ligadas: Array.isArray(d.empresas_ligadas) ? d.empresas_ligadas : [],
-          limite_global_solicitado: d.limite_global_solicitado != null ? String(d.limite_global_solicitado) : "",
-          modalidades: mods,
-          avalistas_solidarios: Array.isArray(d.avalistas_solidarios) ? d.avalistas_solidarios : [],
-          assinatura_digital_tipo: d.assinatura_digital_tipo ?? "",
-          assinatura_digital_observacao: d.assinatura_digital_observacao ?? "",
-          parecer_comercial: d.parecer_comercial ?? d.percepcoes ?? "",
-          pontos_atencao: d.pontos_atencao ?? "",
-          fotos: Array.isArray((d as any).fotos) ? (d as any).fotos : [],
-        });
-      }
-      setLoading(false);
-    })();
+    loadFromDb();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cedenteId]);
+
+  const enterEditMode = () => {
+    setMotivoAlteracao("");
+    setMode("edit");
+  };
+
+  const cancelEdit = async () => {
+    setMotivoAlteracao("");
+    await loadFromDb();
+  };
+
 
   const totalPct = useMemo(() => {
     return [form.pct_vendas_pf, form.pct_vendas_pj]
