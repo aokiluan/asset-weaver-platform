@@ -96,11 +96,11 @@ export default function Auth() {
                 <form onSubmit={handleSignIn} className="space-y-4 mt-4">
                   <div className="space-y-2">
                     <Label htmlFor="email-in">E-mail</Label>
-                    <Input id="email-in" name="email" type="email" required autoComplete="email" />
+                    <Input id="email-in" name="email" type="email" required autoComplete="email" className="h-10 text-sm" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="pw-in">Senha</Label>
-                    <Input id="pw-in" name="password" type="password" required autoComplete="current-password" />
+                    <Input id="pw-in" name="password" type="password" required autoComplete="current-password" className="h-10 text-sm" />
                   </div>
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -113,15 +113,15 @@ export default function Auth() {
                 <form onSubmit={handleSignUp} className="space-y-4 mt-4">
                   <div className="space-y-2">
                     <Label htmlFor="nome">Nome completo</Label>
-                    <Input id="nome" name="nome" required />
+                    <Input id="nome" name="nome" required className="h-10 text-sm" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email-up">E-mail</Label>
-                    <Input id="email-up" name="email" type="email" required autoComplete="email" />
+                    <Input id="email-up" name="email" type="email" required autoComplete="email" className="h-10 text-sm" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="pw-up">Senha</Label>
-                    <Input id="pw-up" name="password" type="password" required minLength={8} autoComplete="new-password" />
+                    <Input id="pw-up" name="password" type="password" required minLength={8} autoComplete="new-password" className="h-10 text-sm" />
                     <p className="text-xs text-muted-foreground">Mínimo de 8 caracteres.</p>
                   </div>
                   <Button type="submit" className="w-full" disabled={loading}>
