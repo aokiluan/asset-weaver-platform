@@ -12,11 +12,11 @@ import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Loader2, Save, Plus, Trash2, Upload, ImageIcon, FileDown, Pencil, X, AlertTriangle } from "lucide-react";
-import jsPDF from "jspdf";
 import { toast } from "sonner";
 import { useFormDraft } from "@/hooks/useFormDraft";
 import { DraftIndicator } from "@/components/ui/draft-indicator";
 import { VisitReportVersionsPanel } from "./VisitReportVersionsPanel";
+import { generateVisitReportPdf } from "@/lib/visit-report-pdf";
 
 interface Props {
   cedenteId: string;
