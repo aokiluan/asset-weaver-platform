@@ -158,4 +158,9 @@
     -moz-appearance: textfield;
     appearance: textfield;
   }
+
+  /* Ícones Lucide com traço mais fino e minimalista (Linear/Notion-like) */
+  svg.lucide {
+    stroke-width: 1.5;
+  }
 }
