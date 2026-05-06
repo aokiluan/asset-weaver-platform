@@ -11,11 +11,12 @@ import {
 import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Loader2, Save, Plus, Trash2, Upload, ImageIcon, FileDown } from "lucide-react";
+import { Loader2, Save, Plus, Trash2, Upload, ImageIcon, FileDown, Pencil, X, AlertTriangle } from "lucide-react";
 import jsPDF from "jspdf";
 import { toast } from "sonner";
 import { useFormDraft } from "@/hooks/useFormDraft";
 import { DraftIndicator } from "@/components/ui/draft-indicator";
+import { VisitReportVersionsPanel } from "./VisitReportVersionsPanel";
 
 interface Props {
   cedenteId: string;
@@ -125,65 +126,90 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [existingId, setExistingId] = useState<string | null>(null);
+  const [versaoAtual, setVersaoAtual] = useState<number>(0);
+  const [precisaRevisao, setPrecisaRevisao] = useState<boolean>(false);
+  const [mode, setMode] = useState<"view" | "edit" | "create">("create");
+  const [motivoAlteracao, setMotivoAlteracao] = useState<string>("");
+  const [versionsRefresh, setVersionsRefresh] = useState(0);
   const [form, setForm] = useState<FormState>(empty());
+  const readOnly = mode === "view";
 
+  // Draft só ativa em modo create (nunca em edit/view de versão existente).
   const { restored, lastSavedAt, clearDraft, discardDraft } = useFormDraft<FormState>({
     key: `visit-report:${cedenteId}`,
     value: form,
     setValue: (v: any) => setForm({ ...v, fotos: Array.isArray(v?.fotos) ? v.fotos : [], modalidades: { ...defaultModalidades(), ...(v?.modalidades || {}) } }),
-    // Só auto-restaura rascunho quando NÃO há registro no banco — evita sobrescrever os dados salvos.
-    enabled: !loading && !existingId,
+    enabled: !loading && mode === "create",
   });
 
+  const loadFromDb = async () => {
+    setLoading(true);
+    const { data } = await supabase
+      .from("cedente_visit_reports")
+      .select("*")
+      .eq("cedente_id", cedenteId)
+      .maybeSingle();
+    if (data) {
+      const d: any = data;
+      setExistingId(d.id);
+      setVersaoAtual(d.versao_atual ?? 1);
+      setPrecisaRevisao(!!d.precisa_revisao);
+      setMode("view");
+      const mods = (d.modalidades && typeof d.modalidades === "object")
+        ? { ...defaultModalidades(), ...d.modalidades }
+        : defaultModalidades();
+      setForm({
+        data_visita: d.data_visita ?? "",
+        tipo_visita: d.tipo_visita ?? "",
+        visitante: d.visitante ?? "",
+        entrevistado_nome: d.entrevistado_nome ?? "",
+        entrevistado_cargo: d.entrevistado_cargo ?? "",
+        entrevistado_cpf: d.entrevistado_cpf ?? "",
+        entrevistado_telefone: d.entrevistado_telefone ?? "",
+        entrevistado_email: d.entrevistado_email ?? "",
+        ramo_atividade: d.ramo_atividade ?? "",
+        faturamento_mensal: d.faturamento_mensal != null ? String(d.faturamento_mensal) : "",
+        principais_produtos: d.principais_produtos ?? "",
+        qtd_funcionarios: d.qtd_funcionarios != null ? String(d.qtd_funcionarios) : "",
+        pct_vendas_pf: d.pct_vendas_pf != null ? String(d.pct_vendas_pf) : "",
+        pct_vendas_pj: d.pct_vendas_pj != null ? String(d.pct_vendas_pj) : "",
+        pct_vendas_cheque: d.pct_vendas_cheque != null ? String(d.pct_vendas_cheque) : "",
+        pct_vendas_boleto: d.pct_vendas_boleto != null ? String(d.pct_vendas_boleto) : "",
+        pct_vendas_cartao: d.pct_vendas_cartao != null ? String(d.pct_vendas_cartao) : "",
+        pct_vendas_outros: d.pct_vendas_outros != null ? String(d.pct_vendas_outros) : "",
+        pct_fat_debito: (d as any).pct_fat_debito != null ? String((d as any).pct_fat_debito) : "",
+        parceiros_financeiros: d.parceiros_financeiros ?? "",
+        empresas_ligadas: Array.isArray(d.empresas_ligadas) ? d.empresas_ligadas : [],
+        limite_global_solicitado: d.limite_global_solicitado != null ? String(d.limite_global_solicitado) : "",
+        modalidades: mods,
+        avalistas_solidarios: Array.isArray(d.avalistas_solidarios) ? d.avalistas_solidarios : [],
+        assinatura_digital_tipo: d.assinatura_digital_tipo ?? "",
+        assinatura_digital_observacao: d.assinatura_digital_observacao ?? "",
+        parecer_comercial: d.parecer_comercial ?? d.percepcoes ?? "",
+        pontos_atencao: d.pontos_atencao ?? "",
+        fotos: Array.isArray((d as any).fotos) ? (d as any).fotos : [],
+      });
+    } else {
+      setMode("create");
+    }
+    setLoading(false);
+  };
+
   useEffect(() => {
-    (async () => {
-      setLoading(true);
-      const { data } = await supabase
-        .from("cedente_visit_reports")
-        .select("*")
-        .eq("cedente_id", cedenteId)
-        .maybeSingle();
-      if (data) {
-        const d: any = data;
-        setExistingId(d.id);
-        const mods = (d.modalidades && typeof d.modalidades === "object")
-          ? { ...defaultModalidades(), ...d.modalidades }
-          : defaultModalidades();
-        setForm({
-          data_visita: d.data_visita ?? "",
-          tipo_visita: d.tipo_visita ?? "",
-          visitante: d.visitante ?? "",
-          entrevistado_nome: d.entrevistado_nome ?? "",
-          entrevistado_cargo: d.entrevistado_cargo ?? "",
-          entrevistado_cpf: d.entrevistado_cpf ?? "",
-          entrevistado_telefone: d.entrevistado_telefone ?? "",
-          entrevistado_email: d.entrevistado_email ?? "",
-          ramo_atividade: d.ramo_atividade ?? "",
-          faturamento_mensal: d.faturamento_mensal != null ? String(d.faturamento_mensal) : "",
-          principais_produtos: d.principais_produtos ?? "",
-          qtd_funcionarios: d.qtd_funcionarios != null ? String(d.qtd_funcionarios) : "",
-          pct_vendas_pf: d.pct_vendas_pf != null ? String(d.pct_vendas_pf) : "",
-          pct_vendas_pj: d.pct_vendas_pj != null ? String(d.pct_vendas_pj) : "",
-          pct_vendas_cheque: d.pct_vendas_cheque != null ? String(d.pct_vendas_cheque) : "",
-          pct_vendas_boleto: d.pct_vendas_boleto != null ? String(d.pct_vendas_boleto) : "",
-          pct_vendas_cartao: d.pct_vendas_cartao != null ? String(d.pct_vendas_cartao) : "",
-          pct_vendas_outros: d.pct_vendas_outros != null ? String(d.pct_vendas_outros) : "",
-          pct_fat_debito: (d as any).pct_fat_debito != null ? String((d as any).pct_fat_debito) : "",
-          parceiros_financeiros: d.parceiros_financeiros ?? "",
-          empresas_ligadas: Array.isArray(d.empresas_ligadas) ? d.empresas_ligadas : [],
-          limite_global_solicitado: d.limite_global_solicitado != null ? String(d.limite_global_solicitado) : "",
-          modalidades: mods,
-          avalistas_solidarios: Array.isArray(d.avalistas_solidarios) ? d.avalistas_solidarios : [],
-          assinatura_digital_tipo: d.assinatura_digital_tipo ?? "",
-          assinatura_digital_observacao: d.assinatura_digital_observacao ?? "",
-          parecer_comercial: d.parecer_comercial ?? d.percepcoes ?? "",
-          pontos_atencao: d.pontos_atencao ?? "",
-          fotos: Array.isArray((d as any).fotos) ? (d as any).fotos : [],
-        });
-      }
-      setLoading(false);
-    })();
+    loadFromDb();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cedenteId]);
+
+  const enterEditMode = () => {
+    setMotivoAlteracao("");
+    setMode("edit");
+  };
+
+  const cancelEdit = async () => {
+    setMotivoAlteracao("");
+    await loadFromDb();
+  };
+
 
   const totalPct = useMemo(() => {
     return [form.pct_vendas_pf, form.pct_vendas_pj]
@@ -443,16 +469,97 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
       created_by: auth.user.id,
     };
 
-    const { error } = existingId
-      ? await supabase.from("cedente_visit_reports").update(payload).eq("id", existingId)
-      : await supabase.from("cedente_visit_reports").insert(payload);
+    if (mode === "edit") {
+      if (!motivoAlteracao.trim()) {
+        setSaving(false);
+        toast.error("Informe o motivo da alteração");
+        return;
+      }
+    }
+
+    let reportId = existingId;
+    let novaVersao = versaoAtual || 1;
+
+    if (existingId) {
+      const { error } = await supabase
+        .from("cedente_visit_reports")
+        .update({ ...payload, versao_atual: (versaoAtual || 1) + (mode === "edit" ? 1 : 0), precisa_revisao: mode === "edit" ? false : precisaRevisao })
+        .eq("id", existingId);
+      if (error) { setSaving(false); toast.error("Erro ao salvar", { description: error.message }); return; }
+      novaVersao = (versaoAtual || 1) + (mode === "edit" ? 1 : 0);
+    } else {
+      const { data: ins, error } = await supabase
+        .from("cedente_visit_reports")
+        .insert({ ...payload, versao_atual: 1, precisa_revisao: false })
+        .select("id")
+        .single();
+      if (error || !ins) { setSaving(false); toast.error("Erro ao salvar", { description: error?.message }); return; }
+      reportId = ins.id;
+      novaVersao = 1;
+    }
+
+    // Snapshot da versão
+    const versionRow: any = {
+      report_id: reportId,
+      cedente_id: cedenteId,
+      versao: novaVersao,
+      is_current: true,
+      motivo_alteracao: mode === "edit" ? motivoAlteracao.trim() : null,
+      data_visita: payload.data_visita,
+      tipo_visita: payload.tipo_visita,
+      visitante: payload.visitante,
+      entrevistado_nome: payload.entrevistado_nome,
+      entrevistado_cargo: payload.entrevistado_cargo,
+      entrevistado_cpf: payload.entrevistado_cpf,
+      entrevistado_telefone: payload.entrevistado_telefone,
+      entrevistado_email: payload.entrevistado_email,
+      ramo_atividade: payload.ramo_atividade,
+      faturamento_mensal: payload.faturamento_mensal,
+      principais_produtos: payload.principais_produtos,
+      qtd_funcionarios: payload.qtd_funcionarios,
+      pct_vendas_pf: payload.pct_vendas_pf,
+      pct_vendas_pj: payload.pct_vendas_pj,
+      pct_vendas_cheque: payload.pct_vendas_cheque,
+      pct_vendas_boleto: payload.pct_vendas_boleto,
+      pct_vendas_cartao: payload.pct_vendas_cartao,
+      pct_vendas_outros: payload.pct_vendas_outros,
+      pct_fat_debito: payload.pct_fat_debito,
+      parceiros_financeiros: payload.parceiros_financeiros,
+      empresas_ligadas: payload.empresas_ligadas,
+      limite_global_solicitado: payload.limite_global_solicitado,
+      modalidades: payload.modalidades,
+      avalistas_solidarios: payload.avalistas_solidarios,
+      assinatura_digital_tipo: payload.assinatura_digital_tipo,
+      assinatura_digital_observacao: payload.assinatura_digital_observacao,
+      parecer_comercial: payload.parecer_comercial,
+      pontos_atencao: payload.pontos_atencao,
+      fotos: payload.fotos,
+      created_by: auth.user.id,
+    };
+
+    if (mode === "edit") {
+      // Marca versões anteriores como não-atuais
+      await (supabase as any)
+        .from("cedente_visit_report_versions")
+        .update({ is_current: false })
+        .eq("report_id", reportId);
+    }
+
+    const { error: vErr } = await (supabase as any)
+      .from("cedente_visit_report_versions")
+      .insert(versionRow);
 
     setSaving(false);
-    if (error) { toast.error("Erro ao salvar", { description: error.message }); return; }
-    toast.success("Relatório comercial salvo");
+    if (vErr) { toast.error("Erro ao registrar versão", { description: vErr.message }); return; }
+
+    toast.success(mode === "edit" ? `Nova versão (v${novaVersao}) salva` : "Relatório comercial salvo");
     clearDraft();
+    setMotivoAlteracao("");
+    setVersionsRefresh((n) => n + 1);
+    await loadFromDb();
     onSaved?.();
   };
+
 
   if (loading) {
     return <div className="flex items-center gap-2 text-muted-foreground py-8"><Loader2 className="h-4 w-4 animate-spin" /> Carregando...</div>;
@@ -460,13 +567,59 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
-        <Button variant="outline" onClick={gerarPdf} disabled={generatingPdf}>
-          {generatingPdf ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileDown className="h-4 w-4 mr-2" />}
-          Gerar PDF
-        </Button>
+      {precisaRevisao && mode !== "edit" && (
+        <div className="flex items-start gap-2 border border-amber-300 bg-amber-50 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200 rounded-md p-3 text-sm">
+          <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+          <div>
+            <p className="font-medium">Cadastro em revalidação</p>
+            <p className="text-xs">Crie uma nova versão do relatório antes de avançar.</p>
+          </div>
+        </div>
+      )}
+
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          {existingId && (
+            <>
+              <span className="px-2 py-0.5 rounded-md border bg-muted/40">Versão atual: v{versaoAtual || 1}</span>
+              {mode === "view" && <span className="text-green-700 dark:text-green-400">somente leitura</span>}
+              {mode === "edit" && <span className="text-amber-700 dark:text-amber-400">editando nova versão</span>}
+            </>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          {mode === "view" && existingId && (
+            <Button variant="default" onClick={enterEditMode}>
+              <Pencil className="h-4 w-4 mr-2" /> Alterar relatório
+            </Button>
+          )}
+          {mode === "edit" && (
+            <Button variant="ghost" onClick={cancelEdit} disabled={saving}>
+              <X className="h-4 w-4 mr-2" /> Cancelar
+            </Button>
+          )}
+          <Button variant="outline" onClick={gerarPdf} disabled={generatingPdf}>
+            {generatingPdf ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileDown className="h-4 w-4 mr-2" />}
+            Gerar PDF
+          </Button>
+        </div>
       </div>
+
+      {mode === "edit" && (
+        <div className="space-y-2 border rounded-md p-3 bg-muted/30">
+          <Label>Motivo da alteração *</Label>
+          <Textarea
+            rows={2}
+            placeholder="Descreva brevemente o que mudou e por quê..."
+            value={motivoAlteracao}
+            onChange={(e) => setMotivoAlteracao(e.target.value)}
+          />
+        </div>
+      )}
+
+      <fieldset disabled={readOnly} className={readOnly ? "opacity-90" : ""}>
       <Accordion type="multiple" defaultValue={["cabecalho"]} className="space-y-2">
+
         {/* 1. Cabeçalho */}
         <AccordionItem value="cabecalho" className="border rounded-md px-4">
           <AccordionTrigger>1. Cabeçalho da visita</AccordionTrigger>
@@ -701,20 +854,30 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
           </AccordionContent>
         </AccordionItem>
       </Accordion>
+      </fieldset>
 
-      <div className="flex items-center justify-between pt-2 gap-3 flex-wrap">
-        <DraftIndicator
-          lastSavedAt={lastSavedAt}
-          restored={restored}
-          onDiscard={() => discardDraft(empty())}
-        />
-        <div className="flex items-center gap-2">
-          <Button onClick={handleSave} disabled={saving}>
-            {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-            {existingId ? "Atualizar relatório" : "Salvar relatório"}
-          </Button>
+      <VisitReportVersionsPanel reportId={existingId} refreshKey={versionsRefresh} />
+
+      {mode !== "view" && (
+        <div className="flex items-center justify-between pt-2 gap-3 flex-wrap">
+          <DraftIndicator
+            lastSavedAt={lastSavedAt}
+            restored={restored}
+            onDiscard={() => discardDraft(empty())}
+          />
+          <div className="flex items-center gap-2">
+            {mode === "edit" && (
+              <Button variant="ghost" onClick={cancelEdit} disabled={saving}>
+                <X className="h-4 w-4 mr-2" /> Cancelar
+              </Button>
+            )}
+            <Button onClick={handleSave} disabled={saving}>
+              {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+              {mode === "edit" ? "Salvar nova versão" : "Salvar relatório"}
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
