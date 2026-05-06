@@ -37,6 +37,8 @@ interface VoteRow {
   decisao: VoteDecision;
   justificativa: string | null;
   created_at: string;
+  checklist_completo?: boolean;
+  itens_revisados?: number;
 }
 
 interface Profile { id: string; nome: string; }
