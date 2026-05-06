@@ -74,9 +74,9 @@ export function SocioFormCard({ socio, index, onChange, onRemove, title, headerE
   const casado = socio.estado_civil === "casado" || socio.estado_civil === "uniao_estavel";
 
   return (
-    <div className="rounded-lg border bg-card p-4 space-y-2.5">
+    <div className="rounded-lg border bg-card p-3 space-y-2">
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold">{title ?? `Sócio ${index + 1}`}</h3>
+        <h3 className="text-[13px] font-semibold">{title ?? `Sócio ${index + 1}`}</h3>
         <Button variant="ghost" size="sm" onClick={onRemove} className="text-destructive">
           <Trash2 className="h-4 w-4 mr-1" /> Remover
         </Button>
@@ -84,7 +84,7 @@ export function SocioFormCard({ socio, index, onChange, onRemove, title, headerE
 
       {headerExtra}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-x-2.5 gap-y-1.5">
         <div className="md:col-span-2">
           <Label>Nome completo *</Label>
           <Input value={socio.nome} onChange={(e) => set("nome", e.target.value)} />
@@ -140,9 +140,9 @@ export function SocioFormCard({ socio, index, onChange, onRemove, title, headerE
         </div>
       </div>
 
-      <div className="pt-2">
-        <h4 className="text-sm font-semibold text-muted-foreground mb-2">Endereço</h4>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+      <div className="pt-1.5">
+        <h4 className="text-[12px] font-semibold text-muted-foreground mb-1">Endereço</h4>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-x-2.5 gap-y-1.5">
           <div>
             <Label>CEP</Label>
             <Input
@@ -174,7 +174,7 @@ export function SocioFormCard({ socio, index, onChange, onRemove, title, headerE
         </div>
       </div>
 
-      <div className="pt-2">
+      <div className="pt-1.5">
         <Label>Estado civil</Label>
         <Select value={socio.estado_civil} onValueChange={(v) => set("estado_civil", v)}>
           <SelectTrigger className="md:w-[260px]"><SelectValue placeholder="Selecione" /></SelectTrigger>
@@ -189,9 +189,9 @@ export function SocioFormCard({ socio, index, onChange, onRemove, title, headerE
       </div>
 
       {casado && (
-        <div className="pt-2 border-t">
-          <h4 className="text-sm font-semibold text-muted-foreground mb-2">Dados do cônjuge</h4>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="pt-1.5 border-t">
+          <h4 className="text-[12px] font-semibold text-muted-foreground mb-1">Dados do cônjuge</h4>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-x-2.5 gap-y-1.5">
             <div className="md:col-span-2">
               <Label>Nome do cônjuge</Label>
               <Input value={socio.conjuge_nome ?? ""} onChange={(e) => set("conjuge_nome", e.target.value)} />
