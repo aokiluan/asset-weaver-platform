@@ -134,8 +134,14 @@ export function VisitReportVersionsPanel({ reportId, cedenteId, refreshKey }: Pr
       <Dialog open={!!opened} onOpenChange={(o) => !o && setOpenId(null)}>
         <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
-              Versão {opened?.versao} {opened?.is_current && <Badge className="ml-2 text-[10px]">atual</Badge>}
+            <DialogTitle className="flex items-center justify-between gap-2 pr-8">
+              <span>
+                Versão {opened?.versao} {opened?.is_current && <Badge className="ml-2 text-[10px]">atual</Badge>}
+              </span>
+              <Button size="sm" variant="outline" onClick={handleGerarPdf} disabled={generatingPdf || !opened}>
+                {generatingPdf ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <FileDown className="h-3.5 w-3.5 mr-1" />}
+                Gerar PDF
+              </Button>
             </DialogTitle>
           </DialogHeader>
           {opened && (
