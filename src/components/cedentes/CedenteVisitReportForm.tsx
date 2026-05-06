@@ -854,20 +854,30 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
           </AccordionContent>
         </AccordionItem>
       </Accordion>
+      </fieldset>
 
-      <div className="flex items-center justify-between pt-2 gap-3 flex-wrap">
-        <DraftIndicator
-          lastSavedAt={lastSavedAt}
-          restored={restored}
-          onDiscard={() => discardDraft(empty())}
-        />
-        <div className="flex items-center gap-2">
-          <Button onClick={handleSave} disabled={saving}>
-            {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-            {existingId ? "Atualizar relatório" : "Salvar relatório"}
-          </Button>
+      <VisitReportVersionsPanel reportId={existingId} refreshKey={versionsRefresh} />
+
+      {mode !== "view" && (
+        <div className="flex items-center justify-between pt-2 gap-3 flex-wrap">
+          <DraftIndicator
+            lastSavedAt={lastSavedAt}
+            restored={restored}
+            onDiscard={() => discardDraft(empty())}
+          />
+          <div className="flex items-center gap-2">
+            {mode === "edit" && (
+              <Button variant="ghost" onClick={cancelEdit} disabled={saving}>
+                <X className="h-4 w-4 mr-2" /> Cancelar
+              </Button>
+            )}
+            <Button onClick={handleSave} disabled={saving}>
+              {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+              {mode === "edit" ? "Salvar nova versão" : "Salvar relatório"}
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
