@@ -292,8 +292,17 @@ export function ComiteGameSession({ proposalId, votosMinimos, proposalStage, ced
                   {showDecision ? VOTE_ICON[v.decisao] : <EyeOff className="h-4 w-4 text-muted-foreground" />}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium truncate">
-                    {profiles[v.voter_id]?.nome ?? "Membro do comitê"} {isOwn && <span className="text-xs text-muted-foreground">(você)</span>}
+                  <div className="text-sm font-medium truncate flex items-center gap-1.5">
+                    {profiles[v.voter_id]?.nome ?? "Membro do comitê"} {isOwn && <span className="text-xs text-muted-foreground font-normal">(você)</span>}
+                    {v.checklist_completo ? (
+                      <span title="Revisou todo o briefing antes de votar">
+                        <Eye className="h-3 w-3 text-green-600" />
+                      </span>
+                    ) : (
+                      <span title="Votou sem completar o checklist de leitura">
+                        <EyeOff className="h-3 w-3 text-amber-600" />
+                      </span>
+                    )}
                   </div>
                   {showDecision ? (
                     <div className="text-xs text-muted-foreground">
