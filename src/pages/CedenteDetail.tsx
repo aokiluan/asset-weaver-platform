@@ -541,6 +541,7 @@ function ComiteTabContent({
           proposalId={latestProposal.id}
           votosMinimos={latestProposal.votos_minimos}
           proposalStage={latestProposal.stage as any}
+          cedenteId={cedenteId}
         />
       </div>
     );
