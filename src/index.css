@@ -161,6 +161,6 @@
 
   /* Ícones Lucide com traço mais fino e minimalista (Linear/Notion-like) */
   svg.lucide {
-    stroke-width: 1;
+    stroke-width: 0.75;
   }
 }
