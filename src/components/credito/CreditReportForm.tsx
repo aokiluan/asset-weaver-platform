@@ -344,7 +344,7 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
         </div>
       )}
 
-      <fieldset disabled={isReadOnly} className="space-y-6 disabled:opacity-90">
+      <div className={`space-y-6 ${isReadOnly ? "opacity-90" : ""}`}>
       {/* Acordeão das 8 seções */}
       <Accordion type="multiple" defaultValue={["identificacao"]} className="space-y-2">
         {SECTION_ORDER.map((key) => {
@@ -474,7 +474,7 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
           </Accordion>
         );
       })()}
-      </fieldset>
+      </div>
 
       <CreditReportVersionsPanel reportId={report.id ?? null} cedenteNome={cedenteNome} refreshKey={versionsRefresh} />
 
