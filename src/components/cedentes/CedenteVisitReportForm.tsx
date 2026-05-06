@@ -708,7 +708,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
       </Accordion>
       </fieldset>
 
-      <VisitReportVersionsPanel reportId={existingId} refreshKey={versionsRefresh} />
+      <VisitReportVersionsPanel reportId={existingId} cedenteId={cedenteId} refreshKey={versionsRefresh} />
 
       {mode !== "view" && (
         <div className="flex items-center justify-between pt-2 gap-3 flex-wrap">
