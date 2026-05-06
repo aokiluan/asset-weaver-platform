@@ -214,7 +214,7 @@ export function AppSidebar() {
           )}
         </div>
 
-        <nav className="flex-1 overflow-y-auto overflow-x-hidden py-2">
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden py-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           {visibleGroups.map((group, idx) => {
             const isOpen = openGroups[group.key] ?? true;
             const groupHasActive = group.items.some((i) => isActive(i.url));
