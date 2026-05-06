@@ -1,15 +1,17 @@
-## Mudança
+## Problemas identificados
 
-No formulário do relatório de crédito (`src/components/credito/CreditReportForm.tsx`), transformar a seção "Parecer" no mesmo padrão de acordeão (lista suspensa) usado pelas 8 seções acima, e renomeá-la para "Parecer do crédito".
+**1. Relatório comercial "não salva":** o registro É salvo no banco (confirmado via rede: GET retorna o relatório completo com `tipo_visita`, `parecer_comercial`, modalidades etc). O que está acontecendo é que o `useFormDraft` restaura o rascunho do localStorage **mesmo depois de carregar o registro do banco**, sobrescrevendo os dados salvos com o rascunho antigo. Resultado: ao reabrir, o usuário vê o rascunho velho e acha que "não salvou".
 
-## Detalhes técnicos
+**2. "Tipo de visita" fora do padrão:** o `SelectTrigger` global está com `h-7` (versão ultracompacta usada nos cards), mas os `Input`s ao lado mantêm `h-10`. Visualmente o select fica menor que os demais campos da mesma linha.
 
-Em `CreditReportForm.tsx`, substituir o bloco atual `<div className="rounded-lg border bg-card p-4 space-y-4">` (linhas 264–322) por um novo `<Accordion type="single" collapsible>` com um único `AccordionItem`:
+## Correções
 
-- Título do trigger: **"Parecer do crédito"** (com hint curto, ex.: "Parecer do analista, pontos positivos/atenção, conclusão e recomendação final").
-- Ícone de status: `CheckCircle2` verde quando `recomendacao` estiver preenchida e ao menos um dos campos (`parecer_analista`, `conclusao`) tiver conteúdo; caso contrário `Circle` cinza — mesmo padrão visual das outras seções.
-- Conteúdo (`AccordionContent`): mover, sem alterações de comportamento, os campos atuais — `parecer_analista`, `pontos_positivos`, `pontos_atencao`, `conclusao` e o select `Recomendação final`.
-- Manter o estilo do item: `border rounded-lg bg-card px-4`, igual aos demais.
-- Por padrão fechado (não incluir em `defaultValue`), igual às demais seções não-iniciais.
+Em `src/components/cedentes/CedenteVisitReportForm.tsx`:
 
-Nenhuma mudança em schema, salvamento ou outros componentes.
+1. **Bloquear restauração automática quando já existe registro no banco** — alterar `useFormDraft({ enabled: !loading })` para `enabled: !loading && !existingId`. Assim o draft só é usado em relatórios novos; quando há registro salvo, ele é sempre a fonte da verdade. (Mantém o auto-save ativo para o caso novo.)
+
+2. **Padronizar o select "Tipo de visita"** sem perder o estilo compacto:
+   - Adicionar `className="h-10"` ao `<SelectTrigger>` do tipo de visita para alinhar com os `<Input h-10>` vizinhos (data e visitante).
+   - Não tocar no componente global `select.tsx` (outros locais ultracompactos continuam com `h-7`).
+
+Nada mais é alterado — payload de save, RLS, schema e demais campos permanecem como estão.

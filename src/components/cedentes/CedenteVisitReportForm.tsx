@@ -131,7 +131,8 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
     key: `visit-report:${cedenteId}`,
     value: form,
     setValue: (v: any) => setForm({ ...v, fotos: Array.isArray(v?.fotos) ? v.fotos : [], modalidades: { ...defaultModalidades(), ...(v?.modalidades || {}) } }),
-    enabled: !loading,
+    // Só auto-restaura rascunho quando NÃO há registro no banco — evita sobrescrever os dados salvos.
+    enabled: !loading && !existingId,
   });
 
   useEffect(() => {
