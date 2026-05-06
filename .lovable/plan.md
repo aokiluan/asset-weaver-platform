@@ -1,24 +1,9 @@
 ## Objetivo
-Tornar o card de header do cedente (e padrões similares no projeto) ultracompacto, reduzindo padding e espaçamento entre elementos textuais.
+Reduzir tamanho de fonte da linha de cabeçalho do representante (accordion trigger) para ficar proporcional ao design ultracompacto.
 
-## Mudanças
-
-### 1. `src/pages/CedenteDetail.tsx` — header card (linhas 240-246)
-- Padding card: `p-5` → `p-3`
-- Espaço interno: `space-y-4` → `space-y-2.5`
-- Gap row: `gap-4` → `gap-3`
-- Título: `text-[20px]` → `text-[18px]`
-- Combinar nome fantasia + CNPJ em **uma única linha** separada por "·":
-  - antes: 2 linhas com `mt-0.5` cada
-  - depois: `<p className="text-[12px] text-muted-foreground">{nome_fantasia ? `${nome_fantasia} · ` : ""}CNPJ: {cnpj}</p>`
-- Wrapper do bloco textual com `leading-tight`
-
-### 2. Padronizar mesmo padding compacto em outros cards de "header de detalhe" se existirem
-Verificar e aplicar `p-3 space-y-2.5` em cards equivalentes:
-- `src/pages/Leads.tsx` (se houver header similar)
-- `src/pages/CedenteCadastro.tsx` (se houver header similar)
-
-(Apenas se o padrão for visivelmente o mesmo — não quebrar layouts de listagens.)
-
-## Resultado
-Header do cedente cai de ~140px para ~85px, com hierarquia preservada e linhas textuais coladas.
+## Mudança
+`src/components/cedentes/CedenteRepresentantesTab.tsx` (linhas 282-302):
+- `py-3` → `py-2`
+- Nome: `font-medium` → `text-[13px] font-medium`
+- CPF/qualificação/% capital: `text-xs` → `text-[11px]`
+- Badges Receita/Manual e "não salvo": adicionar `text-[10px] px-1.5 py-0 h-[18px]`
