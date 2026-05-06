@@ -1,9 +1,30 @@
-## Remover botão "Abrir na esteira"
+## Cards de votação ultracompactos e minimalistas
 
-Em `src/pages/CedenteDetail.tsx`, dentro do bloco `tab === "credito"`, remover o cartão "Proposta de crédito vinculada" (linhas ~417–430) que contém o botão **Abrir na esteira**.
+Em `src/components/credito/ComiteGameSession.tsx`, redesenhar o `ScoreCard` (linhas 310–321) e ajustar o uso (linhas 221–225) para um visual ultracompacto, sem círculos de fundo coloridos, com ícone inline e número à direita do label.
 
-O `CreditReportForm` logo abaixo continua sendo renderizado normalmente, recebendo o `latestProposal?.id` como já faz hoje.
+### Novo layout do card
+- Padding reduzido: `p-3` (de `p-4`)
+- Sem círculo de fundo: ícone pequeno (`h-3.5 w-3.5`) inline ao lado do label, apenas com cor (sem `bg-*/10`)
+- Linha única no topo: `[ícone] Label` em `text-xs text-muted-foreground`
+- Número grande abaixo, mais leve: `text-2xl font-semibold tabular-nums` (de `font-bold`)
+- Gap do grid: `gap-2` (de `gap-3`)
 
-### Verificação
-- Conferir se `latestProposal` ainda é usado em outras abas (ex.: `comite`) — sim, é passado para `ComiteTabContent`. Portanto a variável **não** será removida, apenas o JSX do cartão.
-- Nenhum import precisa sair (o `Link` e `Button` continuam usados em outros pontos do arquivo, se aplicável — confirmar antes de remover).
+### Cores (apenas no ícone)
+- Favoráveis: `text-green-600`
+- Contrários: `text-destructive`
+- Abstenções: `text-muted-foreground`
+
+### Estrutura final do ScoreCard
+```tsx
+<Card className="p-3">
+  <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+    <span className={color}>{icon}</span>
+    <span>{label}</span>
+  </div>
+  <div className="text-2xl font-semibold tabular-nums">
+    {hidden ? <span className="text-muted-foreground">?</span> : count}
+  </div>
+</Card>
+```
+
+Sem mudanças em props nem em lógica — só visual.

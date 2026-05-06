@@ -218,10 +218,10 @@ export function ComiteGameSession({ proposalId, votosMinimos, proposalStage }: P
       </Card>
 
       {/* Placar / contagem */}
-      <div className="grid grid-cols-3 gap-3">
-        <ScoreCard label="Favoráveis" count={favoraveis} icon={<ThumbsUp className="h-5 w-5" />} color="text-green-600 bg-green-500/10" hidden={!revealed} mask={votes.length} />
-        <ScoreCard label="Contrários" count={contrarios} icon={<ThumbsDown className="h-5 w-5" />} color="text-destructive bg-destructive/10" hidden={!revealed} mask={votes.length} />
-        <ScoreCard label="Abstenções" count={abstencoes} icon={<MinusCircle className="h-5 w-5" />} color="text-muted-foreground bg-muted" hidden={!revealed} mask={votes.length} />
+      <div className="grid grid-cols-3 gap-2">
+        <ScoreCard label="Favoráveis" count={favoraveis} icon={<ThumbsUp className="h-3.5 w-3.5" />} color="text-green-600" hidden={!revealed} mask={votes.length} />
+        <ScoreCard label="Contrários" count={contrarios} icon={<ThumbsDown className="h-3.5 w-3.5" />} color="text-destructive" hidden={!revealed} mask={votes.length} />
+        <ScoreCard label="Abstenções" count={abstencoes} icon={<MinusCircle className="h-3.5 w-3.5" />} color="text-muted-foreground" hidden={!revealed} mask={votes.length} />
       </div>
 
       {/* Quórum */}
@@ -311,12 +311,14 @@ function ScoreCard({ label, count, icon, color, hidden, mask }: {
   label: string; count: number; icon: JSX.Element; color: string; hidden?: boolean; mask: number;
 }) {
   return (
-    <Card className="p-4">
-      <div className={`h-10 w-10 rounded-full ${color} flex items-center justify-center mb-2`}>{icon}</div>
-      <div className="text-2xl font-bold tabular-nums">
+    <Card className="p-3">
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+        <span className={color}>{icon}</span>
+        <span>{label}</span>
+      </div>
+      <div className="text-2xl font-semibold tabular-nums">
         {hidden ? <span className="text-muted-foreground">?</span> : count}
       </div>
-      <div className="text-xs text-muted-foreground">{label}</div>
     </Card>
   );
 }
