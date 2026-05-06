@@ -825,6 +825,96 @@ export type Database = {
           },
         ]
       }
+      credit_report_versions: {
+        Row: {
+          attachments_top: Json
+          carteira: Json
+          cedente_id: string
+          completude: number
+          conclusao: string | null
+          created_at: string
+          created_by: string
+          due_diligence: Json
+          empresa: Json
+          financeiro: Json
+          id: string
+          identificacao: Json
+          is_current: boolean
+          motivo_alteracao: string | null
+          parecer_analista: string | null
+          parecer_comercial: string | null
+          parecer_compliance: string | null
+          parecer_regional: string | null
+          pleito: Json
+          pontos_atencao: string | null
+          pontos_positivos: string | null
+          proposal_id: string | null
+          recomendacao: string | null
+          rede_societaria: Json
+          report_id: string
+          restritivos: Json
+          versao: number
+        }
+        Insert: {
+          attachments_top?: Json
+          carteira?: Json
+          cedente_id: string
+          completude?: number
+          conclusao?: string | null
+          created_at?: string
+          created_by: string
+          due_diligence?: Json
+          empresa?: Json
+          financeiro?: Json
+          id?: string
+          identificacao?: Json
+          is_current?: boolean
+          motivo_alteracao?: string | null
+          parecer_analista?: string | null
+          parecer_comercial?: string | null
+          parecer_compliance?: string | null
+          parecer_regional?: string | null
+          pleito?: Json
+          pontos_atencao?: string | null
+          pontos_positivos?: string | null
+          proposal_id?: string | null
+          recomendacao?: string | null
+          rede_societaria?: Json
+          report_id: string
+          restritivos?: Json
+          versao: number
+        }
+        Update: {
+          attachments_top?: Json
+          carteira?: Json
+          cedente_id?: string
+          completude?: number
+          conclusao?: string | null
+          created_at?: string
+          created_by?: string
+          due_diligence?: Json
+          empresa?: Json
+          financeiro?: Json
+          id?: string
+          identificacao?: Json
+          is_current?: boolean
+          motivo_alteracao?: string | null
+          parecer_analista?: string | null
+          parecer_comercial?: string | null
+          parecer_compliance?: string | null
+          parecer_regional?: string | null
+          pleito?: Json
+          pontos_atencao?: string | null
+          pontos_positivos?: string | null
+          proposal_id?: string | null
+          recomendacao?: string | null
+          rede_societaria?: Json
+          report_id?: string
+          restritivos?: Json
+          versao?: number
+        }
+        Relationships: []
+      }
       credit_reports: {
         Row: {
           attachments_top: Json
@@ -846,12 +936,14 @@ export type Database = {
           pleito: Json
           pontos_atencao: string | null
           pontos_positivos: string | null
+          precisa_revisao: boolean
           proposal_id: string | null
           recomendacao: string | null
           rede_societaria: Json
           restritivos: Json
           updated_at: string
           updated_by: string | null
+          versao_atual: number
         }
         Insert: {
           attachments_top?: Json
@@ -873,12 +965,14 @@ export type Database = {
           pleito?: Json
           pontos_atencao?: string | null
           pontos_positivos?: string | null
+          precisa_revisao?: boolean
           proposal_id?: string | null
           recomendacao?: string | null
           rede_societaria?: Json
           restritivos?: Json
           updated_at?: string
           updated_by?: string | null
+          versao_atual?: number
         }
         Update: {
           attachments_top?: Json
@@ -900,12 +994,14 @@ export type Database = {
           pleito?: Json
           pontos_atencao?: string | null
           pontos_positivos?: string | null
+          precisa_revisao?: boolean
           proposal_id?: string | null
           recomendacao?: string | null
           rede_societaria?: Json
           restritivos?: Json
           updated_at?: string
           updated_by?: string | null
+          versao_atual?: number
         }
         Relationships: []
       }
