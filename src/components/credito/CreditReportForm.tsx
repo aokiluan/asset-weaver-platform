@@ -261,65 +261,93 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
         })}
       </Accordion>
 
-      {/* Pareceres em camadas + conclusão */}
-      <div className="rounded-lg border bg-card p-4 space-y-4">
-        <h3 className="text-base font-semibold">Parecer</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {[
-            ["parecer_analista", "Parecer analista de crédito"],
-          ].map(([key, label]) => (
-            <TextareaField
-              key={key}
-              label={label}
-              value={(report as any)[key] ?? ""}
-              onChange={(v) => setTopField(key as keyof ReportRow, v)}
-              disabled={!canEdit}
-              cedenteId={cedenteId}
-              fieldKey={key}
-              attachments={getTopAtt((report as any).attachments_top, key)}
-              onAttachmentsChange={(list) => setTopAttachments(key, list)}
-            />
-          ))}
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {[
-            ["pontos_positivos", "🟢 Pontos positivos"],
-            ["pontos_atencao", "🟡 Pontos de atenção"],
-          ].map(([key, label]) => (
-            <TextareaField
-              key={key}
-              label={label}
-              value={(report as any)[key] ?? ""}
-              onChange={(v) => setTopField(key as keyof ReportRow, v)}
-              disabled={!canEdit}
-              cedenteId={cedenteId}
-              fieldKey={key}
-              attachments={getTopAtt((report as any).attachments_top, key)}
-              onAttachmentsChange={(list) => setTopAttachments(key, list)}
-            />
-          ))}
-        </div>
-        <TextareaField
-          label="📌 Conclusão"
-          value={report.conclusao ?? ""}
-          onChange={(v) => setTopField("conclusao", v)}
-          disabled={!canEdit}
-          rows={3}
-          cedenteId={cedenteId}
-          fieldKey="conclusao"
-          attachments={getTopAtt((report as any).attachments_top, "conclusao")}
-          onAttachmentsChange={(list) => setTopAttachments("conclusao", list)}
-        />
-        <div className="space-y-2 max-w-xs">
-          <Label>Recomendação final</Label>
-          <Select value={report.recomendacao ?? ""} onValueChange={(v) => setTopField("recomendacao", v)} disabled={!canEdit}>
-            <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
-            <SelectContent>
-              {RECOMENDACAO_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+      {/* Parecer do crédito (colapsável) */}
+      {(() => {
+        const parecerComplete =
+          !!report.recomendacao &&
+          (!!(report.parecer_analista && String(report.parecer_analista).trim()) ||
+            !!(report.conclusao && String(report.conclusao).trim()));
+        return (
+          <Accordion type="single" collapsible className="space-y-2">
+            <AccordionItem value="parecer_credito" className="border rounded-lg bg-card px-4">
+              <AccordionTrigger className="hover:no-underline">
+                <div className="flex items-center gap-3 text-left">
+                  {parecerComplete ? (
+                    <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
+                  ) : (
+                    <Circle className="h-4 w-4 text-muted-foreground shrink-0" />
+                  )}
+                  <div>
+                    <div className="text-sm font-medium">Parecer do crédito</div>
+                    <div className="text-xs text-muted-foreground">
+                      Parecer do analista, pontos positivos/atenção, conclusão e recomendação final.
+                    </div>
+                  </div>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="space-y-4 pt-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {[
+                      ["parecer_analista", "Parecer analista de crédito"],
+                    ].map(([key, label]) => (
+                      <TextareaField
+                        key={key}
+                        label={label}
+                        value={(report as any)[key] ?? ""}
+                        onChange={(v) => setTopField(key as keyof ReportRow, v)}
+                        disabled={!canEdit}
+                        cedenteId={cedenteId}
+                        fieldKey={key}
+                        attachments={getTopAtt((report as any).attachments_top, key)}
+                        onAttachmentsChange={(list) => setTopAttachments(key, list)}
+                      />
+                    ))}
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {[
+                      ["pontos_positivos", "🟢 Pontos positivos"],
+                      ["pontos_atencao", "🟡 Pontos de atenção"],
+                    ].map(([key, label]) => (
+                      <TextareaField
+                        key={key}
+                        label={label}
+                        value={(report as any)[key] ?? ""}
+                        onChange={(v) => setTopField(key as keyof ReportRow, v)}
+                        disabled={!canEdit}
+                        cedenteId={cedenteId}
+                        fieldKey={key}
+                        attachments={getTopAtt((report as any).attachments_top, key)}
+                        onAttachmentsChange={(list) => setTopAttachments(key, list)}
+                      />
+                    ))}
+                  </div>
+                  <TextareaField
+                    label="📌 Conclusão"
+                    value={report.conclusao ?? ""}
+                    onChange={(v) => setTopField("conclusao", v)}
+                    disabled={!canEdit}
+                    rows={3}
+                    cedenteId={cedenteId}
+                    fieldKey="conclusao"
+                    attachments={getTopAtt((report as any).attachments_top, "conclusao")}
+                    onAttachmentsChange={(list) => setTopAttachments("conclusao", list)}
+                  />
+                  <div className="space-y-2 max-w-xs">
+                    <Label>Recomendação final</Label>
+                    <Select value={report.recomendacao ?? ""} onValueChange={(v) => setTopField("recomendacao", v)} disabled={!canEdit}>
+                      <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
+                      <SelectContent>
+                        {RECOMENDACAO_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        );
+      })()}
 
       {canEdit && (
         <div className="flex justify-end sticky bottom-4">
