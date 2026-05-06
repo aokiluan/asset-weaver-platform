@@ -350,17 +350,17 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
         {SECTION_ORDER.map((key) => {
           const complete = isSectionComplete((report as any)[key], key);
           return (
-            <AccordionItem key={key} value={key} className="border rounded-lg bg-card px-4">
+            <AccordionItem key={key} value={key} className="border rounded-lg bg-card px-3">
               <AccordionTrigger className="hover:no-underline">
-                <div className="flex items-center gap-3 text-left">
+                <div className="flex items-center gap-2 text-left">
                   {complete ? (
                     <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
                   ) : (
                     <Circle className="h-4 w-4 text-muted-foreground shrink-0" />
                   )}
-                  <div>
-                    <div className="text-sm font-medium">{SECTION_LABEL[key]}</div>
-                    <div className="text-xs text-muted-foreground">{SECTION_HINT[key]}</div>
+                  <div className="flex items-baseline gap-2 min-w-0">
+                    <span className="text-sm font-medium">{SECTION_LABEL[key]}</span>
+                    <span className="text-xs text-muted-foreground truncate">{SECTION_HINT[key]}</span>
                   </div>
                 </div>
               </AccordionTrigger>
@@ -397,19 +397,19 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
             !!(report.conclusao && String(report.conclusao).trim()));
         return (
           <Accordion type="single" collapsible className="space-y-0.5">
-            <AccordionItem value="parecer_credito" className="border rounded-lg bg-card px-4">
+            <AccordionItem value="parecer_credito" className="border rounded-lg bg-card px-3">
               <AccordionTrigger className="hover:no-underline">
-                <div className="flex items-center gap-3 text-left">
+                <div className="flex items-center gap-2 text-left">
                   {parecerComplete ? (
                     <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
                   ) : (
                     <Circle className="h-4 w-4 text-muted-foreground shrink-0" />
                   )}
-                  <div>
-                    <div className="text-sm font-medium">Parecer do crédito</div>
-                    <div className="text-xs text-muted-foreground">
+                  <div className="flex items-baseline gap-2 min-w-0">
+                    <span className="text-sm font-medium">Parecer do crédito</span>
+                    <span className="text-xs text-muted-foreground truncate">
                       Parecer do analista, pontos positivos/atenção, conclusão e recomendação final.
-                    </div>
+                    </span>
                   </div>
                 </div>
               </AccordionTrigger>
