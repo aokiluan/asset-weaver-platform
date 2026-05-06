@@ -4,10 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
-import { History, Eye, Loader2 } from "lucide-react";
+import { History, Eye, Loader2, FileDown } from "lucide-react";
+import { generateVisitReportPdf } from "@/lib/visit-report-pdf";
+import { toast } from "sonner";
 
 interface Props {
   reportId: string | null;
+  cedenteId: string;
   refreshKey?: number;
 }
 
