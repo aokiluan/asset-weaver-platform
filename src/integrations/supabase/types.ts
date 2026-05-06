@@ -208,6 +208,134 @@ export type Database = {
           },
         ]
       }
+      cedente_visit_report_versions: {
+        Row: {
+          assinatura_digital_observacao: string | null
+          assinatura_digital_tipo: string | null
+          avalistas_solidarios: Json
+          cedente_id: string
+          created_at: string
+          created_by: string
+          data_visita: string | null
+          empresas_ligadas: Json
+          entrevistado_cargo: string | null
+          entrevistado_cpf: string | null
+          entrevistado_email: string | null
+          entrevistado_nome: string | null
+          entrevistado_telefone: string | null
+          faturamento_mensal: number | null
+          fotos: Json
+          id: string
+          is_current: boolean
+          limite_global_solicitado: number | null
+          modalidades: Json
+          motivo_alteracao: string | null
+          parceiros_financeiros: string | null
+          parecer_comercial: string | null
+          pct_fat_debito: number | null
+          pct_vendas_boleto: number | null
+          pct_vendas_cartao: number | null
+          pct_vendas_cheque: number | null
+          pct_vendas_outros: number | null
+          pct_vendas_pf: number | null
+          pct_vendas_pj: number | null
+          pontos_atencao: string | null
+          principais_produtos: string | null
+          qtd_funcionarios: number | null
+          ramo_atividade: string | null
+          report_id: string
+          tipo_visita: string | null
+          versao: number
+          visitante: string | null
+        }
+        Insert: {
+          assinatura_digital_observacao?: string | null
+          assinatura_digital_tipo?: string | null
+          avalistas_solidarios?: Json
+          cedente_id: string
+          created_at?: string
+          created_by: string
+          data_visita?: string | null
+          empresas_ligadas?: Json
+          entrevistado_cargo?: string | null
+          entrevistado_cpf?: string | null
+          entrevistado_email?: string | null
+          entrevistado_nome?: string | null
+          entrevistado_telefone?: string | null
+          faturamento_mensal?: number | null
+          fotos?: Json
+          id?: string
+          is_current?: boolean
+          limite_global_solicitado?: number | null
+          modalidades?: Json
+          motivo_alteracao?: string | null
+          parceiros_financeiros?: string | null
+          parecer_comercial?: string | null
+          pct_fat_debito?: number | null
+          pct_vendas_boleto?: number | null
+          pct_vendas_cartao?: number | null
+          pct_vendas_cheque?: number | null
+          pct_vendas_outros?: number | null
+          pct_vendas_pf?: number | null
+          pct_vendas_pj?: number | null
+          pontos_atencao?: string | null
+          principais_produtos?: string | null
+          qtd_funcionarios?: number | null
+          ramo_atividade?: string | null
+          report_id: string
+          tipo_visita?: string | null
+          versao: number
+          visitante?: string | null
+        }
+        Update: {
+          assinatura_digital_observacao?: string | null
+          assinatura_digital_tipo?: string | null
+          avalistas_solidarios?: Json
+          cedente_id?: string
+          created_at?: string
+          created_by?: string
+          data_visita?: string | null
+          empresas_ligadas?: Json
+          entrevistado_cargo?: string | null
+          entrevistado_cpf?: string | null
+          entrevistado_email?: string | null
+          entrevistado_nome?: string | null
+          entrevistado_telefone?: string | null
+          faturamento_mensal?: number | null
+          fotos?: Json
+          id?: string
+          is_current?: boolean
+          limite_global_solicitado?: number | null
+          modalidades?: Json
+          motivo_alteracao?: string | null
+          parceiros_financeiros?: string | null
+          parecer_comercial?: string | null
+          pct_fat_debito?: number | null
+          pct_vendas_boleto?: number | null
+          pct_vendas_cartao?: number | null
+          pct_vendas_cheque?: number | null
+          pct_vendas_outros?: number | null
+          pct_vendas_pf?: number | null
+          pct_vendas_pj?: number | null
+          pontos_atencao?: string | null
+          principais_produtos?: string | null
+          qtd_funcionarios?: number | null
+          ramo_atividade?: string | null
+          report_id?: string
+          tipo_visita?: string | null
+          versao?: number
+          visitante?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cedente_visit_report_versions_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "cedente_visit_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cedente_visit_reports: {
         Row: {
           assinatura_digital_observacao: string | null
@@ -241,12 +369,14 @@ export type Database = {
           pct_vendas_pj: number | null
           percepcoes: string | null
           pontos_atencao: string | null
+          precisa_revisao: boolean
           principais_produtos: string | null
           qtd_funcionarios: number | null
           ramo_atividade: string | null
           recomendacao: string | null
           tipo_visita: string | null
           updated_at: string
+          versao_atual: number
           visitante: string | null
         }
         Insert: {
@@ -281,12 +411,14 @@ export type Database = {
           pct_vendas_pj?: number | null
           percepcoes?: string | null
           pontos_atencao?: string | null
+          precisa_revisao?: boolean
           principais_produtos?: string | null
           qtd_funcionarios?: number | null
           ramo_atividade?: string | null
           recomendacao?: string | null
           tipo_visita?: string | null
           updated_at?: string
+          versao_atual?: number
           visitante?: string | null
         }
         Update: {
@@ -321,12 +453,14 @@ export type Database = {
           pct_vendas_pj?: number | null
           percepcoes?: string | null
           pontos_atencao?: string | null
+          precisa_revisao?: boolean
           principais_produtos?: string | null
           qtd_funcionarios?: number | null
           ramo_atividade?: string | null
           recomendacao?: string | null
           tipo_visita?: string | null
           updated_at?: string
+          versao_atual?: number
           visitante?: string | null
         }
         Relationships: []
