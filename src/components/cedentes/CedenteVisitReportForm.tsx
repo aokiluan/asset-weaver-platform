@@ -474,7 +474,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
 
         {/* 1. Cabeçalho */}
         <AccordionItem value="cabecalho" className="border rounded-lg bg-card px-3">
-          <AccordionTrigger>1. Cabeçalho da visita</AccordionTrigger>
+          <AccordionTrigger className="hover:no-underline"><span className="text-sm font-medium">1. Cabeçalho da visita</span></AccordionTrigger>
           <AccordionContent className="space-y-2.5 pt-1.5">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
               <div className="space-y-0.5">
@@ -513,7 +513,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
 
         {/* 2. Negócio */}
         <AccordionItem value="negocio" className="border rounded-lg bg-card px-3">
-          <AccordionTrigger>2. Dados do negócio</AccordionTrigger>
+          <AccordionTrigger className="hover:no-underline"><span className="text-sm font-medium">2. Dados do negócio</span></AccordionTrigger>
           <AccordionContent className="space-y-2.5 pt-1.5">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
               <div className="space-y-0.5"><Label>Ramo de atividade</Label><Input value={form.ramo_atividade} onChange={(e) => set("ramo_atividade", e.target.value)} /></div>
@@ -569,7 +569,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
 
         {/* 3. Adicionais */}
         <AccordionItem value="adicionais" className="border rounded-lg bg-card px-3">
-          <AccordionTrigger>3. Informações adicionais</AccordionTrigger>
+          <AccordionTrigger className="hover:no-underline"><span className="text-sm font-medium">3. Informações adicionais</span></AccordionTrigger>
           <AccordionContent className="space-y-2.5 pt-1.5">
             <div className="space-y-0.5">
               <Label>Parceiros financeiros (bancos/factorings com quem opera)</Label>
@@ -606,7 +606,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
 
         {/* 4. Pleito */}
         <AccordionItem value="pleito" className="border rounded-lg bg-card px-3">
-          <AccordionTrigger>4. Pleito de crédito</AccordionTrigger>
+          <AccordionTrigger className="hover:no-underline"><span className="text-sm font-medium">4. Pleito de crédito</span></AccordionTrigger>
           <AccordionContent className="space-y-2.5 pt-1.5">
             <div className="space-y-0.5">
               <Label>Limite global solicitado (R$)</Label>
@@ -651,7 +651,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
 
         {/* 5. Parecer */}
         <AccordionItem value="parecer" className="border rounded-lg bg-card px-3">
-          <AccordionTrigger>5. Parecer comercial</AccordionTrigger>
+          <AccordionTrigger className="hover:no-underline"><span className="text-sm font-medium">5. Parecer comercial</span></AccordionTrigger>
           <AccordionContent className="space-y-2.5 pt-1.5">
             <div className="space-y-0.5">
               <Label>Parecer comercial *</Label>
