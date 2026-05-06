@@ -179,12 +179,28 @@ export function ComiteGameSession({ proposalId, votosMinimos, proposalStage, ced
     if (!user || !session) return;
     setBusy(true);
     const { error } = await supabase.from("committee_votes").upsert(
-      { proposal_id: proposalId, voter_id: user.id, decisao: voteDec, justificativa: voteJust || null },
+      {
+        proposal_id: proposalId,
+        voter_id: user.id,
+        decisao: voteDec,
+        justificativa: voteJust || null,
+        checklist_completo: checklistInfo.allDone,
+        itens_revisados: checklistInfo.completed,
+      } as any,
       { onConflict: "proposal_id,voter_id" }
     );
     setBusy(false);
+    setConfirmOpen(false);
     if (error) { toast.error(error.message); return; }
-    toast.success("Voto registrado 🗳️");
+    toast.success(checklistInfo.allDone ? "Voto registrado 🗳️" : "Voto registrado (sem checklist completo)");
+  };
+
+  const handleVoteClick = () => {
+    if (!checklistInfo.allDone && checklistInfo.total > 0) {
+      setConfirmOpen(true);
+    } else {
+      votar();
+    }
   };
 
   if (loading) return <div className="flex items-center justify-center py-10 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin mr-2" /> Carregando comitê…</div>;
