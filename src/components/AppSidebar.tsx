@@ -1,33 +1,67 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import {
-  LayoutDashboard,
   Users,
-  KanbanSquare,
-  Settings,
-  Building2,
-  
+  Kanban,
+  Gear,
+  Buildings,
   Gavel,
   ListChecks,
-  Tags,
+  Tag,
   Wallet,
   Database,
-  FileSpreadsheet,
-  LayoutGrid,
-  BarChart3,
+  MicrosoftExcelLogo,
+  SquaresFour,
+  ChartBar,
   Briefcase,
-  Pin,
-  PinOff,
-  ChevronDown,
-  Menu,
-  TrendingUp,
-  Activity,
-  CalendarDays,
-  Vote,
-  FileSignature,
-} from "lucide-react";
+  PushPin,
+  PushPinSlash,
+  CaretDown,
+  List,
+  TrendUp,
+  Pulse,
+  CalendarBlank,
+  Scales,
+  NotePencil,
+  type Icon as PhosphorIcon,
+} from "@phosphor-icons/react";
+import { forwardRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
+
+// Wrapper que aplica peso "thin" por padrão e expõe a API simples { className }
+function thin(Icon: PhosphorIcon) {
+  const Wrapped = forwardRef<SVGSVGElement, { className?: string }>(
+    ({ className }, ref) => <Icon ref={ref} weight="thin" className={className} />,
+  );
+  Wrapped.displayName = `Thin(${(Icon as any).displayName ?? "Icon"})`;
+  return Wrapped as unknown as React.ComponentType<{ className?: string }>;
+}
+
+const IconDashboard = thin(SquaresFour);
+const IconUsers = thin(Users);
+const IconKanban = thin(Kanban);
+const IconSettings = thin(Gear);
+const IconBuilding = thin(Buildings);
+const IconGavel = thin(Gavel);
+const IconListChecks = thin(ListChecks);
+const IconTags = thin(Tag);
+const IconWallet = thin(Wallet);
+const IconDatabase = thin(Database);
+const IconExcel = thin(MicrosoftExcelLogo);
+const IconGrid = thin(SquaresFour);
+const IconChart = thin(ChartBar);
+const IconBriefcase = thin(Briefcase);
+const IconPin = thin(PushPin);
+const IconPinOff = thin(PushPinSlash);
+const IconChevronDown = thin(CaretDown);
+const IconMenu = thin(List);
+const IconTrendingUp = thin(TrendUp);
+const IconActivity = thin(Pulse);
+const IconCalendar = thin(CalendarBlank);
+const IconVote = thin(Scales);
+const IconSignature = thin(NotePencil);
+
 
 type Item = {
   title: string;
@@ -48,31 +82,31 @@ const GROUPS: Group[] = [
   {
     key: "gestao",
     label: "Gestão",
-    icon: BarChart3,
+    icon: IconChart,
     items: [
-      { title: "Dashboard Comercial", url: "/gestao/comercial", icon: TrendingUp },
-      { title: "Dashboard Operacional", url: "/gestao/operacional", icon: Activity },
-      { title: "Dashboard Financeiro", url: "/gestao/financeiro", icon: Wallet },
-      { title: "Dashboard Diário", url: "/gestao/diario", icon: CalendarDays },
+      { title: "Dashboard Comercial", url: "/gestao/comercial", icon: IconTrendingUp },
+      { title: "Dashboard Operacional", url: "/gestao/operacional", icon: IconActivity },
+      { title: "Dashboard Financeiro", url: "/gestao/financeiro", icon: IconWallet },
+      { title: "Dashboard Diário", url: "/gestao/diario", icon: IconCalendar },
     ],
   },
   {
     key: "operacao",
     label: "Operação",
-    icon: Briefcase,
+    icon: IconBriefcase,
     items: [
-      { title: "CRM", url: "/pipeline", icon: KanbanSquare },
-      { title: "Cedentes", url: "/cedentes", icon: Building2 },
+      { title: "CRM", url: "/pipeline", icon: IconKanban },
+      { title: "Cedentes", url: "/cedentes", icon: IconBuilding },
       {
         title: "Comitê",
         url: "/comite",
-        icon: Vote,
+        icon: IconVote,
         roles: ["admin", "comite", "credito"] as const,
       },
       {
         title: "Formalização",
         url: "/formalizacao",
-        icon: FileSignature,
+        icon: IconSignature,
         roles: ["admin", "formalizacao", "cadastro"] as const,
       },
     ],
@@ -80,23 +114,23 @@ const GROUPS: Group[] = [
   {
     key: "config",
     label: "Configurações",
-    icon: Settings,
+    icon: IconSettings,
     adminOnly: true,
     items: [
       {
         title: "Financeiro",
         url: "/financeiro",
-        icon: Wallet,
+        icon: IconWallet,
         roles: ["admin", "financeiro"] as const,
       },
-      { title: "Usuários", url: "/configuracoes/usuarios", icon: Users },
-      { title: "Equipes", url: "/configuracoes/equipes", icon: Users },
-      { title: "Alçadas", url: "/configuracoes/alcadas", icon: Gavel },
-      { title: "Pipeline", url: "/configuracoes/pipeline", icon: ListChecks },
-      { title: "Categorias de doc.", url: "/configuracoes/categorias", icon: Tags },
-      { title: "BI – Datasets", url: "/bi/datasets", icon: Database },
-      { title: "BI – Uploads", url: "/bi/uploads", icon: FileSpreadsheet },
-      { title: "BI – Widgets", url: "/bi/widgets", icon: LayoutGrid },
+      { title: "Usuários", url: "/configuracoes/usuarios", icon: IconUsers },
+      { title: "Equipes", url: "/configuracoes/equipes", icon: IconUsers },
+      { title: "Alçadas", url: "/configuracoes/alcadas", icon: IconGavel },
+      { title: "Pipeline", url: "/configuracoes/pipeline", icon: IconListChecks },
+      { title: "Categorias de doc.", url: "/configuracoes/categorias", icon: IconTags },
+      { title: "BI – Datasets", url: "/bi/datasets", icon: IconDatabase },
+      { title: "BI – Uploads", url: "/bi/uploads", icon: IconExcel },
+      { title: "BI – Widgets", url: "/bi/widgets", icon: IconGrid },
     ],
   },
 ];
@@ -198,7 +232,7 @@ export function AppSidebar() {
                 title={pinned ? "Desafixar menu" : "Fixar menu"}
                 aria-label={pinned ? "Desafixar menu" : "Fixar menu"}
               >
-                {pinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
+                {pinned ? <IconPinOff className="h-4 w-4" /> : <IconPin className="h-4 w-4" />}
               </button>
             </>
           ) : (
@@ -209,7 +243,7 @@ export function AppSidebar() {
               title="Abrir menu"
               aria-label="Abrir menu"
             >
-              <Menu className="h-4 w-4" />
+              <IconMenu className="h-4 w-4" />
             </button>
           )}
         </div>
@@ -237,7 +271,7 @@ export function AppSidebar() {
                     )}
                   >
                     <span className="flex-1 text-left truncate">{group.label}</span>
-                    <ChevronDown
+                    <IconChevronDown
                       className={cn(
                         "h-3 w-3 transition-transform opacity-50",
                         !isOpen && "-rotate-90",

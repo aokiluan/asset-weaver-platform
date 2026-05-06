@@ -159,8 +159,6 @@
     appearance: textfield;
   }
 
-  /* Ícones Lucide com traço mais fino e minimalista (Linear/Notion-like) */
-  svg.lucide {
-    stroke-width: 0.75;
-  }
+  /* Sidebar usa Phosphor (peso "thin"); demais ícones Lucide ficam no padrão */
+
 }
