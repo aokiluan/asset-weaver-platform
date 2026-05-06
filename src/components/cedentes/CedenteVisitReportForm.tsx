@@ -469,16 +469,97 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
       created_by: auth.user.id,
     };
 
-    const { error } = existingId
-      ? await supabase.from("cedente_visit_reports").update(payload).eq("id", existingId)
-      : await supabase.from("cedente_visit_reports").insert(payload);
+    if (mode === "edit") {
+      if (!motivoAlteracao.trim()) {
+        setSaving(false);
+        toast.error("Informe o motivo da alteração");
+        return;
+      }
+    }
+
+    let reportId = existingId;
+    let novaVersao = versaoAtual || 1;
+
+    if (existingId) {
+      const { error } = await supabase
+        .from("cedente_visit_reports")
+        .update({ ...payload, versao_atual: (versaoAtual || 1) + (mode === "edit" ? 1 : 0), precisa_revisao: mode === "edit" ? false : precisaRevisao })
+        .eq("id", existingId);
+      if (error) { setSaving(false); toast.error("Erro ao salvar", { description: error.message }); return; }
+      novaVersao = (versaoAtual || 1) + (mode === "edit" ? 1 : 0);
+    } else {
+      const { data: ins, error } = await supabase
+        .from("cedente_visit_reports")
+        .insert({ ...payload, versao_atual: 1, precisa_revisao: false })
+        .select("id")
+        .single();
+      if (error || !ins) { setSaving(false); toast.error("Erro ao salvar", { description: error?.message }); return; }
+      reportId = ins.id;
+      novaVersao = 1;
+    }
+
+    // Snapshot da versão
+    const versionRow: any = {
+      report_id: reportId,
+      cedente_id: cedenteId,
+      versao: novaVersao,
+      is_current: true,
+      motivo_alteracao: mode === "edit" ? motivoAlteracao.trim() : null,
+      data_visita: payload.data_visita,
+      tipo_visita: payload.tipo_visita,
+      visitante: payload.visitante,
+      entrevistado_nome: payload.entrevistado_nome,
+      entrevistado_cargo: payload.entrevistado_cargo,
+      entrevistado_cpf: payload.entrevistado_cpf,
+      entrevistado_telefone: payload.entrevistado_telefone,
+      entrevistado_email: payload.entrevistado_email,
+      ramo_atividade: payload.ramo_atividade,
+      faturamento_mensal: payload.faturamento_mensal,
+      principais_produtos: payload.principais_produtos,
+      qtd_funcionarios: payload.qtd_funcionarios,
+      pct_vendas_pf: payload.pct_vendas_pf,
+      pct_vendas_pj: payload.pct_vendas_pj,
+      pct_vendas_cheque: payload.pct_vendas_cheque,
+      pct_vendas_boleto: payload.pct_vendas_boleto,
+      pct_vendas_cartao: payload.pct_vendas_cartao,
+      pct_vendas_outros: payload.pct_vendas_outros,
+      pct_fat_debito: payload.pct_fat_debito,
+      parceiros_financeiros: payload.parceiros_financeiros,
+      empresas_ligadas: payload.empresas_ligadas,
+      limite_global_solicitado: payload.limite_global_solicitado,
+      modalidades: payload.modalidades,
+      avalistas_solidarios: payload.avalistas_solidarios,
+      assinatura_digital_tipo: payload.assinatura_digital_tipo,
+      assinatura_digital_observacao: payload.assinatura_digital_observacao,
+      parecer_comercial: payload.parecer_comercial,
+      pontos_atencao: payload.pontos_atencao,
+      fotos: payload.fotos,
+      created_by: auth.user.id,
+    };
+
+    if (mode === "edit") {
+      // Marca versões anteriores como não-atuais
+      await (supabase as any)
+        .from("cedente_visit_report_versions")
+        .update({ is_current: false })
+        .eq("report_id", reportId);
+    }
+
+    const { error: vErr } = await (supabase as any)
+      .from("cedente_visit_report_versions")
+      .insert(versionRow);
 
     setSaving(false);
-    if (error) { toast.error("Erro ao salvar", { description: error.message }); return; }
-    toast.success("Relatório comercial salvo");
+    if (vErr) { toast.error("Erro ao registrar versão", { description: vErr.message }); return; }
+
+    toast.success(mode === "edit" ? `Nova versão (v${novaVersao}) salva` : "Relatório comercial salvo");
     clearDraft();
+    setMotivoAlteracao("");
+    setVersionsRefresh((n) => n + 1);
+    await loadFromDb();
     onSaved?.();
   };
+
 
   if (loading) {
     return <div className="flex items-center gap-2 text-muted-foreground py-8"><Loader2 className="h-4 w-4 animate-spin" /> Carregando...</div>;
