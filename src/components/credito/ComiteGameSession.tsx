@@ -9,9 +9,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card } from "@/components/ui/card";
 import {
   Vote, ThumbsUp, ThumbsDown, MinusCircle, EyeOff, Eye,
-  Trophy, Loader2, Lock, Sparkles, Clock,
+  Trophy, Loader2, Lock, Sparkles, Clock, AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
+import { VoteBriefing } from "./VoteBriefing";
+import { ReadingChecklist, ChecklistItem } from "./ReadingChecklist";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type VoteDecision = "favoravel" | "desfavoravel" | "abstencao";
 
@@ -39,7 +45,15 @@ interface Props {
   proposalId: string;
   votosMinimos: number;
   proposalStage: string;
+  cedenteId?: string;
 }
+
+const CHECKLIST_ITEMS: ChecklistItem[] = [
+  { key: "pleito_comercial", label: "Revisei o pleito comercial", hint: "Valor, prazo e modalidades solicitados", tab: "visita" },
+  { key: "parecer_comercial", label: "Li o parecer e a recomendação comercial", hint: "Percepção do comercial sobre o cedente", tab: "visita" },
+  { key: "analise_credito", label: "Conferi a análise e o parecer do crédito", hint: "Recomendação, conclusão e justificativa do analista", tab: "credito" },
+  { key: "pontos_atencao", label: "Olhei os pontos de atenção e restritivos", hint: "Riscos levantados em ambos os relatórios", tab: "credito" },
+];
 
 const VOTE_LABEL: Record<VoteDecision, string> = {
   favoravel: "Favorável", desfavoravel: "Desfavorável", abstencao: "Abstenção",
