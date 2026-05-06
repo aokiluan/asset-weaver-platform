@@ -102,8 +102,8 @@ export function VisitReportVersionsPanel({ reportId, cedenteId, refreshKey }: Pr
             <div className="space-y-1">
               {versions.map((v) => (
                 <div key={v.id} className="flex items-center justify-between border rounded-md px-2.5 py-1.5">
-                  <div className="space-y-0.5 min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5 flex-wrap">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5 flex-wrap min-w-0">
                       <span className="text-[13px] font-medium">v{v.versao}</span>
                       {v.is_current && <Badge className="text-[10px] px-1.5 py-0 h-[18px]">atual</Badge>}
                       <span className="text-[11px] text-muted-foreground">
@@ -112,12 +112,12 @@ export function VisitReportVersionsPanel({ reportId, cedenteId, refreshKey }: Pr
                       {authors[v.created_by] && (
                         <span className="text-[11px] text-muted-foreground">· {authors[v.created_by]}</span>
                       )}
+                      {v.motivo_alteracao && (
+                        <span className="text-[11px] text-muted-foreground truncate min-w-0" title={v.motivo_alteracao}>
+                          · Motivo: {v.motivo_alteracao}
+                        </span>
+                      )}
                     </div>
-                    {v.motivo_alteracao && (
-                      <p className="text-[11px] text-muted-foreground truncate" title={v.motivo_alteracao}>
-                        Motivo: {v.motivo_alteracao}
-                      </p>
-                    )}
                   </div>
                   <Button size="sm" variant="ghost" className="h-7 text-[11px]" onClick={() => setOpenId(v.id)}>
                     <Eye className="h-3 w-3 mr-1" /> Ver
