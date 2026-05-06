@@ -540,7 +540,7 @@ function TextareaField({ label, value, onChange, disabled, rows = 2, cedenteId, 
   return (
     <div className="space-y-1.5">
       <Label className="text-xs">{label}</Label>
-      <Textarea rows={rows} value={value} onChange={(e) => onChange(e.target.value)} disabled={disabled} />
+      <Textarea rows={rows} value={value} onChange={(e) => onChange(e.target.value)} disabled={disabled} className="text-[12px] min-h-[60px]" />
       {allowAttachments && (
         <FieldAttachments
           cedenteId={cedenteId}
