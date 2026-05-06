@@ -4,10 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
-import { History, Eye, Loader2 } from "lucide-react";
+import { History, Eye, Loader2, FileDown } from "lucide-react";
+import { generateVisitReportPdf } from "@/lib/visit-report-pdf";
+import { toast } from "sonner";
 
 interface Props {
   reportId: string | null;
+  cedenteId: string;
   refreshKey?: number;
 }
 
@@ -31,11 +34,25 @@ interface VersionRow {
   entrevistado_nome: string | null;
 }
 
-export function VisitReportVersionsPanel({ reportId, refreshKey }: Props) {
+export function VisitReportVersionsPanel({ reportId, cedenteId, refreshKey }: Props) {
   const [versions, setVersions] = useState<VersionRow[]>([]);
   const [authors, setAuthors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
+
+  const handleGerarPdf = async () => {
+    if (!opened) return;
+    setGeneratingPdf(true);
+    try {
+      await generateVisitReportPdf(opened as any, cedenteId, `v${opened.versao}`);
+      toast.success("PDF gerado");
+    } catch (e: any) {
+      toast.error("Erro ao gerar PDF", { description: e?.message });
+    } finally {
+      setGeneratingPdf(false);
+    }
+  };
 
   useEffect(() => {
     if (!reportId) { setVersions([]); return; }
@@ -117,8 +134,14 @@ export function VisitReportVersionsPanel({ reportId, refreshKey }: Props) {
       <Dialog open={!!opened} onOpenChange={(o) => !o && setOpenId(null)}>
         <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
-              Versão {opened?.versao} {opened?.is_current && <Badge className="ml-2 text-[10px]">atual</Badge>}
+            <DialogTitle className="flex items-center justify-between gap-2 pr-8">
+              <span>
+                Versão {opened?.versao} {opened?.is_current && <Badge className="ml-2 text-[10px]">atual</Badge>}
+              </span>
+              <Button size="sm" variant="outline" onClick={handleGerarPdf} disabled={generatingPdf || !opened}>
+                {generatingPdf ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <FileDown className="h-3.5 w-3.5 mr-1" />}
+                Gerar PDF
+              </Button>
             </DialogTitle>
           </DialogHeader>
           {opened && (
