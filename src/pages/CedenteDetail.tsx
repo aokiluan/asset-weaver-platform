@@ -414,20 +414,6 @@ export default function CedenteDetail() {
 
       {tab === "credito" && (
         <div className="mt-4 space-y-4">
-          {latestProposal && (
-            <div className="rounded-lg border bg-card p-4 flex flex-wrap items-center justify-between gap-3">
-              <div className="space-y-0.5">
-                <div className="text-sm font-semibold">Proposta de crédito vinculada</div>
-                <div className="text-xs text-muted-foreground">
-                  Estágio: <span className="font-medium capitalize">{latestProposal.stage}</span>
-                  {latestProposal.approver && <> · Alçada: <span className="font-medium capitalize">{latestProposal.approver}</span></>}
-                </div>
-              </div>
-              <Button asChild variant="outline" size="sm">
-                <Link to={`/credito/${latestProposal.id}`}>Abrir na esteira</Link>
-              </Button>
-            </div>
-          )}
           <CreditReportForm cedenteId={cedente.id} proposalId={latestProposal?.id ?? null} />
         </div>
       )}
