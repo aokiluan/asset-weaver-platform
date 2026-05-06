@@ -232,7 +232,7 @@ export function AppSidebar() {
                 title={pinned ? "Desafixar menu" : "Fixar menu"}
                 aria-label={pinned ? "Desafixar menu" : "Fixar menu"}
               >
-                {pinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
+                {pinned ? <IconPinOff className="h-4 w-4" /> : <IconPin className="h-4 w-4" />}
               </button>
             </>
           ) : (
@@ -243,7 +243,7 @@ export function AppSidebar() {
               title="Abrir menu"
               aria-label="Abrir menu"
             >
-              <Menu className="h-4 w-4" />
+              <IconMenu className="h-4 w-4" />
             </button>
           )}
         </div>
@@ -271,7 +271,7 @@ export function AppSidebar() {
                     )}
                   >
                     <span className="flex-1 text-left truncate">{group.label}</span>
-                    <ChevronDown
+                    <IconChevronDown
                       className={cn(
                         "h-3 w-3 transition-transform opacity-50",
                         !isOpen && "-rotate-90",
