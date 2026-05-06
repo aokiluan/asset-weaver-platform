@@ -29,6 +29,40 @@ import { forwardRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 
+// Wrapper que aplica peso "thin" por padrão e expõe a API simples { className }
+function thin(Icon: PhosphorIcon) {
+  const Wrapped = forwardRef<SVGSVGElement, { className?: string }>(
+    ({ className }, ref) => <Icon ref={ref} weight="thin" className={className} />,
+  );
+  Wrapped.displayName = `Thin(${(Icon as any).displayName ?? "Icon"})`;
+  return Wrapped as unknown as React.ComponentType<{ className?: string }>;
+}
+
+const IconDashboard = thin(SquaresFour);
+const IconUsers = thin(Users);
+const IconKanban = thin(Kanban);
+const IconSettings = thin(Gear);
+const IconBuilding = thin(Buildings);
+const IconGavel = thin(Gavel);
+const IconListChecks = thin(ListChecks);
+const IconTags = thin(Tag);
+const IconWallet = thin(Wallet);
+const IconDatabase = thin(Database);
+const IconExcel = thin(MicrosoftExcelLogo);
+const IconGrid = thin(SquaresFour);
+const IconChart = thin(ChartBar);
+const IconBriefcase = thin(Briefcase);
+const IconPin = thin(PushPin);
+const IconPinOff = thin(PushPinSlash);
+const IconChevronDown = thin(CaretDown);
+const IconMenu = thin(List);
+const IconTrendingUp = thin(TrendUp);
+const IconActivity = thin(Pulse);
+const IconCalendar = thin(CalendarBlank);
+const IconVote = thin(Scales);
+const IconSignature = thin(NotePencil);
+
+
 type Item = {
   title: string;
   url: string;
