@@ -396,7 +396,7 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
           (!!(report.parecer_analista && String(report.parecer_analista).trim()) ||
             !!(report.conclusao && String(report.conclusao).trim()));
         return (
-          <Accordion type="single" collapsible className="space-y-0.5">
+          <Accordion type="single" collapsible className="space-y-0.5 !mt-0.5">
             <AccordionItem value="parecer_credito" className="border rounded-lg bg-card px-3">
               <AccordionTrigger className="hover:no-underline">
                 <div className="flex items-center gap-2 text-left">
