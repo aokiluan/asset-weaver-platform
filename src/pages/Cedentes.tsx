@@ -259,23 +259,23 @@ export default function Cedentes() {
 
               {/* KPIs financeiros */}
               <div className="grid grid-cols-2 gap-px bg-border">
-                <div className="bg-card p-4">
+                <div className="bg-card p-2.5">
                   <div className="text-xs text-muted-foreground">Faturamento médio</div>
                   <div className="text-[18px] font-semibold tabular-nums mt-1">{fmtBRL(selected.faturamento_medio)}</div>
                 </div>
-                <div className="bg-card p-4">
+                <div className="bg-card p-2.5">
                   <div className="text-xs text-muted-foreground">Limite aprovado</div>
                   <div className="text-[18px] font-semibold tabular-nums mt-1 text-primary">{fmtBRL(selected.limite_aprovado)}</div>
                 </div>
               </div>
 
               {/* Detalhes */}
-              <div className="p-5 space-y-3 flex-1 overflow-y-auto">
+              <div className="p-2.5 space-y-2 flex-1 overflow-y-auto">
                 <section>
                   <h3 className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground mb-1.5">
                     Contato
                   </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-1.5">
                     <Field label="E-mail" value={selected.email} />
                     <Field label="Telefone" value={selected.telefone} />
                   </div>
@@ -285,7 +285,7 @@ export default function Cedentes() {
                   <h3 className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground mb-1.5">
                     Endereço
                   </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-1.5">
                     <Field label="Logradouro" value={selected.endereco} />
                     <Field
                       label="Cidade / UF"
@@ -302,7 +302,7 @@ export default function Cedentes() {
                   <h3 className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground mb-1.5">
                     Operação
                   </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-1.5">
                     <Field label="Setor" value={selected.setor} />
                     <Field
                       label="Cadastrado em"
