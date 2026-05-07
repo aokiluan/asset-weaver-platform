@@ -1,14 +1,50 @@
-## Problema
+Espelhar o padrão do `CedenteVisitReportForm` (Comercial) no `CreditReportForm` (Crédito). Apenas o arquivo `src/components/credito/CreditReportForm.tsx` será modificado.
 
-O `VisitReportVersionsPanel` (e o `CreditReportVersionsPanel`) é renderizado fora do `<Accordion>` das seções, dentro de um wrapper com `space-y-2.5` (10 px). Já entre os AccordionItems o espaço é `space-y-0.5` (2 px). Por isso o card "Histórico de versões" fica visualmente afastado do "5. Parecer comercial".
+## Mudanças
 
-## Solução
+1. **Header — título e subtítulo**
+   - "Relatório estruturado de crédito" → **"Relatório de crédito"**.
+   - "Preencha as 8 seções para liberar envio ao comitê." → **"Inclui análise estruturada, due diligence e pleito de crédito."**
 
-Aproximar o painel de versões dos cards anteriores aplicando margem-superior pequena (`mt-0.5` = 2 px) no wrapper, sobrescrevendo o `space-y-2.5` do pai com `!mt-0.5`.
+2. **Header — remover do topo**
+   - Remover o botão **"Cancelar"** (modo edit) do header.
+   - Remover o `<DraftIndicator />` do header.
 
-### Arquivos
+3. **Card "Motivo da alteração"**
+   - Trocar `rounded-lg border bg-card p-4 space-y-0.5` por `border rounded-md p-3 bg-muted/30 space-y-2`.
+   - Trocar `<Label htmlFor="motivo-alteracao" className="text-sm">Motivo da alteração <span className="text-destructive">*</span></Label>` por `<Label>Motivo da alteração *</Label>` (sem id/htmlFor).
 
-1. `src/components/cedentes/CedenteVisitReportForm.tsx` — envolver `<VisitReportVersionsPanel ... />` em `<div className="!mt-0.5">…</div>`.
-2. `src/components/credito/CreditReportForm.tsx` — mesmo tratamento ao redor de `<CreditReportVersionsPanel ... />`.
+4. **Rodapé — novo bloco no padrão Comercial**
+   - Substituir o bloco atual:
+     ```tsx
+     {canEdit && (mode === "create" || mode === "edit") && (
+       <div className="flex justify-end pt-2">
+         <Button onClick={save} disabled={saving} size="lg" className="shadow-lg">…</Button>
+       </div>
+     )}
+     ```
+   - Por:
+     ```tsx
+     {canEdit && (mode === "create" || mode === "edit") && (
+       <div className="flex items-center justify-between pt-2 gap-3 flex-wrap">
+         <DraftIndicator
+           lastSavedAt={lastSavedAt}
+           restored={restored}
+           onDiscard={() => discardDraft(emptyReport(cedenteId, proposalId))}
+         />
+         <div className="flex items-center gap-2">
+           {mode === "edit" && (
+             <Button variant="ghost" onClick={handleCancelarEdicao} disabled={saving}>
+               <X className="h-4 w-4 mr-2" /> Cancelar
+             </Button>
+           )}
+           <Button onClick={save} disabled={saving}>
+             {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+             {mode === "edit" ? "Salvar nova versão" : "Salvar relatório"}
+           </Button>
+         </div>
+       </div>
+     )}
+     ```
 
-Sem mudar nada do componente interno, mantendo o padrão de espaçamento ultracompacto entre os cards.
+Resultado: o header fica idêntico ao do Comercial (sem Cancelar e sem DraftIndicator), e o rodapé reúne `DraftIndicator` + `Cancelar` + `Salvar` no mesmo padrão.
