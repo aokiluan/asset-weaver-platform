@@ -397,7 +397,7 @@ function ScoreCard({ label, count, icon, color, hidden, mask }: {
         <span className={color}>{icon}</span>
         <span>{label}</span>
       </div>
-      <div className="text-2xl font-semibold tabular-nums">
+      <div className="text-[18px] font-semibold tabular-nums">
         {hidden ? <span className="text-muted-foreground">?</span> : count}
       </div>
     </Card>

@@ -208,7 +208,7 @@ export function AppSidebar() {
           "fixed inset-y-0 left-0 z-30 hidden md:flex flex-col",
           "bg-sidebar text-sidebar-foreground border-r border-sidebar-border",
           "transition-[width] duration-200 ease-linear",
-          expanded && !pinned && "shadow-xl",
+          expanded && !pinned && "shadow-md",
         )}
         style={{ width: expanded ? EXPANDED_W : COLLAPSED_W }}
       >

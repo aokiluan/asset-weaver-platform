@@ -206,7 +206,7 @@ export default function Index() {
               <c.icon className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className={c.isText ? "text-xl font-bold text-foreground" : "text-[20px] font-medium tracking-tight text-foreground"}>
+              <div className={c.isText ? "text-[14px] font-semibold text-foreground" : "text-[18px] font-semibold text-foreground tabular-nums"}>
                 {c.value}
               </div>
               <p className="text-xs text-muted-foreground mt-1">{c.hint}</p>

@@ -82,7 +82,7 @@ export default function Auth() {
 
         <Card className="shadow-[var(--shadow-elegant)] border-t-2 border-t-gold">
           <CardHeader>
-            <CardTitle className="font-display text-2xl">Acesse sua conta</CardTitle>
+            <CardTitle className="text-[16px] font-semibold">Acesse sua conta</CardTitle>
             <CardDescription>Entre com seu e-mail corporativo</CardDescription>
           </CardHeader>
           <CardContent>

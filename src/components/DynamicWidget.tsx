@@ -145,7 +145,7 @@ export function DynamicWidget({ widget }: { widget: WidgetDef }) {
       <Card className={`shadow-[var(--shadow-card)] ${span}`}>
         <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">{widget.titulo}</CardTitle></CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-foreground">{fmt(valor, cfg.format)}</div>
+          <div className="text-[18px] font-semibold text-foreground tabular-nums">{fmt(valor, cfg.format)}</div>
           {widget.descricao && <p className="text-xs text-muted-foreground mt-1">{widget.descricao}</p>}
         </CardContent>
       </Card>
