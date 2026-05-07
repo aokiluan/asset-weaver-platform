@@ -93,7 +93,7 @@ export function VisitReportVersionsPanel({ reportId, cedenteId, refreshKey }: Pr
         <AccordionItem value="versoes" className="border rounded-lg bg-card px-3">
           <AccordionTrigger className="hover:no-underline">
             <div className="flex items-center gap-2 text-sm font-medium">
-              <History className="h-3.5 w-3.5" />
+              <History className="h-3 w-3" />
               Histórico de versões
               <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-[18px]">{versions.length}</Badge>
             </div>
