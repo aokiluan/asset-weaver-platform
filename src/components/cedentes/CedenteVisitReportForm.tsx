@@ -736,7 +736,9 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
       </Accordion>
       </div>
 
-      <VisitReportVersionsPanel reportId={existingId} cedenteId={cedenteId} refreshKey={versionsRefresh} />
+      <div className="!mt-0.5">
+        <VisitReportVersionsPanel reportId={existingId} cedenteId={cedenteId} refreshKey={versionsRefresh} />
+      </div>
 
       {mode !== "view" && (
         <div className="flex items-center justify-between pt-2 gap-3 flex-wrap">
