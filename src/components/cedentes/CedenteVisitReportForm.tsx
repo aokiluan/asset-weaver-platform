@@ -633,7 +633,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
 
         {/* 4. Pleito */}
         <AccordionItem value="pleito" className="border rounded-lg bg-card px-3">
-          <AccordionTrigger className="hover:no-underline"><span className="text-sm font-medium">4. Pleito de crédito</span></AccordionTrigger>
+          <AccordionTrigger className="hover:no-underline"><span className="flex items-center gap-2 text-sm font-medium">{sectionStatus.pleito ? <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" /> : <Circle className="h-4 w-4 text-muted-foreground shrink-0" />}4. Pleito de crédito</span></AccordionTrigger>
           <AccordionContent className="space-y-2.5 pt-1.5">
             <div className="space-y-0.5">
               <Label>Limite global solicitado (R$)</Label>
