@@ -239,7 +239,7 @@ export default function AdminDashboardWidgets() {
                 {previewWidget ? (
                   <DynamicWidget widget={previewWidget} />
                 ) : (
-                  <div className="border rounded-md p-6 text-sm text-muted-foreground">
+                  <div className="border rounded-md p-4 text-sm text-muted-foreground">
                     Preencha título e dataset para visualizar.
                   </div>
                 )}

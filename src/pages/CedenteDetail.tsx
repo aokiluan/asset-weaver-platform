@@ -384,7 +384,7 @@ export default function CedenteDetail() {
 
       {tab === "documentos" && (
         <div className="mt-4">
-          <div className="rounded-lg border bg-card p-6 space-y-4">
+          <div className="rounded-lg border bg-card p-4 space-y-4">
             <div className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
               <h2 className="text-lg font-semibold">Documentos</h2>
@@ -403,7 +403,7 @@ export default function CedenteDetail() {
 
       {tab === "visita" && (
         <div className="mt-4">
-          <div className="rounded-lg border bg-card p-6">
+          <div className="rounded-lg border bg-card p-4">
             <div className="mb-4">
               <h2 className="text-lg font-semibold">Relatório comercial</h2>
               <p className="text-sm text-muted-foreground">Inclui dados da visita, do negócio e o pleito de crédito.</p>
@@ -440,7 +440,7 @@ export default function CedenteDetail() {
 
       {tab === "historico" && (
         <div className="mt-4">
-          <div className="rounded-lg border bg-card p-6">
+          <div className="rounded-lg border bg-card p-4">
             <h2 className="text-lg font-semibold mb-4">Histórico de estágios</h2>
             {history.length === 0 ? (
               <p className="text-sm text-muted-foreground">Sem registros.</p>
@@ -711,7 +711,7 @@ function FormalizacaoTabContent({
   return (
     <div className="mt-4 space-y-4">
       {/* 1. Geração da minuta */}
-      <div className="rounded-lg border bg-card p-6 space-y-4">
+      <div className="rounded-lg border bg-card p-4 space-y-4">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className="text-lg font-semibold flex items-center gap-2">
@@ -737,7 +737,7 @@ function FormalizacaoTabContent({
       </div>
 
       {/* 2. Upload do contrato assinado */}
-      <div className="rounded-lg border bg-card p-6 space-y-4">
+      <div className="rounded-lg border bg-card p-4 space-y-4">
         <div>
           <h2 className="text-lg font-semibold flex items-center gap-2">
             <Upload className="h-5 w-5" /> Contrato assinado
@@ -786,7 +786,7 @@ function FormalizacaoTabContent({
       </div>
 
       {/* 3. Confirmação de assinatura */}
-      <div className="rounded-lg border bg-card p-6 space-y-3">
+      <div className="rounded-lg border bg-card p-4 space-y-3">
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <CheckCircle2 className="h-5 w-5" /> Status da formalização
         </h2>

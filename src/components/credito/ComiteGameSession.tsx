@@ -210,7 +210,7 @@ export function ComiteGameSession({ proposalId, votosMinimos, proposalStage, ced
   // Sessão não aberta
   if (!session) {
     return (
-      <Card className="p-6 text-center space-y-3">
+      <Card className="p-4 text-center space-y-3">
         <Vote className="h-10 w-10 mx-auto text-muted-foreground" />
         <h3 className="text-lg font-semibold">Comitê ainda não iniciado</h3>
         <p className="text-sm text-muted-foreground">
