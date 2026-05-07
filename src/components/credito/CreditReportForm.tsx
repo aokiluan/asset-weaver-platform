@@ -271,9 +271,9 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
         <div className="flex items-center justify-between gap-2.5 flex-wrap">
           <div className="flex items-center gap-3 flex-wrap">
             <div>
-              <h3 className="text-base font-semibold">Relatório estruturado de crédito</h3>
+              <h3 className="text-base font-semibold">Relatório de crédito</h3>
               <p className="text-xs text-muted-foreground">
-                Preencha as 8 seções para liberar envio ao comitê.
+                Inclui análise estruturada, due diligence e pleito de crédito.
               </p>
             </div>
             {report.id && (
@@ -312,30 +312,15 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
                 <Pencil className="h-4 w-4 mr-2" /> Alterar relatório
               </Button>
             )}
-            {canEdit && mode === "edit" && (
-              <Button onClick={handleCancelarEdicao} size="sm" variant="ghost">
-                <X className="h-4 w-4 mr-2" /> Cancelar
-              </Button>
-            )}
           </div>
         </div>
         <Progress value={(completude / 8) * 100} className="h-2" />
-        {(mode === "create" || mode === "edit") && (
-          <DraftIndicator
-            lastSavedAt={lastSavedAt}
-            restored={restored}
-            onDiscard={() => discardDraft(emptyReport(cedenteId, proposalId))}
-          />
-        )}
       </div>
 
       {mode === "edit" && (
-        <div className="rounded-lg border bg-card p-4 space-y-0.5">
-          <Label htmlFor="motivo-alteracao" className="text-sm">
-            Motivo da alteração <span className="text-destructive">*</span>
-          </Label>
+        <div className="border rounded-md p-3 bg-muted/30 space-y-2">
+          <Label>Motivo da alteração *</Label>
           <Textarea
-            id="motivo-alteracao"
             rows={2}
             placeholder="Descreva o que mudou e por quê (ex: revalidação, novos dados de balanço, correção de informação...)"
             value={motivoAlteracao}
@@ -481,11 +466,23 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
       </div>
 
       {canEdit && (mode === "create" || mode === "edit") && (
-        <div className="flex justify-end pt-2">
-          <Button onClick={save} disabled={saving} size="lg" className="shadow-lg">
-            {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-            {mode === "edit" ? "Salvar nova versão" : "Salvar relatório"}
-          </Button>
+        <div className="flex items-center justify-between pt-2 gap-3 flex-wrap">
+          <DraftIndicator
+            lastSavedAt={lastSavedAt}
+            restored={restored}
+            onDiscard={() => discardDraft(emptyReport(cedenteId, proposalId))}
+          />
+          <div className="flex items-center gap-2">
+            {mode === "edit" && (
+              <Button variant="ghost" onClick={handleCancelarEdicao} disabled={saving}>
+                <X className="h-4 w-4 mr-2" /> Cancelar
+              </Button>
+            )}
+            <Button onClick={save} disabled={saving}>
+              {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+              {mode === "edit" ? "Salvar nova versão" : "Salvar relatório"}
+            </Button>
+          </div>
         </div>
       )}
     </div>
