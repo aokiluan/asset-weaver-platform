@@ -25,7 +25,7 @@ export default function PlaceholderPage({ title, description, comingItems }: Pro
         </div>
         {comingItems && comingItems.length > 0 && (
           <div className="text-left max-w-md mx-auto pt-4 border-t">
-            <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground mb-1.5">
               O que vai vir aqui
             </div>
             <ul className="text-sm space-y-1.5">

@@ -131,18 +131,18 @@ export default function Cedentes() {
       </div>
 
       {/* KPIs */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <div className="rounded-lg border bg-card p-4">
-          <div className="text-xs text-muted-foreground">Total cadastrado</div>
-          <div className="text-[20px] font-medium tracking-tight">{items.length}</div>
+      <div className="grid gap-3 md:grid-cols-3">
+        <div className="rounded-lg border bg-card p-3">
+          <div className="text-[11px] text-muted-foreground leading-none">Total cadastrado</div>
+          <div className="text-[18px] font-semibold tabular-nums leading-tight mt-1">{items.length}</div>
         </div>
-        <div className="rounded-lg border bg-card p-4">
-          <div className="text-xs text-muted-foreground">Aprovados</div>
-          <div className="text-[20px] font-medium tracking-tight">{items.filter(i => i.status === "aprovado").length}</div>
+        <div className="rounded-lg border bg-card p-3">
+          <div className="text-[11px] text-muted-foreground leading-none">Aprovados</div>
+          <div className="text-[18px] font-semibold tabular-nums leading-tight mt-1">{items.filter(i => i.status === "aprovado").length}</div>
         </div>
-        <div className="rounded-lg border bg-card p-4">
-          <div className="text-xs text-muted-foreground">Limite total aprovado</div>
-          <div className="text-[20px] font-medium tracking-tight">{fmtBRL(totalAprovado)}</div>
+        <div className="rounded-lg border bg-card p-3">
+          <div className="text-[11px] text-muted-foreground leading-none">Limite total aprovado</div>
+          <div className="text-[18px] font-semibold tabular-nums leading-tight mt-1">{fmtBRL(totalAprovado)}</div>
         </div>
       </div>
 
@@ -259,33 +259,33 @@ export default function Cedentes() {
 
               {/* KPIs financeiros */}
               <div className="grid grid-cols-2 gap-px bg-border">
-                <div className="bg-card p-4">
+                <div className="bg-card p-2.5">
                   <div className="text-xs text-muted-foreground">Faturamento médio</div>
                   <div className="text-[18px] font-semibold tabular-nums mt-1">{fmtBRL(selected.faturamento_medio)}</div>
                 </div>
-                <div className="bg-card p-4">
+                <div className="bg-card p-2.5">
                   <div className="text-xs text-muted-foreground">Limite aprovado</div>
                   <div className="text-[18px] font-semibold tabular-nums mt-1 text-primary">{fmtBRL(selected.limite_aprovado)}</div>
                 </div>
               </div>
 
               {/* Detalhes */}
-              <div className="p-5 space-y-3 flex-1 overflow-y-auto">
+              <div className="p-2.5 space-y-2 flex-1 overflow-y-auto">
                 <section>
-                  <h3 className="text-xs font-semibold uppercase text-muted-foreground tracking-wide mb-3">
+                  <h3 className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground mb-1.5">
                     Contato
                   </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-1.5">
                     <Field label="E-mail" value={selected.email} />
                     <Field label="Telefone" value={selected.telefone} />
                   </div>
                 </section>
 
                 <section>
-                  <h3 className="text-xs font-semibold uppercase text-muted-foreground tracking-wide mb-3">
+                  <h3 className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground mb-1.5">
                     Endereço
                   </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-1.5">
                     <Field label="Logradouro" value={selected.endereco} />
                     <Field
                       label="Cidade / UF"
@@ -299,10 +299,10 @@ export default function Cedentes() {
                 </section>
 
                 <section>
-                  <h3 className="text-xs font-semibold uppercase text-muted-foreground tracking-wide mb-3">
+                  <h3 className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground mb-1.5">
                     Operação
                   </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-1.5">
                     <Field label="Setor" value={selected.setor} />
                     <Field
                       label="Cadastrado em"
@@ -313,7 +313,7 @@ export default function Cedentes() {
 
                 {selected.observacoes && (
                   <section>
-                    <h3 className="text-xs font-semibold uppercase text-muted-foreground tracking-wide mb-2">
+                    <h3 className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground mb-1.5">
                       Observações
                     </h3>
                     <p className="text-sm whitespace-pre-wrap text-foreground/90">{selected.observacoes}</p>
@@ -340,8 +340,8 @@ export default function Cedentes() {
 function Field({ label, value }: { label: string; value: string | null | undefined }) {
   return (
     <div>
-      <div className="text-xs text-muted-foreground">{label}</div>
-      <div className="text-sm mt-0.5 break-words">{value || <span className="text-muted-foreground">—</span>}</div>
+      <div className="text-[10px] leading-none text-muted-foreground mb-0.5">{label}</div>
+      <div className="text-[12px] leading-tight break-words">{value || <span className="text-muted-foreground">—</span>}</div>
     </div>
   );
 }
