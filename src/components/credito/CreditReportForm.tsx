@@ -476,7 +476,9 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
       })()}
       </div>
 
-      <CreditReportVersionsPanel reportId={report.id ?? null} cedenteNome={cedenteNome} refreshKey={versionsRefresh} />
+      <div className="!mt-0.5">
+        <CreditReportVersionsPanel reportId={report.id ?? null} cedenteNome={cedenteNome} refreshKey={versionsRefresh} />
+      </div>
 
       {canEdit && (mode === "create" || mode === "edit") && (
         <div className="flex justify-end sticky bottom-4">
