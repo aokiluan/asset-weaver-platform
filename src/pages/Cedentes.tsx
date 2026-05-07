@@ -340,8 +340,8 @@ export default function Cedentes() {
 function Field({ label, value }: { label: string; value: string | null | undefined }) {
   return (
     <div>
-      <div className="text-xs text-muted-foreground">{label}</div>
-      <div className="text-sm mt-0.5 break-words">{value || <span className="text-muted-foreground">—</span>}</div>
+      <div className="text-[10px] leading-none text-muted-foreground mb-0.5">{label}</div>
+      <div className="text-[12px] leading-tight break-words">{value || <span className="text-muted-foreground">—</span>}</div>
     </div>
   );
 }
