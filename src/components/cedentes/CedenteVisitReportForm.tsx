@@ -610,23 +610,23 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
           <AccordionContent className="space-y-2.5 pt-1.5">
             <div className="space-y-0.5">
               <Label>Limite global solicitado (R$)</Label>
-              <Input inputMode="decimal" value={form.limite_global_solicitado} onChange={(e) => set("limite_global_solicitado", e.target.value)} />
+              <Input inputMode="decimal" value={form.limite_global_solicitado} onChange={(e) => set("limite_global_solicitado", e.target.value)} disabled={readOnly} />
             </div>
 
             <div className="space-y-0.5">
               <p className="text-sm font-medium">Modalidades operacionais</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                <ModFull title="Desconto convencional" v={form.modalidades.desconto_convencional ?? emptyFull()} onChange={(p) => setMod("desconto_convencional", p)} />
-                <ModFull title="Comissária" v={form.modalidades.comissaria ?? emptyFull()} onChange={(p) => setMod("comissaria", p)} />
-                <ModFull title="Comissária com conta escrow" v={form.modalidades.comissaria_escrow ?? emptyFull()} onChange={(p) => setMod("comissaria_escrow", p)} />
-                <ModFull title="Nota comercial" v={form.modalidades.nota_comercial ?? emptyFull()} onChange={(p) => setMod("nota_comercial", p)} />
+                <ModFull title="Desconto convencional" v={form.modalidades.desconto_convencional ?? emptyFull()} onChange={(p) => setMod("desconto_convencional", p)} disabled={readOnly} />
+                <ModFull title="Comissária" v={form.modalidades.comissaria ?? emptyFull()} onChange={(p) => setMod("comissaria", p)} disabled={readOnly} />
+                <ModFull title="Comissária com conta escrow" v={form.modalidades.comissaria_escrow ?? emptyFull()} onChange={(p) => setMod("comissaria_escrow", p)} disabled={readOnly} />
+                <ModFull title="Nota comercial" v={form.modalidades.nota_comercial ?? emptyFull()} onChange={(p) => setMod("nota_comercial", p)} disabled={readOnly} />
               </div>
             </div>
 
             <div className="space-y-2 pt-2 border-t">
               <div className="flex items-center justify-between">
                 <Label>Avalistas solidários</Label>
-                <Button size="sm" variant="outline" onClick={() => set("avalistas_solidarios", [...form.avalistas_solidarios, { nome: "", cpf: "" }])}>
+                <Button size="sm" variant="outline" onClick={() => set("avalistas_solidarios", [...form.avalistas_solidarios, { nome: "", cpf: "" }])} disabled={readOnly}>
                   <Plus className="h-4 w-4 mr-1" /> Adicionar
                 </Button>
               </div>
@@ -634,13 +634,13 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
               {form.avalistas_solidarios.map((a, i) => (
                 <div key={i} className="grid grid-cols-12 gap-2 items-end border rounded-md p-3">
                   <div className="col-span-12 md:col-span-7 space-y-0.5"><Label className="text-xs">Nome</Label>
-                    <Input value={a.nome} onChange={(ev) => { const arr = [...form.avalistas_solidarios]; arr[i] = { ...arr[i], nome: ev.target.value }; set("avalistas_solidarios", arr); }} />
+                    <Input value={a.nome} onChange={(ev) => { const arr = [...form.avalistas_solidarios]; arr[i] = { ...arr[i], nome: ev.target.value }; set("avalistas_solidarios", arr); }} disabled={readOnly} />
                   </div>
                   <div className="col-span-11 md:col-span-4 space-y-0.5"><Label className="text-xs">CPF</Label>
-                    <Input value={a.cpf} onChange={(ev) => { const arr = [...form.avalistas_solidarios]; arr[i] = { ...arr[i], cpf: ev.target.value }; set("avalistas_solidarios", arr); }} />
+                    <Input value={a.cpf} onChange={(ev) => { const arr = [...form.avalistas_solidarios]; arr[i] = { ...arr[i], cpf: ev.target.value }; set("avalistas_solidarios", arr); }} disabled={readOnly} />
                   </div>
                   <div className="col-span-1 flex justify-end">
-                    <Button size="icon" variant="ghost" onClick={() => set("avalistas_solidarios", form.avalistas_solidarios.filter((_, j) => j !== i))}><Trash2 className="h-4 w-4" /></Button>
+                    <Button size="icon" variant="ghost" onClick={() => set("avalistas_solidarios", form.avalistas_solidarios.filter((_, j) => j !== i))} disabled={readOnly}><Trash2 className="h-4 w-4" /></Button>
                   </div>
                 </div>
               ))}
