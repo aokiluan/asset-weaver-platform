@@ -501,7 +501,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
 
         {/* 1. Cabeçalho */}
         <AccordionItem value="cabecalho" className="border rounded-lg bg-card px-3">
-          <AccordionTrigger className="hover:no-underline"><span className="text-sm font-medium">1. Cabeçalho da visita</span></AccordionTrigger>
+          <AccordionTrigger className="hover:no-underline"><span className="flex items-center gap-2 text-sm font-medium">{sectionStatus.cabecalho ? <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" /> : <Circle className="h-4 w-4 text-muted-foreground shrink-0" />}1. Cabeçalho da visita</span></AccordionTrigger>
           <AccordionContent className="space-y-2.5 pt-1.5">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
               <div className="space-y-0.5">
