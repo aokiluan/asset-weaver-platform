@@ -540,7 +540,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
 
         {/* 2. Negócio */}
         <AccordionItem value="negocio" className="border rounded-lg bg-card px-3">
-          <AccordionTrigger className="hover:no-underline"><span className="text-sm font-medium">2. Dados do negócio</span></AccordionTrigger>
+          <AccordionTrigger className="hover:no-underline"><span className="flex items-center gap-2 text-sm font-medium">{sectionStatus.negocio ? <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" /> : <Circle className="h-4 w-4 text-muted-foreground shrink-0" />}2. Dados do negócio</span></AccordionTrigger>
           <AccordionContent className="space-y-2.5 pt-1.5">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
               <div className="space-y-0.5"><Label>Ramo de atividade</Label><Input value={form.ramo_atividade} onChange={(e) => set("ramo_atividade", e.target.value)} disabled={readOnly} /></div>
