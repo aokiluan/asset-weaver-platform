@@ -678,7 +678,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
 
         {/* 5. Parecer */}
         <AccordionItem value="parecer" className="border rounded-lg bg-card px-3">
-          <AccordionTrigger className="hover:no-underline"><span className="text-sm font-medium">5. Parecer comercial</span></AccordionTrigger>
+          <AccordionTrigger className="hover:no-underline"><span className="flex items-center gap-2 text-sm font-medium">{sectionStatus.parecer ? <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" /> : <Circle className="h-4 w-4 text-muted-foreground shrink-0" />}5. Parecer comercial</span></AccordionTrigger>
           <AccordionContent className="space-y-2.5 pt-1.5">
             <div className="space-y-0.5">
               <Label>Parecer comercial *</Label>
