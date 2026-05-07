@@ -516,13 +516,13 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
           <AccordionTrigger className="hover:no-underline"><span className="text-sm font-medium">2. Dados do negócio</span></AccordionTrigger>
           <AccordionContent className="space-y-2.5 pt-1.5">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
-              <div className="space-y-0.5"><Label>Ramo de atividade</Label><Input value={form.ramo_atividade} onChange={(e) => set("ramo_atividade", e.target.value)} /></div>
-              <div className="space-y-0.5"><Label>Faturamento mensal (R$)</Label><Input inputMode="decimal" value={form.faturamento_mensal} onChange={(e) => set("faturamento_mensal", e.target.value)} /></div>
-              <div className="space-y-0.5"><Label>Nº de funcionários</Label><Input inputMode="numeric" value={form.qtd_funcionarios} onChange={(e) => set("qtd_funcionarios", e.target.value)} /></div>
+              <div className="space-y-0.5"><Label>Ramo de atividade</Label><Input value={form.ramo_atividade} onChange={(e) => set("ramo_atividade", e.target.value)} disabled={readOnly} /></div>
+              <div className="space-y-0.5"><Label>Faturamento mensal (R$)</Label><Input inputMode="decimal" value={form.faturamento_mensal} onChange={(e) => set("faturamento_mensal", e.target.value)} disabled={readOnly} /></div>
+              <div className="space-y-0.5"><Label>Nº de funcionários</Label><Input inputMode="numeric" value={form.qtd_funcionarios} onChange={(e) => set("qtd_funcionarios", e.target.value)} disabled={readOnly} /></div>
             </div>
             <div className="space-y-0.5">
               <Label>Principais produtos / serviços</Label>
-              <Textarea rows={2} value={form.principais_produtos} onChange={(e) => set("principais_produtos", e.target.value)} />
+              <Textarea rows={2} value={form.principais_produtos} onChange={(e) => set("principais_produtos", e.target.value)} disabled={readOnly} />
             </div>
 
             <div className="pt-2 border-t">
@@ -538,7 +538,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
                 ].map(([k, lbl]) => (
                   <div key={k} className="space-y-0.5">
                     <Label>{lbl}</Label>
-                    <Input inputMode="decimal" value={(form as any)[k]} onChange={(e) => set(k as any, e.target.value)} />
+                    <Input inputMode="decimal" value={(form as any)[k]} onChange={(e) => set(k as any, e.target.value)} disabled={readOnly} />
                   </div>
                 ))}
               </div>
@@ -559,7 +559,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
                 ].map(([k, lbl]) => (
                   <div key={k} className="space-y-0.5">
                     <Label>{lbl}</Label>
-                    <Input inputMode="decimal" value={(form as any)[k]} onChange={(e) => set(k as any, e.target.value)} />
+                    <Input inputMode="decimal" value={(form as any)[k]} onChange={(e) => set(k as any, e.target.value)} disabled={readOnly} />
                   </div>
                 ))}
               </div>
