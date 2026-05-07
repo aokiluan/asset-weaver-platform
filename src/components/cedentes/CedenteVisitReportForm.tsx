@@ -735,19 +735,19 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
   );
 }
 
-function ModFull({ title, v, onChange }: { title: string; v: ModalidadeFull; onChange: (p: Partial<ModalidadeFull>) => void }) {
+function ModFull({ title, v, onChange, disabled }: { title: string; v: ModalidadeFull; onChange: (p: Partial<ModalidadeFull>) => void; disabled?: boolean }) {
   return (
     <div className="border rounded-md p-2.5 space-y-0.5">
-      <label className="flex items-center gap-2 cursor-pointer">
-        <Checkbox checked={v.ativo} onCheckedChange={(c) => onChange({ ativo: !!c })} />
+      <label className={`flex items-center gap-2 ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}>
+        <Checkbox checked={v.ativo} onCheckedChange={(c) => onChange({ ativo: !!c })} disabled={disabled} />
         <span className="font-medium text-sm">{title}</span>
       </label>
       {v.ativo && (
         <div className="grid grid-cols-3 gap-2">
-          <div className="space-y-0.5"><Label className="text-[11px]">Limite (R$)</Label><Input className="h-8" inputMode="decimal" value={v.limite} onChange={(e) => onChange({ limite: e.target.value })} /></div>
-          <div className="space-y-0.5"><Label className="text-[11px]">Prazo (dias)</Label><Input className="h-8" inputMode="numeric" value={v.prazo_medio} onChange={(e) => onChange({ prazo_medio: e.target.value })} /></div>
-          <div className="space-y-0.5"><Label className="text-[11px]">Taxa (% a.m.)</Label><Input className="h-8" inputMode="decimal" value={v.taxa} onChange={(e) => onChange({ taxa: e.target.value })} /></div>
-          <div className="space-y-1 col-span-3"><Label className="text-[11px]">Observação</Label><Input className="h-8" value={v.observacao} onChange={(e) => onChange({ observacao: e.target.value })} /></div>
+          <div className="space-y-0.5"><Label className="text-[11px]">Limite (R$)</Label><Input className="h-8" inputMode="decimal" value={v.limite} onChange={(e) => onChange({ limite: e.target.value })} disabled={disabled} /></div>
+          <div className="space-y-0.5"><Label className="text-[11px]">Prazo (dias)</Label><Input className="h-8" inputMode="numeric" value={v.prazo_medio} onChange={(e) => onChange({ prazo_medio: e.target.value })} disabled={disabled} /></div>
+          <div className="space-y-0.5"><Label className="text-[11px]">Taxa (% a.m.)</Label><Input className="h-8" inputMode="decimal" value={v.taxa} onChange={(e) => onChange({ taxa: e.target.value })} disabled={disabled} /></div>
+          <div className="space-y-1 col-span-3"><Label className="text-[11px]">Observação</Label><Input className="h-8" value={v.observacao} onChange={(e) => onChange({ observacao: e.target.value })} disabled={disabled} /></div>
         </div>
       )}
     </div>
