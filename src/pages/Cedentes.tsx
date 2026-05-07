@@ -131,18 +131,18 @@ export default function Cedentes() {
       </div>
 
       {/* KPIs */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <div className="rounded-lg border bg-card p-4">
-          <div className="text-xs text-muted-foreground">Total cadastrado</div>
-          <div className="text-[20px] font-medium tracking-tight">{items.length}</div>
+      <div className="grid gap-3 md:grid-cols-3">
+        <div className="rounded-lg border bg-card p-3">
+          <div className="text-[11px] text-muted-foreground leading-none">Total cadastrado</div>
+          <div className="text-[18px] font-semibold tabular-nums leading-tight mt-1">{items.length}</div>
         </div>
-        <div className="rounded-lg border bg-card p-4">
-          <div className="text-xs text-muted-foreground">Aprovados</div>
-          <div className="text-[20px] font-medium tracking-tight">{items.filter(i => i.status === "aprovado").length}</div>
+        <div className="rounded-lg border bg-card p-3">
+          <div className="text-[11px] text-muted-foreground leading-none">Aprovados</div>
+          <div className="text-[18px] font-semibold tabular-nums leading-tight mt-1">{items.filter(i => i.status === "aprovado").length}</div>
         </div>
-        <div className="rounded-lg border bg-card p-4">
-          <div className="text-xs text-muted-foreground">Limite total aprovado</div>
-          <div className="text-[20px] font-medium tracking-tight">{fmtBRL(totalAprovado)}</div>
+        <div className="rounded-lg border bg-card p-3">
+          <div className="text-[11px] text-muted-foreground leading-none">Limite total aprovado</div>
+          <div className="text-[18px] font-semibold tabular-nums leading-tight mt-1">{fmtBRL(totalAprovado)}</div>
         </div>
       </div>
 
