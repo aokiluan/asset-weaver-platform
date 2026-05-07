@@ -223,6 +223,19 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
       .reduce((acc, v) => acc + (Number((v ?? "").replace(",", ".")) || 0), 0);
   }, [form]);
 
+  const sectionStatus = useMemo(() => {
+    const has = (v: any) => typeof v === "string" ? v.trim() !== "" : v != null && v !== "";
+    return {
+      cabecalho: has(form.data_visita) && has(form.visitante),
+      negocio: has(form.ramo_atividade) && has(form.faturamento_mensal) && has(form.principais_produtos),
+      adicionais: has(form.parceiros_financeiros) || (form.empresas_ligadas?.length ?? 0) > 0,
+      pleito: has(form.limite_global_solicitado) && Object.values(form.modalidades ?? {}).some((m: any) => m?.ativo),
+      parecer: has(form.parecer_comercial),
+    };
+  }, [form]);
+
+  const completas = useMemo(() => Object.values(sectionStatus).filter(Boolean).length, [sectionStatus]);
+
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
 
