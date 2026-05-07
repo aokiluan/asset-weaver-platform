@@ -244,7 +244,7 @@ export function ConciliacaoDocumentosSheet({
 
         {/* Conteúdo */}
         {fila.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center gap-3 p-8 text-center">
+          <div className="flex-1 flex flex-col items-center justify-center gap-3 p-6 text-center">
             <PartyPopper className="h-12 w-12 text-primary" />
             <h3 className="text-lg font-semibold">Tudo conciliado!</h3>
             <p className="text-sm text-muted-foreground max-w-sm">
@@ -364,7 +364,7 @@ export function ConciliacaoDocumentosSheet({
                 </div>
               )}
               {previewUrl && !isPdf && !isImg && (
-                <div className="flex flex-col items-center justify-center h-full gap-2 p-8 text-muted-foreground">
+                <div className="flex flex-col items-center justify-center h-full gap-2 p-6 text-muted-foreground">
                   <FileText className="h-12 w-12 opacity-30" />
                   <p className="text-sm">Pré-visualização indisponível</p>
                   <Button size="sm" variant="outline" onClick={baixar}>

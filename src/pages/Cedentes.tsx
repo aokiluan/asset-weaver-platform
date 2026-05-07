@@ -175,10 +175,10 @@ export default function Cedentes() {
 
           <div className="flex-1 overflow-y-auto">
             {loading && (
-              <div className="p-8 text-center text-sm text-muted-foreground">Carregando...</div>
+              <div className="p-6 text-center text-sm text-muted-foreground">Carregando...</div>
             )}
             {!loading && filtered.length === 0 && (
-              <div className="p-8 text-center text-sm text-muted-foreground">Nenhum cedente encontrado.</div>
+              <div className="p-6 text-center text-sm text-muted-foreground">Nenhum cedente encontrado.</div>
             )}
             {!loading && filtered.map((c) => {
               const active = c.id === selectedId;
@@ -213,7 +213,7 @@ export default function Cedentes() {
         {/* Coluna direita: visualização rápida */}
         <div className="rounded-lg border bg-card overflow-hidden">
           {!selected ? (
-            <div className="h-full flex flex-col items-center justify-center text-center p-8 text-muted-foreground">
+            <div className="h-full flex flex-col items-center justify-center text-center p-6 text-muted-foreground">
               <Building2 className="h-12 w-12 mb-3 opacity-30" />
               <p className="text-sm">Selecione um cedente na lista para ver os detalhes.</p>
             </div>
@@ -261,11 +261,11 @@ export default function Cedentes() {
               <div className="grid grid-cols-2 gap-px bg-border">
                 <div className="bg-card p-4">
                   <div className="text-xs text-muted-foreground">Faturamento médio</div>
-                  <div className="text-xl font-semibold mt-1">{fmtBRL(selected.faturamento_medio)}</div>
+                  <div className="text-[18px] font-semibold tabular-nums mt-1">{fmtBRL(selected.faturamento_medio)}</div>
                 </div>
                 <div className="bg-card p-4">
                   <div className="text-xs text-muted-foreground">Limite aprovado</div>
-                  <div className="text-xl font-semibold mt-1 text-primary">{fmtBRL(selected.limite_aprovado)}</div>
+                  <div className="text-[18px] font-semibold tabular-nums mt-1 text-primary">{fmtBRL(selected.limite_aprovado)}</div>
                 </div>
               </div>
 

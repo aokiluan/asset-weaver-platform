@@ -30,7 +30,7 @@ export default function BIIndicadores() {
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Carregando indicadores…</p>
       ) : !customWidgets || customWidgets.length === 0 ? (
-        <div className="rounded-md border border-dashed p-8 text-center text-sm text-muted-foreground">
+        <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
           Nenhum widget configurado ainda. Vá em <strong>Widgets</strong> para criar o primeiro.
         </div>
       ) : (
