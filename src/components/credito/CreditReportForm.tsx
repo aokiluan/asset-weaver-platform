@@ -354,9 +354,9 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
               <AccordionTrigger className="hover:no-underline">
                 <div className="flex items-center gap-2 text-left">
                   {complete ? (
-                    <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
+                    <CheckCircle2 className="h-3 w-3 text-green-600 shrink-0" />
                   ) : (
-                    <Circle className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <Circle className="h-3 w-3 text-muted-foreground shrink-0" />
                   )}
                   <div className="flex items-baseline gap-2 min-w-0">
                     <span className="text-sm font-medium">{SECTION_LABEL[key]}</span>
@@ -401,9 +401,9 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
               <AccordionTrigger className="hover:no-underline">
                 <div className="flex items-center gap-2 text-left">
                   {parecerComplete ? (
-                    <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
+                    <CheckCircle2 className="h-3 w-3 text-green-600 shrink-0" />
                   ) : (
-                    <Circle className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <Circle className="h-3 w-3 text-muted-foreground shrink-0" />
                   )}
                   <div className="flex items-baseline gap-2 min-w-0">
                     <span className="text-sm font-medium">Parecer do crédito</span>
