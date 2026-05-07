@@ -396,7 +396,7 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
           (!!(report.parecer_analista && String(report.parecer_analista).trim()) ||
             !!(report.conclusao && String(report.conclusao).trim()));
         return (
-          <Accordion type="single" collapsible className="space-y-0.5">
+          <Accordion type="single" collapsible className="space-y-0.5 !mt-0.5">
             <AccordionItem value="parecer_credito" className="border rounded-lg bg-card px-3">
               <AccordionTrigger className="hover:no-underline">
                 <div className="flex items-center gap-2 text-left">
@@ -481,7 +481,7 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
       </div>
 
       {canEdit && (mode === "create" || mode === "edit") && (
-        <div className="flex justify-end sticky bottom-4">
+        <div className="flex justify-end pt-2">
           <Button onClick={save} disabled={saving} size="lg" className="shadow-lg">
             {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
             {mode === "edit" ? "Salvar nova versão" : "Salvar relatório"}
