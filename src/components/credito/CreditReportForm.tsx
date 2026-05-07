@@ -481,7 +481,7 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
       </div>
 
       {canEdit && (mode === "create" || mode === "edit") && (
-        <div className="flex justify-end sticky bottom-4">
+        <div className="flex justify-end pt-2">
           <Button onClick={save} disabled={saving} size="lg" className="shadow-lg">
             {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
             {mode === "edit" ? "Salvar nova versão" : "Salvar relatório"}
