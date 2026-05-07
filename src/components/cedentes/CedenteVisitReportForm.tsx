@@ -655,18 +655,18 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
           <AccordionContent className="space-y-2.5 pt-1.5">
             <div className="space-y-0.5">
               <Label>Parecer comercial *</Label>
-              <Textarea rows={5} placeholder="Avaliação geral, recomendação, próximos passos..." value={form.parecer_comercial} onChange={(e) => set("parecer_comercial", e.target.value)} />
+              <Textarea rows={5} placeholder="Avaliação geral, recomendação, próximos passos..." value={form.parecer_comercial} onChange={(e) => set("parecer_comercial", e.target.value)} disabled={readOnly} />
             </div>
             <div className="space-y-0.5">
               <Label>Pontos de atenção</Label>
-              <Textarea rows={3} placeholder="Riscos, alertas, dependências..." value={form.pontos_atencao} onChange={(e) => set("pontos_atencao", e.target.value)} />
+              <Textarea rows={3} placeholder="Riscos, alertas, dependências..." value={form.pontos_atencao} onChange={(e) => set("pontos_atencao", e.target.value)} disabled={readOnly} />
             </div>
 
             <div className="space-y-2 pt-2 border-t">
               <div className="flex items-center justify-between">
                 <Label>Fotos</Label>
-                <Button size="sm" variant="outline" asChild disabled={uploadingFotos}>
-                  <label className="cursor-pointer">
+                <Button size="sm" variant="outline" asChild disabled={uploadingFotos || readOnly}>
+                  <label className={readOnly ? "cursor-not-allowed pointer-events-none opacity-50" : "cursor-pointer"}>
                     {uploadingFotos ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Upload className="h-4 w-4 mr-1" />}
                     Adicionar fotos
                     <input
@@ -674,6 +674,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
                       accept="image/*"
                       multiple
                       className="hidden"
+                      disabled={readOnly}
                       onChange={(e) => { uploadFotos(e.target.files); e.target.value = ""; }}
                     />
                   </label>
@@ -694,7 +695,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
                       </button>
                       <div className="flex items-center justify-between gap-1">
                         <span className="text-xs truncate flex-1" title={f.name}>{f.name}</span>
-                        <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => removerFoto(i)}>
+                        <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => removerFoto(i)} disabled={readOnly}>
                           <Trash2 className="h-3 w-3" />
                         </Button>
                       </div>
