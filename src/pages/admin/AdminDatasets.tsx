@@ -87,7 +87,7 @@ export default function AdminDatasets() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-[20px] font-medium tracking-tight">Tipos de relatório</h1>
@@ -101,7 +101,7 @@ export default function AdminDatasets() {
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader><DialogTitle>{editing.id ? "Editar dataset" : "Novo dataset"}</DialogTitle></DialogHeader>
-            <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+            <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label>Nome</Label>
@@ -183,9 +183,9 @@ export default function AdminDatasets() {
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Carregando…</TableCell></TableRow>
+              <TableRow><TableCell colSpan={5} className="text-center py-4 text-muted-foreground">Carregando…</TableCell></TableRow>
             ) : items.length === 0 ? (
-              <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Nenhum dataset.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={5} className="text-center py-4 text-muted-foreground">Nenhum dataset.</TableCell></TableRow>
             ) : items.map((d) => (
               <TableRow key={d.id}>
                 <TableCell className="font-medium">{d.nome}</TableCell>

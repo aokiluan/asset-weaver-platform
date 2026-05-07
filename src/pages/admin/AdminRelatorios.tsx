@@ -115,7 +115,7 @@ export default function AdminRelatorios() {
   const datasetNome = (id: string) => datasets.find((d) => d.id === id)?.nome ?? "—";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-[20px] font-medium tracking-tight">Relatórios</h1>
@@ -181,9 +181,9 @@ export default function AdminRelatorios() {
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Carregando…</TableCell></TableRow>
+              <TableRow><TableCell colSpan={6} className="text-center py-4 text-muted-foreground">Carregando…</TableCell></TableRow>
             ) : visiveis.length === 0 ? (
-              <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Nenhum upload ainda.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={6} className="text-center py-4 text-muted-foreground">Nenhum upload ainda.</TableCell></TableRow>
             ) : visiveis.map((u) => (
               <TableRow key={u.id}>
                 <TableCell className="flex items-center gap-2">

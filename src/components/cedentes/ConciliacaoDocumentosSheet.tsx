@@ -255,7 +255,7 @@ export function ConciliacaoDocumentosSheet({
         ) : !current ? null : (
           <div className="flex-1 grid lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] overflow-hidden">
             {/* FICHA */}
-            <div className="border-r overflow-y-auto p-4 space-y-4 bg-muted/10">
+            <div className="border-r overflow-y-auto p-4 space-y-3 bg-muted/10">
               <section className="space-y-1">
                 <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Arquivo</p>
                 <div className="flex items-start gap-2">

@@ -429,7 +429,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
 
 
   if (loading) {
-    return <div className="flex items-center gap-2 text-muted-foreground py-8"><Loader2 className="h-4 w-4 animate-spin" /> Carregando...</div>;
+    return <div className="flex items-center gap-2 text-muted-foreground py-4"><Loader2 className="h-4 w-4 animate-spin" /> Carregando...</div>;
   }
 
   return (

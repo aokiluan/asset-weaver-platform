@@ -255,7 +255,7 @@ export default function CedenteCadastro() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
+    <div className="max-w-5xl mx-auto space-y-3">
       <header className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={() => navigate("/cedentes")}>
@@ -287,7 +287,7 @@ export default function CedenteCadastro() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="dados" className="space-y-4">
+        <TabsContent value="dados" className="space-y-3">
           <Card>
             <CardHeader><CardTitle className="text-base">Identificação</CardTitle></CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -399,7 +399,7 @@ export default function CedenteCadastro() {
           </div>
         </TabsContent>
 
-        <TabsContent value="socios" className="space-y-4">
+        <TabsContent value="socios" className="space-y-3">
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
               Adicione todos os sócios e representantes legais da empresa.
@@ -436,7 +436,7 @@ export default function CedenteCadastro() {
 
         <TabsContent value="documentos">
           <Card>
-            <CardContent className="py-12 text-center space-y-4">
+            <CardContent className="py-12 text-center space-y-3">
               <FileText className="h-12 w-12 mx-auto text-muted-foreground" />
               <p className="text-sm text-muted-foreground">
                 A gestão de documentos acontece na tela de detalhe do cedente.

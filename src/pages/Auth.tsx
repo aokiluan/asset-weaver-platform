@@ -69,7 +69,7 @@ export default function Auth() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-[var(--gradient-subtle)]">
       <div className="w-full max-w-md">
-        <div className="flex flex-col items-center mb-8">
+        <div className="flex flex-col items-center mb-4">
           <img
             src={logoVertical}
             alt="S3 Capital"
@@ -93,7 +93,7 @@ export default function Auth() {
               </TabsList>
 
               <TabsContent value="signin">
-                <form onSubmit={handleSignIn} className="space-y-4 mt-4">
+                <form onSubmit={handleSignIn} className="space-y-3 mt-4">
                   <div className="space-y-2">
                     <Label htmlFor="email-in">E-mail</Label>
                     <Input id="email-in" name="email" type="email" required autoComplete="email" className="h-10 text-sm" />
@@ -110,7 +110,7 @@ export default function Auth() {
               </TabsContent>
 
               <TabsContent value="signup">
-                <form onSubmit={handleSignUp} className="space-y-4 mt-4">
+                <form onSubmit={handleSignUp} className="space-y-3 mt-4">
                   <div className="space-y-2">
                     <Label htmlFor="nome">Nome completo</Label>
                     <Input id="nome" name="nome" required className="h-10 text-sm" />

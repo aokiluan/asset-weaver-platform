@@ -166,7 +166,7 @@ export default function Formalizacao() {
   const prontos = cedentes.filter((c) => c.minuta_assinada).length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       <header>
         <h1 className="text-[20px] font-medium tracking-tight flex items-center gap-2">
           <FileSignature className="h-6 w-6" /> Formalização
@@ -193,7 +193,7 @@ export default function Formalizacao() {
             const proposta = propostas[c.id];
             const dias = daysSince(c.updated_at);
             return (
-              <div key={c.id} className="rounded-lg border bg-card p-5 space-y-4">
+              <div key={c.id} className="rounded-lg border bg-card p-5 space-y-3">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
                     <h3 className="font-semibold tracking-tight flex items-center gap-2">

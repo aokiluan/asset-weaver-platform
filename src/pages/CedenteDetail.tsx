@@ -195,7 +195,7 @@ export default function CedenteDetail() {
   }
   if (!cedente) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-3">
         <Button asChild variant="ghost"><Link to="/cedentes"><ArrowLeft className="h-4 w-4 mr-2" /> Voltar</Link></Button>
         <p className="text-muted-foreground">Cedente não encontrado.</p>
       </div>
@@ -231,7 +231,7 @@ export default function CedenteDetail() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="flex items-center justify-between gap-4">
         <Button asChild variant="ghost" size="sm" className="text-[13px]"><Link to="/cedentes"><ArrowLeft className="h-4 w-4 mr-2" /> Cedentes</Link></Button>
         <Button variant="outline" size="sm" className="text-[13px]" onClick={() => setEditOpen(true)}><Pencil className="h-4 w-4 mr-2" /> Editar dados</Button>
@@ -384,7 +384,7 @@ export default function CedenteDetail() {
 
       {tab === "documentos" && (
         <div className="mt-4">
-          <div className="rounded-lg border bg-card p-4 space-y-4">
+          <div className="rounded-lg border bg-card p-4 space-y-3">
             <div className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
               <h2 className="text-lg font-semibold">Documentos</h2>
@@ -414,7 +414,7 @@ export default function CedenteDetail() {
       )}
 
       {tab === "credito" && (
-        <div className="mt-4 space-y-4">
+        <div className="mt-4 space-y-3">
           <CreditReportForm cedenteId={cedente.id} proposalId={latestProposal?.id ?? null} />
         </div>
       )}
@@ -537,7 +537,7 @@ function ComiteTabContent({
 
   if (latestProposal) {
     return (
-      <div className="mt-4 space-y-4">
+      <div className="mt-4 space-y-3">
         <ComiteGameSession
           proposalId={latestProposal.id}
           votosMinimos={latestProposal.votos_minimos}
@@ -709,9 +709,9 @@ function FormalizacaoTabContent({
   };
 
   return (
-    <div className="mt-4 space-y-4">
+    <div className="mt-4 space-y-3">
       {/* 1. Geração da minuta */}
-      <div className="rounded-lg border bg-card p-4 space-y-4">
+      <div className="rounded-lg border bg-card p-4 space-y-3">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className="text-lg font-semibold flex items-center gap-2">
@@ -737,7 +737,7 @@ function FormalizacaoTabContent({
       </div>
 
       {/* 2. Upload do contrato assinado */}
-      <div className="rounded-lg border bg-card p-4 space-y-4">
+      <div className="rounded-lg border bg-card p-4 space-y-3">
         <div>
           <h2 className="text-lg font-semibold flex items-center gap-2">
             <Upload className="h-5 w-5" /> Contrato assinado

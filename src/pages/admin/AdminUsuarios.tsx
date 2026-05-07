@@ -100,7 +100,7 @@ export default function AdminUsuarios() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-[20px] font-medium tracking-tight">Usuários</h1>
         <div className="flex items-center gap-3">
@@ -114,7 +114,7 @@ export default function AdminUsuarios() {
                 <DialogTitle>Atribuir função a usuário</DialogTitle>
                 <DialogDescription>O usuário precisa ter criado uma conta no sistema (login feito ao menos uma vez).</DialogDescription>
               </DialogHeader>
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div className="space-y-2">
                   <Label>E-mail do usuário</Label>
                   <Input type="email" value={emailLookup} onChange={(e) => setEmailLookup(e.target.value)} placeholder="usuario@empresa.com" />
@@ -154,8 +154,8 @@ export default function AdminUsuarios() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {loading && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-6 text-[12px]">Carregando...</TableCell></TableRow>}
-            {!loading && users.length === 0 && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-6 text-[12px]">Nenhum usuário.</TableCell></TableRow>}
+            {loading && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-3 text-[12px]">Carregando...</TableCell></TableRow>}
+            {!loading && users.length === 0 && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-3 text-[12px]">Nenhum usuário.</TableCell></TableRow>}
             {users.map((u) => {
               const isGestorGeral = u.roles.includes("gestor_geral");
               const primaryRoles = u.roles.filter(r => r !== "gestor_geral");

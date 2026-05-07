@@ -102,7 +102,7 @@ export default function AdminDashboardWidgets() {
   } : null;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-[20px] font-medium tracking-tight">Widgets do Dashboard</h1>
@@ -267,9 +267,9 @@ export default function AdminDashboardWidgets() {
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Carregando…</TableCell></TableRow>
+              <TableRow><TableCell colSpan={6} className="text-center py-4 text-muted-foreground">Carregando…</TableCell></TableRow>
             ) : items.length === 0 ? (
-              <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Nenhum widget configurado.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={6} className="text-center py-4 text-muted-foreground">Nenhum widget configurado.</TableCell></TableRow>
             ) : items.map((w) => (
               <TableRow key={w.id} className="group">
                 <TableCell>{w.ordem}</TableCell>
