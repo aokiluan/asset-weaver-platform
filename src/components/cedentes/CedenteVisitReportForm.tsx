@@ -11,7 +11,9 @@ import {
 import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Loader2, Save, Plus, Trash2, Upload, ImageIcon, FileDown, Pencil, X, AlertTriangle } from "lucide-react";
+import { Loader2, Save, Plus, Trash2, Upload, ImageIcon, FileDown, Pencil, X, AlertTriangle, CheckCircle2, Circle } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useFormDraft } from "@/hooks/useFormDraft";
 import { DraftIndicator } from "@/components/ui/draft-indicator";
@@ -221,6 +223,19 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
       .reduce((acc, v) => acc + (Number((v ?? "").replace(",", ".")) || 0), 0);
   }, [form]);
 
+  const sectionStatus = useMemo(() => {
+    const has = (v: any) => typeof v === "string" ? v.trim() !== "" : v != null && v !== "";
+    return {
+      cabecalho: has(form.data_visita) && has(form.visitante),
+      negocio: has(form.ramo_atividade) && has(form.faturamento_mensal) && has(form.principais_produtos),
+      adicionais: has(form.parceiros_financeiros) || (form.empresas_ligadas?.length ?? 0) > 0,
+      pleito: has(form.limite_global_solicitado) && Object.values(form.modalidades ?? {}).some((m: any) => m?.ativo),
+      parecer: has(form.parecer_comercial),
+    };
+  }, [form]);
+
+  const completas = useMemo(() => Object.values(sectionStatus).filter(Boolean).length, [sectionStatus]);
+
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
 
@@ -429,32 +444,44 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
         </div>
       )}
 
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          {existingId && (
-            <>
-              <span className="px-2 py-0.5 rounded-md border bg-muted/40">Versão atual: v{versaoAtual || 1}</span>
-              {mode === "view" && <span className="text-green-700 dark:text-green-400">somente leitura</span>}
-              {mode === "edit" && <span className="text-amber-700 dark:text-amber-400">editando nova versão</span>}
-            </>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          {mode === "view" && existingId && (
-            <Button variant="default" onClick={enterEditMode}>
-              <Pencil className="h-4 w-4 mr-2" /> Alterar relatório
+      <div className="rounded-lg border bg-card p-4 space-y-3">
+        <div className="flex items-center justify-between gap-2.5 flex-wrap">
+          <div className="flex items-center gap-3 flex-wrap">
+            <div>
+              <h3 className="text-base font-semibold">Relatório comercial</h3>
+              <p className="text-xs text-muted-foreground">
+                Inclui dados da visita, do negócio e o pleito de crédito.
+              </p>
+            </div>
+            {existingId && (
+              <span className="px-2 py-0.5 rounded-md border bg-muted/40 text-xs">
+                Versão atual: v{versaoAtual || 1}
+              </span>
+            )}
+            {mode === "view" && existingId && <Badge variant="secondary" className="text-[10px]">Somente leitura</Badge>}
+            {mode === "edit" && <Badge className="text-[10px]">Editando nova versão</Badge>}
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge variant={completas === 5 ? "default" : "outline"}>
+              {completas}/5 seções
+            </Badge>
+            <Button variant="outline" size="sm" onClick={gerarPdf} disabled={generatingPdf}>
+              {generatingPdf ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileDown className="h-4 w-4 mr-2" />}
+              Gerar PDF
             </Button>
-          )}
-          {mode === "edit" && (
-            <Button variant="ghost" onClick={cancelEdit} disabled={saving}>
-              <X className="h-4 w-4 mr-2" /> Cancelar
-            </Button>
-          )}
-          <Button variant="outline" onClick={gerarPdf} disabled={generatingPdf}>
-            {generatingPdf ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileDown className="h-4 w-4 mr-2" />}
-            Gerar PDF
-          </Button>
+            {mode === "view" && existingId && (
+              <Button size="sm" variant="outline" onClick={enterEditMode}>
+                <Pencil className="h-4 w-4 mr-2" /> Alterar relatório
+              </Button>
+            )}
+            {mode === "edit" && (
+              <Button size="sm" variant="ghost" onClick={cancelEdit} disabled={saving}>
+                <X className="h-4 w-4 mr-2" /> Cancelar
+              </Button>
+            )}
+          </div>
         </div>
+        <Progress value={(completas / 5) * 100} className="h-2" />
       </div>
 
       {mode === "edit" && (
@@ -474,7 +501,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
 
         {/* 1. Cabeçalho */}
         <AccordionItem value="cabecalho" className="border rounded-lg bg-card px-3">
-          <AccordionTrigger className="hover:no-underline"><span className="text-sm font-medium">1. Cabeçalho da visita</span></AccordionTrigger>
+          <AccordionTrigger className="hover:no-underline"><span className="flex items-center gap-2 text-sm font-medium">{sectionStatus.cabecalho ? <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" /> : <Circle className="h-4 w-4 text-muted-foreground shrink-0" />}1. Cabeçalho da visita</span></AccordionTrigger>
           <AccordionContent className="space-y-2.5 pt-1.5">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
               <div className="space-y-0.5">
@@ -513,7 +540,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
 
         {/* 2. Negócio */}
         <AccordionItem value="negocio" className="border rounded-lg bg-card px-3">
-          <AccordionTrigger className="hover:no-underline"><span className="text-sm font-medium">2. Dados do negócio</span></AccordionTrigger>
+          <AccordionTrigger className="hover:no-underline"><span className="flex items-center gap-2 text-sm font-medium">{sectionStatus.negocio ? <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" /> : <Circle className="h-4 w-4 text-muted-foreground shrink-0" />}2. Dados do negócio</span></AccordionTrigger>
           <AccordionContent className="space-y-2.5 pt-1.5">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
               <div className="space-y-0.5"><Label>Ramo de atividade</Label><Input value={form.ramo_atividade} onChange={(e) => set("ramo_atividade", e.target.value)} disabled={readOnly} /></div>
@@ -569,7 +596,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
 
         {/* 3. Adicionais */}
         <AccordionItem value="adicionais" className="border rounded-lg bg-card px-3">
-          <AccordionTrigger className="hover:no-underline"><span className="text-sm font-medium">3. Informações adicionais</span></AccordionTrigger>
+          <AccordionTrigger className="hover:no-underline"><span className="flex items-center gap-2 text-sm font-medium">{sectionStatus.adicionais ? <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" /> : <Circle className="h-4 w-4 text-muted-foreground shrink-0" />}3. Informações adicionais</span></AccordionTrigger>
           <AccordionContent className="space-y-2.5 pt-1.5">
             <div className="space-y-0.5">
               <Label>Parceiros financeiros (bancos/factorings com quem opera)</Label>
@@ -606,7 +633,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
 
         {/* 4. Pleito */}
         <AccordionItem value="pleito" className="border rounded-lg bg-card px-3">
-          <AccordionTrigger className="hover:no-underline"><span className="text-sm font-medium">4. Pleito de crédito</span></AccordionTrigger>
+          <AccordionTrigger className="hover:no-underline"><span className="flex items-center gap-2 text-sm font-medium">{sectionStatus.pleito ? <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" /> : <Circle className="h-4 w-4 text-muted-foreground shrink-0" />}4. Pleito de crédito</span></AccordionTrigger>
           <AccordionContent className="space-y-2.5 pt-1.5">
             <div className="space-y-0.5">
               <Label>Limite global solicitado (R$)</Label>
@@ -651,7 +678,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
 
         {/* 5. Parecer */}
         <AccordionItem value="parecer" className="border rounded-lg bg-card px-3">
-          <AccordionTrigger className="hover:no-underline"><span className="text-sm font-medium">5. Parecer comercial</span></AccordionTrigger>
+          <AccordionTrigger className="hover:no-underline"><span className="flex items-center gap-2 text-sm font-medium">{sectionStatus.parecer ? <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" /> : <Circle className="h-4 w-4 text-muted-foreground shrink-0" />}5. Parecer comercial</span></AccordionTrigger>
           <AccordionContent className="space-y-2.5 pt-1.5">
             <div className="space-y-0.5">
               <Label>Parecer comercial *</Label>
