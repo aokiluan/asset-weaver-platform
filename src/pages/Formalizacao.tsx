@@ -193,7 +193,7 @@ export default function Formalizacao() {
             const proposta = propostas[c.id];
             const dias = daysSince(c.updated_at);
             return (
-              <div key={c.id} className="rounded-lg border bg-card p-5 space-y-3">
+              <div key={c.id} className="rounded-lg border bg-card p-3 space-y-3">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
                     <h3 className="font-semibold tracking-tight flex items-center gap-2">
@@ -276,7 +276,7 @@ function StatCard({
   highlight?: boolean;
 }) {
   return (
-    <div className={`rounded-lg border bg-card p-4 ${highlight ? "border-primary/40 bg-primary/5" : ""}`}>
+    <div className={`rounded-lg border bg-card p-3 ${highlight ? "border-primary/40 bg-primary/5" : ""}`}>
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
         {icon}
         <span>{label}</span>

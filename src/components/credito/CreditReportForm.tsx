@@ -255,7 +255,7 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
   }
 
   return (
-    <div className="space-y-3.5">
+    <div className="space-y-2.5">
       {precisaRevisao && mode === "view" && (
         <div className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-950/30 p-3 text-sm">
           <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
@@ -267,7 +267,7 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
       )}
 
       {/* Header com progresso */}
-      <div className="rounded-lg border bg-card p-4 space-y-3">
+      <div className="rounded-lg border bg-card p-3 space-y-3">
         <div className="flex items-center justify-between gap-2.5 flex-wrap">
           <div className="flex items-center gap-3 flex-wrap">
             <div>
@@ -329,7 +329,7 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
         </div>
       )}
 
-      <div className={`space-y-3.5 ${isReadOnly ? "opacity-90" : ""}`}>
+      <div className={`space-y-2.5 ${isReadOnly ? "opacity-90" : ""}`}>
       {/* Acordeão das 8 seções */}
       <Accordion type="multiple" defaultValue={["identificacao"]} className="space-y-0.5">
         {SECTION_ORDER.map((key) => {

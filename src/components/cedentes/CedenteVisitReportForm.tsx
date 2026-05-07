@@ -444,7 +444,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
         </div>
       )}
 
-      <div className="rounded-lg border bg-card p-4 space-y-3">
+      <div className="rounded-lg border bg-card p-3 space-y-3">
         <div className="flex items-center justify-between gap-2.5 flex-wrap">
           <div className="flex items-center gap-3 flex-wrap">
             <div>
