@@ -466,11 +466,23 @@ export function CreditReportForm({ cedenteId, proposalId }: Props) {
       </div>
 
       {canEdit && (mode === "create" || mode === "edit") && (
-        <div className="flex justify-end pt-2">
-          <Button onClick={save} disabled={saving} size="lg" className="shadow-lg">
-            {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-            {mode === "edit" ? "Salvar nova versão" : "Salvar relatório"}
-          </Button>
+        <div className="flex items-center justify-between pt-2 gap-3 flex-wrap">
+          <DraftIndicator
+            lastSavedAt={lastSavedAt}
+            restored={restored}
+            onDiscard={() => discardDraft(emptyReport(cedenteId, proposalId))}
+          />
+          <div className="flex items-center gap-2">
+            {mode === "edit" && (
+              <Button variant="ghost" onClick={handleCancelarEdicao} disabled={saving}>
+                <X className="h-4 w-4 mr-2" /> Cancelar
+              </Button>
+            )}
+            <Button onClick={save} disabled={saving}>
+              {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+              {mode === "edit" ? "Salvar nova versão" : "Salvar relatório"}
+            </Button>
+          </div>
         </div>
       )}
     </div>
