@@ -113,7 +113,7 @@ export default function Financeiro() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">Financeiro</h1>
+          <h1 className="text-[20px] font-medium tracking-tight">Financeiro</h1>
           <p className="text-sm text-muted-foreground">
             Conectado ao OneDrive — selecione uma planilha para visualizar.
           </p>

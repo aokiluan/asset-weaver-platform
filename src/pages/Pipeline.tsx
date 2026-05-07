@@ -208,7 +208,7 @@ export default function Pipeline() {
     <div className="space-y-4 max-w-full">
       <header className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Pipeline</h1>
+          <h1 className="text-[20px] font-medium tracking-tight text-foreground">Pipeline</h1>
           <p className="text-sm text-muted-foreground">
             Arraste os cards entre estágios. Duplo-clique abre o cedente.
           </p>

@@ -106,7 +106,7 @@ export default function Leads() {
     <div className="space-y-6 max-w-7xl mx-auto">
       <header className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Leads</h1>
+          <h1 className="text-[20px] font-medium tracking-tight text-foreground">Leads</h1>
           <p className="text-muted-foreground">Cedentes e investidores no pipeline comercial.</p>
         </div>
         <Button onClick={() => { setEditing(undefined); setDialogOpen(true); }}>

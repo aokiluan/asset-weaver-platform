@@ -132,7 +132,7 @@ export default function Comite() {
     <div className="space-y-6">
       <header className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
+          <h1 className="text-[20px] font-medium tracking-tight flex items-center gap-2">
             <Vote className="h-6 w-6" /> Comitê de Crédito
           </h1>
           <p className="text-sm text-muted-foreground">
@@ -261,7 +261,7 @@ function StatCard({
         {icon}
         <span>{label}</span>
       </div>
-      <div className="text-2xl font-semibold mt-1 tabular-nums">{value}</div>
+      <div className="text-[20px] font-medium tracking-tight mt-1 tabular-nums">{value}</div>
     </div>
   );
 }

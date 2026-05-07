@@ -80,7 +80,7 @@ export default function AdminAlcadas() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Alçadas de aprovação</h1>
+          <h1 className="text-[20px] font-medium tracking-tight">Alçadas de aprovação</h1>
           <p className="text-muted-foreground">Faixas de valor que definem quem aprova cada proposta.</p>
         </div>
         <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setEditing(empty); }}>

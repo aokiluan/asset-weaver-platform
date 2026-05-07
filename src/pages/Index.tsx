@@ -191,7 +191,7 @@ export default function Index() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       <header>
-        <h1 className="text-2xl font-bold text-foreground">Dashboard Executivo</h1>
+        <h1 className="text-[20px] font-medium tracking-tight text-foreground">Dashboard Executivo</h1>
         <p className="text-sm text-muted-foreground">
           {user?.email} · {roles.length > 0 ? roles.join(" · ") : "aguardando atribuição de função"}
         </p>
@@ -206,7 +206,7 @@ export default function Index() {
               <c.icon className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className={c.isText ? "text-xl font-bold text-foreground" : "text-2xl font-bold text-foreground"}>
+              <div className={c.isText ? "text-xl font-bold text-foreground" : "text-[20px] font-medium tracking-tight text-foreground"}>
                 {c.value}
               </div>
               <p className="text-xs text-muted-foreground mt-1">{c.hint}</p>

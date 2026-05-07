@@ -90,7 +90,7 @@ export default function AdminDatasets() {
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Tipos de relatório</h1>
+          <h1 className="text-[20px] font-medium tracking-tight">Tipos de relatório</h1>
           <p className="text-sm text-muted-foreground">
             Defina os "moldes" das planilhas que serão importadas (colunas esperadas e tipos).
           </p>

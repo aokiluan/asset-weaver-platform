@@ -118,7 +118,7 @@ export default function AdminRelatorios() {
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Relatórios</h1>
+          <h1 className="text-[20px] font-medium tracking-tight">Relatórios</h1>
           <p className="text-sm text-muted-foreground">Envie planilhas externas (CSV/XLSX) para alimentar o dashboard.</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
