@@ -130,7 +130,7 @@ export default function Comite() {
 
   return (
     <div className="space-y-3">
-      <header className="flex items-start justify-between gap-4">
+      <header className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-[20px] font-medium tracking-tight flex items-center gap-2">
             <Vote className="h-6 w-6" /> Comitê de Crédito
@@ -157,7 +157,7 @@ export default function Comite() {
           <p className="text-sm text-muted-foreground">Nenhuma proposta em pauta no comitê.</p>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-3 md:grid-cols-2">
           {proposals.map((p) => {
             const propVotes = votes.filter((v) => v.proposal_id === p.id);
             const fav = propVotes.filter((v) => v.decisao === "favoravel").length;
@@ -170,7 +170,7 @@ export default function Comite() {
             const dias = daysSince(p.created_at);
 
             return (
-              <div key={p.id} className="rounded-lg border bg-card p-5 space-y-3 hover:shadow-md transition-shadow">
+              <div key={p.id} className="rounded-lg border bg-card p-3 space-y-3 hover:shadow-md transition-shadow">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="text-[11px] font-mono text-muted-foreground">{p.codigo}</p>
@@ -256,7 +256,7 @@ function StatCard({
   highlight?: boolean;
 }) {
   return (
-    <div className={`rounded-lg border bg-card p-4 ${highlight ? "border-primary/40 bg-primary/5" : ""}`}>
+    <div className={`rounded-lg border bg-card p-3 ${highlight ? "border-primary/40 bg-primary/5" : ""}`}>
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
         {icon}
         <span>{label}</span>

@@ -235,7 +235,7 @@ export function CedenteRepresentantesTab({ cedenteId, jaSincronizado, onSynced }
   };
 
   return (
-    <div className="rounded-lg border bg-card p-4 space-y-2.5">
+    <div className="rounded-lg border bg-card p-3 space-y-2.5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <Users className="h-5 w-5" />
