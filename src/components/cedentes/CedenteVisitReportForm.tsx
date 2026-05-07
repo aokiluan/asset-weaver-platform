@@ -444,32 +444,44 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
         </div>
       )}
 
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          {existingId && (
-            <>
-              <span className="px-2 py-0.5 rounded-md border bg-muted/40">Versão atual: v{versaoAtual || 1}</span>
-              {mode === "view" && <span className="text-green-700 dark:text-green-400">somente leitura</span>}
-              {mode === "edit" && <span className="text-amber-700 dark:text-amber-400">editando nova versão</span>}
-            </>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          {mode === "view" && existingId && (
-            <Button variant="default" onClick={enterEditMode}>
-              <Pencil className="h-4 w-4 mr-2" /> Alterar relatório
+      <div className="rounded-lg border bg-card p-4 space-y-3">
+        <div className="flex items-center justify-between gap-2.5 flex-wrap">
+          <div className="flex items-center gap-3 flex-wrap">
+            <div>
+              <h3 className="text-base font-semibold">Relatório comercial</h3>
+              <p className="text-xs text-muted-foreground">
+                Inclui dados da visita, do negócio e o pleito de crédito.
+              </p>
+            </div>
+            {existingId && (
+              <span className="px-2 py-0.5 rounded-md border bg-muted/40 text-xs">
+                Versão atual: v{versaoAtual || 1}
+              </span>
+            )}
+            {mode === "view" && existingId && <Badge variant="secondary" className="text-[10px]">Somente leitura</Badge>}
+            {mode === "edit" && <Badge className="text-[10px]">Editando nova versão</Badge>}
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge variant={completas === 5 ? "default" : "outline"}>
+              {completas}/5 seções
+            </Badge>
+            <Button variant="outline" size="sm" onClick={gerarPdf} disabled={generatingPdf}>
+              {generatingPdf ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileDown className="h-4 w-4 mr-2" />}
+              Gerar PDF
             </Button>
-          )}
-          {mode === "edit" && (
-            <Button variant="ghost" onClick={cancelEdit} disabled={saving}>
-              <X className="h-4 w-4 mr-2" /> Cancelar
-            </Button>
-          )}
-          <Button variant="outline" onClick={gerarPdf} disabled={generatingPdf}>
-            {generatingPdf ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileDown className="h-4 w-4 mr-2" />}
-            Gerar PDF
-          </Button>
+            {mode === "view" && existingId && (
+              <Button size="sm" variant="outline" onClick={enterEditMode}>
+                <Pencil className="h-4 w-4 mr-2" /> Alterar relatório
+              </Button>
+            )}
+            {mode === "edit" && (
+              <Button size="sm" variant="ghost" onClick={cancelEdit} disabled={saving}>
+                <X className="h-4 w-4 mr-2" /> Cancelar
+              </Button>
+            )}
+          </div>
         </div>
+        <Progress value={(completas / 5) * 100} className="h-2" />
       </div>
 
       {mode === "edit" && (
