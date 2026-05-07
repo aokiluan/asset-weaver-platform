@@ -479,11 +479,11 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
               <div className="space-y-0.5">
                 <Label>Data da visita *</Label>
-                <Input type="date" value={form.data_visita} onChange={(e) => set("data_visita", e.target.value)} />
+                <Input type="date" value={form.data_visita} onChange={(e) => set("data_visita", e.target.value)} disabled={readOnly} />
               </div>
               <div className="space-y-0.5">
                 <Label>Tipo de visita</Label>
-                <Select value={form.tipo_visita} onValueChange={(v) => set("tipo_visita", v)}>
+                <Select value={form.tipo_visita} onValueChange={(v) => set("tipo_visita", v)} disabled={readOnly}>
                   <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="prospeccao">Prospecção</SelectItem>
@@ -495,17 +495,17 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
               </div>
               <div className="space-y-0.5">
                 <Label>Visitante (executivo)</Label>
-                <Input value={form.visitante} onChange={(e) => set("visitante", e.target.value)} />
+                <Input value={form.visitante} onChange={(e) => set("visitante", e.target.value)} disabled={readOnly} />
               </div>
             </div>
 
             <div className="pt-2 border-t">
               <p className="text-sm font-medium mb-2">Entrevistado</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-                <div className="space-y-0.5"><Label>Nome</Label><Input value={form.entrevistado_nome} onChange={(e) => set("entrevistado_nome", e.target.value)} /></div>
-                <div className="space-y-0.5"><Label>Cargo</Label><Input value={form.entrevistado_cargo} onChange={(e) => set("entrevistado_cargo", e.target.value)} /></div>
-                <div className="space-y-0.5"><Label>Telefone</Label><Input value={form.entrevistado_telefone} onChange={(e) => set("entrevistado_telefone", e.target.value)} /></div>
-                <div className="space-y-0.5"><Label>E-mail</Label><Input type="email" value={form.entrevistado_email} onChange={(e) => set("entrevistado_email", e.target.value)} /></div>
+                <div className="space-y-0.5"><Label>Nome</Label><Input value={form.entrevistado_nome} onChange={(e) => set("entrevistado_nome", e.target.value)} disabled={readOnly} /></div>
+                <div className="space-y-0.5"><Label>Cargo</Label><Input value={form.entrevistado_cargo} onChange={(e) => set("entrevistado_cargo", e.target.value)} disabled={readOnly} /></div>
+                <div className="space-y-0.5"><Label>Telefone</Label><Input value={form.entrevistado_telefone} onChange={(e) => set("entrevistado_telefone", e.target.value)} disabled={readOnly} /></div>
+                <div className="space-y-0.5"><Label>E-mail</Label><Input type="email" value={form.entrevistado_email} onChange={(e) => set("entrevistado_email", e.target.value)} disabled={readOnly} /></div>
               </div>
             </div>
           </AccordionContent>
