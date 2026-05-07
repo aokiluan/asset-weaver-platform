@@ -272,7 +272,7 @@ export default function Cedentes() {
               {/* Detalhes */}
               <div className="p-5 space-y-3 flex-1 overflow-y-auto">
                 <section>
-                  <h3 className="text-xs font-semibold uppercase text-muted-foreground tracking-wide mb-3">
+                  <h3 className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground mb-1.5">
                     Contato
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
@@ -282,7 +282,7 @@ export default function Cedentes() {
                 </section>
 
                 <section>
-                  <h3 className="text-xs font-semibold uppercase text-muted-foreground tracking-wide mb-3">
+                  <h3 className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground mb-1.5">
                     Endereço
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
@@ -299,7 +299,7 @@ export default function Cedentes() {
                 </section>
 
                 <section>
-                  <h3 className="text-xs font-semibold uppercase text-muted-foreground tracking-wide mb-3">
+                  <h3 className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground mb-1.5">
                     Operação
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
@@ -313,7 +313,7 @@ export default function Cedentes() {
 
                 {selected.observacoes && (
                   <section>
-                    <h3 className="text-xs font-semibold uppercase text-muted-foreground tracking-wide mb-2">
+                    <h3 className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground mb-1.5">
                       Observações
                     </h3>
                     <p className="text-sm whitespace-pre-wrap text-foreground/90">{selected.observacoes}</p>

@@ -168,7 +168,7 @@ export function CedenteNovoSheet({ open, onOpenChange, onCreated }: Props) {
 
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-3.5">
           <section className="space-y-2.5">
-            <h3 className="text-xs font-semibold uppercase text-muted-foreground tracking-wide">Identificação</h3>
+            <h3 className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Identificação</h3>
             <div className="space-y-0.5">
               <Label>CNPJ *</Label>
               <div className="relative">
@@ -219,7 +219,7 @@ export function CedenteNovoSheet({ open, onOpenChange, onCreated }: Props) {
           </section>
 
           <section className="space-y-2.5">
-            <h3 className="text-xs font-semibold uppercase text-muted-foreground tracking-wide">Endereço</h3>
+            <h3 className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Endereço</h3>
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-0.5">
                 <Label>CEP</Label>
@@ -253,7 +253,7 @@ export function CedenteNovoSheet({ open, onOpenChange, onCreated }: Props) {
           </section>
 
           <section className="space-y-2.5">
-            <h3 className="text-xs font-semibold uppercase text-muted-foreground tracking-wide">Contato</h3>
+            <h3 className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Contato</h3>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-0.5">
                 <Label>Telefone</Label>
