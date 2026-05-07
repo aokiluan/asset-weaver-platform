@@ -573,13 +573,13 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
           <AccordionContent className="space-y-2.5 pt-1.5">
             <div className="space-y-0.5">
               <Label>Parceiros financeiros (bancos/factorings com quem opera)</Label>
-              <Textarea rows={2} value={form.parceiros_financeiros} onChange={(e) => set("parceiros_financeiros", e.target.value)} />
+              <Textarea rows={2} value={form.parceiros_financeiros} onChange={(e) => set("parceiros_financeiros", e.target.value)} disabled={readOnly} />
             </div>
 
             <div className="space-y-0.5">
               <div className="flex items-center justify-between">
                 <Label>Empresas ligadas / grupo econômico</Label>
-                <Button size="sm" variant="outline" onClick={() => set("empresas_ligadas", [...form.empresas_ligadas, { nome: "", cnpj: "", relacao: "" }])}>
+                <Button size="sm" variant="outline" onClick={() => set("empresas_ligadas", [...form.empresas_ligadas, { nome: "", cnpj: "", relacao: "" }])} disabled={readOnly}>
                   <Plus className="h-4 w-4 mr-1" /> Adicionar
                 </Button>
               </div>
@@ -587,16 +587,16 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
               {form.empresas_ligadas.map((e, i) => (
                 <div key={i} className="grid grid-cols-12 gap-2 items-end border rounded-md p-3">
                   <div className="col-span-12 md:col-span-4 space-y-0.5"><Label className="text-xs">Razão social</Label>
-                    <Input value={e.nome} onChange={(ev) => { const arr = [...form.empresas_ligadas]; arr[i] = { ...arr[i], nome: ev.target.value }; set("empresas_ligadas", arr); }} />
+                    <Input value={e.nome} onChange={(ev) => { const arr = [...form.empresas_ligadas]; arr[i] = { ...arr[i], nome: ev.target.value }; set("empresas_ligadas", arr); }} disabled={readOnly} />
                   </div>
                   <div className="col-span-7 md:col-span-3 space-y-0.5"><Label className="text-xs">CNPJ</Label>
-                    <Input value={e.cnpj} onChange={(ev) => { const arr = [...form.empresas_ligadas]; arr[i] = { ...arr[i], cnpj: ev.target.value }; set("empresas_ligadas", arr); }} />
+                    <Input value={e.cnpj} onChange={(ev) => { const arr = [...form.empresas_ligadas]; arr[i] = { ...arr[i], cnpj: ev.target.value }; set("empresas_ligadas", arr); }} disabled={readOnly} />
                   </div>
                   <div className="col-span-4 md:col-span-4 space-y-0.5"><Label className="text-xs">Relação</Label>
-                    <Input placeholder="Ex.: matriz, filial, sócio em comum" value={e.relacao} onChange={(ev) => { const arr = [...form.empresas_ligadas]; arr[i] = { ...arr[i], relacao: ev.target.value }; set("empresas_ligadas", arr); }} />
+                    <Input placeholder="Ex.: matriz, filial, sócio em comum" value={e.relacao} onChange={(ev) => { const arr = [...form.empresas_ligadas]; arr[i] = { ...arr[i], relacao: ev.target.value }; set("empresas_ligadas", arr); }} disabled={readOnly} />
                   </div>
                   <div className="col-span-1 flex justify-end">
-                    <Button size="icon" variant="ghost" onClick={() => set("empresas_ligadas", form.empresas_ligadas.filter((_, j) => j !== i))}><Trash2 className="h-4 w-4" /></Button>
+                    <Button size="icon" variant="ghost" onClick={() => set("empresas_ligadas", form.empresas_ligadas.filter((_, j) => j !== i))} disabled={readOnly}><Trash2 className="h-4 w-4" /></Button>
                   </div>
                 </div>
               ))}
