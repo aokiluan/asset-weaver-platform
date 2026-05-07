@@ -479,11 +479,11 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
               <div className="space-y-0.5">
                 <Label>Data da visita *</Label>
-                <Input type="date" value={form.data_visita} onChange={(e) => set("data_visita", e.target.value)} />
+                <Input type="date" value={form.data_visita} onChange={(e) => set("data_visita", e.target.value)} disabled={readOnly} />
               </div>
               <div className="space-y-0.5">
                 <Label>Tipo de visita</Label>
-                <Select value={form.tipo_visita} onValueChange={(v) => set("tipo_visita", v)}>
+                <Select value={form.tipo_visita} onValueChange={(v) => set("tipo_visita", v)} disabled={readOnly}>
                   <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="prospeccao">Prospecção</SelectItem>
@@ -495,17 +495,17 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
               </div>
               <div className="space-y-0.5">
                 <Label>Visitante (executivo)</Label>
-                <Input value={form.visitante} onChange={(e) => set("visitante", e.target.value)} />
+                <Input value={form.visitante} onChange={(e) => set("visitante", e.target.value)} disabled={readOnly} />
               </div>
             </div>
 
             <div className="pt-2 border-t">
               <p className="text-sm font-medium mb-2">Entrevistado</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-                <div className="space-y-0.5"><Label>Nome</Label><Input value={form.entrevistado_nome} onChange={(e) => set("entrevistado_nome", e.target.value)} /></div>
-                <div className="space-y-0.5"><Label>Cargo</Label><Input value={form.entrevistado_cargo} onChange={(e) => set("entrevistado_cargo", e.target.value)} /></div>
-                <div className="space-y-0.5"><Label>Telefone</Label><Input value={form.entrevistado_telefone} onChange={(e) => set("entrevistado_telefone", e.target.value)} /></div>
-                <div className="space-y-0.5"><Label>E-mail</Label><Input type="email" value={form.entrevistado_email} onChange={(e) => set("entrevistado_email", e.target.value)} /></div>
+                <div className="space-y-0.5"><Label>Nome</Label><Input value={form.entrevistado_nome} onChange={(e) => set("entrevistado_nome", e.target.value)} disabled={readOnly} /></div>
+                <div className="space-y-0.5"><Label>Cargo</Label><Input value={form.entrevistado_cargo} onChange={(e) => set("entrevistado_cargo", e.target.value)} disabled={readOnly} /></div>
+                <div className="space-y-0.5"><Label>Telefone</Label><Input value={form.entrevistado_telefone} onChange={(e) => set("entrevistado_telefone", e.target.value)} disabled={readOnly} /></div>
+                <div className="space-y-0.5"><Label>E-mail</Label><Input type="email" value={form.entrevistado_email} onChange={(e) => set("entrevistado_email", e.target.value)} disabled={readOnly} /></div>
               </div>
             </div>
           </AccordionContent>
@@ -516,13 +516,13 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
           <AccordionTrigger className="hover:no-underline"><span className="text-sm font-medium">2. Dados do negócio</span></AccordionTrigger>
           <AccordionContent className="space-y-2.5 pt-1.5">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
-              <div className="space-y-0.5"><Label>Ramo de atividade</Label><Input value={form.ramo_atividade} onChange={(e) => set("ramo_atividade", e.target.value)} /></div>
-              <div className="space-y-0.5"><Label>Faturamento mensal (R$)</Label><Input inputMode="decimal" value={form.faturamento_mensal} onChange={(e) => set("faturamento_mensal", e.target.value)} /></div>
-              <div className="space-y-0.5"><Label>Nº de funcionários</Label><Input inputMode="numeric" value={form.qtd_funcionarios} onChange={(e) => set("qtd_funcionarios", e.target.value)} /></div>
+              <div className="space-y-0.5"><Label>Ramo de atividade</Label><Input value={form.ramo_atividade} onChange={(e) => set("ramo_atividade", e.target.value)} disabled={readOnly} /></div>
+              <div className="space-y-0.5"><Label>Faturamento mensal (R$)</Label><Input inputMode="decimal" value={form.faturamento_mensal} onChange={(e) => set("faturamento_mensal", e.target.value)} disabled={readOnly} /></div>
+              <div className="space-y-0.5"><Label>Nº de funcionários</Label><Input inputMode="numeric" value={form.qtd_funcionarios} onChange={(e) => set("qtd_funcionarios", e.target.value)} disabled={readOnly} /></div>
             </div>
             <div className="space-y-0.5">
               <Label>Principais produtos / serviços</Label>
-              <Textarea rows={2} value={form.principais_produtos} onChange={(e) => set("principais_produtos", e.target.value)} />
+              <Textarea rows={2} value={form.principais_produtos} onChange={(e) => set("principais_produtos", e.target.value)} disabled={readOnly} />
             </div>
 
             <div className="pt-2 border-t">
@@ -538,7 +538,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
                 ].map(([k, lbl]) => (
                   <div key={k} className="space-y-0.5">
                     <Label>{lbl}</Label>
-                    <Input inputMode="decimal" value={(form as any)[k]} onChange={(e) => set(k as any, e.target.value)} />
+                    <Input inputMode="decimal" value={(form as any)[k]} onChange={(e) => set(k as any, e.target.value)} disabled={readOnly} />
                   </div>
                 ))}
               </div>
@@ -559,7 +559,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
                 ].map(([k, lbl]) => (
                   <div key={k} className="space-y-0.5">
                     <Label>{lbl}</Label>
-                    <Input inputMode="decimal" value={(form as any)[k]} onChange={(e) => set(k as any, e.target.value)} />
+                    <Input inputMode="decimal" value={(form as any)[k]} onChange={(e) => set(k as any, e.target.value)} disabled={readOnly} />
                   </div>
                 ))}
               </div>
@@ -573,13 +573,13 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
           <AccordionContent className="space-y-2.5 pt-1.5">
             <div className="space-y-0.5">
               <Label>Parceiros financeiros (bancos/factorings com quem opera)</Label>
-              <Textarea rows={2} value={form.parceiros_financeiros} onChange={(e) => set("parceiros_financeiros", e.target.value)} />
+              <Textarea rows={2} value={form.parceiros_financeiros} onChange={(e) => set("parceiros_financeiros", e.target.value)} disabled={readOnly} />
             </div>
 
             <div className="space-y-0.5">
               <div className="flex items-center justify-between">
                 <Label>Empresas ligadas / grupo econômico</Label>
-                <Button size="sm" variant="outline" onClick={() => set("empresas_ligadas", [...form.empresas_ligadas, { nome: "", cnpj: "", relacao: "" }])}>
+                <Button size="sm" variant="outline" onClick={() => set("empresas_ligadas", [...form.empresas_ligadas, { nome: "", cnpj: "", relacao: "" }])} disabled={readOnly}>
                   <Plus className="h-4 w-4 mr-1" /> Adicionar
                 </Button>
               </div>
@@ -587,16 +587,16 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
               {form.empresas_ligadas.map((e, i) => (
                 <div key={i} className="grid grid-cols-12 gap-2 items-end border rounded-md p-3">
                   <div className="col-span-12 md:col-span-4 space-y-0.5"><Label className="text-xs">Razão social</Label>
-                    <Input value={e.nome} onChange={(ev) => { const arr = [...form.empresas_ligadas]; arr[i] = { ...arr[i], nome: ev.target.value }; set("empresas_ligadas", arr); }} />
+                    <Input value={e.nome} onChange={(ev) => { const arr = [...form.empresas_ligadas]; arr[i] = { ...arr[i], nome: ev.target.value }; set("empresas_ligadas", arr); }} disabled={readOnly} />
                   </div>
                   <div className="col-span-7 md:col-span-3 space-y-0.5"><Label className="text-xs">CNPJ</Label>
-                    <Input value={e.cnpj} onChange={(ev) => { const arr = [...form.empresas_ligadas]; arr[i] = { ...arr[i], cnpj: ev.target.value }; set("empresas_ligadas", arr); }} />
+                    <Input value={e.cnpj} onChange={(ev) => { const arr = [...form.empresas_ligadas]; arr[i] = { ...arr[i], cnpj: ev.target.value }; set("empresas_ligadas", arr); }} disabled={readOnly} />
                   </div>
                   <div className="col-span-4 md:col-span-4 space-y-0.5"><Label className="text-xs">Relação</Label>
-                    <Input placeholder="Ex.: matriz, filial, sócio em comum" value={e.relacao} onChange={(ev) => { const arr = [...form.empresas_ligadas]; arr[i] = { ...arr[i], relacao: ev.target.value }; set("empresas_ligadas", arr); }} />
+                    <Input placeholder="Ex.: matriz, filial, sócio em comum" value={e.relacao} onChange={(ev) => { const arr = [...form.empresas_ligadas]; arr[i] = { ...arr[i], relacao: ev.target.value }; set("empresas_ligadas", arr); }} disabled={readOnly} />
                   </div>
                   <div className="col-span-1 flex justify-end">
-                    <Button size="icon" variant="ghost" onClick={() => set("empresas_ligadas", form.empresas_ligadas.filter((_, j) => j !== i))}><Trash2 className="h-4 w-4" /></Button>
+                    <Button size="icon" variant="ghost" onClick={() => set("empresas_ligadas", form.empresas_ligadas.filter((_, j) => j !== i))} disabled={readOnly}><Trash2 className="h-4 w-4" /></Button>
                   </div>
                 </div>
               ))}
@@ -610,23 +610,23 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
           <AccordionContent className="space-y-2.5 pt-1.5">
             <div className="space-y-0.5">
               <Label>Limite global solicitado (R$)</Label>
-              <Input inputMode="decimal" value={form.limite_global_solicitado} onChange={(e) => set("limite_global_solicitado", e.target.value)} />
+              <Input inputMode="decimal" value={form.limite_global_solicitado} onChange={(e) => set("limite_global_solicitado", e.target.value)} disabled={readOnly} />
             </div>
 
             <div className="space-y-0.5">
               <p className="text-sm font-medium">Modalidades operacionais</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                <ModFull title="Desconto convencional" v={form.modalidades.desconto_convencional ?? emptyFull()} onChange={(p) => setMod("desconto_convencional", p)} />
-                <ModFull title="Comissária" v={form.modalidades.comissaria ?? emptyFull()} onChange={(p) => setMod("comissaria", p)} />
-                <ModFull title="Comissária com conta escrow" v={form.modalidades.comissaria_escrow ?? emptyFull()} onChange={(p) => setMod("comissaria_escrow", p)} />
-                <ModFull title="Nota comercial" v={form.modalidades.nota_comercial ?? emptyFull()} onChange={(p) => setMod("nota_comercial", p)} />
+                <ModFull title="Desconto convencional" v={form.modalidades.desconto_convencional ?? emptyFull()} onChange={(p) => setMod("desconto_convencional", p)} disabled={readOnly} />
+                <ModFull title="Comissária" v={form.modalidades.comissaria ?? emptyFull()} onChange={(p) => setMod("comissaria", p)} disabled={readOnly} />
+                <ModFull title="Comissária com conta escrow" v={form.modalidades.comissaria_escrow ?? emptyFull()} onChange={(p) => setMod("comissaria_escrow", p)} disabled={readOnly} />
+                <ModFull title="Nota comercial" v={form.modalidades.nota_comercial ?? emptyFull()} onChange={(p) => setMod("nota_comercial", p)} disabled={readOnly} />
               </div>
             </div>
 
             <div className="space-y-2 pt-2 border-t">
               <div className="flex items-center justify-between">
                 <Label>Avalistas solidários</Label>
-                <Button size="sm" variant="outline" onClick={() => set("avalistas_solidarios", [...form.avalistas_solidarios, { nome: "", cpf: "" }])}>
+                <Button size="sm" variant="outline" onClick={() => set("avalistas_solidarios", [...form.avalistas_solidarios, { nome: "", cpf: "" }])} disabled={readOnly}>
                   <Plus className="h-4 w-4 mr-1" /> Adicionar
                 </Button>
               </div>
@@ -634,13 +634,13 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
               {form.avalistas_solidarios.map((a, i) => (
                 <div key={i} className="grid grid-cols-12 gap-2 items-end border rounded-md p-3">
                   <div className="col-span-12 md:col-span-7 space-y-0.5"><Label className="text-xs">Nome</Label>
-                    <Input value={a.nome} onChange={(ev) => { const arr = [...form.avalistas_solidarios]; arr[i] = { ...arr[i], nome: ev.target.value }; set("avalistas_solidarios", arr); }} />
+                    <Input value={a.nome} onChange={(ev) => { const arr = [...form.avalistas_solidarios]; arr[i] = { ...arr[i], nome: ev.target.value }; set("avalistas_solidarios", arr); }} disabled={readOnly} />
                   </div>
                   <div className="col-span-11 md:col-span-4 space-y-0.5"><Label className="text-xs">CPF</Label>
-                    <Input value={a.cpf} onChange={(ev) => { const arr = [...form.avalistas_solidarios]; arr[i] = { ...arr[i], cpf: ev.target.value }; set("avalistas_solidarios", arr); }} />
+                    <Input value={a.cpf} onChange={(ev) => { const arr = [...form.avalistas_solidarios]; arr[i] = { ...arr[i], cpf: ev.target.value }; set("avalistas_solidarios", arr); }} disabled={readOnly} />
                   </div>
                   <div className="col-span-1 flex justify-end">
-                    <Button size="icon" variant="ghost" onClick={() => set("avalistas_solidarios", form.avalistas_solidarios.filter((_, j) => j !== i))}><Trash2 className="h-4 w-4" /></Button>
+                    <Button size="icon" variant="ghost" onClick={() => set("avalistas_solidarios", form.avalistas_solidarios.filter((_, j) => j !== i))} disabled={readOnly}><Trash2 className="h-4 w-4" /></Button>
                   </div>
                 </div>
               ))}
@@ -655,18 +655,18 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
           <AccordionContent className="space-y-2.5 pt-1.5">
             <div className="space-y-0.5">
               <Label>Parecer comercial *</Label>
-              <Textarea rows={5} placeholder="Avaliação geral, recomendação, próximos passos..." value={form.parecer_comercial} onChange={(e) => set("parecer_comercial", e.target.value)} />
+              <Textarea rows={5} placeholder="Avaliação geral, recomendação, próximos passos..." value={form.parecer_comercial} onChange={(e) => set("parecer_comercial", e.target.value)} disabled={readOnly} />
             </div>
             <div className="space-y-0.5">
               <Label>Pontos de atenção</Label>
-              <Textarea rows={3} placeholder="Riscos, alertas, dependências..." value={form.pontos_atencao} onChange={(e) => set("pontos_atencao", e.target.value)} />
+              <Textarea rows={3} placeholder="Riscos, alertas, dependências..." value={form.pontos_atencao} onChange={(e) => set("pontos_atencao", e.target.value)} disabled={readOnly} />
             </div>
 
             <div className="space-y-2 pt-2 border-t">
               <div className="flex items-center justify-between">
                 <Label>Fotos</Label>
-                <Button size="sm" variant="outline" asChild disabled={uploadingFotos}>
-                  <label className="cursor-pointer">
+                <Button size="sm" variant="outline" asChild disabled={uploadingFotos || readOnly}>
+                  <label className={readOnly ? "cursor-not-allowed pointer-events-none opacity-50" : "cursor-pointer"}>
                     {uploadingFotos ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Upload className="h-4 w-4 mr-1" />}
                     Adicionar fotos
                     <input
@@ -674,6 +674,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
                       accept="image/*"
                       multiple
                       className="hidden"
+                      disabled={readOnly}
                       onChange={(e) => { uploadFotos(e.target.files); e.target.value = ""; }}
                     />
                   </label>
@@ -694,7 +695,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
                       </button>
                       <div className="flex items-center justify-between gap-1">
                         <span className="text-xs truncate flex-1" title={f.name}>{f.name}</span>
-                        <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => removerFoto(i)}>
+                        <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => removerFoto(i)} disabled={readOnly}>
                           <Trash2 className="h-3 w-3" />
                         </Button>
                       </div>
@@ -734,19 +735,19 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
   );
 }
 
-function ModFull({ title, v, onChange }: { title: string; v: ModalidadeFull; onChange: (p: Partial<ModalidadeFull>) => void }) {
+function ModFull({ title, v, onChange, disabled }: { title: string; v: ModalidadeFull; onChange: (p: Partial<ModalidadeFull>) => void; disabled?: boolean }) {
   return (
     <div className="border rounded-md p-2.5 space-y-0.5">
-      <label className="flex items-center gap-2 cursor-pointer">
-        <Checkbox checked={v.ativo} onCheckedChange={(c) => onChange({ ativo: !!c })} />
+      <label className={`flex items-center gap-2 ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}>
+        <Checkbox checked={v.ativo} onCheckedChange={(c) => onChange({ ativo: !!c })} disabled={disabled} />
         <span className="font-medium text-sm">{title}</span>
       </label>
       {v.ativo && (
         <div className="grid grid-cols-3 gap-2">
-          <div className="space-y-0.5"><Label className="text-[11px]">Limite (R$)</Label><Input className="h-8" inputMode="decimal" value={v.limite} onChange={(e) => onChange({ limite: e.target.value })} /></div>
-          <div className="space-y-0.5"><Label className="text-[11px]">Prazo (dias)</Label><Input className="h-8" inputMode="numeric" value={v.prazo_medio} onChange={(e) => onChange({ prazo_medio: e.target.value })} /></div>
-          <div className="space-y-0.5"><Label className="text-[11px]">Taxa (% a.m.)</Label><Input className="h-8" inputMode="decimal" value={v.taxa} onChange={(e) => onChange({ taxa: e.target.value })} /></div>
-          <div className="space-y-1 col-span-3"><Label className="text-[11px]">Observação</Label><Input className="h-8" value={v.observacao} onChange={(e) => onChange({ observacao: e.target.value })} /></div>
+          <div className="space-y-0.5"><Label className="text-[11px]">Limite (R$)</Label><Input className="h-8" inputMode="decimal" value={v.limite} onChange={(e) => onChange({ limite: e.target.value })} disabled={disabled} /></div>
+          <div className="space-y-0.5"><Label className="text-[11px]">Prazo (dias)</Label><Input className="h-8" inputMode="numeric" value={v.prazo_medio} onChange={(e) => onChange({ prazo_medio: e.target.value })} disabled={disabled} /></div>
+          <div className="space-y-0.5"><Label className="text-[11px]">Taxa (% a.m.)</Label><Input className="h-8" inputMode="decimal" value={v.taxa} onChange={(e) => onChange({ taxa: e.target.value })} disabled={disabled} /></div>
+          <div className="space-y-1 col-span-3"><Label className="text-[11px]">Observação</Label><Input className="h-8" value={v.observacao} onChange={(e) => onChange({ observacao: e.target.value })} disabled={disabled} /></div>
         </div>
       )}
     </div>
