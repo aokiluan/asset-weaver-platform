@@ -117,7 +117,7 @@ export function VoteBriefing({ cedenteId, proposalId }: Props) {
 
   if (loading) {
     return (
-      <Card className="p-6 flex items-center gap-2 text-sm text-muted-foreground">
+      <Card className="p-4 flex items-center gap-2 text-sm text-muted-foreground">
         <Loader2 className="h-4 w-4 animate-spin" /> Carregando briefing…
       </Card>
     );

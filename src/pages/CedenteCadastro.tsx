@@ -262,7 +262,7 @@ export default function CedenteCadastro() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">
+            <h1 className="text-[20px] font-medium tracking-tight">
               {isEdit ? "Editar cadastro" : "Novo cadastro"}
             </h1>
             <p className="text-sm text-muted-foreground">

@@ -84,7 +84,7 @@ export default function AdminEquipes() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Equipes</h1>
+          <h1 className="text-[20px] font-medium tracking-tight">Equipes</h1>
           <p className="text-muted-foreground">
             Organize usuários em equipes. O gestor da equipe vê apenas os membros dela; gestores gerais veem tudo do papel.
           </p>

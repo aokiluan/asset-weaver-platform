@@ -65,7 +65,7 @@ export default function AdminPipeline() {
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Estágios do Pipeline</h1>
+          <h1 className="text-[20px] font-medium tracking-tight">Estágios do Pipeline</h1>
           <p className="text-muted-foreground">Configure as colunas do funil comercial.</p>
         </div>
         <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setEditing(empty); }}>

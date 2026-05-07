@@ -120,7 +120,7 @@ export default function Cedentes() {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Cedentes</h1>
+          <h1 className="text-[20px] font-medium tracking-tight">Cedentes</h1>
           <p className="text-sm text-muted-foreground">
             Cadastro de cedentes, status de análise e limites aprovados.
           </p>
@@ -134,15 +134,15 @@ export default function Cedentes() {
       <div className="grid gap-4 md:grid-cols-3">
         <div className="rounded-lg border bg-card p-4">
           <div className="text-xs text-muted-foreground">Total cadastrado</div>
-          <div className="text-2xl font-semibold">{items.length}</div>
+          <div className="text-[20px] font-medium tracking-tight">{items.length}</div>
         </div>
         <div className="rounded-lg border bg-card p-4">
           <div className="text-xs text-muted-foreground">Aprovados</div>
-          <div className="text-2xl font-semibold">{items.filter(i => i.status === "aprovado").length}</div>
+          <div className="text-[20px] font-medium tracking-tight">{items.filter(i => i.status === "aprovado").length}</div>
         </div>
         <div className="rounded-lg border bg-card p-4">
           <div className="text-xs text-muted-foreground">Limite total aprovado</div>
-          <div className="text-2xl font-semibold">{fmtBRL(totalAprovado)}</div>
+          <div className="text-[20px] font-medium tracking-tight">{fmtBRL(totalAprovado)}</div>
         </div>
       </div>
 

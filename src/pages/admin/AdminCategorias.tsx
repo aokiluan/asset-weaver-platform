@@ -65,7 +65,7 @@ export default function AdminCategorias() {
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Categorias de Documento</h1>
+          <h1 className="text-[20px] font-medium tracking-tight">Categorias de Documento</h1>
           <p className="text-muted-foreground">Tipos de documento aceitos no cadastro de cedentes.</p>
         </div>
         <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setEditing(empty); }}>
