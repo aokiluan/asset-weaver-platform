@@ -129,7 +129,7 @@ export default function Comite() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       <header className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-[20px] font-medium tracking-tight flex items-center gap-2">
@@ -170,7 +170,7 @@ export default function Comite() {
             const dias = daysSince(p.created_at);
 
             return (
-              <div key={p.id} className="rounded-lg border bg-card p-5 space-y-4 hover:shadow-md transition-shadow">
+              <div key={p.id} className="rounded-lg border bg-card p-5 space-y-3 hover:shadow-md transition-shadow">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="text-[11px] font-mono text-muted-foreground">{p.codigo}</p>

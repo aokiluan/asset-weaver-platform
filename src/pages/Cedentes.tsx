@@ -116,7 +116,7 @@ export default function Cedentes() {
   const totalAprovado = items.filter(i => i.status === "aprovado").reduce((s, i) => s + (i.limite_aprovado ?? 0), 0);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
@@ -270,7 +270,7 @@ export default function Cedentes() {
               </div>
 
               {/* Detalhes */}
-              <div className="p-5 space-y-5 flex-1 overflow-y-auto">
+              <div className="p-5 space-y-3 flex-1 overflow-y-auto">
                 <section>
                   <h3 className="text-xs font-semibold uppercase text-muted-foreground tracking-wide mb-3">
                     Contato

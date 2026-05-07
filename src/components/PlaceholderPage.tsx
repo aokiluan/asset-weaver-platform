@@ -8,13 +8,13 @@ interface Props {
 
 export default function PlaceholderPage({ title, description, comingItems }: Props) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       <div>
         <h1 className="text-[20px] font-medium tracking-tight">{title}</h1>
         <p className="text-sm text-muted-foreground">{description}</p>
       </div>
 
-      <div className="rounded-lg border bg-card p-10 text-center space-y-4">
+      <div className="rounded-lg border bg-card p-10 text-center space-y-3">
         <Construction className="h-10 w-10 mx-auto text-muted-foreground" />
         <div>
           <div className="font-medium">Em construção</div>

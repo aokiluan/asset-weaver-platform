@@ -131,7 +131,7 @@ export function VoteBriefing({ cedenteId, proposalId }: Props) {
   const valor = proposal?.valor_solicitado ?? visit?.limite_global_solicitado ?? null;
 
   return (
-    <Card className="p-5 space-y-4 border-primary/20">
+    <Card className="p-5 space-y-3 border-primary/20">
       {/* Cabeçalho */}
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div className="min-w-0 space-y-0.5">

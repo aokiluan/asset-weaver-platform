@@ -226,7 +226,7 @@ export function ComiteGameSession({ proposalId, votosMinimos, proposalStage, ced
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Briefing sintetizado dos pareceres */}
       {cedenteId && <VoteBriefing cedenteId={cedenteId} proposalId={proposalId} />}
 

@@ -103,7 +103,7 @@ export default function Leads() {
     v == null ? "—" : new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-3 max-w-7xl mx-auto">
       <header className="flex items-center justify-between">
         <div>
           <h1 className="text-[20px] font-medium tracking-tight text-foreground">Leads</h1>
@@ -115,7 +115,7 @@ export default function Leads() {
       </header>
 
       <Card className="shadow-[var(--shadow-card)]">
-        <CardContent className="p-4 space-y-4">
+        <CardContent className="p-4 space-y-3">
           <div className="flex flex-col md:flex-row gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />

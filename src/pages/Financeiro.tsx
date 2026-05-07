@@ -110,7 +110,7 @@ export default function Financeiro() {
   const dataRows: any[][] = sheetQuery.data?.values?.slice(1) ?? [];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-[20px] font-medium tracking-tight">Financeiro</h1>
@@ -180,7 +180,7 @@ export default function Financeiro() {
               </button>
             ))}
             {!filesQuery.isLoading && filteredFiles.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center py-8">
+              <p className="text-sm text-muted-foreground text-center py-4">
                 Nenhuma planilha encontrada.
               </p>
             )}

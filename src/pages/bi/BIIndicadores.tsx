@@ -17,7 +17,7 @@ export default function BIIndicadores() {
   });
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <header>
         <h2 className="text-lg font-semibold text-foreground">
           Indicadores de carteira

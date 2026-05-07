@@ -81,7 +81,7 @@ export default function AdminEquipes() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-[20px] font-medium tracking-tight">Equipes</h1>
@@ -152,8 +152,8 @@ export default function AdminEquipes() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {loading && <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>}
-            {!loading && teams.length === 0 && <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Nenhuma equipe ainda.</TableCell></TableRow>}
+            {loading && <TableRow><TableCell colSpan={6} className="text-center py-4 text-muted-foreground">Carregando...</TableCell></TableRow>}
+            {!loading && teams.length === 0 && <TableRow><TableCell colSpan={6} className="text-center py-4 text-muted-foreground">Nenhuma equipe ainda.</TableCell></TableRow>}
             {teams.map(t => {
               const gestor = t.gestor_id ? profilesById[t.gestor_id] : null;
               const members = membersByTeam[t.id] ?? [];

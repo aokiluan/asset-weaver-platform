@@ -121,7 +121,7 @@ function StageColumn({
           <CedenteCardItem key={c.id} cedente={c} onOpen={() => onOpen(c.id)} />
         ))}
         {cedentes.length === 0 && (
-          <div className="text-xs text-muted-foreground text-center py-8">Vazio</div>
+          <div className="text-xs text-muted-foreground text-center py-4">Vazio</div>
         )}
       </div>
       {total > 0 && (
@@ -205,7 +205,7 @@ export default function Pipeline() {
   }
 
   return (
-    <div className="space-y-4 max-w-full">
+    <div className="space-y-3 max-w-full">
       <header className="flex items-center justify-between">
         <div>
           <h1 className="text-[20px] font-medium tracking-tight text-foreground">Pipeline</h1>

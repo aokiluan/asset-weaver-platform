@@ -33,7 +33,7 @@ export function PageTabs({ title, description, tabs, actions }: PageTabsProps) {
             )}
           </div>
 
-          <nav className="flex items-end gap-6 -mb-px">
+          <nav className="flex items-end gap-3 -mb-px">
             {tabs.map((t) => (
               <NavLink
                 key={t.to}

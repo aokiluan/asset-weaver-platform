@@ -62,7 +62,7 @@ export default function AdminCategorias() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-[20px] font-medium tracking-tight">Categorias de Documento</h1>
@@ -120,7 +120,7 @@ export default function AdminCategorias() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {loading && <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>}
+            {loading && <TableRow><TableCell colSpan={6} className="text-center py-4 text-muted-foreground">Carregando...</TableCell></TableRow>}
             {items.map(c => (
               <TableRow key={c.id} className="group">
                 <TableCell>{c.ordem}</TableCell>
