@@ -322,50 +322,50 @@ export default function CedenteDetail() {
       })()}
 
       {tab === "resumo" && (
-        <div className="mt-4">
-          <div className="rounded-lg border bg-card p-3 space-y-3">
-            <section className="space-y-1.5">
-              <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.08em]">Identificação</h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-x-3 gap-y-2 text-[13px]">
-                <div><div className="text-[11px] text-muted-foreground leading-tight">Razão social</div><div>{cedente.razao_social}</div></div>
-                <div><div className="text-[11px] text-muted-foreground leading-tight">Nome fantasia</div><div>{cedente.nome_fantasia ?? "—"}</div></div>
-                <div><div className="text-[11px] text-muted-foreground leading-tight">CNPJ</div><div className="font-mono">{cedente.cnpj}</div></div>
+        <div className="mt-3">
+          <div className="rounded-lg border bg-card p-2.5 space-y-2">
+            <section className="space-y-1">
+              <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-[0.08em]">Identificação</h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-x-3 gap-y-1 text-[12px]">
+                <div><div className="text-[10px] text-muted-foreground leading-none mb-0.5">Razão social</div><div className="leading-tight">{cedente.razao_social}</div></div>
+                <div><div className="text-[10px] text-muted-foreground leading-none mb-0.5">Nome fantasia</div><div className="leading-tight">{cedente.nome_fantasia ?? "—"}</div></div>
+                <div><div className="text-[10px] text-muted-foreground leading-none mb-0.5">CNPJ</div><div className="font-mono leading-tight">{cedente.cnpj}</div></div>
               </div>
             </section>
 
-            <section className="space-y-1.5 pt-3 border-t">
-              <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.08em]">Contato</h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-x-3 gap-y-2 text-[13px]">
-                <div><div className="text-[11px] text-muted-foreground leading-tight">E-mail</div><div>{cedente.email ?? "—"}</div></div>
-                <div><div className="text-[11px] text-muted-foreground leading-tight">Telefone</div><div>{cedente.telefone ?? "—"}</div></div>
+            <section className="space-y-1 pt-2 border-t">
+              <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-[0.08em]">Contato</h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-x-3 gap-y-1 text-[12px]">
+                <div><div className="text-[10px] text-muted-foreground leading-none mb-0.5">E-mail</div><div className="leading-tight">{cedente.email ?? "—"}</div></div>
+                <div><div className="text-[10px] text-muted-foreground leading-none mb-0.5">Telefone</div><div className="leading-tight">{cedente.telefone ?? "—"}</div></div>
               </div>
             </section>
 
-            <section className="space-y-1.5 pt-3 border-t">
-              <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.08em]">Endereço</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-x-3 gap-y-2 text-[13px]">
-                <div className="md:col-span-2"><div className="text-[11px] text-muted-foreground leading-tight">Endereço</div><div>{cedente.endereco ?? "—"}</div></div>
-                <div><div className="text-[11px] text-muted-foreground leading-tight">Cidade</div><div>{cedente.cidade ?? "—"}</div></div>
-                <div><div className="text-[11px] text-muted-foreground leading-tight">UF</div><div>{cedente.estado ?? "—"}</div></div>
-                <div><div className="text-[11px] text-muted-foreground leading-tight">CEP</div><div>{cedente.cep ?? "—"}</div></div>
+            <section className="space-y-1 pt-2 border-t">
+              <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-[0.08em]">Endereço</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-x-3 gap-y-1 text-[12px]">
+                <div className="md:col-span-2"><div className="text-[10px] text-muted-foreground leading-none mb-0.5">Endereço</div><div className="leading-tight">{cedente.endereco ?? "—"}</div></div>
+                <div><div className="text-[10px] text-muted-foreground leading-none mb-0.5">Cidade</div><div className="leading-tight">{cedente.cidade ?? "—"}</div></div>
+                <div><div className="text-[10px] text-muted-foreground leading-none mb-0.5">UF</div><div className="leading-tight">{cedente.estado ?? "—"}</div></div>
+                <div><div className="text-[10px] text-muted-foreground leading-none mb-0.5">CEP</div><div className="leading-tight">{cedente.cep ?? "—"}</div></div>
               </div>
             </section>
 
-            <section className="space-y-1.5 pt-3 border-t">
-              <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.08em]">Comercial</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-x-3 gap-y-2 text-[13px]">
-                <div><div className="text-[11px] text-muted-foreground leading-tight">Setor</div><div>{cedente.setor ?? "—"}</div></div>
-                <div><div className="text-[11px] text-muted-foreground leading-tight">Faturamento médio</div><div>{fmtBRL(cedente.faturamento_medio)}</div></div>
-                <div><div className="text-[11px] text-muted-foreground leading-tight">Status</div><div className="capitalize">{cedente.status.replace("_", " ")}</div></div>
-                <div><div className="text-[11px] text-muted-foreground leading-tight">Limite aprovado</div><div className="font-semibold">{fmtBRL(cedente.limite_aprovado)}</div></div>
-                <div className="md:col-span-2"><div className="text-[11px] text-muted-foreground leading-tight">Responsável comercial</div><div>{ownerName ?? "—"}</div></div>
+            <section className="space-y-1 pt-2 border-t">
+              <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-[0.08em]">Comercial</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-x-3 gap-y-1 text-[12px]">
+                <div><div className="text-[10px] text-muted-foreground leading-none mb-0.5">Setor</div><div className="leading-tight">{cedente.setor ?? "—"}</div></div>
+                <div><div className="text-[10px] text-muted-foreground leading-none mb-0.5">Faturamento médio</div><div className="leading-tight">{fmtBRL(cedente.faturamento_medio)}</div></div>
+                <div><div className="text-[10px] text-muted-foreground leading-none mb-0.5">Status</div><div className="capitalize leading-tight">{cedente.status.replace("_", " ")}</div></div>
+                <div><div className="text-[10px] text-muted-foreground leading-none mb-0.5">Limite aprovado</div><div className="font-semibold leading-tight">{fmtBRL(cedente.limite_aprovado)}</div></div>
+                <div className="md:col-span-2"><div className="text-[10px] text-muted-foreground leading-none mb-0.5">Responsável comercial</div><div className="leading-tight">{ownerName ?? "—"}</div></div>
               </div>
             </section>
 
             {cedente.observacoes && (
-              <section className="space-y-1.5 pt-3 border-t">
-                <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.08em]">Observações</h3>
-                <p className="text-sm whitespace-pre-wrap">{cedente.observacoes}</p>
+              <section className="space-y-1 pt-2 border-t">
+                <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-[0.08em]">Observações</h3>
+                <p className="text-[12px] whitespace-pre-wrap leading-snug">{cedente.observacoes}</p>
               </section>
             )}
           </div>
