@@ -1,22 +1,29 @@
-## Problema
+## Objetivo
 
-No `CedenteVisitReportForm`, quando já existe um relatório salvo (`mode === "view"`), o flag `readOnly` é calculado mas **nunca aplicado aos inputs**. Apenas adiciona `opacity-90` no wrapper. Por isso os campos continuam editáveis na tela (como na imagem: "Luan" sendo digitado em modo "somente leitura").
+Adicionar barra de progresso e indicadores de seção (bolinhas ⚪/✅) ao Relatório Comercial, no mesmo padrão do Relatório de Crédito.
 
-## Solução
+## Definição de "seção completa"
 
-Em `src/components/cedentes/CedenteVisitReportForm.tsx`, propagar o `readOnly` (renomeando para `disabled` por consistência visual) para todos os controles dentro do acordeão:
+Cada uma das 5 seções é considerada completa quando seus campos-chave estão preenchidos:
 
-1. **Cabeçalho da visita** (Data, Tipo, Visitante, Nome/Cargo/Telefone/E-mail do entrevistado) — adicionar `disabled={readOnly}` nos `Input` e `Select`.
-2. **Dados do negócio** — `disabled={readOnly}` em todos os inputs (ramo, faturamento, qtd_funcionarios, principais_produtos, %s de PF/PJ e formas de faturamento).
-3. **Informações adicionais** — `disabled` em `Textarea` de parceiros, no botão "Adicionar empresa ligada", nos inputs de cada empresa e no botão de remover.
-4. **Pleito de crédito** — `disabled` no input de limite global, no componente `ModFull` (passar prop `disabled` que desabilita Checkbox/Inputs internos), no botão "Adicionar avalista", inputs de avalistas e botão de remover.
-5. **Parecer comercial** — `disabled` nos `Textarea` de parecer e pontos de atenção; o botão de upload de fotos e o botão de remover foto também ficam `disabled` em modo view (apenas o `abrirFoto` continua funcionando para visualizar).
-6. **`ModFull`** — adicionar prop opcional `disabled?: boolean` aplicada ao `Checkbox` e aos quatro `Input`s.
+1. **Cabeçalho da visita** — `data_visita` e `visitante` preenchidos.
+2. **Dados do negócio** — `ramo_atividade`, `faturamento_mensal` e `principais_produtos` preenchidos.
+3. **Informações adicionais** — `parceiros_financeiros` preenchido **ou** ao menos 1 item em `empresas_ligadas`.
+4. **Pleito de crédito** — `limite_global_solicitado` preenchido **e** ao menos 1 modalidade com `ativo: true`.
+5. **Parecer comercial** — `parecer_comercial` preenchido (já é obrigatório no save).
 
-Manter o wrapper `opacity-90` como está, apenas para reforçar visualmente.
+## Mudanças em `src/components/cedentes/CedenteVisitReportForm.tsx`
 
-Fluxo: ao clicar em **"Alterar relatório"**, `mode` vira `"edit"` e `readOnly` passa a `false`, reabilitando todos os campos. Ao clicar em **"Cancelar"** ou após salvar, volta a `view` e tudo fica desabilitado novamente.
+1. Importar `CheckCircle2`, `Circle` de `lucide-react`, `Progress` de `@/components/ui/progress` e `Badge` de `@/components/ui/badge`.
+2. Criar helper local `isSectionComplete(form, key)` com as regras acima e `useMemo` para `completas` (0–5).
+3. Substituir o cabeçalho atual (linhas 432–458) por um card no mesmo estilo do `CreditReportForm`:
+   - Título "Relatório comercial" + subtítulo "Inclui dados da visita, do negócio e o pleito de crédito."
+   - Badge "Versão atual: vN" (quando existir) + badges "Somente leitura" / "Editando nova versão".
+   - Badge `{completas}/5 seções` à direita.
+   - Botões "Alterar relatório" / "Cancelar" / "Gerar PDF" mantidos.
+   - `<Progress value={(completas/5)*100} className="h-2" />` abaixo.
+4. Em cada `AccordionTrigger` das 5 seções, prefixar o título com `<CheckCircle2 className="h-4 w-4 text-green-600" />` se completa, ou `<Circle className="h-4 w-4 text-muted-foreground" />` caso contrário, mantendo o texto "1. Cabeçalho da visita" etc.
 
 ## Escopo
 
-Apenas `src/components/cedentes/CedenteVisitReportForm.tsx`. Nenhuma mudança de schema ou de outros arquivos.
+Apenas `src/components/cedentes/CedenteVisitReportForm.tsx`. Sem mudanças de schema, sem novos arquivos.
