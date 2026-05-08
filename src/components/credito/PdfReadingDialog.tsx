@@ -10,7 +10,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
 // Worker do pdf.js (vite resolve para URL final)
-// @ts-expect-error - bundler vai resolver
 import workerSrc from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 (pdfjs as any).GlobalWorkerOptions.workerSrc = workerSrc;
 
