@@ -60,7 +60,7 @@ export default function Formalizacao() {
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const canSign =
-    hasRole("admin") || hasRole("formalizacao") || hasRole("cadastro");
+    hasRole("admin") || hasRole("formalizacao") || hasRole("gestor_geral");
 
   useEffect(() => {
     document.title = "Formalização | Securitizadora";
