@@ -162,7 +162,7 @@ export default function Comite() {
             const propVotes = votes.filter((v) => v.proposal_id === p.id);
             const fav = propVotes.filter((v) => v.decisao === "favoravel").length;
             const desfav = propVotes.filter((v) => v.decisao === "desfavoravel").length;
-            const abst = propVotes.filter((v) => v.decisao === "abstencao").length;
+            
             const min = p.approval_levels?.votos_minimos ?? 1;
             const meuVoto = user ? propVotes.find((v) => v.voter_id === user.id) : null;
             const quorum = fav >= min;
@@ -222,7 +222,7 @@ export default function Comite() {
                   <div className="flex gap-3 text-[11px] text-muted-foreground pt-0.5">
                     <span className="flex items-center gap-1"><ThumbsUp className="h-3 w-3 text-green-600" /> {fav}</span>
                     <span className="flex items-center gap-1"><ThumbsDown className="h-3 w-3 text-destructive" /> {desfav}</span>
-                    <span className="flex items-center gap-1">— {abst} abst.</span>
+                    
                     {p.approval_levels && (
                       <span className="ml-auto truncate">Alçada: {p.approval_levels.nome}</span>
                     )}
