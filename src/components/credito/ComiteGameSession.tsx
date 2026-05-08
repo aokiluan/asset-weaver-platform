@@ -256,21 +256,21 @@ export function ComiteGameSession({ proposalId, votosMinimos, proposalStage, ced
 
       {/* Placar / contagem */}
       <div className="grid grid-cols-2 gap-2">
-        <ScoreCard label="Favoráveis" count={favoraveis} icon={<ThumbsUp className="h-3.5 w-3.5" />} color="text-green-600" hidden={!revealed} mask={votes.length} />
-        <ScoreCard label="Contrários" count={contrarios} icon={<ThumbsDown className="h-3.5 w-3.5" />} color="text-destructive" hidden={!revealed} mask={votes.length} />
+        <ScoreCard label="Favoráveis" count={favoraveis} icon={<ThumbsUp className="h-3 w-3" />} color="text-green-600" hidden={!revealed} mask={votes.length} />
+        <ScoreCard label="Contrários" count={contrarios} icon={<ThumbsDown className="h-3 w-3" />} color="text-destructive" hidden={!revealed} mask={votes.length} />
       </div>
 
       {/* Quórum */}
-      <Card className={`p-4 ${revealed && quorumOk ? "border-green-500 bg-green-500/5" : ""}`}>
-        <div className="flex items-center gap-3">
-          <Trophy className={`h-6 w-6 ${revealed && quorumOk ? "text-green-600" : "text-muted-foreground"}`} />
-          <div className="flex-1">
-            <div className="text-sm font-medium">
+      <Card className={`p-2.5 ${revealed && quorumOk ? "border-green-500 bg-green-500/5" : ""}`}>
+        <div className="flex items-center gap-2.5">
+          <Trophy className={`h-5 w-5 shrink-0 ${revealed && quorumOk ? "text-green-600" : "text-muted-foreground"}`} />
+          <div className="flex-1 min-w-0">
+            <div className="text-[12px] font-medium leading-tight">
               {revealed
                 ? (quorumOk ? "Quórum atingido — pronto para decisão final ✅" : "Quórum não atingido")
                 : "Aguardando revelação dos votos"}
             </div>
-            <div className="text-xs text-muted-foreground">
+            <div className="text-[11px] text-muted-foreground leading-tight">
               {revealed ? `${favoraveis} de ${votosMinimos} votos favoráveis necessários` : `Mínimo: ${votosMinimos} favorável(is)`}
             </div>
           </div>
@@ -278,21 +278,21 @@ export function ComiteGameSession({ proposalId, votosMinimos, proposalStage, ced
       </Card>
 
       {/* Lista de votos / votantes */}
-      <Card className="p-4 space-y-3">
-        <h4 className="text-sm font-semibold flex items-center gap-2"><Vote className="h-4 w-4" /> Votantes</h4>
-        {votes.length === 0 && <p className="text-sm text-muted-foreground">Nenhum voto registrado ainda.</p>}
-        <div className="space-y-2">
+      <Card className="p-2.5 space-y-2">
+        <h4 className="text-[12px] font-semibold flex items-center gap-1.5 leading-none"><Vote className="h-3.5 w-3.5" /> Votantes</h4>
+        {votes.length === 0 && <p className="text-[11px] text-muted-foreground leading-tight">Nenhum voto registrado ainda.</p>}
+        <div className="space-y-1.5">
           {votes.map((v) => {
             const isOwn = v.voter_id === user?.id;
             const showDecision = revealed || isOwn;
             return (
-              <div key={v.id} className="flex items-center gap-3 rounded-md border p-3">
-                <div className={`h-9 w-9 rounded-full flex items-center justify-center font-medium text-sm ${showDecision ? VOTE_COLOR[v.decisao] + " text-white" : "bg-muted"}`}>
-                  {showDecision ? VOTE_ICON[v.decisao] : <EyeOff className="h-4 w-4 text-muted-foreground" />}
+              <div key={v.id} className="flex items-center gap-2 rounded-md border p-2">
+                <div className={`h-7 w-7 rounded-full flex items-center justify-center font-medium text-[11px] shrink-0 ${showDecision ? VOTE_COLOR[v.decisao] + " text-white" : "bg-muted"}`}>
+                  {showDecision ? VOTE_ICON[v.decisao] : <EyeOff className="h-3.5 w-3.5 text-muted-foreground" />}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium truncate flex items-center gap-1.5">
-                    {profiles[v.voter_id]?.nome ?? "Membro do comitê"} {isOwn && <span className="text-xs text-muted-foreground font-normal">(você)</span>}
+                  <div className="text-[12px] font-medium truncate flex items-center gap-1 leading-tight">
+                    {profiles[v.voter_id]?.nome ?? "Membro do comitê"} {isOwn && <span className="text-[10px] text-muted-foreground font-normal">(você)</span>}
                     {v.checklist_completo ? (
                       <span title="Revisou todo o briefing antes de votar">
                         <Eye className="h-3 w-3 text-green-600" />
@@ -304,12 +304,12 @@ export function ComiteGameSession({ proposalId, votosMinimos, proposalStage, ced
                     )}
                   </div>
                   {showDecision ? (
-                    <div className="text-xs text-muted-foreground">
+                    <div className="text-[11px] text-muted-foreground leading-tight">
                       <span className="font-medium">{VOTE_LABEL[v.decisao]}</span>
                       {v.justificativa && <> — {v.justificativa}</>}
                     </div>
                   ) : (
-                    <div className="text-xs text-muted-foreground italic">Voto oculto até revelação</div>
+                    <div className="text-[11px] text-muted-foreground italic leading-tight">Voto oculto até revelação</div>
                   )}
                 </div>
               </div>
