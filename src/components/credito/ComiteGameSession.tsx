@@ -330,39 +330,39 @@ export function ComiteGameSession({ proposalId, votosMinimos, proposalStage, ced
             />
           )}
 
-          <Card className="p-4 space-y-3 border-primary/30">
-            <h4 className="text-sm font-semibold">{ownVote ? "Atualizar meu voto" : "Registrar meu voto"}</h4>
+          <Card className="p-2.5 space-y-2 border-primary/30">
+            <h4 className="text-[12px] font-semibold leading-none">{ownVote ? "Atualizar meu voto" : "Registrar meu voto"}</h4>
             <div className="grid grid-cols-2 gap-2">
               {(["favoravel", "desfavoravel"] as VoteDecision[]).map((d) => (
                 <button
                   key={d}
                   onClick={() => setVoteDec(d)}
-                  className={`rounded-md border p-3 flex flex-col items-center gap-1 transition ${voteDec === d ? `${VOTE_COLOR[d]} text-white border-transparent` : "hover:bg-muted"}`}
+                  className={`rounded-md border p-2 flex flex-col items-center gap-1 transition ${voteDec === d ? `${VOTE_COLOR[d]} text-white border-transparent` : "hover:bg-muted"}`}
                   type="button"
                 >
                   {VOTE_ICON[d]}
-                  <span className="text-xs font-medium">{VOTE_LABEL[d]}</span>
+                  <span className="text-[11px] font-medium leading-none">{VOTE_LABEL[d]}</span>
                 </button>
               ))}
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Justificativa (opcional)</Label>
-              <Textarea rows={2} value={voteJust} onChange={(e) => setVoteJust(e.target.value)} />
+            <div className="space-y-1">
+              <Label className="text-[10px] leading-none">Justificativa (opcional)</Label>
+              <Textarea rows={2} value={voteJust} onChange={(e) => setVoteJust(e.target.value)} className="text-[11px]" />
             </div>
             {!checklistInfo.allDone && checklistInfo.total > 0 && (
-              <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/5 p-2 text-xs text-amber-700 dark:text-amber-400">
+              <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/5 p-2 text-[11px] text-amber-700 dark:text-amber-400 leading-tight">
                 <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
                 <span>
                   Você revisou {checklistInfo.completed} de {checklistInfo.total} itens. Recomendamos completar antes de votar.
                 </span>
               </div>
             )}
-            <Button onClick={handleVoteClick} disabled={busy} className="w-full">
-              {busy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Vote className="h-4 w-4 mr-2" />}
+            <Button onClick={handleVoteClick} disabled={busy} className="w-full h-7 text-[11px]">
+              {busy ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Vote className="h-3.5 w-3.5 mr-1.5" />}
               {ownVote ? "Atualizar voto" : "Confirmar voto"}
             </Button>
             {session.voto_secreto && !revealed && (
-              <p className="text-xs text-muted-foreground text-center"><Lock className="inline h-3 w-3 mr-1" /> Seu voto fica oculto até a revelação.</p>
+              <p className="text-[10px] text-muted-foreground text-center leading-none"><Lock className="inline h-3 w-3 mr-1" /> Seu voto fica oculto até a revelação.</p>
             )}
           </Card>
         </>
