@@ -222,7 +222,7 @@ export default function Comite() {
                   <div className="flex gap-3 text-[11px] text-muted-foreground pt-0.5">
                     <span className="flex items-center gap-1"><ThumbsUp className="h-3 w-3 text-green-600" /> {fav}</span>
                     <span className="flex items-center gap-1"><ThumbsDown className="h-3 w-3 text-destructive" /> {desfav}</span>
-                    <span className="flex items-center gap-1">— {abst} abst.</span>
+                    
                     {p.approval_levels && (
                       <span className="ml-auto truncate">Alçada: {p.approval_levels.nome}</span>
                     )}
