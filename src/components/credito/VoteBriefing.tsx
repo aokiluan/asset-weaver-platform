@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Building2, FileText, ArrowRight, ThumbsUp, AlertTriangle, Loader2, Briefcase, Sparkles,
+  Building2, FileText, ArrowRight, ThumbsUp, AlertTriangle, Loader2, Briefcase, Sparkles, CheckSquare, Square,
 } from "lucide-react";
 
 interface Props {
@@ -26,11 +26,27 @@ interface Proposal {
   taxa_sugerida: number | null;
 }
 
+interface ModalidadeFull {
+  ativo?: boolean;
+  limite?: string | number | null;
+  prazo_medio?: string | number | null;
+  taxa?: string | number | null;
+  observacao?: string | null;
+}
+
+interface Modalidades {
+  desconto_convencional?: ModalidadeFull;
+  comissaria?: ModalidadeFull;
+  comissaria_escrow?: ModalidadeFull;
+  nota_comercial?: ModalidadeFull;
+}
+
 interface Visit {
   recomendacao: string | null;
   parecer_comercial: string | null;
   pontos_atencao: string | null;
   limite_global_solicitado: number | null;
+  modalidades: Modalidades | null;
   created_by: string | null;
 }
 
@@ -93,7 +109,7 @@ export function VoteBriefing({ cedenteId, proposalId }: Props) {
         supabase.from("cedentes").select("razao_social,cnpj,setor,faturamento_medio").eq("id", cedenteId).maybeSingle(),
         supabase.from("credit_proposals").select("valor_solicitado,prazo_dias,taxa_sugerida").eq("id", proposalId).maybeSingle(),
         supabase.from("cedente_visit_reports")
-          .select("recomendacao,parecer_comercial,pontos_atencao,limite_global_solicitado,created_by")
+          .select("recomendacao,parecer_comercial,pontos_atencao,limite_global_solicitado,modalidades,created_by")
           .eq("cedente_id", cedenteId).order("created_at", { ascending: false }).limit(1).maybeSingle(),
         supabase.from("credit_reports")
           .select("recomendacao,parecer_analista,pontos_positivos,pontos_atencao,conclusao,updated_by")
@@ -148,11 +164,16 @@ export function VoteBriefing({ cedenteId, proposalId }: Props) {
           </p>
         </div>
         <div className="flex flex-wrap gap-1.5 text-xs">
-          <Badge variant="outline" className="font-normal">Pleito {fmtBRL(valor)}</Badge>
           {proposal?.prazo_dias && <Badge variant="outline" className="font-normal">{proposal.prazo_dias}d</Badge>}
           {proposal?.taxa_sugerida && <Badge variant="outline" className="font-normal">Taxa {proposal.taxa_sugerida}%</Badge>}
         </div>
       </div>
+
+      {/* Pleito de crédito */}
+      <PleitoCard
+        limiteGlobal={visit?.limite_global_solicitado ?? proposal?.valor_solicitado ?? null}
+        modalidades={visit?.modalidades ?? null}
+      />
 
       {/* Recomendações */}
       <div className="grid gap-2 sm:grid-cols-2">
@@ -248,3 +269,85 @@ export function VoteBriefing({ cedenteId, proposalId }: Props) {
     </Card>
   );
 }
+
+const MOD_LABELS: Array<{ key: keyof Modalidades; label: string }> = [
+  { key: "desconto_convencional", label: "Desconto convencional" },
+  { key: "comissaria", label: "Comissária" },
+  { key: "comissaria_escrow", label: "Comissária com conta escrow" },
+  { key: "nota_comercial", label: "Nota comercial" },
+];
+
+function PleitoCard({
+  limiteGlobal,
+  modalidades,
+}: {
+  limiteGlobal: number | null;
+  modalidades: Modalidades | null;
+}) {
+  const items = MOD_LABELS.map((m) => ({ ...m, mod: modalidades?.[m.key] }));
+  const ativas = items.filter((i) => i.mod?.ativo);
+  const inativas = items.filter((i) => !i.mod?.ativo);
+
+  if (limiteGlobal == null && ativas.length === 0) return null;
+
+  return (
+    <div className="rounded-md border bg-muted/10 p-2.5 space-y-2">
+      <div className="flex items-center justify-between gap-2">
+        <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-[0.08em]">
+          Pleito de crédito
+        </div>
+        {limiteGlobal != null && (
+          <div className="text-[12px] leading-tight">
+            <span className="text-muted-foreground">Limite global solicitado: </span>
+            <span className="font-semibold tabular-nums">{fmtBRL(limiteGlobal)}</span>
+          </div>
+        )}
+      </div>
+
+      {ativas.length > 0 && (
+        <div className="grid gap-2 md:grid-cols-2">
+          {ativas.map(({ key, label, mod }) => (
+            <div key={key} className="rounded-md border bg-background p-2.5 space-y-1.5">
+              <div className="flex items-center gap-1.5 text-[12px] font-medium leading-tight">
+                <CheckSquare className="h-3.5 w-3.5 text-primary" />
+                {label}
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <Field label="Limite (R$)" value={mod?.limite != null && mod?.limite !== "" ? Number(mod.limite).toLocaleString("pt-BR", { maximumFractionDigits: 0 }) : "—"} />
+                <Field label="Prazo (dias)" value={mod?.prazo_medio != null && mod?.prazo_medio !== "" ? `${mod.prazo_medio}` : "—"} />
+                <Field label="Taxa (% a.m.)" value={mod?.taxa != null && mod?.taxa !== "" ? `${mod.taxa}` : "—"} />
+              </div>
+              {mod?.observacao && (
+                <div>
+                  <div className="text-[10px] text-muted-foreground leading-none mb-0.5">Observação</div>
+                  <div className="text-[12px] leading-tight whitespace-pre-wrap">{mod.observacao}</div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {inativas.length > 0 && (
+        <div className="flex flex-wrap gap-x-3 gap-y-1 pt-1 border-t">
+          {inativas.map(({ key, label }) => (
+            <div key={key} className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              <Square className="h-3 w-3" />
+              {label}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Field({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <div className="text-[10px] text-muted-foreground leading-none mb-0.5">{label}</div>
+      <div className="text-[12px] leading-tight tabular-nums">{value}</div>
+    </div>
+  );
+}
+
