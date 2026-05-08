@@ -102,6 +102,12 @@ export default function CedenteDetail() {
   const initialTab = searchParams.get("tab") ?? "resumo";
   const [tab, setTab] = useState(initialTab);
 
+  // Sincroniza estado com a query string (cliques em <Link to="?tab=..."> de fora desta árvore)
+  useEffect(() => {
+    const t = searchParams.get("tab") ?? "resumo";
+    setTab((prev) => (prev === t ? prev : t));
+  }, [searchParams]);
+
   const onTabChange = (v: string) => {
     setTab(v);
     const sp = new URLSearchParams(searchParams);
