@@ -205,7 +205,7 @@ export function ComiteGameSession({ proposalId, votosMinimos, proposalStage, ced
     }
   };
 
-  if (loading) return <div className="flex items-center justify-center py-10 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin mr-2" /> Carregando comitê…</div>;
+  if (loading) return <div className="flex items-center justify-center py-8 text-muted-foreground text-[12px]"><Loader2 className="h-3.5 w-3.5 animate-spin mr-2" /> Carregando comitê…</div>;
 
   // Sessão não aberta
   if (!session) {
