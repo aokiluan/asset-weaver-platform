@@ -162,7 +162,7 @@ export default function Comite() {
             const propVotes = votes.filter((v) => v.proposal_id === p.id);
             const fav = propVotes.filter((v) => v.decisao === "favoravel").length;
             const desfav = propVotes.filter((v) => v.decisao === "desfavoravel").length;
-            const abst = propVotes.filter((v) => v.decisao === "abstencao").length;
+            
             const min = p.approval_levels?.votos_minimos ?? 1;
             const meuVoto = user ? propVotes.find((v) => v.voter_id === user.id) : null;
             const quorum = fav >= min;
