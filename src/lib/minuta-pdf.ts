@@ -61,31 +61,39 @@ const todayLong = () => {
   return `${d.getDate()} de ${meses[d.getMonth()]} de ${d.getFullYear()}`;
 };
 
-const enderecoCedente = (c: MinutaCedente) => {
-  const partes: string[] = [];
-  const linha1 = [c.logradouro ?? c.endereco, c.numero].filter(Boolean).join(", ");
-  if (linha1) partes.push(linha1);
-  if (c.bairro) partes.push(c.bairro);
-  const cid = c.cidade && c.estado ? `${c.cidade}/${c.estado}` : (c.cidade ?? c.estado ?? "");
-  if (cid) partes.push(cid);
-  if (c.cep) partes.push(`CEP ${c.cep}`);
-  return partes.filter(Boolean).join(", ");
-};
+const PH = "_______________"; // placeholder padrão para campos vazios
 
-const enderecoRep = (r: MinutaRepresentante) => {
-  const partes: string[] = [];
-  const linha1 = [r.endereco_logradouro, r.endereco_numero].filter(Boolean).join(", ");
-  if (linha1) partes.push(linha1);
-  if (r.endereco_bairro) partes.push(r.endereco_bairro);
-  const cid = r.endereco_cidade && r.endereco_estado ? `${r.endereco_cidade}/${r.endereco_estado}` : (r.endereco_cidade ?? r.endereco_estado ?? "");
-  if (cid) partes.push(cid);
-  if (r.endereco_cep) partes.push(`CEP ${r.endereco_cep}`);
-  return partes.filter(Boolean).join(", ");
-};
+const orPH = (v?: string | null) => (v && v.trim() ? v.trim() : PH);
+
+// Constrói a qualificação completa do CONTRATANTE (cedente)
+function blocoContratante(c: MinutaCedente): string {
+  const logr = orPH(c.logradouro ?? c.endereco);
+  const num = orPH(c.numero);
+  const bairro = orPH(c.bairro);
+  const cidade = orPH(c.cidade);
+  const estado = orPH(c.estado);
+  const cep = orPH(c.cep);
+  return (
+    `${(c.razao_social || PH).toUpperCase()}, pessoa jurídica de direito privado, devidamente inscrita no CNPJ/MF sob o n. ${orPH(c.cnpj)}, ` +
+    `com endereço à ${logr}, n. ${num}, bairro ${bairro}, na cidade de ${cidade}, estado de ${estado}, CEP: ${cep}, ` +
+    `neste ato representada conforme determinação de seus Atos Constitutivos, de ora em diante denominada simplesmente como CONTRATANTE ou FOMENTADA,`
+  );
+}
+
+function blocoAvalista(f: MinutaFiador): string {
+  // Sem dados completos do avalista no schema; mantemos qualificação compacta
+  const cpf = f.cpf ? `inscrito(a) no CPF/MF sob o n. ${f.cpf}` : `inscrito(a) no CPF/CNPJ sob o n. ${PH}`;
+  const q = f.qualificacao ? ` (${f.qualificacao})` : "";
+  return (
+    `${(f.nome || PH).toUpperCase()}${q}, ${cpf}, com endereço à ${PH}, n. ${PH}, bairro ${PH}, ` +
+    `na cidade de ${PH}, estado de ${PH}, CEP: ${PH}, de ora em diante denominado(a) simplesmente como AVALISTA,`
+  );
+}
 
 /**
- * Gera a minuta padrão "Contrato de Fomento Mercantil — S3 Capital",
- * preenchida com os dados do cedente, representantes legais e fiadores.
+ * Gera a minuta padrão "INSTRUMENTO PARTICULAR DE FOMENTO MERCANTIL", seguindo
+ * o texto-padrão fornecido pelo jurídico (avalista + garantia), preenchida com
+ * os dados do cedente, representantes legais e fiadores.
  */
 export function generateMinutaPDF(data: MinutaData): jsPDF {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
@@ -111,7 +119,8 @@ export function generateMinutaPDF(data: MinutaData): jsPDF {
   };
 
   const writeClause = (text: string) => {
-    ensureSpace(9);
+    ensureSpace(10);
+    y += 2;
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
     const lines = doc.splitTextToSize(text, maxW);
@@ -120,246 +129,183 @@ export function generateMinutaPDF(data: MinutaData): jsPDF {
       doc.text(l, margin, y);
       y += 5.5;
     }
-    y += 2;
+    y += 1.5;
   };
 
-  const writeP = (text: string, opts?: { bold?: boolean; size?: number; gap?: number }) => {
+  const writeP = (text: string, opts?: { bold?: boolean; size?: number; gap?: number; align?: "left" | "justify" | "center" }) => {
     doc.setFont("helvetica", opts?.bold ? "bold" : "normal");
     doc.setFontSize(opts?.size ?? 10);
     const lines = doc.splitTextToSize(text, maxW);
     for (const l of lines) {
       ensureSpace(5.2);
-      doc.text(l, margin, y, { align: "justify", maxWidth: maxW });
+      if (opts?.align === "center") {
+        doc.text(l, pageW / 2, y, { align: "center" });
+      } else {
+        doc.text(l, margin, y, { align: opts?.align ?? "justify", maxWidth: maxW });
+      }
       y += 5.2;
     }
     y += opts?.gap ?? 2;
   };
 
-  // CABEÇALHO
-  writeTitle("CONTRATO DE FOMENTO MERCANTIL");
+  // ============ CABEÇALHO ============
+  writeTitle("INSTRUMENTO PARTICULAR DE FOMENTO MERCANTIL");
   y += 2;
+
   writeP(
-    "Pelo presente instrumento particular, as partes abaixo identificadas, de comum acordo e na melhor forma de direito, celebram o presente CONTRATO DE FOMENTO MERCANTIL, que se regerá pelas cláusulas e condições a seguir, as quais declaram aceitar integralmente.",
+    "Pelo presente instrumento particular de fomento mercantil, na melhor forma de direito e nos termos da legislação civil aplicável, especialmente os artigos 286 e seguintes do Código Civil, de um lado, como CONTRATADA:",
   );
 
-  // CLÁUSULA 1 - PARTES
-  writeClause("CLÁUSULA 1 — DAS PARTES CONTRATANTES");
-
-  writeP("1. CONTRATADA — FATURIZADORA", { bold: true });
   writeP(
-    "S3 CAPITAL SECURITIZADORA S.A., pessoa jurídica de direito privado, inscrita no CNPJ/MF sob nº 60.353.126/0001-71, com sede na Avenida Júlio Diniz, nº 257, Sala 09, Jardim Nossa Senhora, Campinas/SP, CEP 13075-420, neste ato representada por EVERALDO FERNANDO SILVÉRIO, brasileiro, casado, empresário, portador do RG nº 8.477.589 — SSP/MG e CPF/MF nº 191.926.008-08, residente e domiciliado na Rua Dr. Mário Natividade, nº 908, bairro Taquaral, Campinas/SP, CEP 13076-112, doravante denominada simplesmente CONTRATADA.",
+    "S3 CAPITAL SECURITIZADORA S/A, pessoa jurídica de direito privado, devidamente inscrita no CNPJ/MF sob o n. 60.353.126/0001-71, com endereço à Av. Júlio Diniz, n. 257, sala 09, Jd. Nossa Senhora Auxiliadora, na cidade de Campinas, estado de São Paulo, CEP: 13075-420, neste ato representada conforme determinação de seus Atos Constitutivos, de ora em diante denominada simplesmente como CONTRATADA ou FOMENTADORA e, de outro lado,",
   );
 
-  writeP("2. CONTRATANTE — FATURIZADA", { bold: true });
-  const c = data.cedente;
-  const enderecoC = enderecoCedente(c) || "[ENDEREÇO COMPLETO NÃO INFORMADO]";
-  let blocoContratante =
-    `${c.razao_social.toUpperCase()}, pessoa jurídica de direito privado, inscrita no CNPJ/MF sob nº ${c.cnpj}, com estabelecimento na ${enderecoC}`;
-  if (data.representantes.length > 0) {
-    const reps = data.representantes.map((r) => {
-      const partes: string[] = [];
-      partes.push(r.nome.toUpperCase());
-      if (r.nacionalidade) partes.push(r.nacionalidade.toLowerCase());
-      if (r.estado_civil) partes.push(r.estado_civil.toLowerCase());
-      if (r.qualificacao) partes.push(r.qualificacao.toLowerCase());
-      const docs: string[] = [];
-      if (r.rg) docs.push(`portador do RG nº ${r.rg}${r.orgao_emissor ? ` — ${r.orgao_emissor}` : ""}`);
-      if (r.cpf) docs.push(`CPF/MF nº ${r.cpf}`);
-      if (docs.length) partes.push(docs.join(" e "));
-      const end = enderecoRep(r);
-      if (end) partes.push(`residente e domiciliado na ${end}`);
-      return partes.join(", ");
-    });
-    blocoContratante += `, neste ato representada por ${reps.join("; e ainda por ")}`;
-  } else {
-    blocoContratante += ", neste ato representada por seu(s) sócio(s)/administrador(es) regularmente constituído(s) em seu contrato social";
-  }
-  blocoContratante += ", doravante denominada simplesmente CONTRATANTE.";
-  writeP(blocoContratante);
+  writeP(blocoContratante(data.cedente));
 
-  writeP("3. RESPONSÁVEIS SOLIDÁRIOS — FIADORES", { bold: true });
   if (data.fiadores.length > 0) {
-    const lista = data.fiadores
-      .map((f) => {
-        const docs = f.cpf ? `, CPF nº ${f.cpf}` : "";
-        const q = f.qualificacao ? `, ${f.qualificacao}` : "";
-        return `${f.nome.toUpperCase()}${docs}${q}`;
-      })
-      .join("; ");
-    writeP(
-      `Figuram como RESPONSÁVEIS SOLIDÁRIOS — FIADORES, em caráter solidário, irretratável e ilimitado, por todas as obrigações assumidas pela CONTRATANTE-FATURIZADA: ${lista}.`,
-    );
+    for (const f of data.fiadores) {
+      writeP(blocoAvalista(f));
+    }
   } else {
     writeP(
-      "Os responsáveis solidários, já qualificados no instrumento original firmado entre as partes, permanecem obrigados, em caráter solidário, irretratável e ilimitado, por todas as obrigações assumidas pela CONTRATANTE-FATURIZADA neste contrato e em seus respectivos aditivos e/ou contratos operacionais, inclusive quanto à recomposição de prejuízos, recompras de títulos, penalidades, juros, correção monetária, custas, despesas e honorários advocatícios.",
+      `${PH}, na condição de AVALISTA, qualificação completa a ser preenchida no momento da assinatura, de ora em diante denominado(a) simplesmente como AVALISTA,`,
     );
   }
 
-  // CLÁUSULA 2 - OBJETO
-  writeClause("CLÁUSULA 2 — DO OBJETO DO CONTRATO");
+  writeP("e em conjunto, Partes,");
   writeP(
-    "2.1. O presente contrato tem por objeto a cessão, aquisição e transferência, pela CONTRATADA-FATURIZADORA, de direitos creditórios titularizados pela CONTRATANTE-FATURIZADA, originados de suas operações mercantis, industriais, de prestação de serviços, agronegócio, locação de bens móveis ou imóveis e demais atividades lícitas, inclusive créditos futuros emergentes de vínculos contratuais já constituídos.",
-  );
-  writeP("2.2. As operações de fomento mercantil aqui estabelecidas compreendem, ainda:");
-  writeP("I — A antecipação de recursos financeiros à CONTRATANTE-FATURIZADA, em contrapartida à cessão dos direitos creditórios;");
-  writeP("II — A análise cadastral, comercial e de risco dos sacados-devedores;");
-  writeP("III — a assessoria mercantil e administrativa relativa à gestão dos recebíveis;");
-  writeP("IV — A cobrança administrativa dos títulos cedidos;");
-  writeP("V — A gestão, controle e monitoramento dos créditos;");
-  writeP("VI — Demais serviços acessórios necessários ao pleno desenvolvimento das operações de fomento mercantil.");
-  writeP(
-    "2.3. A cessão dos direitos creditórios poderá ocorrer à vista, total ou parcialmente, mediante a transferência plena dos títulos via endosso translativo, cessão civil ou outro instrumento admitido em lei, com incorporação dos créditos ao patrimônio da CONTRATADA-FATURIZADORA.",
-  );
-  writeP(
-    "2.4. As partes reconhecem que as operações objeto deste contrato não constituem operação de crédito bancário, mútuo, financiamento ou desconto bancário, não se confundindo com atividade privativa de instituição financeira, tratando-se de modalidade típica de fomento mercantil, nos termos da legislação e jurisprudência aplicáveis.",
+    "Têm, como justo e acordado o quanto segue no que diz respeito ao fomento mercantil, a ser realizado nas condições abaixo e, ainda, eventuais Contratos de Cessão que passarão a compor o presente na condição de Aditivos.",
   );
 
-  // CLÁUSULA 3
-  writeClause("CLÁUSULA 3 — DAS CONDIÇÕES GERAIS APLICÁVEIS À OPERAÇÃO");
-  writeP(
-    "3.1. Este contrato será regido pelas disposições do Código Civil Brasileiro (Lei nº 10.406/2002), pela Lei nº 9.613/1998 (prevenção à lavagem de dinheiro), pela Lei nº 13.709/2018 (LGPD), pelas normas expedidas pelos órgãos competentes, bem como pelas demais normas aplicáveis às operações de fomento mercantil.",
-  );
-  writeP(
-    "3.2. As partes declaram-se em plena conformidade com as normas de compliance, integridade, anticorrupção e prevenção à lavagem de dinheiro, obrigando-se a conduzir seus negócios com ética, transparência e observância da legislação vigente, respondendo pelas consequências civis, administrativas e criminais por atos ilícitos que venham a praticar.",
-  );
-  writeP(
-    "3.3. Antes da efetivação de cada operação, a CONTRATADA-FATURIZADORA realizará análise e seleção dos títulos apresentados, podendo recusá-los, total ou parcialmente, se verificar: (a) inconsistências documentais; (b) vícios de origem; (c) indícios de fraude; (d) elevado risco de inadimplência; (e) qualquer fato que comprometa a liquidez, exigibilidade ou legitimidade dos créditos cedidos.",
-  );
-  writeP(
-    "3.4. A remuneração da CONTRATADA-FATURIZADORA será composta pelo fator de compra, pela comissão ad valorem, por eventuais despesas operacionais, tributos incidentes, IOF quando aplicável e demais encargos previstos nos respectivos aditivos e/ou contratos operacionais, que integrarão o presente instrumento.",
-  );
-  writeP(
-    "3.5. As operações serão formalizadas mediante ADITIVOS e/ou CONTRATOS OPERACIONAIS, nos quais constarão, dentre outros: discriminação dos títulos; valor de face; valor líquido a ser disponibilizado; fator de compra aplicável; tributos e encargos; condições de pagamento; eventuais garantias complementares.",
-  );
-  writeP(
-    "3.6. Os ADITIVOS e/ou CONTRATOS OPERACIONAIS terão força de título executivo extrajudicial, nos termos da legislação vigente, possuindo autonomia jurídica, sem prejuízo de sua vinculação a este contrato principal.",
-  );
-  writeP(
-    "3.7. As partes reconhecem como válidas as assinaturas eletrônicas e digitais apostas nos instrumentos derivados deste contrato, desde que emitidas por meio de certificados digitais ou plataformas que observem a legislação pertinente e a ICP-Brasil.",
-  );
-  writeP(
-    "3.8. Os títulos de crédito cedidos e endossados à CONTRATADA-FATURIZADORA deverão conter, sempre que aplicável, a cláusula \"sem despesas\" ou \"sem protesto\", nos termos dos artigos 45, 46 e 70 do Decreto nº 57.663/66 e do artigo 25 da Lei nº 5.474/68.",
-  );
+  // ============ CONSIDERANDOS ============
+  writeClause("Considerando:");
+  writeP("a) Que a FOMENTADA possui relações comerciais com diversas pessoas, físicas e jurídicas, para o fornecimento de produtos de sua especialidade;");
+  writeP("b) Que a FOMENTADA não tem meios em caixa de promover a fabricação, elaboração e entrega imediata desses produtos nos termos de Pedidos de Compra já emitidos e ora apresentados;");
+  writeP("c) Que a FOMENTADORA poderá fomentar a atividade exercida pela FOMENTADA, mediante o adiantamento de valores a serem destinados, obrigatoriamente aos pedidos descritos, ou, ainda, comprovados através de meio idôneo a ser enviado à FOMENTADORA;");
+  writeP("d) Que, para que tal operação se concretize, a FOMENTADORA irá realizar o adiantamento financeiro tanto para a FOMENTADA como para quem ela indicar, de modo a proporcionar o exercício empresarial e entrega efetiva aos clientes da FOMENTADA, sem que a FOMENTADORA passe a ser considerada sócia ou, até mesmo parceira comercial da Contratante.");
+  writeP("e) Que o pagamento à FOMENTADA, a ser realizado pela FOMENTADORA, será realizado após a efetivação da comprovação dos pedidos e terminará com a emissão das Notas Fiscais respectivas, seja pela FOMENTADA, seja pelas empresas clientes da FOMENTADA, conforme melhor delineado nos Termos de Cessão respectivos.");
+  writeP("As partes resolvem por regulamentar a relação conforme as cláusulas que seguem:");
 
-  // CLÁUSULA 4
-  writeClause("CLÁUSULA 4 — DA PRECIFICAÇÃO, FATOR DE COMPRA E CUSTOS OPERACIONAIS");
-  writeP(
-    "4.1. O preço de aquisição dos direitos creditórios será determinado mediante aplicação de FATOR DE COMPRA, livremente pactuado entre as partes, levando em consideração, entre outros: (a) custo de captação e oportunidade dos recursos; (b) prazo de vencimento dos títulos; (c) risco de crédito dos sacados; (d) risco operacional; (e) carga tributária incidente; (f) despesas administrativas e operacionais; (g) margem de remuneração da CONTRATADA-FATURIZADORA.",
-  );
-  writeP(
-    "4.2. O cálculo da remuneração da CONTRATADA-FATURIZADORA observará o prazo pro rata temporis entre a data da aquisição dos direitos creditórios e o vencimento dos respectivos títulos.",
-  );
-  writeP(
-    "4.3. Os direitos creditórios representados por títulos de crédito (duplicatas, notas promissórias, cheques etc.) serão transferidos por endosso translativo em preto, operando-se a transferência plena da titularidade, com todos os direitos, ações e garantias a ele inerentes.",
-  );
-  writeP(
-    "4.4. Sem prejuízo da transferência plena, a CONTRATANTE-FATURIZADA será responsável, nos termos deste contrato e da legislação cambial, pela solvência dos títulos cedidos, na hipótese de inadimplemento dos sacados-devedores, vícios de origem, irregularidades, inexistência da operação, defeitos na prestação de serviços ou entrega de mercadorias.",
-  );
-  writeP(
-    "4.5. A CONTRATADA-FATURIZADORA poderá, a seu exclusivo critério, exigir garantias adicionais ou reforço de garantias já existentes sempre que, no curso da relação contratual, verificar o aumento do risco das operações.",
-  );
+  // ============ CLÁUSULA PRIMEIRA ============
+  writeClause("CLÁUSULA PRIMEIRA – DO OBJETO");
+  writeP("1.1. O presente contrato tem por objeto a realização de operação de fomento mercantil produtivo, mediante a aquisição, pela FOMENTADORA, de direitos creditórios presentes e futuros de titularidade da FOMENTADA, oriundos de suas relações comerciais com terceiros (SACADOS/CLIENTES), com a finalidade de viabilizar a produção e circulação de bens pela FOMENTADA.");
 
-  // CLÁUSULA 5
-  writeClause("CLÁUSULA 5 — DA RECOMPRA DOS DIREITOS CREDITÓRIOS");
-  writeP(
-    "5.1. A CONTRATANTE-FATURIZADA dispensa expressamente a CONTRATADA-FATURIZADORA da obrigatoriedade de promover o protesto por falta de pagamento para o exercício do direito de regresso, de acordo com a faculdade prevista no artigo 46 do Decreto nº 57.663/66 e no artigo 25 da Lei nº 5.474/68.",
-  );
-  writeP(
-    "5.2. Na hipótese de não pagamento, pelo sacado-devedor, do título cedido, bem como em caso de vício, irregularidade, inexistência de causa, fraude, contestação, devolução de mercadoria, arrependimento, cancelamento ou qualquer outra exceção que comprometa o crédito, a CONTRATANTE-FATURIZADA obriga-se a realizar a recompra do respectivo direito creditório no prazo máximo de 24 (vinte e quatro) horas, contado da comunicação da CONTRATADA-FATURIZADORA.",
-  );
-  writeP(
-    "5.3. A recompra será efetuada pelo valor de face do título, acrescido de: (a) multa contratual de 2% (dois por cento); (b) juros de mora de 10% (dez por cento) ao mês, com fundamento na faculdade prevista no artigo 406 do Código Civil; (c) correção monetária segundo índices oficiais regularmente estabelecidos; (d) honorários advocatícios fixados em 10% (dez por cento) sobre o valor atualizado; (e) demais despesas operacionais, cartorárias, bancárias e judiciais suportadas pela CONTRATADA-FATURIZADORA.",
-  );
-  writeP(
-    "5.4. O não cumprimento da obrigação de recompra no prazo estipulado poderá ensejar, a critério da CONTRATADA-FATURIZADORA, o ajuizamento imediato de ação de execução contra a CONTRATANTE-FATURIZADA e os RESPONSÁVEIS SOLIDÁRIOS-FIADORES, com base neste contrato e nos respectivos aditivos.",
-  );
-  writeP(
-    "5.5. Efetuada a recompra, a CONTRATANTE-FATURIZADA ficará sub-rogada nos direitos anteriormente titularizados pela CONTRATADA-FATURIZADORA, cabendo-lhe, a partir de então, o exercício das medidas de cobrança em face do sacado-devedor.",
-  );
-  writeP(
-    "5.6. A eventual tolerância da CONTRATADA-FATURIZADORA quanto a prazos, formas ou condições de recompra não importará em novação, renúncia ou alteração deste contrato, sendo considerada mera liberalidade, que não impedirá o exercício posterior dos direitos aqui previstos.",
-  );
+  // ============ CLÁUSULA SEGUNDA ============
+  writeClause("CLÁUSULA SEGUNDA – DA CESSÃO DE CRÉDITOS");
+  writeP("2.1. A FOMENTADA cede e transfere à FOMENTADORA, em caráter oneroso, irrevogável e irretratável, os direitos creditórios presentes e futuros decorrentes de pedidos comerciais, contratos e notas fiscais, a serem comprovados mediante a entrega de documentação hábil para tanto.");
+  writeP("2.2. A cessão abrange créditos ainda não constituídos, condicionados à efetiva produção, entrega e emissão das respectivas notas fiscais.");
+  writeP("2.3. A titularidade dos créditos será automaticamente transferida à FOMENTADORA no momento de sua constituição, sendo certo que, neste momento, haverá a formalização do respectivo termo e, ainda, enviado comunicado ao SACADO para que este passe a ter ciência acerca da necessidade de pagamento à FOMENTADORA.");
+  writeP("2.4. A cessão dos créditos mediante a formalização do respectivo termo será formalizada por escrito e passará a compor o presente na condição de Termo Aditivo, de modo que aplicar-se-á o regramento aqui delimitado, ressalvada disposição em sentido contrário que eventualmente venha a existir.");
 
-  // CLÁUSULA 6
-  writeClause("CLÁUSULA 6 — DAS OBRIGAÇÕES DA CONTRATANTE-FATURIZADA");
-  writeP("6.1. Apresentar à CONTRATADA-FATURIZADORA, a cada operação, toda a documentação que comprove de forma plena, inequívoca e idônea a legitimidade, existência, origem, liquidez e certeza dos créditos cedidos (notas fiscais, comprovantes de entrega, ordens de compra, pedidos, contratos de fornecimento, recibos, comprovantes de prestação de serviços, declarações do sacado e qualquer outro elemento solicitado).");
-  writeP("6.2. Declara, sob pena de responsabilidade civil e criminal, que todos os títulos cedidos são verdadeiros, autênticos e correspondentes a operações comerciais efetivamente realizadas, sem vício, contestação, pendência ou condição que possa comprometer a exigibilidade dos créditos.");
-  writeP("6.3. É vedado modificar, renegociar, prorrogar, antecipar, extinguir, substituir, cancelar ou alterar as condições originais pactuadas com os sacados-devedores após a cessão, salvo autorização prévia e expressa da CONTRATADA-FATURIZADORA, sob pena de recompra imediata.");
-  writeP("6.4. Notificar formalmente, no prazo de 48 horas, os sacados-devedores acerca da cessão (art. 290 CC), informando que o pagamento deve ser feito exclusivamente à CONTRATADA-FATURIZADORA, entregando-lhe o comprovante.");
-  writeP("6.5. A ausência de notificação torna a cessão pro solvendo, respondendo a CONTRATANTE-FATURIZADA pela solvência integral dos títulos.");
-  writeP("6.6. Comunicar à CONTRATADA-FATURIZADORA, em até 24 horas, qualquer fato relevante (reclamações, devoluções, cancelamentos, contestações, divergências, protestos, sustações, contraordens, atrasos, recusa de aceite ou qualquer irregularidade).");
-  writeP("6.7. Comunicar, em até 24 horas, qualquer alteração societária, de endereço, ramo de atividade, capital social ou situação econômico-financeira que possa impactar este contrato.");
-  writeP("6.8. Reembolsar integralmente a CONTRATADA-FATURIZADORA por todas as despesas decorrentes de irregularidades dos títulos cedidos (protestos, custas, honorários, diligências, certidões etc.).");
-  writeP("6.9. Em caso de recebimento indevido de pagamento referente a crédito já cedido, repassá-lo integralmente em até 24 horas, sob pena de apropriação indébita.");
-  writeP("6.10. Declara que cópias e documentos digitais entregues são fiéis aos originais, obrigando-se a apresentá-los em até 48 horas quando solicitados.");
-  writeP("6.11. Caso ocorra liberação de recursos antes da entrega dos originais, assume a condição de fiel depositária, devendo entregar os originais em até 48 horas.");
-  writeP("6.12. É vedado renegociar valores, conceder descontos, aceitar devoluções, cancelar notas, emitir notas substitutas ou alterar prazos sem anuência expressa da CONTRATADA-FATURIZADORA.");
-  writeP("6.13. Responde integralmente por vícios, defeitos, ilegalidades, falsidades, fraudes, duplicidades ou inconsistências dos créditos cedidos, com obrigação de recompra imediata.");
+  // ============ CLÁUSULA TERCEIRA ============
+  writeClause("CLÁUSULA TERCEIRA – DA ANTECIPAÇÃO DE RECURSOS");
+  writeP("3.1. A FOMENTADORA poderá antecipar valores à FOMENTADA com base na expectativa de constituição dos créditos, a ser analisada mediante comprovação idônea por parte da FOMENTADA.");
+  writeP("3.2. Os valores antecipados serão definidos conforme análise de risco, volume de pedidos e capacidade produtiva da FOMENTADA, e poderão ser pagos diretamente à FOMENTADA ou a quem esta vier a indicar, exemplificadamente, não de maneira exaustiva, fornecedores de materiais e prestadores de serviço envolvidos no método produtivo empregado.");
+  writeP("3.3. Os pagamentos realizados a terceiros por indicação da FOMENTADA serão considerados como efetivamente pagos à FOMENTADA, que permanecerá integralmente responsável pela correta aplicação dos recursos, não podendo alegar desvio, inadimplemento de terceiros ou falhas na cadeia produtiva.");
+  writeP("3.4. Sendo o caso de antecipação de recursos, a FOMENTADA se compromete a utilizar os valores adiantados a título de fomento apenas e tão somente para proporcionar a operacionalização do pedido de compra/prestação de serviços utilizado para a obtenção do fomento, responsabilizando-se civil e criminalmente, inclusive no que diz respeito à considerar o presente rescindido, caso realize desvios de recursos.");
+  writeP("3.5. A antecipação tratada no presente instrumento não caracteriza empréstimo ou financiamento, tampouco associação entre as Partes.");
 
-  // CLÁUSULA 7
-  writeClause("CLÁUSULA 7 — DAS OBRIGAÇÕES DA CONTRATADA-FATURIZADORA");
-  writeP("7.1. Realizar o pagamento dos valores correspondentes à aquisição dos direitos creditórios nos termos, condições e prazos estabelecidos em cada ADITIVO ou CONTRATO OPERACIONAL.");
-  writeP("7.2. Zelar pela guarda, integridade e conservação dos documentos físicos ou digitais entregues, devolvendo-os após quitação, recompra ou desligamento da operação.");
-  writeP("7.3. Adotar todas as providências necessárias à regular cobrança dos títulos cedidos, podendo promover notificações, contatos operacionais, envio a protesto, ações judiciais e demais atos.");
-  writeP("7.4. Poderá notificar diretamente os sacados-devedores sobre a cessão dos créditos, sem que isso exclua a obrigação primária da CONTRATANTE-FATURIZADA.");
-  writeP("7.5. Atuar em conformidade com as normas legais e cambiais aplicáveis.");
-  writeP("7.6. Manter sigilo sobre as informações comerciais, financeiras e cadastrais da CONTRATANTE-FATURIZADA e seus sacados-devedores, ressalvadas as hipóteses legais.");
-  writeP("7.7. Não assume a obrigação de garantir a solvência dos sacados-devedores; permanece a CONTRATANTE-FATURIZADA responsável pela recompra dos títulos inadimplidos, contestados, viciados ou irregulares.");
+  // ============ CLÁUSULA QUARTA ============
+  writeClause("CLÁUSULA QUARTA – DA PRECIFICAÇÃO");
+  writeP("4.1. Pela aquisição dos créditos, a FOMENTADORA aplicará deságio sobre os valores nominais dos pedidos, de modo que os valores envolvidos serão obtidos através de precificação que considere, dentre outros fatores, os custos operacionais da FOMENTADORA, a carga tributária, custos de oportunidade e expectativa de lucro.");
+  writeP("4.2. As Partes são livres para o estabelecimento e aceite de preço a ser aplicado, de modo que, se os créditos a serem cedidos estiverem representados por Título de Crédito, sua transferência será concretizada pelo endosso pleno, aperfeiçoado pela tradição dos títulos envolvidos e comunicação ao SACADO.");
 
-  // CLÁUSULA 8
-  writeClause("CLÁUSULA 8 — DAS RESPONSABILIDADES ESPECIAIS DA CONTRATANTE-FATURIZADA");
-  writeP("8.1. Declara-se totalmente responsável pela legalidade, veracidade e legitimidade das duplicatas emitidas, ciente de que a emissão fraudulenta constitui crime previsto no art. 172 do Código Penal.");
-  writeP("8.2. Responde pela regularidade de cheques cedidos, vícios de origem, sustações fraudulentas, conluios com sacados e práticas que possam caracterizar fraude.");
-  writeP("8.3. Declara que cópias reprográficas ou documentos digitalizados são fiéis aos originais, comprometendo-se a apresentá-los em até 48 horas quando solicitados.");
-  writeP("8.4. A recusa injustificada na apresentação ou retenção indevida dos originais autoriza a CONTRATADA-FATURIZADORA a considerar descaracterizada a regularidade do crédito.");
+  // ============ CLÁUSULA QUINTA ============
+  writeClause("CLÁUSULA QUINTA – DA RECOMPRA DOS TÍTULOS");
+  writeP("5.1. A recompra dos direitos creditórios pela FOMENTADA somente será exigida nas seguintes hipóteses:");
+  writeP("I – Inexistência, nulidade ou invalidade do título cedido;");
+  writeP("II – vício na origem da operação comercial, seja ele causado ou não pela FOMENTADA;");
+  writeP("III – descumprimento contratual pela FOMENTADA que impeça a constituição ou exigibilidade do crédito, inclusive para os casos de culpa e/ou responsabilidade de terceiros;");
+  writeP("IV – não comprovação da entrega do produto ou prestação do serviço;");
+  writeP("V – pagamento do crédito ser realizado diretamente à FOMENTADA em descumprimento da cessão.");
+  writeP("5.2. A inadimplência do SACADO, ainda que devidamente notificado pela FOMENTADA, igualmente implicará na obrigação automática de recompra, independentemente se for decorrente de ato, omissão ou responsabilidade da FOMENTADA.");
+  writeP("5.3. Na eventualidade da não liquidação dos direitos creditórios cedidos ou qualquer outro vício, será a FOMENTADA comunicada para que efetue a recompra no prazo de até 24 (vinte e quatro) horas, sob pena de, decorrido o prazo citado, serem aplicados sobre o crédito inadimplido pelo sacado devedor os mesmos encargos moratórios previstos nesta Cláusula.");
+  writeP("5.4. O não cumprimento da obrigação de recompra no prazo estipulado, além dos encargos moratórios, poderá dar ensejo à execução judicial contra a FOMENTADA e eventuais devedores solidários.");
+  writeP("5.5. A FOMENTADA, ao recomprar os direitos creditórios, ficará sub-rogada nos direitos do credor de modo que os direitos creditórios cujos protestos por falta de pagamento tenham sido concretizados lhes serão entregues com o respectivo instrumento e carta de anuência, ficando atribuída ao credor sub-rogado a obrigação de entregar tais documentos ao devedor quando da efetiva quitação.");
+  writeP("5.6. Concluída a operação e sobrevindo a constatação de vícios ou de quaisquer outras exceções na origem dos direitos creditórios negociados, a FOMENTADA será obrigada a recomprar os títulos, acrescido da multa de 2,00% (dois por cento), e de juros moratórios convencionados conforme a legislação vigente, no importe de 1% (um por cento) ao mês, bem como atualização monetária nos termos do índice adotado pelo Tribunal de Justiça do Estado de São Paulo, pro rata die.");
+  writeP("5.7. A recusa na recompra dos direitos creditórios no prazo estipulado, poderá dar ensejo à execução judicial contra a FOMENTADA e eventuais DEVEDORES SOLIDÁRIOS, inclusive, mas, não se limitando à execução da garantia creditória prevista.");
 
-  // CLÁUSULAS 9-14: blocos resumidos (texto integral em aditivos)
-  writeClause("CLÁUSULAS 9 A 14 — DEMAIS DISPOSIÇÕES");
-  writeP("9. Garantias adicionais — A CONTRATANTE-FATURIZADA poderá outorgar garantias reais, fidejussórias ou pessoais sempre que solicitado, sem prejuízo da fiança solidária dos RESPONSÁVEIS SOLIDÁRIOS-FIADORES.");
-  writeP("10. Compliance, prevenção à lavagem de dinheiro e anticorrupção — As partes obrigam-se a observar integralmente a legislação aplicável, mantendo política de integridade e respondendo individualmente por desvios.");
-  writeP("11. Confidencialidade — As informações trocadas entre as partes têm caráter sigiloso e somente poderão ser divulgadas mediante autorização expressa, ordem judicial ou exigência regulatória.");
-  writeP("12. Assinatura eletrônica e validade jurídica — As partes reconhecem a validade das assinaturas eletrônicas e digitais apostas neste instrumento e em seus aditivos, nos termos da MP 2.200-2/2001 e demais normas aplicáveis.");
-  writeP("13. Comunicações — Considerar-se-ão válidas as comunicações enviadas aos endereços, e-mails e telefones constantes neste contrato, cabendo a cada parte manter seus dados atualizados.");
-  writeP("14. Disposições gerais — A nulidade ou ineficácia de qualquer cláusula não afetará as demais. Nenhuma tolerância importará em novação. Os direitos e obrigações são intransferíveis sem prévia anuência da outra parte.");
-  writeP("14-A. Proteção de dados (LGPD) — As partes tratarão dados pessoais conforme a Lei nº 13.709/2018, observando as bases legais aplicáveis e adotando medidas de segurança adequadas. O descumprimento sujeita a parte infratora às penalidades cabíveis.");
+  // ============ CLÁUSULA SEXTA ============
+  writeClause("CLÁUSULA SEXTA – DAS OBRIGAÇÕES DA FOMENTADA");
+  writeP("6.1. Ressalvada a possibilidade de novas obrigações serem estipuladas em momento posterior, através da formalização de Termo Aditivo, são obrigações da Fomentada, além de outras estabelecidas no presente instrumento:");
+  writeP("a) Produzir e entregar os bens e/ou serviços conforme pactuado com os SACADOS, nos exatos termos dos Pedidos, Ordens de Serviço ou quaisquer outros meios idôneos eventualmente adotados.");
+  writeP("b) Emitir as notas fiscais correspondentes aos Pedidos e Ordens de Serviço conforme a legislação vigente, com exatidão de informações, observando todas as obrigações acessórias a elas inerentes, incluindo a comprovação de entrega de produtos ou prestação de serviços.");
+  writeP("c) Notificar os SACADOS acerca da cessão de crédito realizada, e enviar o comprovante da entrega da notificação à FOMENTADORA, no prazo de até 24h a partir da data de operação aqui descrita, responsabilizando-se pelo adimplemento por parte do SACADO em caso de não comprovação da efetiva entrega, através da recompra.");
+  writeP("d) Incluir, em todos os documentos fiscais e comerciais, instrução expressa para pagamento diretamente à FOMENTADORA, bem como a não realizar qualquer negociação, cessão ou oneração dos créditos cedidos.");
+  writeP("e) Garantir a existência, legitimidade e exigibilidade dos créditos a serem cedidos posteriormente, sob pena de responsabilizar-se por eles, na exata medida do quanto apresentado à FOMENTADORA.");
+  writeP("f) Informar à FOMENTADORA toda e qualquer alteração ou situação de relevância em sua relação com o SACADO, dentre elas, mas não se limitando à desistências, notificações extrajudiciais ou judiciais etc., dentro do prazo de 24h da intercorrência identificada.");
+  writeP("g) Indenizar a FOMENTADORA por todo e qualquer prejuízo ou dano que a sua conduta ou omissão em relação à cessão de créditos vier a ocasionar, inclusive, mas, não se limitando a custos judiciais e extrajudiciais.");
+  writeP("h) Repassar à FOMENTADORA eventuais valores recebidos por si relacionados aos títulos cedidos se o caso de pagamento direto, sob pena de responsabilização civil e criminal.");
+  writeP("6.2. A FOMENTADA reconhece que assume integral responsabilidade pelo processo produtivo, incluindo aquisição de insumos, fabricação, logística e entrega, não podendo transferir à FOMENTADORA quaisquer riscos inerentes à execução da atividade empresarial.");
+  writeP("6.3. A não conclusão da produção, entrega ou prestação de serviços, por qualquer motivo, caracterizará descumprimento contratual, ensejando a obrigação de recomposição integral dos valores antecipados, não podendo a FOMENTADA se valer de qualquer situação, a exemplo de caso fortuito ou força maior, como escusa para não realizar a recompra.");
 
-  // CLÁUSULA 15
-  writeClause("CLÁUSULA 15 — DA RESCISÃO DO CONTRATO");
-  writeP("15.1. Rescisão imotivada por qualquer das partes mediante aviso escrito com 30 dias de antecedência, desde que não haja operações em curso, títulos pendentes ou obrigações de recompra inadimplidas.");
-  writeP("15.2. Rescisão imediata em caso de: (a) não apresentação de documentação; (b) alteração não autorizada das condições com sacados; (c) omissão de informações relevantes; (d) inadimplemento de recompra; (e) fraudes; (f) mudança de endereço, encerramento, recuperação judicial, falência ou insolvência; (g) descumprimento de qualquer cláusula.");
-  writeP("15.3. A rescisão por culpa da CONTRATANTE-FATURIZADA acarreta multa de 10% sobre o saldo devedor, juros de 1% ao mês, correção monetária, honorários de 10% e recomposição de prejuízos.");
-  writeP("15.4. A rescisão não prejudica a cobrança dos créditos já cedidos.");
+  // ============ CLÁUSULA SÉTIMA ============
+  writeClause("CLÁUSULA SÉTIMA – DAS OBRIGAÇÕES DA FOMENTADORA");
+  writeP("7.1. São obrigações da FOMENTADORA, dentre outras descritas no presente instrumento:");
+  writeP("a) Realizar o pagamento pela compra dos títulos, na forma convencionada, seja através de pagamento à FOMENTADA, seja através de pagamentos a quem esta vier a indicar, quando da efetivação da cessão de crédito consubstanciada pela emissão da respectiva Nota Fiscal e entrega.");
+  writeP("b) Realizar a devolução das notas fiscais e comprovantes de entrega de mercadorias ou serviços, após a quitação dos títulos pelo Sacado, ou, no caso de recompra pela FOMENTADA, responsabilizando-se pela guarda e conservação destes documentos.");
 
-  // CLÁUSULA 16
-  writeClause("CLÁUSULA 16 — DO PRAZO E DA VIGÊNCIA");
-  writeP("16.1. Vigência de 04 (quatro) anos a contar da assinatura, prorrogável automaticamente por iguais períodos, salvo manifestação em contrário com 30 dias de antecedência.");
-  writeP("16.2. A rescisão por descumprimento contratual produz efeitos imediatos, independentemente de notificação, sem prejuízo da exigibilidade das obrigações pendentes.");
+  // ============ CLÁUSULA OITAVA ============
+  writeClause("CLÁUSULA OITAVA – DA INEXISTÊNCIA DE VÍNCULO FINANCEIRO E NATUREZA DO PRESENTE");
+  writeP("8.1. As Partes ratificam que o presente instrumento não configura operação de crédito, mútuo ou atividade privativa de instituição financeira, bem como não estabelece qualquer relação que não a de fomento, inexistindo situação de associação, sucessão ou incorporação empresarial. As Partes declaram ainda que são independentes entre si e que o presente instrumento é firmado, após livre deliberação e discussão de seus termos, por representantes legais devidamente legitimados e capazes de assumir os compromissos aqui descritos.");
+  writeP("8.2. Haja vista a independência entre as partes e o caráter do quanto pactuado, cada uma delas responderá, de maneira independente, por todas as suas obrigações relacionadas ou não com o presente, incluindo, mas, não se limitando ao pagamento de taxas, tributos, salários, contribuições previdenciárias, obedecendo a legislação aplicável à atividade especifica de cada uma delas em sua integralidade. Em não havendo cumprimento de tais obrigações, cujo rol não é exaustivo, por parte da FOMENTADA, esta compromete-se a indenizar a FOMENTADORA por todo e qualquer dano, prejuízo ou custo que o inadimplemento vier a ocasionar.");
 
-  // CLÁUSULA 17
-  writeClause("CLÁUSULA 17 — DO FORO");
-  writeP("17.1. As partes elegem, com exclusão de qualquer outro, o FORO DA COMARCA DE PAULÍNIA/SP como competente para dirimir quaisquer dúvidas, controvérsias ou litígios decorrentes deste contrato e de seus aditivos.");
+  // ============ CLÁUSULA NONA ============
+  writeClause("CLÁUSULA NONA – DA VIGÊNCIA");
+  writeP("9.1. O presente instrumento é firmado pelo prazo de 12 (doze) meses, podendo ser renovado por igual período, de maneira automática e sucessiva, desde que as partes não se manifestem em sentido contrário. Durante a vigência estipulada, serão formalizados termos de cessão para os títulos eventualmente cedidos, os quais contarão com as especificidades de pagamento e serão aplicáveis ao presente em tudo quanto não constar em sentido contrário.");
+  writeP("9.2. Poderá ocorrer a rescisão deste termo através de simples notificação de uma parte à outra, restando preservados todos os negócios e condições já firmados enquanto o presente vigia, de modo que a rescisão deste contrato não afastará a obrigação de pagamento conforme estabelecido nos Termos de Cessão, a responsabilidade das partes e, ainda, responsabilidade por quitação de títulos eventualmente cedidos.");
 
-  // ADITIVO COM CONDIÇÕES APROVADAS (se houver)
-  if (data.proposta) {
-    writeClause("ANEXO I — CONDIÇÕES APROVADAS PELA ÁREA DE CRÉDITO");
+  // ============ CLÁUSULA DÉCIMA — DO AVAL ============
+  writeClause("CLÁUSULA DÉCIMA – DO AVAL");
+  const nomesAval = data.fiadores.length > 0
+    ? data.fiadores.map((f) => (f.nome || PH).toUpperCase()).join(", ")
+    : PH;
+  writeP(`10.1. Assinam o presente, em conjunto com a FOMENTADA, ${nomesAval}, na condição de avalista e garantidor não apenas do presente, mas, também, dos aditivos a serem futuramente formalizados. O aval aqui firmado é solidário, de modo que o Avalista desde logo renuncia ao benefício de ordem ou qualquer outro que lhe venha a ser atribuído, devendo responder de maneira integral e incondicionada, nos mesmos moldes da FOMENTADA, até a integral quitação de obrigações aqui previstas.`);
+
+  // ============ CLÁUSULA DÉCIMA PRIMEIRA ============
+  writeClause("CLÁUSULA DÉCIMA PRIMEIRA – DO TÍTULO EXECUTIVO");
+  writeP("11.1. O presente instrumento, assinado pelas Partes e testemunhas, resta caracterizado como título executivo extrajudicial e, em caso de inadimplemento, poderá ser livremente executado pela parte prejudicada.");
+  writeP("11.2. As partes declaram-se de acordo com a assinatura do presente instrumento através de plataforma digital, não podendo vir a alegar qualquer nulidade ou falsidade de assinaturas em razão disso, bem como concordando com a execução dos exatos termos aqui descritos em caso de inadimplemento de qualquer das disposições.");
+
+  // ============ CLÁUSULA DÉCIMA SEGUNDA ============
+  writeClause("CLÁUSULA DÉCIMA SEGUNDA – DAS DISPOSIÇÕES GERAIS");
+  writeP("12.1. Qualquer tolerância em relação ao disposto nesta cláusula será considerada mera liberalidade do FOMENTADORA.");
+  writeP("12.2. A presente contratação está submetida à legislação Brasileira, em especial ao Código Civil e legislação cambiária específica conforme os títulos cedidos posteriormente e cuja formalização dependerá da assinatura de Termo Aditivo.");
+  writeP("12.3. A FOMENTADA declara que todos os direitos creditórios cedidos ou a serem cedidos possuem lastro em operações comerciais reais, previamente formalizadas mediante pedidos de compra, contratos ou instrumentos equivalentes, contendo identificação do SACADO, objeto, valor e prazo para cumprimento e pagamento.");
+  writeP("12.4. A FOMENTADORA poderá, a qualquer tempo, exigir documentação comprobatória adicional, incluindo, mas não se limitando a: contratos, pedidos formais, comprovantes de entrega, aceite do SACADO e histórico comercial.");
+  writeP("12.5. A ausência, insuficiência ou inconsistência do lastro autorizará a FOMENTADORA a suspender novas operações e exigir a recompra imediata dos créditos.");
+  writeP("12.6. As Partes reconhecem que a presente operação não constitui, sob qualquer hipótese, mútuo ou financiamento, inexistindo obrigação de devolução de valores em caráter geral, mas apenas nas hipóteses expressamente previstas neste instrumento, vinculadas à invalidade ou frustração do crédito.");
+
+  // ============ CLÁUSULA DÉCIMA TERCEIRA ============
+  writeClause("CLÁUSULA DÉCIMA TERCEIRA – DA GARANTIA");
+  const garantiaDescricao = data.proposta?.garantias && data.proposta.garantias.trim()
+    ? data.proposta.garantias.trim()
+    : "(descrever por completo conforme matrícula/NF/documento de propriedade)";
+  writeP(`13.1. Como meio de garantir a operação de crédito vinculada ao presente contrato, bem como estabelecer um limite ao valor das transações, a FOMENTADA dá, como garantia, o seguinte bem: ${garantiaDescricao}, o qual é de sua propriedade exclusiva e se encontra livre e desembaraçado, sem qualquer impedimento no que diz respeito ao uso como garantia nos termos aqui descritos e sob o qual compromete-se a comunicar imediatamente à FOMENTADORA em caso de perda, danificação ou comprometimento estrutural, sob pena de responsabilização civil e criminal se não vier a substituir o bem em prazo não superior a 07 (sete) dias.`);
+  writeP("13.2. A FOMENTADA reconhece, assume e concorda que toda e qualquer transação que se der sob a égide do presente contrato contará com a mencionada garantia, ressalvada renúncia ou alteração expressa. A vista disso, a FOMENTADA não poderá dar o mesmo bem em garantia para qualquer outra operação ou situação sem a autorização expressa da FOMENTADORA.");
+
+  // ============ CLÁUSULA DÉCIMA QUARTA ============
+  writeClause("CLÁUSULA DÉCIMA QUARTA – DO FORO COMPETENTE");
+  writeP("14.1. Fica eleito o foro da Comarca de Campinas, estado de São Paulo, para dirimir quaisquer dúvidas ou litígios decorrentes da interpretação ou cumprimento deste contrato, ou casos omissos do presente contrato, excluindo-se qualquer outro, por mais privilegiado que seja.");
+
+  // ============ CONDIÇÕES APROVADAS (opcional) ============
+  if (data.proposta && (data.proposta.valor_aprovado || data.proposta.prazo_dias || data.proposta.taxa_sugerida)) {
+    writeClause("CONDIÇÕES APROVADAS PELA ÁREA DE CRÉDITO");
     if (data.proposta.codigo) writeP(`Código da proposta: ${data.proposta.codigo}`);
     writeP(`Limite aprovado: ${fmtBRL(data.proposta.valor_aprovado)}`);
     writeP(`Prazo: ${data.proposta.prazo_dias ? `${data.proposta.prazo_dias} dias` : "—"}`);
     writeP(`Taxa de desconto: ${data.proposta.taxa_sugerida != null ? `${data.proposta.taxa_sugerida}% ao mês` : "a definir caso a caso"}`);
     if (data.proposta.finalidade) writeP(`Finalidade: ${data.proposta.finalidade}`);
-    if (data.proposta.garantias) writeP(`Garantias: ${data.proposta.garantias}`);
     if (data.proposta.decided_at) writeP(`Aprovado em: ${new Date(data.proposta.decided_at).toLocaleDateString("pt-BR")}`);
   }
 
-  // FECHAMENTO
+  // ============ FECHAMENTO ============
   ensureSpace(20);
   y += 4;
-  writeP(
-    "E, por estarem assim justas e contratadas, firmam o presente instrumento em 2 (duas) vias de igual teor e forma, juntamente com as testemunhas abaixo, para que produza seus efeitos legais.",
-  );
+  writeP("E assim, por estarem justas e contratadas, assinam as Partes o presente através de certificado digital.");
   writeP(`Campinas/SP, ${todayLong()}.`, { gap: 8 });
 
-  // ASSINATURAS
+  // ============ ASSINATURAS ============
   const sigBlock = (label1: string, label2: string) => {
     ensureSpace(28);
     doc.setDrawColor(0);
@@ -373,18 +319,18 @@ export function generateMinutaPDF(data: MinutaData): jsPDF {
     y += 28;
   };
 
-  sigBlock("S3 CAPITAL SECURITIZADORA S.A.", "CONTRATADA");
-  sigBlock(c.razao_social.toUpperCase(), `CNPJ ${c.cnpj} — CONTRATANTE`);
+  sigBlock("S3 CAPITAL SECURITIZADORA S/A", "FOMENTADORA");
+  sigBlock(data.cedente.razao_social.toUpperCase(), `CNPJ ${data.cedente.cnpj} — FOMENTADA`);
 
   if (data.fiadores.length > 0) {
     for (const f of data.fiadores) {
-      sigBlock(f.nome.toUpperCase(), `${f.cpf ? `CPF ${f.cpf} — ` : ""}RESPONSÁVEL SOLIDÁRIO / FIADOR`);
+      sigBlock(f.nome.toUpperCase(), `${f.cpf ? `CPF ${f.cpf} — ` : ""}AVALISTA`);
     }
   } else {
-    sigBlock("RESPONSÁVEL SOLIDÁRIO / FIADOR", "(cônjuge, se aplicável)");
+    sigBlock(PH, "AVALISTA");
   }
 
-  // TESTEMUNHAS
+  // ============ TESTEMUNHAS ============
   ensureSpace(35);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
@@ -402,8 +348,56 @@ export function generateMinutaPDF(data: MinutaData): jsPDF {
   doc.text("RG:", margin + colW + 10, y + 18);
   doc.text("CPF:", margin, y + 23);
   doc.text("CPF:", margin + colW + 10, y + 23);
+  y += 30;
 
-  // Rodapé com paginação
+  // ============ ANEXO I — TERMO DE AUTORIZAÇÃO DE PAGAMENTO A TERCEIRO ============
+  doc.addPage();
+  y = margin;
+  writeTitle("ANEXO I");
+  writeTitle("TERMO DE AUTORIZAÇÃO DE PAGAMENTO A TERCEIRO");
+  y += 2;
+  writeP(`Através do presente, visando a concretização da atividade de fomento correspondente ao contrato vinculado ao presente Anexo, autorizo a FOMENTADORA a realizar o pagamento de parte do preço ajustado pela cessão de créditos, qual seja, a de R$ ${PH} (${PH}) à pessoa jurídica ${PH}, sendo ela fornecedora de matéria prima/insumos/descrever possibilidade de atuação, até o dia ${PH}, em conta de número ${PH} (descrever dados bancários).`);
+  writeP("Tal pagamento deverá ser considerado, para todos os fins, como se feito em meu nome, e a comprovação através de recibo bancário bastará para que o valor seja tido como quitado para todos os fins.");
+  writeP("A realização deste pagamento será ato totalmente independente do contrato firmado com a pessoa jurídica indicada, de modo que a Cessionária não poderá ser responsabilizada por eventual inadimplemento da empresa terceira.");
+  writeP("Local, data.", { gap: 12 });
+  sigBlock(data.cedente.razao_social.toUpperCase(), "FOMENTADA");
+
+  // ============ ANEXO II — TERMO ADITIVO PARA INCLUSÃO DE NOTAS FISCAIS ============
+  doc.addPage();
+  y = margin;
+  writeTitle("TERMO ADITIVO PARA INCLUSÃO DE NOTAS FISCAIS");
+  y += 2;
+  writeP(
+    "S3 CAPITAL SECURITIZADORA S/A, pessoa jurídica de direito privado, devidamente inscrita no CNPJ/MF sob o n. 60.353.126/0001-71, com endereço à Av. Júlio Diniz, n. 257, sala 09, Jd. Nossa Senhora Auxiliadora, na cidade de Campinas, estado de São Paulo, CEP: 13075-420, neste ato representada conforme determinação de seus Atos Constitutivos, de ora em diante denominada simplesmente como CONTRATADA ou FOMENTADORA e, de outro lado,",
+  );
+  writeP(blocoContratante(data.cedente));
+  writeP(`Têm, como justo e acordado o quanto segue no que diz respeito ao termo aditivo do contrato de fomento firmado pelas partes em ${PH} de ${PH} de ${PH}, de modo que os termos do presente passarão a compor o contrato principal de maneira subsidiária e complementar.`);
+
+  writeClause("Considerando:");
+  writeP("a) Que as partes firmaram contrato de fomento mercantil na modalidade de adiantamento para aquisição de matéria prima, custeio de insumos e fomento à produção em geral, cujas cláusulas a CONTRATANTE e a CONTRATADA reiteram os termos já descritos e inalterados a partir do presente.");
+  writeP("b) Que, para que ocorra a liberação antecipada de valores se faz necessário a formalização deste Termo Aditivo com o descritivo da operação específica e autorização de pagamento.");
+  writeP("As partes, em comum acordo, resolvem que:");
+
+  writeClause("CLÁUSULA PRIMEIRA – DA LIBERAÇÃO ANTECIPADA");
+  writeP("1.1. A FOMENTADORA efetuará a liberação antecipada de valores em favor da FOMENTADA conforme recomendações fornecidas pela FOMENTADORA, em documento denominado “Autorização para Depósito ou Pagamento”, que passa a fazer parte integrante deste aditivo, sendo devidamente rubricado pelas partes contratantes.");
+  writeP("1.2. Em cumprimento com o quanto descrito no contrato de fomento anteriormente firmado, a FOMENTADA dá como garantia ao cumprimento de suas obrigações para com a FOMENTADORA a(s) Nota(s) Promissória(s) anexa(s) a este instrumento, que segue(m) também assinada(s) pelo(s) Responsável(eis) Solidário(s) acima qualificado(s).");
+  writeP(`1.3. Para que a obrigação de fomento se dê por cumprida, faz-se necessário que a FOMENTADA encaminhe à FOMENTADORA o borderô por completo, com o valor total do fomento, a forma de pagamento e a indicação das duplicatas, devidamente endossadas à FOMENTADORA para que o contrato de fomento seja considerado quitado, até a data de ${PH}, sendo ela a do vencimento das duplicatas entregues.`);
+
+  writeClause("CLÁUSULA SEGUNDA – DAS DISPOSIÇÕES GERAIS");
+  writeP("2.1. Permanecem inalteradas, bem como são ratificadas no presente momento todas as cláusulas constantes no Contrato de Fomento firmado pelas partes, inclusive a de garantia prestada.");
+  writeP("2.2. As partes declaram-se de acordo com a assinatura do presente instrumento através de plataforma digital, não podendo vir a alegar qualquer nulidade ou falsidade de assinaturas em razão disso, bem como concordando com a execução dos exatos termos aqui descritos em caso de inadimplemento de qualquer das disposições.");
+  writeP("2.3. Fica eleito o foro da Comarca de Campinas, estado de São Paulo, para dirimir quaisquer dúvidas ou litígios decorrentes da interpretação ou cumprimento deste contrato, ou casos omissos do presente contrato, excluindo-se qualquer outro, por mais privilegiado que seja.");
+  writeP("E assim, por estarem justas e contratadas, assinam as Partes o presente através de certificado digital.", { gap: 4 });
+  writeP(`Campinas/SP, ${todayLong()}.`, { gap: 8 });
+  sigBlock("S3 CAPITAL SECURITIZADORA S/A", "FOMENTADORA");
+  sigBlock(data.cedente.razao_social.toUpperCase(), `CNPJ ${data.cedente.cnpj} — FOMENTADA`);
+  if (data.fiadores.length > 0) {
+    for (const f of data.fiadores) {
+      sigBlock(f.nome.toUpperCase(), `${f.cpf ? `CPF ${f.cpf} — ` : ""}AVALISTA`);
+    }
+  }
+
+  // ============ RODAPÉ COM PAGINAÇÃO ============
   const total = doc.getNumberOfPages();
   for (let i = 1; i <= total; i++) {
     doc.setPage(i);
@@ -411,7 +405,7 @@ export function generateMinutaPDF(data: MinutaData): jsPDF {
     doc.setFontSize(8);
     doc.setTextColor(120);
     doc.text(
-      `Contrato de Fomento Mercantil — S3 Capital • Gerado em ${todayLong()} • Página ${i} de ${total}`,
+      `Instrumento Particular de Fomento Mercantil — S3 Capital • Gerado em ${todayLong()} • Página ${i} de ${total}`,
       pageW / 2,
       pageH - 8,
       { align: "center" },
