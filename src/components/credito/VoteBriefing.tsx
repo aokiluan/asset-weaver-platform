@@ -26,11 +26,27 @@ interface Proposal {
   taxa_sugerida: number | null;
 }
 
+interface ModalidadeFull {
+  ativo?: boolean;
+  limite?: string | number | null;
+  prazo_medio?: string | number | null;
+  taxa?: string | number | null;
+  observacao?: string | null;
+}
+
+interface Modalidades {
+  desconto_convencional?: ModalidadeFull;
+  comissaria?: ModalidadeFull;
+  comissaria_escrow?: ModalidadeFull;
+  nota_comercial?: ModalidadeFull;
+}
+
 interface Visit {
   recomendacao: string | null;
   parecer_comercial: string | null;
   pontos_atencao: string | null;
   limite_global_solicitado: number | null;
+  modalidades: Modalidades | null;
   created_by: string | null;
 }
 
