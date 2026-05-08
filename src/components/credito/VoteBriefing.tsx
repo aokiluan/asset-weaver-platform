@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Building2, FileText, ArrowRight, ThumbsUp, AlertTriangle, Loader2, Briefcase, Sparkles,
+  Building2, FileText, ArrowRight, ThumbsUp, AlertTriangle, Loader2, Briefcase, Sparkles, CheckSquare, Square,
 } from "lucide-react";
 
 interface Props {
