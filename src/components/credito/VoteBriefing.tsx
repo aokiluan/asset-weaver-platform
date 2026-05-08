@@ -142,10 +142,83 @@ export function VoteBriefing({ cedenteId, proposalId }: Props) {
         const { data: profs } = await supabase.from("profiles").select("id,nome").in("id", ids);
         if (active && profs) setAuthors(Object.fromEntries(profs.map((p: any) => [p.id, p.nome])));
       }
+
+      // Carrega itens já lidos pelo usuário corrente
+      if (user && proposalId) {
+        const { data: chk } = await supabase
+          .from("committee_vote_checklist")
+          .select("item_key")
+          .eq("proposal_id", proposalId)
+          .eq("voter_id", user.id)
+          .in("item_key", ["lido_relatorio_comercial", "lido_analise_credito"]);
+        if (active && chk) {
+          const map = { lido_relatorio_comercial: false, lido_analise_credito: false } as Record<ReadingItemKey, boolean>;
+          chk.forEach((row: any) => { map[row.item_key as ReadingItemKey] = true; });
+          setReadDone(map);
+        }
+      }
+
       setLoading(false);
     })();
     return () => { active = false; };
-  }, [cedenteId, proposalId]);
+  }, [cedenteId, proposalId, user]);
+
+  // Cleanup do object URL ao trocar / desmontar
+  useEffect(() => {
+    return () => {
+      if (readerUrl) URL.revokeObjectURL(readerUrl);
+    };
+  }, [readerUrl]);
+
+  const openVisitPdf = async () => {
+    setReaderTitle(`Relatório comercial — ${cedente?.razao_social ?? ""}`);
+    setReaderKey("lido_relatorio_comercial");
+    setReaderLoading(true);
+    setReaderOpen(true);
+    if (readerUrl) { URL.revokeObjectURL(readerUrl); setReaderUrl(null); }
+    try {
+      const { data } = await supabase
+        .from("cedente_visit_reports")
+        .select("*")
+        .eq("cedente_id", cedenteId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (!data) { toast.error("Relatório comercial não encontrado"); setReaderOpen(false); return; }
+      const res = await generateVisitReportPdf(data as any, cedenteId, undefined, "blob");
+      if (res) setReaderUrl(res.url);
+    } catch (e: any) {
+      toast.error("Erro ao gerar PDF", { description: e?.message });
+      setReaderOpen(false);
+    } finally {
+      setReaderLoading(false);
+    }
+  };
+
+  const openCreditPdf = async () => {
+    setReaderTitle(`Análise de crédito — ${cedente?.razao_social ?? ""}`);
+    setReaderKey("lido_analise_credito");
+    setReaderLoading(true);
+    setReaderOpen(true);
+    if (readerUrl) { URL.revokeObjectURL(readerUrl); setReaderUrl(null); }
+    try {
+      const { data } = await supabase
+        .from("credit_reports")
+        .select("*")
+        .eq("cedente_id", cedenteId)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (!data) { toast.error("Análise de crédito não encontrada"); setReaderOpen(false); return; }
+      const res = await generateCreditReportPdf(data as any, cedente?.razao_social, "blob");
+      if (res) setReaderUrl(res.url);
+    } catch (e: any) {
+      toast.error("Erro ao gerar PDF", { description: e?.message });
+      setReaderOpen(false);
+    } finally {
+      setReaderLoading(false);
+    }
+  };
 
   if (loading) {
     return (
