@@ -97,6 +97,7 @@ const labelReco = (v: string | null | undefined) => {
 const variantReco = (v: string | null | undefined) => RECO_VARIANT[v ?? ""] ?? "outline";
 
 export function VoteBriefing({ cedenteId, proposalId }: Props) {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [cedente, setCedente] = useState<Cedente | null>(null);
   const [proposal, setProposal] = useState<Proposal | null>(null);
@@ -104,6 +105,17 @@ export function VoteBriefing({ cedenteId, proposalId }: Props) {
   const [report, setReport] = useState<Report | null>(null);
   const [authors, setAuthors] = useState<Record<string, string>>({});
   const [expanded, setExpanded] = useState(false);
+
+  // Estado do leitor de PDF
+  const [readerOpen, setReaderOpen] = useState(false);
+  const [readerLoading, setReaderLoading] = useState(false);
+  const [readerUrl, setReaderUrl] = useState<string | null>(null);
+  const [readerTitle, setReaderTitle] = useState("");
+  const [readerKey, setReaderKey] = useState<ReadingItemKey>("lido_relatorio_comercial");
+  const [readDone, setReadDone] = useState<Record<ReadingItemKey, boolean>>({
+    lido_relatorio_comercial: false,
+    lido_analise_credito: false,
+  });
 
   useEffect(() => {
     let active = true;
