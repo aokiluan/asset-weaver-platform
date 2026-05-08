@@ -179,5 +179,9 @@ export async function generateCreditReportPdf(
   }
 
   const filename = `relatorio-credito-${(cedenteNome ?? "cedente").replace(/\s+/g, "-").toLowerCase()}.pdf`;
+  if (mode === "blob") {
+    const blob = doc.output("blob");
+    return { blob, url: URL.createObjectURL(blob) };
+  }
   doc.save(filename);
 }
