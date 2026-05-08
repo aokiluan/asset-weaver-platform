@@ -67,7 +67,7 @@ const App = () => (
               <Route
                 path="/financeiro"
                 element={
-                  <RoleGuard role={["admin", "financeiro"]}>
+                  <RoleGuard role={["admin", "financeiro", "gestor_geral"]}>
                     <Financeiro />
                   </RoleGuard>
                 }
@@ -83,7 +83,7 @@ const App = () => (
               <Route
                 path="/comite"
                 element={
-                  <RoleGuard role={["admin", "comite", "credito"]}>
+                  <RoleGuard role={["admin", "comite", "credito", "gestor_geral"]}>
                     <Comite />
                   </RoleGuard>
                 }
@@ -91,7 +91,7 @@ const App = () => (
               <Route
                 path="/formalizacao"
                 element={
-                  <RoleGuard role={["admin", "formalizacao", "cadastro"]}>
+                  <RoleGuard role={["admin", "formalizacao", "gestor_geral"]}>
                     <Formalizacao />
                   </RoleGuard>
                 }
