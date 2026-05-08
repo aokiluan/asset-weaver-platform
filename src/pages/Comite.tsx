@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-type VoteDecision = "favoravel" | "desfavoravel" | "abstencao";
+type VoteDecision = "favoravel" | "desfavoravel";
 
 interface Voto {
   id: string;
@@ -129,13 +129,13 @@ export default function Comite() {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       <header className="flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-[20px] font-medium tracking-tight flex items-center gap-2">
-            <Vote className="h-6 w-6" /> Comitê de Crédito
+          <h1 className="text-[18px] font-medium tracking-tight flex items-center gap-2">
+            <Vote className="h-5 w-5" /> Comitê de Crédito
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-[11px] text-muted-foreground">
             Propostas aguardando voto. {canVote ? "Seu voto é assíncrono — vote quando quiser." : "Você está em modo somente leitura."}
           </p>
         </div>
@@ -143,21 +143,21 @@ export default function Comite() {
 
       {/* Painel do membro */}
       {canVote && (
-        <div className="grid gap-3 md:grid-cols-4">
-          <StatCard icon={<Clock className="h-4 w-4" />} label="Aguardando seu voto" value={stats.aguardando} highlight={stats.aguardando > 0} />
-          <StatCard icon={<CheckCircle2 className="h-4 w-4" />} label="Você já votou" value={stats.jaVotei} />
-          <StatCard icon={<Trophy className="h-4 w-4" />} label="Quórum atingido" value={stats.quorumAtingido} />
-          <StatCard icon={<Vote className="h-4 w-4" />} label="Total em pauta" value={stats.total} />
+        <div className="grid gap-2 md:grid-cols-4">
+          <StatCard icon={<Clock className="h-3.5 w-3.5" />} label="Aguardando seu voto" value={stats.aguardando} highlight={stats.aguardando > 0} />
+          <StatCard icon={<CheckCircle2 className="h-3.5 w-3.5" />} label="Você já votou" value={stats.jaVotei} />
+          <StatCard icon={<Trophy className="h-3.5 w-3.5" />} label="Quórum atingido" value={stats.quorumAtingido} />
+          <StatCard icon={<Vote className="h-3.5 w-3.5" />} label="Total em pauta" value={stats.total} />
         </div>
       )}
 
       {proposals.length === 0 ? (
-        <div className="rounded-lg border bg-card p-12 text-center">
-          <Vote className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-          <p className="text-sm text-muted-foreground">Nenhuma proposta em pauta no comitê.</p>
+        <div className="rounded-lg border bg-card p-8 text-center">
+          <Vote className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+          <p className="text-[12px] text-muted-foreground">Nenhuma proposta em pauta no comitê.</p>
         </div>
       ) : (
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className="grid gap-2 md:grid-cols-2">
           {proposals.map((p) => {
             const propVotes = votes.filter((v) => v.proposal_id === p.id);
             const fav = propVotes.filter((v) => v.decisao === "favoravel").length;
@@ -170,46 +170,46 @@ export default function Comite() {
             const dias = daysSince(p.created_at);
 
             return (
-              <div key={p.id} className="rounded-lg border bg-card p-3 space-y-3 hover:shadow-md transition-shadow">
+              <div key={p.id} className="rounded-lg border bg-card p-2.5 space-y-2 hover:shadow-sm transition-shadow">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-[11px] font-mono text-muted-foreground">{p.codigo}</p>
-                    <h3 className="font-semibold tracking-tight truncate flex items-center gap-1.5">
-                      <Building2 className="h-4 w-4 shrink-0" />
+                    <p className="text-[10px] font-mono text-muted-foreground leading-none">{p.codigo}</p>
+                    <h3 className="text-[13px] font-semibold tracking-tight truncate flex items-center gap-1.5 leading-tight">
+                      <Building2 className="h-3.5 w-3.5 shrink-0" />
                       {p.cedentes?.razao_social ?? "—"}
                     </h3>
-                    <p className="text-[11px] text-muted-foreground font-mono truncate">CNPJ: {p.cedentes?.cnpj}</p>
+                    <p className="text-[10px] text-muted-foreground font-mono truncate leading-none">CNPJ: {p.cedentes?.cnpj}</p>
                   </div>
                   {meuVoto ? (
-                    <Badge variant="default" className="shrink-0">
+                    <Badge variant="default" className="shrink-0 text-[10px] h-5 px-1.5">
                       <CheckCircle2 className="h-3 w-3 mr-1" /> Você votou
                     </Badge>
                   ) : canVote ? (
-                    <Badge variant="secondary" className="shrink-0 animate-pulse">
+                    <Badge variant="secondary" className="shrink-0 animate-pulse text-[10px] h-5 px-1.5">
                       <Clock className="h-3 w-3 mr-1" /> Aguarda voto
                     </Badge>
                   ) : null}
                 </div>
 
-                <div className="grid grid-cols-3 gap-2 text-xs">
-                  <div className="rounded-md bg-muted/40 px-2 py-1.5">
-                    <div className="text-muted-foreground">Valor</div>
-                    <div className="font-semibold tabular-nums">{fmtBRL(p.valor_solicitado)}</div>
+                <div className="grid grid-cols-3 gap-2 text-[11px]">
+                  <div className="rounded-md bg-muted/40 px-2 py-1">
+                    <div className="text-[10px] text-muted-foreground leading-none">Valor</div>
+                    <div className="font-semibold tabular-nums leading-tight">{fmtBRL(p.valor_solicitado)}</div>
                   </div>
-                  <div className="rounded-md bg-muted/40 px-2 py-1.5">
-                    <div className="text-muted-foreground">Prazo</div>
-                    <div className="font-semibold">{p.prazo_dias ? `${p.prazo_dias}d` : "—"}</div>
+                  <div className="rounded-md bg-muted/40 px-2 py-1">
+                    <div className="text-[10px] text-muted-foreground leading-none">Prazo</div>
+                    <div className="font-semibold leading-tight">{p.prazo_dias ? `${p.prazo_dias}d` : "—"}</div>
                   </div>
-                  <div className="rounded-md bg-muted/40 px-2 py-1.5">
-                    <div className="text-muted-foreground">Em pauta há</div>
-                    <div className="font-semibold">{dias === 0 ? "hoje" : `${dias}d`}</div>
+                  <div className="rounded-md bg-muted/40 px-2 py-1">
+                    <div className="text-[10px] text-muted-foreground leading-none">Em pauta há</div>
+                    <div className="font-semibold leading-tight">{dias === 0 ? "hoje" : `${dias}d`}</div>
                   </div>
                 </div>
 
                 {/* Progresso de quórum */}
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="text-muted-foreground leading-none">
                       Quórum: <strong className="text-foreground">{fav}</strong> de {min} favoráveis
                     </span>
                     {quorum && (
@@ -219,7 +219,7 @@ export default function Comite() {
                     )}
                   </div>
                   <Progress value={pct} className={quorum ? "[&>div]:bg-green-600" : ""} />
-                  <div className="flex gap-3 text-[11px] text-muted-foreground pt-0.5">
+                  <div className="flex gap-2 text-[10px] text-muted-foreground pt-0.5">
                     <span className="flex items-center gap-1"><ThumbsUp className="h-3 w-3 text-green-600" /> {fav}</span>
                     <span className="flex items-center gap-1"><ThumbsDown className="h-3 w-3 text-destructive" /> {desfav}</span>
                     
@@ -229,10 +229,10 @@ export default function Comite() {
                   </div>
                 </div>
 
-                <Button asChild size="sm" className="w-full" variant={meuVoto ? "outline" : "default"}>
+                <Button asChild size="sm" className="w-full h-7 text-[11px]" variant={meuVoto ? "outline" : "default"}>
                   <Link to={`/credito/${p.id}`}>
                     {meuVoto ? "Rever proposta" : canVote ? "Votar agora" : "Abrir proposta"}
-                    <ArrowRight className="h-4 w-4 ml-2" />
+                    <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
                   </Link>
                 </Button>
               </div>
@@ -256,12 +256,12 @@ function StatCard({
   highlight?: boolean;
 }) {
   return (
-    <div className={`rounded-lg border bg-card p-3 ${highlight ? "border-primary/40 bg-primary/5" : ""}`}>
-      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+    <div className={`rounded-lg border bg-card p-2.5 ${highlight ? "border-primary/40 bg-primary/5" : ""}`}>
+      <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground leading-none">
         {icon}
         <span>{label}</span>
       </div>
-      <div className="text-[20px] font-medium tracking-tight mt-1 tabular-nums">{value}</div>
+      <div className="text-[16px] font-medium tracking-tight mt-1 tabular-nums leading-none">{value}</div>
     </div>
   );
 }

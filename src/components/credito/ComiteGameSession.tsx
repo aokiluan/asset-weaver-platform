@@ -205,20 +205,20 @@ export function ComiteGameSession({ proposalId, votosMinimos, proposalStage, ced
     }
   };
 
-  if (loading) return <div className="flex items-center justify-center py-10 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin mr-2" /> Carregando comitê…</div>;
+  if (loading) return <div className="flex items-center justify-center py-8 text-muted-foreground text-[12px]"><Loader2 className="h-3.5 w-3.5 animate-spin mr-2" /> Carregando comitê…</div>;
 
   // Sessão não aberta
   if (!session) {
     return (
-      <Card className="p-4 text-center space-y-3">
-        <Vote className="h-10 w-10 mx-auto text-muted-foreground" />
-        <h3 className="text-lg font-semibold">Comitê ainda não iniciado</h3>
-        <p className="text-sm text-muted-foreground">
+      <Card className="p-2.5 text-center space-y-2">
+        <Vote className="h-8 w-8 mx-auto text-muted-foreground" />
+        <h3 className="text-[14px] font-semibold leading-tight">Comitê ainda não iniciado</h3>
+        <p className="text-[11px] text-muted-foreground leading-tight">
           Abra a sessão para que o comitê registre os votos. Quórum mínimo: <strong>{votosMinimos}</strong>.
         </p>
         {canManage && proposalStage === "comite" && (
-          <Button onClick={abrirSessao} disabled={busy}>
-            <Sparkles className="h-4 w-4 mr-2" /> Abrir sessão de comitê
+          <Button onClick={abrirSessao} disabled={busy} className="h-7 text-[11px]">
+            <Sparkles className="h-3.5 w-3.5 mr-1.5" /> Abrir sessão de comitê
           </Button>
         )}
       </Card>
@@ -226,28 +226,28 @@ export function ComiteGameSession({ proposalId, votosMinimos, proposalStage, ced
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {/* Briefing sintetizado dos pareceres */}
       {cedenteId && <VoteBriefing cedenteId={cedenteId} proposalId={proposalId} />}
 
       {/* Header da sessão */}
-      <Card className="p-4">
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <div className="flex items-center gap-3">
-            <Badge variant={session.status === "encerrada" ? "outline" : "default"} className="uppercase tracking-wide">
+      <Card className="p-2.5">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-2">
+            <Badge variant={session.status === "encerrada" ? "outline" : "default"} className="uppercase tracking-wide text-[10px] h-5 px-1.5">
               {session.status}
             </Badge>
             {session.voto_secreto && !revealed && (
-              <Badge variant="secondary"><Lock className="h-3 w-3 mr-1" /> Voto secreto</Badge>
+              <Badge variant="secondary" className="text-[10px] h-5 px-1.5"><Lock className="h-3 w-3 mr-1" /> Voto secreto</Badge>
             )}
-            {revealed && <Badge variant="secondary"><Eye className="h-3 w-3 mr-1" /> Revelado</Badge>}
-            {deadlineStr && <Badge variant="outline"><Clock className="h-3 w-3 mr-1" /> {deadlineStr}</Badge>}
+            {revealed && <Badge variant="secondary" className="text-[10px] h-5 px-1.5"><Eye className="h-3 w-3 mr-1" /> Revelado</Badge>}
+            {deadlineStr && <Badge variant="outline" className="text-[10px] h-5 px-1.5"><Clock className="h-3 w-3 mr-1" /> {deadlineStr}</Badge>}
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">{votes.length} voto{votes.length === 1 ? "" : "s"} registrado{votes.length === 1 ? "" : "s"}</span>
+            <span className="text-[11px] text-muted-foreground leading-none">{votes.length} voto{votes.length === 1 ? "" : "s"} registrado{votes.length === 1 ? "" : "s"}</span>
             {canManage && session.status === "aberta" && votes.length > 0 && (
-              <Button onClick={revelar} disabled={busy} size="sm" variant="default">
-                <Eye className="h-4 w-4 mr-2" /> Revelar votos
+              <Button onClick={revelar} disabled={busy} size="sm" variant="default" className="h-7 text-[11px]">
+                <Eye className="h-3.5 w-3.5 mr-1.5" /> Revelar votos
               </Button>
             )}
           </div>
@@ -256,21 +256,21 @@ export function ComiteGameSession({ proposalId, votosMinimos, proposalStage, ced
 
       {/* Placar / contagem */}
       <div className="grid grid-cols-2 gap-2">
-        <ScoreCard label="Favoráveis" count={favoraveis} icon={<ThumbsUp className="h-3.5 w-3.5" />} color="text-green-600" hidden={!revealed} mask={votes.length} />
-        <ScoreCard label="Contrários" count={contrarios} icon={<ThumbsDown className="h-3.5 w-3.5" />} color="text-destructive" hidden={!revealed} mask={votes.length} />
+        <ScoreCard label="Favoráveis" count={favoraveis} icon={<ThumbsUp className="h-3 w-3" />} color="text-green-600" hidden={!revealed} mask={votes.length} />
+        <ScoreCard label="Contrários" count={contrarios} icon={<ThumbsDown className="h-3 w-3" />} color="text-destructive" hidden={!revealed} mask={votes.length} />
       </div>
 
       {/* Quórum */}
-      <Card className={`p-4 ${revealed && quorumOk ? "border-green-500 bg-green-500/5" : ""}`}>
-        <div className="flex items-center gap-3">
-          <Trophy className={`h-6 w-6 ${revealed && quorumOk ? "text-green-600" : "text-muted-foreground"}`} />
-          <div className="flex-1">
-            <div className="text-sm font-medium">
+      <Card className={`p-2.5 ${revealed && quorumOk ? "border-green-500 bg-green-500/5" : ""}`}>
+        <div className="flex items-center gap-2.5">
+          <Trophy className={`h-5 w-5 shrink-0 ${revealed && quorumOk ? "text-green-600" : "text-muted-foreground"}`} />
+          <div className="flex-1 min-w-0">
+            <div className="text-[12px] font-medium leading-tight">
               {revealed
                 ? (quorumOk ? "Quórum atingido — pronto para decisão final ✅" : "Quórum não atingido")
                 : "Aguardando revelação dos votos"}
             </div>
-            <div className="text-xs text-muted-foreground">
+            <div className="text-[11px] text-muted-foreground leading-tight">
               {revealed ? `${favoraveis} de ${votosMinimos} votos favoráveis necessários` : `Mínimo: ${votosMinimos} favorável(is)`}
             </div>
           </div>
@@ -278,21 +278,21 @@ export function ComiteGameSession({ proposalId, votosMinimos, proposalStage, ced
       </Card>
 
       {/* Lista de votos / votantes */}
-      <Card className="p-4 space-y-3">
-        <h4 className="text-sm font-semibold flex items-center gap-2"><Vote className="h-4 w-4" /> Votantes</h4>
-        {votes.length === 0 && <p className="text-sm text-muted-foreground">Nenhum voto registrado ainda.</p>}
-        <div className="space-y-2">
+      <Card className="p-2.5 space-y-2">
+        <h4 className="text-[12px] font-semibold flex items-center gap-1.5 leading-none"><Vote className="h-3.5 w-3.5" /> Votantes</h4>
+        {votes.length === 0 && <p className="text-[11px] text-muted-foreground leading-tight">Nenhum voto registrado ainda.</p>}
+        <div className="space-y-1.5">
           {votes.map((v) => {
             const isOwn = v.voter_id === user?.id;
             const showDecision = revealed || isOwn;
             return (
-              <div key={v.id} className="flex items-center gap-3 rounded-md border p-3">
-                <div className={`h-9 w-9 rounded-full flex items-center justify-center font-medium text-sm ${showDecision ? VOTE_COLOR[v.decisao] + " text-white" : "bg-muted"}`}>
-                  {showDecision ? VOTE_ICON[v.decisao] : <EyeOff className="h-4 w-4 text-muted-foreground" />}
+              <div key={v.id} className="flex items-center gap-2 rounded-md border p-2">
+                <div className={`h-7 w-7 rounded-full flex items-center justify-center font-medium text-[11px] shrink-0 ${showDecision ? VOTE_COLOR[v.decisao] + " text-white" : "bg-muted"}`}>
+                  {showDecision ? VOTE_ICON[v.decisao] : <EyeOff className="h-3.5 w-3.5 text-muted-foreground" />}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium truncate flex items-center gap-1.5">
-                    {profiles[v.voter_id]?.nome ?? "Membro do comitê"} {isOwn && <span className="text-xs text-muted-foreground font-normal">(você)</span>}
+                  <div className="text-[12px] font-medium truncate flex items-center gap-1 leading-tight">
+                    {profiles[v.voter_id]?.nome ?? "Membro do comitê"} {isOwn && <span className="text-[10px] text-muted-foreground font-normal">(você)</span>}
                     {v.checklist_completo ? (
                       <span title="Revisou todo o briefing antes de votar">
                         <Eye className="h-3 w-3 text-green-600" />
@@ -304,12 +304,12 @@ export function ComiteGameSession({ proposalId, votosMinimos, proposalStage, ced
                     )}
                   </div>
                   {showDecision ? (
-                    <div className="text-xs text-muted-foreground">
+                    <div className="text-[11px] text-muted-foreground leading-tight">
                       <span className="font-medium">{VOTE_LABEL[v.decisao]}</span>
                       {v.justificativa && <> — {v.justificativa}</>}
                     </div>
                   ) : (
-                    <div className="text-xs text-muted-foreground italic">Voto oculto até revelação</div>
+                    <div className="text-[11px] text-muted-foreground italic leading-tight">Voto oculto até revelação</div>
                   )}
                 </div>
               </div>
@@ -330,39 +330,39 @@ export function ComiteGameSession({ proposalId, votosMinimos, proposalStage, ced
             />
           )}
 
-          <Card className="p-4 space-y-3 border-primary/30">
-            <h4 className="text-sm font-semibold">{ownVote ? "Atualizar meu voto" : "Registrar meu voto"}</h4>
+          <Card className="p-2.5 space-y-2 border-primary/30">
+            <h4 className="text-[12px] font-semibold leading-none">{ownVote ? "Atualizar meu voto" : "Registrar meu voto"}</h4>
             <div className="grid grid-cols-2 gap-2">
               {(["favoravel", "desfavoravel"] as VoteDecision[]).map((d) => (
                 <button
                   key={d}
                   onClick={() => setVoteDec(d)}
-                  className={`rounded-md border p-3 flex flex-col items-center gap-1 transition ${voteDec === d ? `${VOTE_COLOR[d]} text-white border-transparent` : "hover:bg-muted"}`}
+                  className={`rounded-md border p-2 flex flex-col items-center gap-1 transition ${voteDec === d ? `${VOTE_COLOR[d]} text-white border-transparent` : "hover:bg-muted"}`}
                   type="button"
                 >
                   {VOTE_ICON[d]}
-                  <span className="text-xs font-medium">{VOTE_LABEL[d]}</span>
+                  <span className="text-[11px] font-medium leading-none">{VOTE_LABEL[d]}</span>
                 </button>
               ))}
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Justificativa (opcional)</Label>
-              <Textarea rows={2} value={voteJust} onChange={(e) => setVoteJust(e.target.value)} />
+            <div className="space-y-1">
+              <Label className="text-[10px] leading-none">Justificativa (opcional)</Label>
+              <Textarea rows={2} value={voteJust} onChange={(e) => setVoteJust(e.target.value)} className="text-[11px]" />
             </div>
             {!checklistInfo.allDone && checklistInfo.total > 0 && (
-              <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/5 p-2 text-xs text-amber-700 dark:text-amber-400">
+              <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/5 p-2 text-[11px] text-amber-700 dark:text-amber-400 leading-tight">
                 <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
                 <span>
                   Você revisou {checklistInfo.completed} de {checklistInfo.total} itens. Recomendamos completar antes de votar.
                 </span>
               </div>
             )}
-            <Button onClick={handleVoteClick} disabled={busy} className="w-full">
-              {busy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Vote className="h-4 w-4 mr-2" />}
+            <Button onClick={handleVoteClick} disabled={busy} className="w-full h-7 text-[11px]">
+              {busy ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Vote className="h-3.5 w-3.5 mr-1.5" />}
               {ownVote ? "Atualizar voto" : "Confirmar voto"}
             </Button>
             {session.voto_secreto && !revealed && (
-              <p className="text-xs text-muted-foreground text-center"><Lock className="inline h-3 w-3 mr-1" /> Seu voto fica oculto até a revelação.</p>
+              <p className="text-[10px] text-muted-foreground text-center leading-none"><Lock className="inline h-3 w-3 mr-1" /> Seu voto fica oculto até a revelação.</p>
             )}
           </Card>
         </>
@@ -371,15 +371,15 @@ export function ComiteGameSession({ proposalId, votosMinimos, proposalStage, ced
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Votar sem revisar tudo?</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="text-[14px] leading-tight">Votar sem revisar tudo?</AlertDialogTitle>
+            <AlertDialogDescription className="text-[12px] leading-tight">
               Você marcou apenas {checklistInfo.completed} de {checklistInfo.total} itens do checklist de leitura.
               Seu voto será registrado com essa informação para fins de auditoria. Deseja continuar?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Voltar e revisar</AlertDialogCancel>
-            <AlertDialogAction onClick={votar}>Votar mesmo assim</AlertDialogAction>
+            <AlertDialogCancel className="h-7 text-[11px]">Voltar e revisar</AlertDialogCancel>
+            <AlertDialogAction onClick={votar} className="h-7 text-[11px]">Votar mesmo assim</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -391,12 +391,12 @@ function ScoreCard({ label, count, icon, color, hidden, mask }: {
   label: string; count: number; icon: JSX.Element; color: string; hidden?: boolean; mask: number;
 }) {
   return (
-    <Card className="p-3">
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+    <Card className="p-2.5">
+      <div className="flex items-center gap-1 text-[10px] text-muted-foreground mb-1 leading-none">
         <span className={color}>{icon}</span>
         <span>{label}</span>
       </div>
-      <div className="text-[18px] font-semibold tabular-nums">
+      <div className="text-[14px] font-semibold tabular-nums leading-none">
         {hidden ? <span className="text-muted-foreground">?</span> : count}
       </div>
     </Card>
