@@ -226,28 +226,28 @@ export function ComiteGameSession({ proposalId, votosMinimos, proposalStage, ced
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {/* Briefing sintetizado dos pareceres */}
       {cedenteId && <VoteBriefing cedenteId={cedenteId} proposalId={proposalId} />}
 
       {/* Header da sessão */}
-      <Card className="p-4">
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <div className="flex items-center gap-3">
-            <Badge variant={session.status === "encerrada" ? "outline" : "default"} className="uppercase tracking-wide">
+      <Card className="p-2.5">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-2">
+            <Badge variant={session.status === "encerrada" ? "outline" : "default"} className="uppercase tracking-wide text-[10px] h-5 px-1.5">
               {session.status}
             </Badge>
             {session.voto_secreto && !revealed && (
-              <Badge variant="secondary"><Lock className="h-3 w-3 mr-1" /> Voto secreto</Badge>
+              <Badge variant="secondary" className="text-[10px] h-5 px-1.5"><Lock className="h-3 w-3 mr-1" /> Voto secreto</Badge>
             )}
-            {revealed && <Badge variant="secondary"><Eye className="h-3 w-3 mr-1" /> Revelado</Badge>}
-            {deadlineStr && <Badge variant="outline"><Clock className="h-3 w-3 mr-1" /> {deadlineStr}</Badge>}
+            {revealed && <Badge variant="secondary" className="text-[10px] h-5 px-1.5"><Eye className="h-3 w-3 mr-1" /> Revelado</Badge>}
+            {deadlineStr && <Badge variant="outline" className="text-[10px] h-5 px-1.5"><Clock className="h-3 w-3 mr-1" /> {deadlineStr}</Badge>}
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">{votes.length} voto{votes.length === 1 ? "" : "s"} registrado{votes.length === 1 ? "" : "s"}</span>
+            <span className="text-[11px] text-muted-foreground leading-none">{votes.length} voto{votes.length === 1 ? "" : "s"} registrado{votes.length === 1 ? "" : "s"}</span>
             {canManage && session.status === "aberta" && votes.length > 0 && (
-              <Button onClick={revelar} disabled={busy} size="sm" variant="default">
-                <Eye className="h-4 w-4 mr-2" /> Revelar votos
+              <Button onClick={revelar} disabled={busy} size="sm" variant="default" className="h-7 text-[11px]">
+                <Eye className="h-3.5 w-3.5 mr-1.5" /> Revelar votos
               </Button>
             )}
           </div>
