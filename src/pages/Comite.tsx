@@ -256,12 +256,12 @@ function StatCard({
   highlight?: boolean;
 }) {
   return (
-    <div className={`rounded-lg border bg-card p-3 ${highlight ? "border-primary/40 bg-primary/5" : ""}`}>
-      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+    <div className={`rounded-lg border bg-card p-2.5 ${highlight ? "border-primary/40 bg-primary/5" : ""}`}>
+      <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground leading-none">
         {icon}
         <span>{label}</span>
       </div>
-      <div className="text-[20px] font-medium tracking-tight mt-1 tabular-nums">{value}</div>
+      <div className="text-[16px] font-medium tracking-tight mt-1 tabular-nums leading-none">{value}</div>
     </div>
   );
 }
