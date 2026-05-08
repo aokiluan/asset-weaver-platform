@@ -109,7 +109,7 @@ export function VoteBriefing({ cedenteId, proposalId }: Props) {
         supabase.from("cedentes").select("razao_social,cnpj,setor,faturamento_medio").eq("id", cedenteId).maybeSingle(),
         supabase.from("credit_proposals").select("valor_solicitado,prazo_dias,taxa_sugerida").eq("id", proposalId).maybeSingle(),
         supabase.from("cedente_visit_reports")
-          .select("recomendacao,parecer_comercial,pontos_atencao,limite_global_solicitado,created_by")
+          .select("recomendacao,parecer_comercial,pontos_atencao,limite_global_solicitado,modalidades,created_by")
           .eq("cedente_id", cedenteId).order("created_at", { ascending: false }).limit(1).maybeSingle(),
         supabase.from("credit_reports")
           .select("recomendacao,parecer_analista,pontos_positivos,pontos_atencao,conclusao,updated_by")
