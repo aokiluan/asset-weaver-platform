@@ -129,13 +129,13 @@ export default function Comite() {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       <header className="flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-[20px] font-medium tracking-tight flex items-center gap-2">
-            <Vote className="h-6 w-6" /> Comitê de Crédito
+          <h1 className="text-[18px] font-medium tracking-tight flex items-center gap-2">
+            <Vote className="h-5 w-5" /> Comitê de Crédito
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-[11px] text-muted-foreground">
             Propostas aguardando voto. {canVote ? "Seu voto é assíncrono — vote quando quiser." : "Você está em modo somente leitura."}
           </p>
         </div>
@@ -143,11 +143,11 @@ export default function Comite() {
 
       {/* Painel do membro */}
       {canVote && (
-        <div className="grid gap-3 md:grid-cols-4">
-          <StatCard icon={<Clock className="h-4 w-4" />} label="Aguardando seu voto" value={stats.aguardando} highlight={stats.aguardando > 0} />
-          <StatCard icon={<CheckCircle2 className="h-4 w-4" />} label="Você já votou" value={stats.jaVotei} />
-          <StatCard icon={<Trophy className="h-4 w-4" />} label="Quórum atingido" value={stats.quorumAtingido} />
-          <StatCard icon={<Vote className="h-4 w-4" />} label="Total em pauta" value={stats.total} />
+        <div className="grid gap-2 md:grid-cols-4">
+          <StatCard icon={<Clock className="h-3.5 w-3.5" />} label="Aguardando seu voto" value={stats.aguardando} highlight={stats.aguardando > 0} />
+          <StatCard icon={<CheckCircle2 className="h-3.5 w-3.5" />} label="Você já votou" value={stats.jaVotei} />
+          <StatCard icon={<Trophy className="h-3.5 w-3.5" />} label="Quórum atingido" value={stats.quorumAtingido} />
+          <StatCard icon={<Vote className="h-3.5 w-3.5" />} label="Total em pauta" value={stats.total} />
         </div>
       )}
 
