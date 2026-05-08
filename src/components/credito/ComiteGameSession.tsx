@@ -177,6 +177,30 @@ export function ComiteGameSession({ proposalId, votosMinimos, proposalStage, ced
     toast.success("Votos revelados! 🎉");
   };
 
+  const encerrar = async () => {
+    if (!session || !user || !cedenteId) return;
+    setBusy(true);
+    const decisao: "aprovado" | "reprovado" = quorumOk ? "aprovado" : "reprovado";
+    const { error: e1 } = await supabase.from("credit_proposals")
+      .update({ stage: decisao, decided_at: new Date().toISOString(), decided_by: user.id })
+      .eq("id", proposalId);
+    if (e1) { setBusy(false); toast.error(e1.message); return; }
+    const { error: e2 } = await supabase.from("committee_sessions")
+      .update({ status: "encerrada", encerrada_em: new Date().toISOString(), encerrada_por: user.id })
+      .eq("id", session.id);
+    if (e2) { setBusy(false); toast.error(e2.message); return; }
+    if (decisao === "aprovado") {
+      const { error: e3 } = await supabase.from("cedentes")
+        .update({ stage: "formalizacao" })
+        .eq("id", cedenteId);
+      if (e3) { setBusy(false); toast.error(e3.message); return; }
+      toast.success("Comitê encerrado — cedente movido para Formalização ✅");
+    } else {
+      toast.success("Comitê encerrado — proposta reprovada");
+    }
+    setBusy(false);
+  };
+
   const votar = async () => {
     if (!user || !session) return;
     setBusy(true);
@@ -248,6 +272,11 @@ export function ComiteGameSession({ proposalId, votosMinimos, proposalStage, ced
             {canManage && session.status === "aberta" && votes.length > 0 && (
               <Button onClick={revelar} disabled={busy} size="sm" variant="default" className="h-7 text-[11px]">
                 <Eye className="h-3.5 w-3.5 mr-1.5" /> Revelar votos
+              </Button>
+            )}
+            {canManage && session.status === "revelada" && (
+              <Button onClick={encerrar} disabled={busy} size="sm" variant="default" className="h-7 text-[11px]">
+                <Trophy className="h-3.5 w-3.5 mr-1.5" /> Encerrar e registrar decisão
               </Button>
             )}
           </div>

@@ -1598,6 +1598,14 @@ export type Database = {
         }[]
       }
       can_decide_proposal: { Args: { _user_id: string }; Returns: boolean }
+      can_edit_cedente: {
+        Args: {
+          _owner_id?: string
+          _stage: Database["public"]["Enums"]["cedente_stage"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       can_review_documento: { Args: { _user_id: string }; Returns: boolean }
       can_view_cedente: {
         Args: { _owner_id: string; _user_id: string }
