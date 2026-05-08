@@ -1,4 +1,51 @@
 import jsPDF from "jspdf";
+import s3LogoUrl from "@/assets/s3-logo-symbol.png";
+
+let cachedLogoDataUrl: string | null = null;
+async function loadS3LogoDataUrl(): Promise<string | null> {
+  if (cachedLogoDataUrl) return cachedLogoDataUrl;
+  try {
+    const res = await fetch(s3LogoUrl);
+    const blob = await res.blob();
+    cachedLogoDataUrl = await new Promise<string>((resolve, reject) => {
+      const r = new FileReader();
+      r.onloadend = () => resolve(r.result as string);
+      r.onerror = reject;
+      r.readAsDataURL(blob);
+    });
+    return cachedLogoDataUrl;
+  } catch {
+    return null;
+  }
+}
+
+function applyWatermark(doc: jsPDF, dataUrl: string) {
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const total = doc.getNumberOfPages();
+  // Marca d'água centralizada, baixa opacidade
+  const wmW = 120; // mm
+  const wmH = 120;
+  const x = (pageW - wmW) / 2;
+  const y = (pageH - wmH) / 2;
+  for (let i = 1; i <= total; i++) {
+    doc.setPage(i);
+    const anyDoc = doc as any;
+    let gs: any = null;
+    if (typeof anyDoc.GState === "function" && typeof anyDoc.setGState === "function") {
+      gs = new anyDoc.GState({ opacity: 0.07 });
+      anyDoc.setGState(gs);
+    }
+    try {
+      doc.addImage(dataUrl, "PNG", x, y, wmW, wmH, undefined, "FAST");
+    } catch {
+      // ignora se a imagem não puder ser embutida
+    }
+    if (gs && typeof anyDoc.setGState === "function") {
+      anyDoc.setGState(new anyDoc.GState({ opacity: 1 }));
+    }
+  }
+}
 
 export interface MinutaCedente {
   razao_social: string;
@@ -416,8 +463,10 @@ export function generateMinutaPDF(data: MinutaData): jsPDF {
   return doc;
 }
 
-export function downloadMinutaPDF(data: MinutaData) {
+export async function downloadMinutaPDF(data: MinutaData) {
   const doc = generateMinutaPDF(data);
+  const logo = await loadS3LogoDataUrl();
+  if (logo) applyWatermark(doc, logo);
   const safeName = data.cedente.razao_social.replace(/[^\w\s-]+/g, "").trim().replace(/\s+/g, "_");
   doc.save(`contrato_fomento_${safeName}_${Date.now()}.pdf`);
 }
