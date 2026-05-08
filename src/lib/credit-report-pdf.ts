@@ -45,7 +45,11 @@ function fmtVal(v: any): string {
   return String(v);
 }
 
-export async function generateCreditReportPdf(report: any, cedenteNome?: string) {
+export async function generateCreditReportPdf(
+  report: any,
+  cedenteNome?: string,
+  mode: "download" | "blob" = "download",
+): Promise<{ blob: Blob; url: string } | void> {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   let y = MARGIN;
 
@@ -175,5 +179,9 @@ export async function generateCreditReportPdf(report: any, cedenteNome?: string)
   }
 
   const filename = `relatorio-credito-${(cedenteNome ?? "cedente").replace(/\s+/g, "-").toLowerCase()}.pdf`;
+  if (mode === "blob") {
+    const blob = doc.output("blob");
+    return { blob, url: URL.createObjectURL(blob) };
+  }
   doc.save(filename);
 }

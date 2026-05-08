@@ -35,7 +35,8 @@ export async function generateVisitReportPdf(
   snapshot: VisitReportSnapshot,
   cedenteId: string,
   versaoLabel?: string,
-) {
+  mode: "download" | "blob" = "download",
+): Promise<{ blob: Blob; url: string } | void> {
   const { data: ced } = await supabase
     .from("cedentes")
     .select("razao_social, nome_fantasia, cnpj")
@@ -186,5 +187,9 @@ export async function generateVisitReportPdf(
 
   const versaoSuffix = versaoLabel ? `_${versaoLabel.replace(/[^\w]+/g, "-").toLowerCase()}` : "";
   const fileName = `relatorio-comercial_${(ced?.razao_social || "cedente").replace(/[^\w]+/g, "-").toLowerCase()}_${snapshot.data_visita || new Date().toISOString().slice(0, 10)}${versaoSuffix}.pdf`;
+  if (mode === "blob") {
+    const blob = doc.output("blob");
+    return { blob, url: URL.createObjectURL(blob) };
+  }
   doc.save(fileName);
 }

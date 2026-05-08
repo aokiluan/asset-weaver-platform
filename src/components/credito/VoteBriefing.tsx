@@ -1,12 +1,16 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Building2, FileText, ArrowRight, ThumbsUp, AlertTriangle, Loader2, Briefcase, Sparkles, CheckSquare, Square,
+  Building2, FileText, ThumbsUp, AlertTriangle, Loader2, Briefcase, Sparkles, CheckSquare, Square, BookOpen, CheckCircle2,
 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { generateVisitReportPdf } from "@/lib/visit-report-pdf";
+import { generateCreditReportPdf } from "@/lib/credit-report-pdf";
+import { PdfReadingDialog, type ReadingItemKey } from "./PdfReadingDialog";
+import { toast } from "sonner";
 
 interface Props {
   cedenteId: string;
@@ -93,6 +97,7 @@ const labelReco = (v: string | null | undefined) => {
 const variantReco = (v: string | null | undefined) => RECO_VARIANT[v ?? ""] ?? "outline";
 
 export function VoteBriefing({ cedenteId, proposalId }: Props) {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [cedente, setCedente] = useState<Cedente | null>(null);
   const [proposal, setProposal] = useState<Proposal | null>(null);
@@ -100,6 +105,17 @@ export function VoteBriefing({ cedenteId, proposalId }: Props) {
   const [report, setReport] = useState<Report | null>(null);
   const [authors, setAuthors] = useState<Record<string, string>>({});
   const [expanded, setExpanded] = useState(false);
+
+  // Estado do leitor de PDF
+  const [readerOpen, setReaderOpen] = useState(false);
+  const [readerLoading, setReaderLoading] = useState(false);
+  const [readerUrl, setReaderUrl] = useState<string | null>(null);
+  const [readerTitle, setReaderTitle] = useState("");
+  const [readerKey, setReaderKey] = useState<ReadingItemKey>("lido_relatorio_comercial");
+  const [readDone, setReadDone] = useState<Record<ReadingItemKey, boolean>>({
+    lido_relatorio_comercial: false,
+    lido_analise_credito: false,
+  });
 
   useEffect(() => {
     let active = true;
@@ -126,10 +142,83 @@ export function VoteBriefing({ cedenteId, proposalId }: Props) {
         const { data: profs } = await supabase.from("profiles").select("id,nome").in("id", ids);
         if (active && profs) setAuthors(Object.fromEntries(profs.map((p: any) => [p.id, p.nome])));
       }
+
+      // Carrega itens já lidos pelo usuário corrente
+      if (user && proposalId) {
+        const { data: chk } = await supabase
+          .from("committee_vote_checklist")
+          .select("item_key")
+          .eq("proposal_id", proposalId)
+          .eq("voter_id", user.id)
+          .in("item_key", ["lido_relatorio_comercial", "lido_analise_credito"]);
+        if (active && chk) {
+          const map = { lido_relatorio_comercial: false, lido_analise_credito: false } as Record<ReadingItemKey, boolean>;
+          chk.forEach((row: any) => { map[row.item_key as ReadingItemKey] = true; });
+          setReadDone(map);
+        }
+      }
+
       setLoading(false);
     })();
     return () => { active = false; };
-  }, [cedenteId, proposalId]);
+  }, [cedenteId, proposalId, user]);
+
+  // Cleanup do object URL ao trocar / desmontar
+  useEffect(() => {
+    return () => {
+      if (readerUrl) URL.revokeObjectURL(readerUrl);
+    };
+  }, [readerUrl]);
+
+  const openVisitPdf = async () => {
+    setReaderTitle(`Relatório comercial — ${cedente?.razao_social ?? ""}`);
+    setReaderKey("lido_relatorio_comercial");
+    setReaderLoading(true);
+    setReaderOpen(true);
+    if (readerUrl) { URL.revokeObjectURL(readerUrl); setReaderUrl(null); }
+    try {
+      const { data } = await supabase
+        .from("cedente_visit_reports")
+        .select("*")
+        .eq("cedente_id", cedenteId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (!data) { toast.error("Relatório comercial não encontrado"); setReaderOpen(false); return; }
+      const res = await generateVisitReportPdf(data as any, cedenteId, undefined, "blob");
+      if (res) setReaderUrl(res.url);
+    } catch (e: any) {
+      toast.error("Erro ao gerar PDF", { description: e?.message });
+      setReaderOpen(false);
+    } finally {
+      setReaderLoading(false);
+    }
+  };
+
+  const openCreditPdf = async () => {
+    setReaderTitle(`Análise de crédito — ${cedente?.razao_social ?? ""}`);
+    setReaderKey("lido_analise_credito");
+    setReaderLoading(true);
+    setReaderOpen(true);
+    if (readerUrl) { URL.revokeObjectURL(readerUrl); setReaderUrl(null); }
+    try {
+      const { data } = await supabase
+        .from("credit_reports")
+        .select("*")
+        .eq("cedente_id", cedenteId)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (!data) { toast.error("Análise de crédito não encontrada"); setReaderOpen(false); return; }
+      const res = await generateCreditReportPdf(data as any, cedente?.razao_social, "blob");
+      if (res) setReaderUrl(res.url);
+    } catch (e: any) {
+      toast.error("Erro ao gerar PDF", { description: e?.message });
+      setReaderOpen(false);
+    } finally {
+      setReaderLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -253,19 +342,44 @@ export function VoteBriefing({ cedenteId, proposalId }: Props) {
         </div>
       )}
 
-      {/* Atalhos para os pareceres completos */}
+      {/* Atalhos para os pareceres completos (leitura obrigatória) */}
       <div className="flex flex-wrap gap-2 pt-1 border-t">
-        <Button asChild size="sm" variant="outline">
-          <Link to={`/cedentes/${cedenteId}?tab=visita`}>
-            Relatório comercial completo <ArrowRight className="h-3 w-3 ml-1" />
-          </Link>
+        <Button
+          size="sm"
+          variant={readDone.lido_relatorio_comercial ? "secondary" : "outline"}
+          onClick={openVisitPdf}
+        >
+          {readDone.lido_relatorio_comercial
+            ? <CheckCircle2 className="h-3.5 w-3.5 mr-1 text-green-600" />
+            : <BookOpen className="h-3.5 w-3.5 mr-1" />}
+          Relatório comercial {readDone.lido_relatorio_comercial ? "(lido)" : "completo"}
         </Button>
-        <Button asChild size="sm" variant="outline">
-          <Link to={`/cedentes/${cedenteId}?tab=credito`}>
-            Análise de crédito completa <ArrowRight className="h-3 w-3 ml-1" />
-          </Link>
+        <Button
+          size="sm"
+          variant={readDone.lido_analise_credito ? "secondary" : "outline"}
+          onClick={openCreditPdf}
+        >
+          {readDone.lido_analise_credito
+            ? <CheckCircle2 className="h-3.5 w-3.5 mr-1 text-green-600" />
+            : <BookOpen className="h-3.5 w-3.5 mr-1" />}
+          Análise de crédito {readDone.lido_analise_credito ? "(lida)" : "completa"}
         </Button>
       </div>
+
+      <PdfReadingDialog
+        open={readerOpen}
+        onOpenChange={(v) => {
+          setReaderOpen(v);
+          if (!v && readerUrl) { URL.revokeObjectURL(readerUrl); setReaderUrl(null); }
+        }}
+        title={readerTitle}
+        pdfUrl={readerUrl}
+        loading={readerLoading}
+        proposalId={proposalId}
+        itemKey={readerKey}
+        alreadyConfirmed={readDone[readerKey]}
+        onConfirmed={() => setReadDone((m) => ({ ...m, [readerKey]: true }))}
+      />
     </Card>
   );
 }
