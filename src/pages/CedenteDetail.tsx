@@ -191,10 +191,9 @@ export default function CedenteDetail() {
         : `Documentos obrigatórios faltando: ${obrigatoriosFaltando.join(", ")}`,
       ok: obrigatoriosFaltando.length === 0,
     },
-    { label: "Relatório comercial preenchido", ok: hasVisitReport },
-    { label: "Pleito de crédito informado", ok: hasPleito },
+    { label: "Relatório comercial preenchido (inclui pleito)", ok: hasVisitReport },
     { label: "Representantes sincronizados", ok: !!cedente?.representantes_sincronizado_em },
-  ]), [obrigatoriosFaltando, hasVisitReport, hasPleito, cedente?.representantes_sincronizado_em]);
+  ]), [obrigatoriosFaltando, hasVisitReport, cedente?.representantes_sincronizado_em]);
 
   if (loading) {
     return <div className="flex items-center justify-center py-16 text-muted-foreground"><Loader2 className="h-5 w-5 animate-spin mr-2" /> Carregando...</div>;

@@ -79,8 +79,9 @@ export function evaluateGates(c: CedenteForGates): GateResult {
       // novo -> cadastro
       if (c.obrigatoriosFaltando.length === 0) atendidos.push("Documentos obrigatórios anexados");
       else pendentes.push(`Documentos obrigatórios faltando: ${c.obrigatoriosFaltando.join(", ")}`);
-      check(c.hasVisitReport, "Relatório de visita preenchido");
-      check(c.hasPleito, "Pleito de limite informado");
+      check(c.hasVisitReport, "Relatório comercial preenchido");
+      // Pleito é capturado dentro do relatório comercial (limite + modalidades),
+      // não exigimos mais um registro em credit_proposals nesta etapa.
       break;
     }
     case "cadastro": {
