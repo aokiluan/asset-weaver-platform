@@ -292,6 +292,15 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
   const handleSave = async () => {
     if (!form.data_visita) { toast.error("Informe a data da visita"); return; }
     if (!form.parecer_comercial.trim()) { toast.error("Informe o parecer comercial"); return; }
+    if (!form.limite_global_solicitado.trim()) {
+      toast.error("Informe o limite global solicitado (Pleito de crédito)");
+      return;
+    }
+    const algumaModalidade = Object.values(form.modalidades ?? {}).some((m: any) => m?.ativo);
+    if (!algumaModalidade) {
+      toast.error("Selecione ao menos uma modalidade no Pleito de crédito");
+      return;
+    }
 
     setSaving(true);
     const { data: auth } = await supabase.auth.getUser();
