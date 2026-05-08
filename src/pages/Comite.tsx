@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-type VoteDecision = "favoravel" | "desfavoravel" | "abstencao";
+type VoteDecision = "favoravel" | "desfavoravel";
 
 interface Voto {
   id: string;
