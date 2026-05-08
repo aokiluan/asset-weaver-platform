@@ -371,15 +371,15 @@ export function ComiteGameSession({ proposalId, votosMinimos, proposalStage, ced
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Votar sem revisar tudo?</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="text-[14px] leading-tight">Votar sem revisar tudo?</AlertDialogTitle>
+            <AlertDialogDescription className="text-[12px] leading-tight">
               Você marcou apenas {checklistInfo.completed} de {checklistInfo.total} itens do checklist de leitura.
               Seu voto será registrado com essa informação para fins de auditoria. Deseja continuar?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Voltar e revisar</AlertDialogCancel>
-            <AlertDialogAction onClick={votar}>Votar mesmo assim</AlertDialogAction>
+            <AlertDialogCancel className="h-7 text-[11px]">Voltar e revisar</AlertDialogCancel>
+            <AlertDialogAction onClick={votar} className="h-7 text-[11px]">Votar mesmo assim</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
