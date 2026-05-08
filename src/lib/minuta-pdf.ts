@@ -1,31 +1,41 @@
 import jsPDF from "jspdf";
-import s3LogoUrl from "@/assets/s3-logo-symbol.png";
+import s3BrandUrl from "@/assets/s3-logo-brand.png";
+import s3HorizontalUrl from "@/assets/s3-logo-horizontal.png";
 
-let cachedLogoDataUrl: string | null = null;
-async function loadS3LogoDataUrl(): Promise<string | null> {
-  if (cachedLogoDataUrl) return cachedLogoDataUrl;
+async function urlToDataUrl(url: string): Promise<string | null> {
   try {
-    const res = await fetch(s3LogoUrl);
+    const res = await fetch(url);
     const blob = await res.blob();
-    cachedLogoDataUrl = await new Promise<string>((resolve, reject) => {
+    return await new Promise<string>((resolve, reject) => {
       const r = new FileReader();
       r.onloadend = () => resolve(r.result as string);
       r.onerror = reject;
       r.readAsDataURL(blob);
     });
-    return cachedLogoDataUrl;
   } catch {
     return null;
   }
 }
 
+let cachedBrand: string | null = null;
+let cachedHorizontal: string | null = null;
+async function loadS3Brand(): Promise<string | null> {
+  if (!cachedBrand) cachedBrand = await urlToDataUrl(s3BrandUrl);
+  return cachedBrand;
+}
+async function loadS3Horizontal(): Promise<string | null> {
+  if (!cachedHorizontal) cachedHorizontal = await urlToDataUrl(s3HorizontalUrl);
+  return cachedHorizontal;
+}
+
+// Marca d'água: apenas o brasão S3, centralizado, opacidade baixa, em todas as páginas.
 function applyWatermark(doc: jsPDF, dataUrl: string) {
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
   const total = doc.getNumberOfPages();
-  // Marca d'água centralizada, baixa opacidade
-  const wmW = 120; // mm
-  const wmH = 120;
+  // proporção do brasão ~509x716 ⇒ h/w ≈ 1.406
+  const wmW = 90; // mm
+  const wmH = wmW * (716 / 509);
   const x = (pageW - wmW) / 2;
   const y = (pageH - wmH) / 2;
   for (let i = 1; i <= total; i++) {
@@ -33,19 +43,37 @@ function applyWatermark(doc: jsPDF, dataUrl: string) {
     const anyDoc = doc as any;
     let gs: any = null;
     if (typeof anyDoc.GState === "function" && typeof anyDoc.setGState === "function") {
-      gs = new anyDoc.GState({ opacity: 0.07 });
+      gs = new anyDoc.GState({ opacity: 0.06 });
       anyDoc.setGState(gs);
     }
     try {
       doc.addImage(dataUrl, "PNG", x, y, wmW, wmH, undefined, "FAST");
     } catch {
-      // ignora se a imagem não puder ser embutida
+      // ignora
     }
     if (gs && typeof anyDoc.setGState === "function") {
       anyDoc.setGState(new anyDoc.GState({ opacity: 1 }));
     }
   }
 }
+
+// Cabeçalho com o logo horizontal S3, alinhado à direita, apenas na primeira página.
+function applyHeaderLogo(doc: jsPDF, dataUrl: string) {
+  const pageW = doc.internal.pageSize.getWidth();
+  doc.setPage(1);
+  // proporção 1920x800 ⇒ h/w = 0.4167
+  const w = 38; // mm
+  const h = w * (800 / 1920);
+  const margin = 20;
+  const x = pageW - margin - w;
+  const y = 8;
+  try {
+    doc.addImage(dataUrl, "PNG", x, y, w, h, undefined, "FAST");
+  } catch {
+    // ignora
+  }
+}
+
 
 export interface MinutaCedente {
   razao_social: string;
@@ -148,7 +176,7 @@ export function generateMinutaPDF(data: MinutaData): jsPDF {
   const pageH = doc.internal.pageSize.getHeight();
   const margin = 20;
   const maxW = pageW - margin * 2;
-  let y = margin;
+  let y = margin + 12; // espaço extra na página 1 para o cabeçalho com o logo S3
 
   const ensureSpace = (needed: number) => {
     if (y + needed > pageH - margin - 10) {
@@ -465,8 +493,9 @@ export function generateMinutaPDF(data: MinutaData): jsPDF {
 
 export async function downloadMinutaPDF(data: MinutaData) {
   const doc = generateMinutaPDF(data);
-  const logo = await loadS3LogoDataUrl();
-  if (logo) applyWatermark(doc, logo);
+  const [brand, horizontal] = await Promise.all([loadS3Brand(), loadS3Horizontal()]);
+  if (horizontal) applyHeaderLogo(doc, horizontal);
+  if (brand) applyWatermark(doc, brand);
   const safeName = data.cedente.razao_social.replace(/[^\w\s-]+/g, "").trim().replace(/\s+/g, "_");
   doc.save(`contrato_fomento_${safeName}_${Date.now()}.pdf`);
 }
