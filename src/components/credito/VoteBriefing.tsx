@@ -164,11 +164,16 @@ export function VoteBriefing({ cedenteId, proposalId }: Props) {
           </p>
         </div>
         <div className="flex flex-wrap gap-1.5 text-xs">
-          <Badge variant="outline" className="font-normal">Pleito {fmtBRL(valor)}</Badge>
           {proposal?.prazo_dias && <Badge variant="outline" className="font-normal">{proposal.prazo_dias}d</Badge>}
           {proposal?.taxa_sugerida && <Badge variant="outline" className="font-normal">Taxa {proposal.taxa_sugerida}%</Badge>}
         </div>
       </div>
+
+      {/* Pleito de crédito */}
+      <PleitoCard
+        limiteGlobal={visit?.limite_global_solicitado ?? proposal?.valor_solicitado ?? null}
+        modalidades={visit?.modalidades ?? null}
+      />
 
       {/* Recomendações */}
       <div className="grid gap-2 sm:grid-cols-2">
