@@ -1,12 +1,16 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Building2, FileText, ArrowRight, ThumbsUp, AlertTriangle, Loader2, Briefcase, Sparkles, CheckSquare, Square,
+  Building2, FileText, ThumbsUp, AlertTriangle, Loader2, Briefcase, Sparkles, CheckSquare, Square, BookOpen, CheckCircle2,
 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { generateVisitReportPdf } from "@/lib/visit-report-pdf";
+import { generateCreditReportPdf } from "@/lib/credit-report-pdf";
+import { PdfReadingDialog, type ReadingItemKey } from "./PdfReadingDialog";
+import { toast } from "sonner";
 
 interface Props {
   cedenteId: string;
