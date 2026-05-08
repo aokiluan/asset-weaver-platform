@@ -1,0 +1,1 @@
+INSERT INTO public.documento_categorias (nome, descricao, obrigatorio, ordem, ativo) VALUES ('Contrato de cessão assinado', 'PDF do contrato de cessão/fomento assinado pelas partes', false, 100, true) ON CONFLICT (nome) DO NOTHING;
