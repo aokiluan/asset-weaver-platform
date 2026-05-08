@@ -332,8 +332,8 @@ export function ComiteGameSession({ proposalId, votosMinimos, proposalStage, ced
 
           <Card className="p-4 space-y-3 border-primary/30">
             <h4 className="text-sm font-semibold">{ownVote ? "Atualizar meu voto" : "Registrar meu voto"}</h4>
-            <div className="grid grid-cols-3 gap-2">
-              {(["favoravel", "desfavoravel", "abstencao"] as VoteDecision[]).map((d) => (
+            <div className="grid grid-cols-2 gap-2">
+              {(["favoravel", "desfavoravel"] as VoteDecision[]).map((d) => (
                 <button
                   key={d}
                   onClick={() => setVoteDec(d)}
