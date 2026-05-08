@@ -176,7 +176,7 @@ export function generateMinutaPDF(data: MinutaData): jsPDF {
   const pageH = doc.internal.pageSize.getHeight();
   const margin = 20;
   const maxW = pageW - margin * 2;
-  let y = margin;
+  let y = margin + 12; // espaço extra na página 1 para o cabeçalho com o logo S3
 
   const ensureSpace = (needed: number) => {
     if (y + needed > pageH - margin - 10) {
@@ -493,8 +493,9 @@ export function generateMinutaPDF(data: MinutaData): jsPDF {
 
 export async function downloadMinutaPDF(data: MinutaData) {
   const doc = generateMinutaPDF(data);
-  const logo = await loadS3LogoDataUrl();
-  if (logo) applyWatermark(doc, logo);
+  const [brand, horizontal] = await Promise.all([loadS3Brand(), loadS3Horizontal()]);
+  if (horizontal) applyHeaderLogo(doc, horizontal);
+  if (brand) applyWatermark(doc, brand);
   const safeName = data.cedente.razao_social.replace(/[^\w\s-]+/g, "").trim().replace(/\s+/g, "_");
   doc.save(`contrato_fomento_${safeName}_${Date.now()}.pdf`);
 }
