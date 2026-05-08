@@ -11,8 +11,9 @@ interface Props {
 const fmtTime = (d: Date) =>
   d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 
-export function DraftIndicator({ lastSavedAt, restored, onDiscard, className }: Props) {
-  if (!lastSavedAt && !restored) return null;
+export function DraftIndicator(_props: Props) {
+  return null;
+  // eslint-disable-next-line no-unreachable
   return (
     <div
       className={`flex items-center gap-2 text-xs text-muted-foreground ${className ?? ""}`}
