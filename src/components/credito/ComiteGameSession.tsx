@@ -210,15 +210,15 @@ export function ComiteGameSession({ proposalId, votosMinimos, proposalStage, ced
   // Sessão não aberta
   if (!session) {
     return (
-      <Card className="p-4 text-center space-y-3">
-        <Vote className="h-10 w-10 mx-auto text-muted-foreground" />
-        <h3 className="text-lg font-semibold">Comitê ainda não iniciado</h3>
-        <p className="text-sm text-muted-foreground">
+      <Card className="p-2.5 text-center space-y-2">
+        <Vote className="h-8 w-8 mx-auto text-muted-foreground" />
+        <h3 className="text-[14px] font-semibold leading-tight">Comitê ainda não iniciado</h3>
+        <p className="text-[11px] text-muted-foreground leading-tight">
           Abra a sessão para que o comitê registre os votos. Quórum mínimo: <strong>{votosMinimos}</strong>.
         </p>
         {canManage && proposalStage === "comite" && (
-          <Button onClick={abrirSessao} disabled={busy}>
-            <Sparkles className="h-4 w-4 mr-2" /> Abrir sessão de comitê
+          <Button onClick={abrirSessao} disabled={busy} className="h-7 text-[11px]">
+            <Sparkles className="h-3.5 w-3.5 mr-1.5" /> Abrir sessão de comitê
           </Button>
         )}
       </Card>
