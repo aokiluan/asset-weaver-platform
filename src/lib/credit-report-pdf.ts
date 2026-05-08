@@ -45,7 +45,11 @@ function fmtVal(v: any): string {
   return String(v);
 }
 
-export async function generateCreditReportPdf(report: any, cedenteNome?: string) {
+export async function generateCreditReportPdf(
+  report: any,
+  cedenteNome?: string,
+  mode: "download" | "blob" = "download",
+): Promise<{ blob: Blob; url: string } | void> {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   let y = MARGIN;
 
