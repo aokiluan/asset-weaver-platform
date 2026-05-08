@@ -342,19 +342,44 @@ export function VoteBriefing({ cedenteId, proposalId }: Props) {
         </div>
       )}
 
-      {/* Atalhos para os pareceres completos */}
+      {/* Atalhos para os pareceres completos (leitura obrigatória) */}
       <div className="flex flex-wrap gap-2 pt-1 border-t">
-        <Button asChild size="sm" variant="outline">
-          <Link to={`/cedentes/${cedenteId}?tab=visita`}>
-            Relatório comercial completo <ArrowRight className="h-3 w-3 ml-1" />
-          </Link>
+        <Button
+          size="sm"
+          variant={readDone.lido_relatorio_comercial ? "secondary" : "outline"}
+          onClick={openVisitPdf}
+        >
+          {readDone.lido_relatorio_comercial
+            ? <CheckCircle2 className="h-3.5 w-3.5 mr-1 text-green-600" />
+            : <BookOpen className="h-3.5 w-3.5 mr-1" />}
+          Relatório comercial {readDone.lido_relatorio_comercial ? "(lido)" : "completo"}
         </Button>
-        <Button asChild size="sm" variant="outline">
-          <Link to={`/cedentes/${cedenteId}?tab=credito`}>
-            Análise de crédito completa <ArrowRight className="h-3 w-3 ml-1" />
-          </Link>
+        <Button
+          size="sm"
+          variant={readDone.lido_analise_credito ? "secondary" : "outline"}
+          onClick={openCreditPdf}
+        >
+          {readDone.lido_analise_credito
+            ? <CheckCircle2 className="h-3.5 w-3.5 mr-1 text-green-600" />
+            : <BookOpen className="h-3.5 w-3.5 mr-1" />}
+          Análise de crédito {readDone.lido_analise_credito ? "(lida)" : "completa"}
         </Button>
       </div>
+
+      <PdfReadingDialog
+        open={readerOpen}
+        onOpenChange={(v) => {
+          setReaderOpen(v);
+          if (!v && readerUrl) { URL.revokeObjectURL(readerUrl); setReaderUrl(null); }
+        }}
+        title={readerTitle}
+        pdfUrl={readerUrl}
+        loading={readerLoading}
+        proposalId={proposalId}
+        itemKey={readerKey}
+        alreadyConfirmed={readDone[readerKey]}
+        onConfirmed={() => setReadDone((m) => ({ ...m, [readerKey]: true }))}
+      />
     </Card>
   );
 }
