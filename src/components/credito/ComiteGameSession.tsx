@@ -255,10 +255,9 @@ export function ComiteGameSession({ proposalId, votosMinimos, proposalStage, ced
       </Card>
 
       {/* Placar / contagem */}
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-2 gap-2">
         <ScoreCard label="Favoráveis" count={favoraveis} icon={<ThumbsUp className="h-3.5 w-3.5" />} color="text-green-600" hidden={!revealed} mask={votes.length} />
         <ScoreCard label="Contrários" count={contrarios} icon={<ThumbsDown className="h-3.5 w-3.5" />} color="text-destructive" hidden={!revealed} mask={votes.length} />
-        <ScoreCard label="Abstenções" count={abstencoes} icon={<MinusCircle className="h-3.5 w-3.5" />} color="text-muted-foreground" hidden={!revealed} mask={votes.length} />
       </div>
 
       {/* Quórum */}
