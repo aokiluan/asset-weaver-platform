@@ -715,26 +715,26 @@ function FormalizacaoTabContent({
   };
 
   return (
-    <div className="mt-4 space-y-3">
+    <div className="mt-3 space-y-2">
       {/* 1. Geração da minuta */}
-      <div className="rounded-lg border bg-card p-3 space-y-3">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-              <FileSignature className="h-5 w-5" /> Minuta padrão (Contrato de Fomento Mercantil)
+      <div className="rounded-lg border bg-card p-2.5 space-y-2">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <h2 className="text-[12px] font-semibold flex items-center gap-1.5 leading-tight">
+              <FileSignature className="size-3.5" /> Minuta padrão (Contrato de Fomento Mercantil)
             </h2>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">
               Gera o PDF padrão da S3 Capital preenchido com a qualificação do cedente, dos representantes legais e dos fiadores.
             </p>
           </div>
-          <Button onClick={handleGerar} disabled={generating}>
-            {generating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
+          <Button onClick={handleGerar} disabled={generating} size="sm" className="h-7 text-[11px] shrink-0">
+            {generating ? <Loader2 className="size-3.5 mr-1.5 animate-spin" /> : <Download className="size-3.5 mr-1.5" />}
             Gerar minuta (PDF)
           </Button>
         </div>
         {repsCount === 0 && (
-          <div className="rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-700 p-3 text-sm flex items-start gap-2">
-            <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+          <div className="rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-700 p-2 text-[11px] flex items-start gap-1.5 leading-tight">
+            <AlertCircle className="size-3.5 text-amber-600 mt-0.5 shrink-0" />
             <span className="text-amber-900 dark:text-amber-200">
               Nenhum representante legal cadastrado. A minuta sairá com o bloco da CONTRATANTE genérico — recomendamos preencher a aba <strong>Representantes legais</strong> antes.
             </span>
@@ -743,17 +743,17 @@ function FormalizacaoTabContent({
       </div>
 
       {/* 2. Upload do contrato assinado */}
-      <div className="rounded-lg border bg-card p-3 space-y-3">
-        <div>
-          <h2 className="text-lg font-semibold flex items-center gap-2">
-            <Upload className="h-5 w-5" /> Contrato assinado
-          </h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Após a assinatura na plataforma externa, anexe aqui o PDF assinado pelas partes.
-          </p>
-        </div>
-        <div>
-          <label className="inline-flex">
+      <div className="rounded-lg border bg-card p-2.5 space-y-2">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <h2 className="text-[12px] font-semibold flex items-center gap-1.5 leading-tight">
+              <Upload className="size-3.5" /> Contrato assinado
+            </h2>
+            <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">
+              Após a assinatura na plataforma externa, anexe aqui o PDF assinado pelas partes.
+            </p>
+          </div>
+          <label className="inline-flex shrink-0">
             <input
               type="file"
               accept="application/pdf,image/*"
@@ -761,28 +761,28 @@ function FormalizacaoTabContent({
               disabled={uploading || !categoriaId}
               onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUpload(f); e.currentTarget.value = ""; }}
             />
-            <span className={`inline-flex items-center px-3 py-2 rounded-md border text-sm cursor-pointer hover:bg-accent ${uploading ? "opacity-50 pointer-events-none" : ""}`}>
-              {uploading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
+            <span className={`inline-flex items-center h-7 px-2.5 rounded-md border text-[11px] cursor-pointer hover:bg-accent ${uploading ? "opacity-50 pointer-events-none" : ""}`}>
+              {uploading ? <Loader2 className="size-3.5 mr-1.5 animate-spin" /> : <Upload className="size-3.5 mr-1.5" />}
               Anexar contrato assinado
             </span>
           </label>
         </div>
         {contratoDocs.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Nenhum contrato anexado ainda.</p>
+          <p className="text-[11px] text-muted-foreground leading-tight">Nenhum contrato anexado ainda.</p>
         ) : (
           <ul className="divide-y border rounded-md">
             {contratoDocs.map((d) => (
-              <li key={d.id} className="flex items-center justify-between gap-3 px-3 py-2 text-sm">
+              <li key={d.id} className="flex items-center justify-between gap-2 px-2.5 py-1.5 text-[11px]">
                 <div className="min-w-0">
-                  <div className="truncate font-medium">{d.nome_arquivo}</div>
-                  <div className="text-[11px] text-muted-foreground leading-tight">{new Date(d.created_at).toLocaleString("pt-BR")}</div>
+                  <div className="truncate font-medium text-[12px] leading-tight">{d.nome_arquivo}</div>
+                  <div className="text-[10px] text-muted-foreground leading-none mt-0.5">{new Date(d.created_at).toLocaleString("pt-BR")}</div>
                 </div>
-                <div className="flex gap-1 shrink-0">
-                  <Button size="sm" variant="ghost" onClick={() => handleDownloadDoc(d.storage_path, d.nome_arquivo)}>
-                    <Download className="h-4 w-4" />
+                <div className="flex gap-0.5 shrink-0">
+                  <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => handleDownloadDoc(d.storage_path, d.nome_arquivo)}>
+                    <Download className="size-3.5" />
                   </Button>
-                  <Button size="sm" variant="ghost" onClick={() => handleRemoveDoc(d.id, d.storage_path)}>
-                    <Trash2 className="h-4 w-4 text-destructive" />
+                  <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => handleRemoveDoc(d.id, d.storage_path)}>
+                    <Trash2 className="size-3.5 text-destructive" />
                   </Button>
                 </div>
               </li>
@@ -792,28 +792,28 @@ function FormalizacaoTabContent({
       </div>
 
       {/* 3. Confirmação de assinatura */}
-      <div className="rounded-lg border bg-card p-3 space-y-3">
-        <h2 className="text-lg font-semibold flex items-center gap-2">
-          <CheckCircle2 className="h-5 w-5" /> Status da formalização
+      <div className="rounded-lg border bg-card p-2.5 space-y-2">
+        <h2 className="text-[12px] font-semibold flex items-center gap-1.5 leading-tight">
+          <CheckCircle2 className="size-3.5" /> Status da formalização
         </h2>
         {minutaAssinada ? (
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2 text-sm">
-              <Badge variant="default" className="bg-green-600 hover:bg-green-600">Assinado</Badge>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5 text-[11px] leading-tight">
+              <Badge variant="default" className="bg-green-600 hover:bg-green-600 h-5 text-[10px] px-1.5">Assinado</Badge>
               <span className="text-muted-foreground">
                 {assinatura.em ? `em ${new Date(assinatura.em).toLocaleString("pt-BR")}` : ""}
                 {assinatura.por ? ` por ${assinatura.por}` : ""}
               </span>
             </div>
             {canSign && (
-              <Button variant="outline" size="sm" onClick={handleDesfazer} disabled={signing}>
+              <Button variant="outline" size="sm" className="h-7 text-[11px]" onClick={handleDesfazer} disabled={signing}>
                 Desfazer assinatura
               </Button>
             )}
           </div>
         ) : (
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-sm text-muted-foreground">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[11px] text-muted-foreground leading-tight">
               {contratoDocs.length === 0
                 ? "Anexe o contrato assinado acima antes de confirmar."
                 : canSign
@@ -821,8 +821,8 @@ function FormalizacaoTabContent({
                   : "Aguardando confirmação do time financeiro."}
             </p>
             {canSign && (
-              <Button onClick={handleMarcarAssinado} disabled={signing || contratoDocs.length === 0}>
-                {signing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
+              <Button onClick={handleMarcarAssinado} disabled={signing || contratoDocs.length === 0} size="sm" className="h-7 text-[11px] shrink-0">
+                {signing ? <Loader2 className="size-3.5 mr-1.5 animate-spin" /> : <CheckCircle2 className="size-3.5 mr-1.5" />}
                 Marcar como assinado
               </Button>
             )}
