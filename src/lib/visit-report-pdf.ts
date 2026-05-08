@@ -35,7 +35,8 @@ export async function generateVisitReportPdf(
   snapshot: VisitReportSnapshot,
   cedenteId: string,
   versaoLabel?: string,
-) {
+  mode: "download" | "blob" = "download",
+): Promise<{ blob: Blob; url: string } | void> {
   const { data: ced } = await supabase
     .from("cedentes")
     .select("razao_social, nome_fantasia, cnpj")
