@@ -391,12 +391,12 @@ function ScoreCard({ label, count, icon, color, hidden, mask }: {
   label: string; count: number; icon: JSX.Element; color: string; hidden?: boolean; mask: number;
 }) {
   return (
-    <Card className="p-3">
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+    <Card className="p-2.5">
+      <div className="flex items-center gap-1 text-[10px] text-muted-foreground mb-1 leading-none">
         <span className={color}>{icon}</span>
         <span>{label}</span>
       </div>
-      <div className="text-[18px] font-semibold tabular-nums">
+      <div className="text-[14px] font-semibold tabular-nums leading-none">
         {hidden ? <span className="text-muted-foreground">?</span> : count}
       </div>
     </Card>
