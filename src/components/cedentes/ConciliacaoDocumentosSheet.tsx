@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import {
   CheckCircle2, XCircle, ChevronLeft, ChevronRight, Loader2, FileText,
-  Sparkles, Download, PartyPopper, AlertTriangle, Undo2,
+  Sparkles, Download, PartyPopper, AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { Categoria, Documento } from "./DocumentosUploadKanban";
