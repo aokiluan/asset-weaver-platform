@@ -180,6 +180,11 @@ export async function generateCreditReportPdf(
     doc.text(`Página ${i} de ${pages}`, PAGE_W - MARGIN, PAGE_H - 8, { align: "right" });
   }
 
+  // Branding S3
+  await applyS3HeaderLogo(doc, { variant: "white", headerWidthMm: 28, headerTopMm: 5, headerRightMm: 15 });
+  const { applyS3Watermark } = await import("./pdf-branding");
+  await applyS3Watermark(doc, { unit: "mm" });
+
   const filename = `relatorio-credito-${(cedenteNome ?? "cedente").replace(/\s+/g, "-").toLowerCase()}.pdf`;
   if (mode === "blob") {
     const blob = doc.output("blob");
