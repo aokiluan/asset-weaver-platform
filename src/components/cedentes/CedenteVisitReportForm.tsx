@@ -19,6 +19,10 @@ import { useFormDraft } from "@/hooks/useFormDraft";
 import { DraftIndicator } from "@/components/ui/draft-indicator";
 import { VisitReportVersionsPanel } from "./VisitReportVersionsPanel";
 import { generateVisitReportPdf } from "@/lib/visit-report-pdf";
+import { useAuth } from "@/hooks/useAuth";
+import {
+  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface Props {
   cedenteId: string;
@@ -134,7 +138,9 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
   const [motivoAlteracao, setMotivoAlteracao] = useState<string>("");
   const [versionsRefresh, setVersionsRefresh] = useState(0);
   const [form, setForm] = useState<FormState>(empty());
-  const readOnly = mode === "view";
+  const { hasRole } = useAuth();
+  const canEdit = hasRole("admin") || hasRole("comercial") || hasRole("gestor_geral");
+  const readOnly = mode === "view" || !canEdit;
 
   // Draft só ativa em modo create (nunca em edit/view de versão existente).
   const { restored, lastSavedAt, clearDraft, discardDraft } = useFormDraft<FormState>({
@@ -479,9 +485,26 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
               Gerar PDF
             </Button>
             {mode === "view" && existingId && (
-              <Button size="sm" variant="outline" onClick={enterEditMode}>
-                <Pencil className="h-4 w-4 mr-2" /> Alterar relatório
-              </Button>
+              canEdit ? (
+                <Button size="sm" variant="outline" onClick={enterEditMode}>
+                  <Pencil className="h-4 w-4 mr-2" /> Alterar relatório
+                </Button>
+              ) : (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span tabIndex={0}>
+                        <Button size="sm" variant="outline" disabled>
+                          <Pencil className="h-4 w-4 mr-2" /> Alterar relatório
+                        </Button>
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      Apenas Comercial, Gestor geral ou Admin podem alterar o relatório comercial.
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )
             )}
             {mode === "edit" && (
               <Button size="sm" variant="ghost" onClick={cancelEdit} disabled={saving}>
@@ -749,7 +772,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
         <VisitReportVersionsPanel reportId={existingId} cedenteId={cedenteId} refreshKey={versionsRefresh} />
       </div>
 
-      {mode !== "view" && (
+      {mode !== "view" && canEdit && (
         <div className="flex items-center justify-between pt-2 gap-3 flex-wrap">
           <DraftIndicator
             lastSavedAt={lastSavedAt}
@@ -767,6 +790,11 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
               {mode === "edit" ? "Salvar nova versão" : "Salvar relatório"}
             </Button>
           </div>
+        </div>
+      )}
+      {!canEdit && mode !== "view" && (
+        <div className="rounded-md border border-dashed p-3 text-xs text-muted-foreground">
+          Apenas usuários com perfil Comercial, Gestor geral ou Admin podem criar/alterar o relatório comercial.
         </div>
       )}
     </div>
