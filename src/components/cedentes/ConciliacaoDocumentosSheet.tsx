@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import * as pdfjs from "pdfjs-dist";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
@@ -13,6 +14,9 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import type { Categoria, Documento } from "./DocumentosUploadKanban";
+import workerSrc from "pdfjs-dist/build/pdf.worker.min.mjs?url";
+
+(pdfjs as any).GlobalWorkerOptions.workerSrc = workerSrc;
 
 interface Props {
   open: boolean;
@@ -33,6 +37,88 @@ const fmtBytes = (b: number | null) => {
 };
 
 type MotivoAcao = "devolver" | "reprovar" | null;
+
+function PdfCanvasPreview({ pdfUrl, fileName }: { pdfUrl: string; fileName: string }) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [rendering, setRendering] = useState(false);
+  const [renderError, setRenderError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!pdfUrl || !containerRef.current) return;
+
+    let cancelled = false;
+    const container = containerRef.current;
+    container.innerHTML = "";
+    setRendering(true);
+    setRenderError(null);
+
+    (async () => {
+      try {
+        const pdf = await (pdfjs as any).getDocument(pdfUrl).promise;
+        if (cancelled) return;
+
+        const targetWidth = Math.max(320, Math.min(1100, container.clientWidth - 24));
+
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          if (cancelled) return;
+
+          const viewport = page.getViewport({ scale: 1 });
+          const scale = targetWidth / viewport.width;
+          const scaledViewport = page.getViewport({ scale });
+
+          const canvas = document.createElement("canvas");
+          canvas.width = scaledViewport.width;
+          canvas.height = scaledViewport.height;
+          canvas.className = "block max-w-full shadow-sm border rounded-sm";
+          canvas.style.width = `${scaledViewport.width}px`;
+          canvas.style.height = `${scaledViewport.height}px`;
+
+          const context = canvas.getContext("2d");
+          if (!context) continue;
+
+          await page.render({ canvasContext: context, viewport: scaledViewport, canvas }).promise;
+          if (cancelled) return;
+
+          const wrapper = document.createElement("div");
+          wrapper.className = "mb-3 flex justify-center";
+          wrapper.appendChild(canvas);
+          container.appendChild(wrapper);
+        }
+      } catch (err: any) {
+        if (!cancelled) {
+          const message = err?.message ?? "Não foi possível renderizar este PDF.";
+          setRenderError(message);
+          toast.error("Falha ao renderizar PDF", { description: message });
+        }
+      } finally {
+        if (!cancelled) setRendering(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [pdfUrl]);
+
+  return (
+    <div className="h-full overflow-auto p-3">
+      {rendering && (
+        <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Carregando PDF…
+        </div>
+      )}
+      {renderError ? (
+        <div className="flex h-full flex-col items-center justify-center gap-2 p-6 text-center text-muted-foreground">
+          <FileText className="h-10 w-10 opacity-40" />
+          <p className="text-sm leading-tight">Não foi possível abrir a pré-visualização de {fileName}.</p>
+        </div>
+      ) : (
+        <div ref={containerRef} className="min-h-full" />
+      )}
+    </div>
+  );
+}
 
 export function ConciliacaoDocumentosSheet({
   open, onOpenChange, cedenteId, cedenteRazaoSocial, cedenteCnpj,
