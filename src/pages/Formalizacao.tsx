@@ -424,10 +424,10 @@ export default function Formalizacao() {
                   <tr className="text-left">
                     <th className="px-2.5 py-1.5 font-medium">Cedente</th>
                     <th className="px-2.5 py-1.5 font-medium">CNPJ</th>
-                    
                     <th className="px-2.5 py-1.5 font-medium text-right">Valor aprovado</th>
                     <th className="px-2.5 py-1.5 font-medium">Assinado em</th>
                     <th className="px-2.5 py-1.5 font-medium">Status</th>
+                    <th className="px-2.5 py-1.5 font-medium">Renovação</th>
                     <th className="px-2.5 py-1.5 font-medium text-right">Ações</th>
                   </tr>
                 </thead>
@@ -435,6 +435,7 @@ export default function Formalizacao() {
                   {filteredHistorico.map((c) => {
                     const prop = propostas[c.id];
                     const dias = c.minuta_assinada_em ? daysSince(c.minuta_assinada_em) : null;
+                    const renov = renovacaoMap.get(c.id) ?? computeRenovacao(c.cadastro_revisado_em, c.minuta_assinada_em);
                     return (
                       <tr key={c.id} className="border-t hover:bg-muted/20">
                         <td className="px-2.5 py-1.5">
@@ -443,7 +444,6 @@ export default function Formalizacao() {
                           </Link>
                         </td>
                         <td className="px-2.5 py-1.5 font-mono text-muted-foreground">{c.cnpj}</td>
-                        
                         <td className="px-2.5 py-1.5 text-right tabular-nums">{fmtBRL(prop?.valor_aprovado ?? null)}</td>
                         <td className="px-2.5 py-1.5">
                           <span>{fmtDate(c.minuta_assinada_em)}</span>
@@ -452,8 +452,22 @@ export default function Formalizacao() {
                           )}
                         </td>
                         <td className="px-2.5 py-1.5">{statusBadge(c.stage)}</td>
+                        <td className="px-2.5 py-1.5">
+                          <RenovacaoBadge info={renov} />
+                        </td>
                         <td className="px-2.5 py-1.5 text-right">
                           <div className="flex items-center justify-end gap-1">
+                            {canRevisar && renov.status !== "em_dia" && renov.status !== "sem_dados" && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-6 px-2 text-[11px]"
+                                onClick={() => setRevisarTarget(c)}
+                                title="Marcar cadastro como revisado"
+                              >
+                                <RotateCcw className="h-3.5 w-3.5 mr-1" /> Revisar
+                              </Button>
+                            )}
                             <Button
                               size="sm"
                               variant="ghost"
@@ -478,6 +492,19 @@ export default function Formalizacao() {
           )}
         </TabsContent>
       </Tabs>
+
+      {revisarTarget && (
+        <MarcarRevisadoDialog
+          cedenteId={revisarTarget.id}
+          cedenteNome={revisarTarget.razao_social}
+          open={!!revisarTarget}
+          onOpenChange={(o) => !o && setRevisarTarget(null)}
+          onSuccess={() => {
+            setRevisarTarget(null);
+            load();
+          }}
+        />
+      )}
     </div>
   );
 }
