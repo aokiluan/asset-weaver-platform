@@ -13,6 +13,8 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { CedenteNovoSheet } from "@/components/cedentes/CedenteNovoSheet";
+import { useAuth } from "@/hooks/useAuth";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface Cedente {
   id: string;
@@ -60,6 +62,8 @@ const fmtCNPJ = (s: string | null | undefined) => {
 
 export default function Cedentes() {
   const navigate = useNavigate();
+  const { hasRole, roles, loading: authLoading } = useAuth();
+  const canCreate = hasRole("admin") || hasRole("comercial") || hasRole("gestor_geral");
   const [items, setItems] = useState<Cedente[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -125,9 +129,24 @@ export default function Cedentes() {
             Cadastro de cedentes, status de análise e limites aprovados.
           </p>
         </div>
-        <Button onClick={() => setNovoOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" /> Novo cadastro
-        </Button>
+        <TooltipProvider delayDuration={200}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span tabIndex={0} className="inline-flex">
+                <Button onClick={() => setNovoOpen(true)} disabled={authLoading || !canCreate}>
+                  <Plus className="h-4 w-4 mr-2" /> Novo cadastro
+                </Button>
+              </span>
+            </TooltipTrigger>
+            {!canCreate && !authLoading && (
+              <TooltipContent side="bottom" className="max-w-xs text-xs">
+                {roles.length === 0
+                  ? "Seu usuário ainda não tem perfil atribuído. Peça a um administrador para liberar o acesso."
+                  : "Apenas Comercial, Gestor geral ou Admin podem cadastrar cedentes."}
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       {/* KPIs */}
