@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
+  AlertTriangle,
   ArrowRight,
   Building2,
   CheckCircle2,
@@ -15,10 +16,18 @@ import {
   FileSignature,
   History,
   Loader2,
+  RotateCcw,
   Search,
 } from "lucide-react";
 import { toast } from "sonner";
 import { downloadMinutaPDF } from "@/lib/minuta-pdf";
+import {
+  computeRenovacao,
+  renovacaoLabel,
+  renovacaoSortKey,
+  type RenovacaoInfo,
+} from "@/lib/cadastro-renovacao";
+import MarcarRevisadoDialog from "@/components/cedentes/MarcarRevisadoDialog";
 
 interface CedenteRow {
   id: string;
@@ -36,6 +45,7 @@ interface CedenteRow {
   stage: string;
   minuta_assinada: boolean;
   minuta_assinada_em: string | null;
+  cadastro_revisado_em: string | null;
   updated_at: string;
 }
 
@@ -69,10 +79,13 @@ export default function Formalizacao() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [tab, setTab] = useState("ativos");
   const [search, setSearch] = useState("");
+  const [revisarTarget, setRevisarTarget] = useState<CedenteRow | null>(null);
 
   const canSign =
     hasRole("admin") || hasRole("formalizacao") || hasRole("gestor_geral");
   const canGenerate = hasRole("admin") || hasRole("formalizacao");
+  const canRevisar =
+    hasRole("admin") || hasRole("formalizacao") || hasRole("cadastro") || hasRole("gestor_geral");
 
   useEffect(() => {
     document.title = "Formalização | Securitizadora";
@@ -81,7 +94,7 @@ export default function Formalizacao() {
   const load = async () => {
     setLoading(true);
     const SELECT =
-      "id,razao_social,nome_fantasia,cnpj,email,telefone,endereco,cidade,estado,cep,setor,faturamento_medio,stage,minuta_assinada,minuta_assinada_em,updated_at";
+      "id,razao_social,nome_fantasia,cnpj,email,telefone,endereco,cidade,estado,cep,setor,faturamento_medio,stage,minuta_assinada,minuta_assinada_em,cadastro_revisado_em,updated_at";
 
     const [{ data: ativos, error: e1 }, { data: assinados, error: e2 }] = await Promise.all([
       supabase.from("cedentes").select(SELECT).eq("stage", "formalizacao").order("updated_at", { ascending: true }),
@@ -218,18 +231,36 @@ export default function Formalizacao() {
     load();
   };
 
+  const renovacaoMap = useMemo(() => {
+    const map = new Map<string, RenovacaoInfo>();
+    for (const c of historico) {
+      map.set(c.id, computeRenovacao(c.cadastro_revisado_em, c.minuta_assinada_em));
+    }
+    return map;
+  }, [historico]);
+
   const filteredHistorico = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return historico;
-    return historico.filter((c) => {
-      const prop = propostas[c.id];
-      return (
-        c.razao_social?.toLowerCase().includes(q) ||
-        c.cnpj?.includes(q) ||
-        prop?.codigo?.toLowerCase().includes(q)
-      );
+    const base = !q
+      ? [...historico]
+      : historico.filter((c) => {
+          const prop = propostas[c.id];
+          return (
+            c.razao_social?.toLowerCase().includes(q) ||
+            c.cnpj?.includes(q) ||
+            prop?.codigo?.toLowerCase().includes(q)
+          );
+        });
+    base.sort((a, b) => {
+      const ka = renovacaoSortKey(renovacaoMap.get(a.id) ?? { status: "sem_dados", proximaEm: null, diasParaVencer: null });
+      const kb = renovacaoSortKey(renovacaoMap.get(b.id) ?? { status: "sem_dados", proximaEm: null, diasParaVencer: null });
+      if (ka !== kb) return ka - kb;
+      const da = a.minuta_assinada_em ? new Date(a.minuta_assinada_em).getTime() : 0;
+      const db = b.minuta_assinada_em ? new Date(b.minuta_assinada_em).getTime() : 0;
+      return db - da;
     });
-  }, [historico, propostas, search]);
+    return base;
+  }, [historico, propostas, search, renovacaoMap]);
 
   if (loading) {
     return (
@@ -241,6 +272,8 @@ export default function Formalizacao() {
 
   const aguardandoAssinatura = cedentes.filter((c) => !c.minuta_assinada).length;
   const prontos = cedentes.filter((c) => c.minuta_assinada).length;
+  const renovacoesVencidas = Array.from(renovacaoMap.values()).filter((r) => r.status === "vencida").length;
+  const renovacoesAtencao = Array.from(renovacaoMap.values()).filter((r) => r.status === "atencao").length;
 
   const statusBadge = (stage: string) => {
     if (stage === "ativo")
@@ -263,10 +296,17 @@ export default function Formalizacao() {
         </p>
       </header>
 
-      <div className="grid gap-2 md:grid-cols-3">
+      <div className="grid gap-2 md:grid-cols-4">
         <StatCard label="Em formalização" value={cedentes.length} icon={<FileSignature className="h-3.5 w-3.5" />} />
         <StatCard label="Aguardando assinatura" value={aguardandoAssinatura} icon={<Clock className="h-3.5 w-3.5" />} highlight={aguardandoAssinatura > 0} />
         <StatCard label="Prontos para ativar" value={prontos} icon={<CheckCircle2 className="h-3.5 w-3.5" />} />
+        <StatCard
+          label={renovacoesVencidas > 0 ? "Renovações vencidas" : "Renovação cadastral"}
+          value={renovacoesVencidas > 0 ? renovacoesVencidas : renovacoesAtencao}
+          icon={renovacoesVencidas > 0 ? <AlertTriangle className="h-3.5 w-3.5" /> : <RotateCcw className="h-3.5 w-3.5" />}
+          tone={renovacoesVencidas > 0 ? "danger" : renovacoesAtencao > 0 ? "warning" : undefined}
+          hint={renovacoesVencidas > 0 ? `+ ${renovacoesAtencao} próx. do vencimento` : renovacoesAtencao > 0 ? "vencendo em até 30d" : "todos em dia"}
+        />
       </div>
 
       <Tabs value={tab} onValueChange={setTab}>
@@ -384,10 +424,10 @@ export default function Formalizacao() {
                   <tr className="text-left">
                     <th className="px-2.5 py-1.5 font-medium">Cedente</th>
                     <th className="px-2.5 py-1.5 font-medium">CNPJ</th>
-                    
                     <th className="px-2.5 py-1.5 font-medium text-right">Valor aprovado</th>
                     <th className="px-2.5 py-1.5 font-medium">Assinado em</th>
                     <th className="px-2.5 py-1.5 font-medium">Status</th>
+                    <th className="px-2.5 py-1.5 font-medium">Renovação</th>
                     <th className="px-2.5 py-1.5 font-medium text-right">Ações</th>
                   </tr>
                 </thead>
@@ -395,6 +435,7 @@ export default function Formalizacao() {
                   {filteredHistorico.map((c) => {
                     const prop = propostas[c.id];
                     const dias = c.minuta_assinada_em ? daysSince(c.minuta_assinada_em) : null;
+                    const renov = renovacaoMap.get(c.id) ?? computeRenovacao(c.cadastro_revisado_em, c.minuta_assinada_em);
                     return (
                       <tr key={c.id} className="border-t hover:bg-muted/20">
                         <td className="px-2.5 py-1.5">
@@ -403,7 +444,6 @@ export default function Formalizacao() {
                           </Link>
                         </td>
                         <td className="px-2.5 py-1.5 font-mono text-muted-foreground">{c.cnpj}</td>
-                        
                         <td className="px-2.5 py-1.5 text-right tabular-nums">{fmtBRL(prop?.valor_aprovado ?? null)}</td>
                         <td className="px-2.5 py-1.5">
                           <span>{fmtDate(c.minuta_assinada_em)}</span>
@@ -412,8 +452,22 @@ export default function Formalizacao() {
                           )}
                         </td>
                         <td className="px-2.5 py-1.5">{statusBadge(c.stage)}</td>
+                        <td className="px-2.5 py-1.5">
+                          <RenovacaoBadge info={renov} />
+                        </td>
                         <td className="px-2.5 py-1.5 text-right">
                           <div className="flex items-center justify-end gap-1">
+                            {canRevisar && renov.status !== "em_dia" && renov.status !== "sem_dados" && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-6 px-2 text-[11px]"
+                                onClick={() => setRevisarTarget(c)}
+                                title="Marcar cadastro como revisado"
+                              >
+                                <RotateCcw className="h-3.5 w-3.5 mr-1" /> Revisar
+                              </Button>
+                            )}
                             <Button
                               size="sm"
                               variant="ghost"
@@ -438,6 +492,19 @@ export default function Formalizacao() {
           )}
         </TabsContent>
       </Tabs>
+
+      {revisarTarget && (
+        <MarcarRevisadoDialog
+          cedenteId={revisarTarget.id}
+          cedenteNome={revisarTarget.razao_social}
+          open={!!revisarTarget}
+          onOpenChange={(o) => !o && setRevisarTarget(null)}
+          onSuccess={() => {
+            setRevisarTarget(null);
+            load();
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -447,19 +514,58 @@ function StatCard({
   value,
   icon,
   highlight,
+  tone,
+  hint,
 }: {
   label: string;
   value: number;
   icon: React.ReactNode;
   highlight?: boolean;
+  tone?: "danger" | "warning";
+  hint?: string;
 }) {
+  const toneCls =
+    tone === "danger"
+      ? "border-destructive/50 bg-destructive/5 text-destructive"
+      : tone === "warning"
+      ? "border-amber-500/40 bg-amber-500/5 text-amber-700 dark:text-amber-400"
+      : highlight
+      ? "border-primary/40 bg-primary/5"
+      : "";
   return (
-    <div className={`rounded-lg border bg-card p-2.5 ${highlight ? "border-primary/40 bg-primary/5" : ""}`}>
+    <div className={`rounded-lg border bg-card p-2.5 ${toneCls}`}>
       <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
         {icon}
         <span>{label}</span>
       </div>
       <div className="text-[16px] font-medium tracking-tight mt-1 tabular-nums leading-none">{value}</div>
+      {hint && <div className="text-[10px] text-muted-foreground mt-1 leading-none">{hint}</div>}
     </div>
+  );
+}
+
+function RenovacaoBadge({ info }: { info: RenovacaoInfo }) {
+  const label = renovacaoLabel(info);
+  if (info.status === "vencida") {
+    return (
+      <Badge variant="outline" className="gap-1 text-[10px] h-5 border-destructive/50 text-destructive bg-destructive/5">
+        <AlertTriangle className="h-3 w-3" /> {label}
+      </Badge>
+    );
+  }
+  if (info.status === "atencao") {
+    return (
+      <Badge variant="outline" className="gap-1 text-[10px] h-5 border-amber-500/40 text-amber-700 dark:text-amber-400 bg-amber-500/5">
+        <Clock className="h-3 w-3" /> {label}
+      </Badge>
+    );
+  }
+  if (info.status === "sem_dados") {
+    return <Badge variant="outline" className="text-[10px] h-5 text-muted-foreground">—</Badge>;
+  }
+  return (
+    <Badge variant="outline" className="gap-1 text-[10px] h-5 text-muted-foreground">
+      <CheckCircle2 className="h-3 w-3" /> {label}
+    </Badge>
   );
 }
