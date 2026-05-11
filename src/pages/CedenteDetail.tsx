@@ -288,7 +288,6 @@ export default function CedenteDetail() {
             isOwner={isOwner}
             gateInfo={{
               hasVisitReport,
-              hasPleito,
               obrigatoriosFaltando,
               docsRejeitados,
               hasParecer,
