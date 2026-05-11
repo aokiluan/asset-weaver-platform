@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { VoteBriefing } from "./VoteBriefing";
 import { ReadingChecklist, ChecklistItem } from "./ReadingChecklist";
 import { downloadAtaById } from "@/lib/comite-ata-pdf";
+import { ReapresentarComiteDialog } from "./ReapresentarComiteDialog";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
