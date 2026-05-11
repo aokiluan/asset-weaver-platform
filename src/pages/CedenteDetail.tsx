@@ -87,7 +87,6 @@ export default function CedenteDetail() {
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [documentos, setDocumentos] = useState<Documento[]>([]);
   const [hasVisitReport, setHasVisitReport] = useState(false);
-  const [hasPleito, setHasPleito] = useState(false);
 
   const [hasParecer, setHasParecer] = useState(false);
   const [comiteDecidido, setComiteDecidido] = useState(false);
@@ -127,22 +126,33 @@ export default function CedenteDetail() {
       if (!prev) setLoading(true);
       return prev;
     });
-    const [{ data: ced, error: e1 }, { data: cats }, { data: docs }, { data: visit }, { data: props }, { data: hist }, { data: creditRep }] =
+    const [{ data: ced, error: e1 }, { data: cats }, { data: docs }, { data: visit }, { data: hist }, { data: creditRep }] =
       await Promise.all([
         supabase.from("cedentes").select("*").eq("id", id).maybeSingle(),
         supabase.from("documento_categorias").select("id,nome,obrigatorio,ordem").eq("ativo", true).order("ordem"),
         supabase.from("documentos").select("*").eq("cedente_id", id).order("created_at", { ascending: false }),
         supabase.from("cedente_visit_reports").select("id").eq("cedente_id", id).maybeSingle(),
-        supabase.from("credit_proposals").select("id,stage,created_at,approval_levels(approver,votos_minimos)").eq("cedente_id", id).order("created_at", { ascending: false }),
         supabase.from("cedente_history").select("*").eq("cedente_id", id).order("created_at", { ascending: false }),
         supabase.from("credit_reports").select("completude,recomendacao").eq("cedente_id", id).maybeSingle(),
       ]);
     setLoading(false);
     if (e1) { toast.error("Erro ao carregar", { description: e1.message }); return; }
+
+    // Carrega propostas só se o cedente já chegou ao comitê (ou além).
+    const stageNow = (ced as Cedente)?.stage as string | undefined;
+    let propsList: { id: string; stage: string; created_at: string; approval_levels: { approver: string; votos_minimos: number } | null }[] = [];
+    if (stageNow && ["comite", "formalizacao", "ativo", "inativo"].includes(stageNow)) {
+      const { data: props } = await supabase
+        .from("credit_proposals")
+        .select("id,stage,created_at,approval_levels(approver,votos_minimos)")
+        .eq("cedente_id", id)
+        .order("created_at", { ascending: false });
+      propsList = (props ?? []) as typeof propsList;
+    }
+
     setCedente(ced as Cedente);
     setCategorias(cats ?? []);
     const docsList = (docs as Documento[]) ?? [];
-    // Hidrata nome do reviewer p/ exibir o selo "Verificado por X"
     const reviewerIds = Array.from(new Set(docsList.map((d) => d.reviewed_by).filter(Boolean) as string[]));
     let reviewerMap: Record<string, string> = {};
     if (reviewerIds.length > 0) {
@@ -154,11 +164,10 @@ export default function CedenteDetail() {
       reviewer_nome: d.reviewed_by ? reviewerMap[d.reviewed_by] ?? null : null,
     })));
     setHasVisitReport(!!visit);
-    const propsList = (props ?? []) as { id: string; stage: string; created_at: string; approval_levels: { approver: string; votos_minimos: number } | null }[];
 
-    setHasPleito(propsList.length > 0);
+    // Gate "Parecer de crédito concluído" lê SOMENTE de credit_reports (fluxo novo).
     const reportConcluido = !!creditRep && (creditRep as any).completude === 8 && !!(creditRep as any).recomendacao;
-    setHasParecer(reportConcluido || propsList.some((p) => ["parecer", "comite", "aprovado"].includes(p.stage)));
+    setHasParecer(reportConcluido);
     setComiteDecidido(propsList.some((p) => p.stage === "aprovado"));
     setMinutaAssinada(!!(ced as any)?.minuta_assinada);
     const latest = propsList[0] ?? null;
@@ -263,7 +272,6 @@ export default function CedenteDetail() {
           isOwner={isOwner}
           gateInfo={{
             hasVisitReport,
-            hasPleito,
             obrigatoriosFaltando,
             docsRejeitados,
             hasParecer,
@@ -280,7 +288,6 @@ export default function CedenteDetail() {
             isOwner={isOwner}
             gateInfo={{
               hasVisitReport,
-              hasPleito,
               obrigatoriosFaltando,
               docsRejeitados,
               hasParecer,
@@ -519,32 +526,12 @@ function ComiteTabContent({
   cedenteId,
   cedenteStage,
   latestProposal,
-  onProvisioned,
 }: {
   cedenteId: string;
   cedenteStage: CedenteStage;
   latestProposal: { id: string; stage: string; approver: string | null; votos_minimos: number } | null;
-  onProvisioned: () => void;
+  onProvisioned?: () => void;
 }) {
-  const [provisioning, setProvisioning] = useState(false);
-
-  useEffect(() => {
-    if (!latestProposal && !provisioning) {
-      setProvisioning(true);
-      supabase
-        .rpc("ensure_proposal_for_cedente", { _cedente_id: cedenteId })
-        .then(({ error }) => {
-          if (error) {
-            toast.error("Não foi possível abrir o comitê", { description: error.message });
-          } else {
-            onProvisioned();
-          }
-        })
-        .then(() => setProvisioning(false));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [latestProposal?.id]);
-
   if (latestProposal) {
     return (
       <div className="mt-4 space-y-3">
@@ -558,10 +545,15 @@ function ComiteTabContent({
     );
   }
 
+  // Sem proposta: o cedente ainda não chegou ao comitê. A criação ocorre
+  // automaticamente via trigger ao mover o cedente para a etapa "comite".
   return (
     <div className="mt-4 rounded-lg border bg-card p-10 text-center space-y-2">
-      <Loader2 className="h-6 w-6 mx-auto animate-spin text-muted-foreground" />
-      <p className="text-sm text-muted-foreground">Preparando sessão do comitê…</p>
+      <p className="text-sm text-muted-foreground">
+        {cedenteStage === "comite"
+          ? "Aguardando criação da sessão do comitê…"
+          : "Esta sessão fica disponível quando o cedente entra na etapa Comitê."}
+      </p>
     </div>
   );
 }

@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.ensure_proposal_for_cedente(uuid);

@@ -42,9 +42,10 @@ export interface CedenteForGates {
   stage: CedenteStage;
   // dados auxiliares vindos da página
   hasVisitReport: boolean;
-  hasPleito: boolean;
   obrigatoriosFaltando: string[]; // nomes das categorias obrigatórias sem documento aprovado
   docsRejeitados: number;
+  // hasParecer agora vem de credit_reports (completude=8 + recomendação preenchida).
+  // O fluxo legado via credit_proposals NÃO alimenta mais este gate.
   hasParecer: boolean;
   comiteDecidido: boolean;
   minutaAssinada: boolean;
