@@ -27,7 +27,7 @@ export default function AdminUsuarios() {
   const [loading, setLoading] = useState(true);
   const [assignOpen, setAssignOpen] = useState(false);
   const [emailLookup, setEmailLookup] = useState("");
-  const [roleToAdd, setRoleToAdd] = useState<AppRole>("comercial");
+  const [rolesToAdd, setRolesToAdd] = useState<AppRole[]>([]);
   const [adding, setAdding] = useState(false);
 
   const teamsById = useMemo(() => Object.fromEntries(teams.map(t => [t.id, t])), [teams]);
@@ -80,7 +80,8 @@ export default function AdminUsuarios() {
   };
 
   const assignRole = async () => {
-    if (!emailLookup.trim()) { toast.error("Informe o e-mail"); return; }
+    if (!emailLookup.trim()) { toast.error("Selecione um usuário"); return; }
+    if (rolesToAdd.length === 0) { toast.error("Selecione ao menos uma função"); return; }
     setAdding(true);
     const { data: uid, error: e1 } = await supabase.rpc("admin_find_user_by_email", { _email: emailLookup.trim() });
     if (e1 || !uid) {
@@ -88,15 +89,15 @@ export default function AdminUsuarios() {
       toast.error("Usuário não encontrado", { description: "O usuário precisa ter feito login pelo menos uma vez." });
       return;
     }
-    const { error: e2 } = await supabase.from("user_roles").insert({ user_id: uid as string, role: roleToAdd });
+    const rows = rolesToAdd.map((r) => ({ user_id: uid as string, role: r }));
+    const { error: e2 } = await supabase.from("user_roles").upsert(rows, { onConflict: "user_id,role", ignoreDuplicates: true });
     setAdding(false);
     if (e2) {
-      if (e2.message.includes("duplicate")) toast.error("Usuário já tem essa função");
-      else toast.error("Erro", { description: e2.message });
+      toast.error("Erro", { description: e2.message });
       return;
     }
-    toast.success("Função atribuída");
-    setEmailLookup(""); setAssignOpen(false); load();
+    toast.success(rolesToAdd.length > 1 ? "Funções atribuídas" : "Função atribuída");
+    setEmailLookup(""); setRolesToAdd([]); setAssignOpen(false); load();
   };
 
   return (
