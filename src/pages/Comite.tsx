@@ -145,6 +145,7 @@ export default function Comite() {
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="h-8">
           <TabsTrigger value="pauta" className="text-[11px] h-7">Em pauta ({proposals.length})</TabsTrigger>
+          <TabsTrigger value="reprovados" className="text-[11px] h-7">Reprovados ({reprovados.length})</TabsTrigger>
           <TabsTrigger value="atas" className="text-[11px] h-7">Atas ({minutes.length})</TabsTrigger>
         </TabsList>
 
