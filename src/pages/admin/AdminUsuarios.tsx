@@ -131,13 +131,30 @@ export default function AdminUsuarios() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Função</Label>
-                  <Select value={roleToAdd} onValueChange={(v) => setRoleToAdd(v as AppRole)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {ALL_ROLES.map(r => <SelectItem key={r} value={r}>{ROLE_LABEL[r]}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                  <Label>Funções</Label>
+                  <div className="rounded-md border p-2 grid grid-cols-2 gap-1.5">
+                    {ALL_ROLES.map((r) => {
+                      const checked = rolesToAdd.includes(r);
+                      return (
+                        <label key={r} className="flex items-center gap-2 text-[12px] cursor-pointer hover:bg-accent rounded px-1.5 py-1">
+                          <input
+                            type="checkbox"
+                            className="h-3.5 w-3.5 accent-primary"
+                            checked={checked}
+                            onChange={(e) => {
+                              setRolesToAdd((prev) =>
+                                e.target.checked ? [...prev, r] : prev.filter((x) => x !== r),
+                              );
+                            }}
+                          />
+                          {ROLE_LABEL[r]}
+                        </label>
+                      );
+                    })}
+                  </div>
+                  {rolesToAdd.length > 0 && (
+                    <p className="text-[11px] text-muted-foreground">{rolesToAdd.length} selecionada(s)</p>
+                  )}
                 </div>
               </div>
               <DialogFooter>
