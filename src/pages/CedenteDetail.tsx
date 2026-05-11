@@ -87,7 +87,6 @@ export default function CedenteDetail() {
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [documentos, setDocumentos] = useState<Documento[]>([]);
   const [hasVisitReport, setHasVisitReport] = useState(false);
-  const [hasPleito, setHasPleito] = useState(false);
 
   const [hasParecer, setHasParecer] = useState(false);
   const [comiteDecidido, setComiteDecidido] = useState(false);
