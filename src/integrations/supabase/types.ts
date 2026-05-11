@@ -1626,6 +1626,10 @@ export type Database = {
         Args: { _cedente_id: string; _user_id: string }
         Returns: boolean
       }
+      ensure_committee_session_for_proposal: {
+        Args: { _proposal_id: string }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
