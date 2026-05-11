@@ -478,12 +478,10 @@ export function ConciliacaoDocumentosSheet({
         )}
 
         {/* Dialog de motivo */}
-        <Dialog open={acao !== null} onOpenChange={(v) => { if (!v) { setAcao(null); setMotivo(""); } }}>
+        <Dialog open={reprovarOpen} onOpenChange={(v) => { if (!v) { setReprovarOpen(false); setMotivo(""); } }}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>
-                {acao === "reprovar" ? "Reprovar documento" : "Devolver para reclassificar"}
-              </DialogTitle>
+              <DialogTitle>Reprovar documento</DialogTitle>
               <DialogDescription>
                 O motivo será publicado no <strong>Histórico</strong> do cedente para que os outros perfis vejam.
               </DialogDescription>
@@ -494,23 +492,21 @@ export function ConciliacaoDocumentosSheet({
                 rows={4}
                 value={motivo}
                 onChange={(e) => setMotivo(e.target.value)}
-                placeholder={acao === "reprovar"
-                  ? "Ex.: documento ilegível, fora do prazo de validade, divergência de CNPJ…"
-                  : "Ex.: categoria errada — este arquivo é um contrato social, não um cartão CNPJ."}
+                placeholder="Ex.: documento ilegível, fora do prazo de validade, divergência de CNPJ…"
                 autoFocus
               />
             </div>
             <DialogFooter>
-              <Button variant="ghost" onClick={() => { setAcao(null); setMotivo(""); }} disabled={enviandoMotivo}>
+              <Button variant="ghost" onClick={() => { setReprovarOpen(false); setMotivo(""); }} disabled={enviandoMotivo}>
                 Cancelar
               </Button>
               <Button
                 onClick={confirmarMotivo}
                 disabled={!motivo.trim() || enviandoMotivo}
-                className={acao === "reprovar" ? "bg-destructive hover:bg-destructive/90 text-destructive-foreground" : ""}
+                className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
               >
                 {enviandoMotivo && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                {acao === "reprovar" ? "Reprovar e publicar" : "Devolver e publicar"}
+                Reprovar e publicar
               </Button>
             </DialogFooter>
           </DialogContent>
