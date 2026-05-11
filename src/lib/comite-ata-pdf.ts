@@ -147,6 +147,25 @@ export function generateAtaPdf(d: AtaData): jsPDF {
   if (meta) doc.text(meta, MARGIN, y);
   y += 8;
 
+  // Reapresentação (se aplicável)
+  const motivoReap = (d.pleito as any)?.motivo_reapresentacao as string | null | undefined;
+  const mudancasReap = (d.pleito as any)?.mudancas_reapresentacao as string | null | undefined;
+  if (motivoReap && motivoReap.trim()) {
+    y = ensureSpace(doc, y, 14);
+    y = sectionTitle(doc, "MOTIVO DA REAPRESENTAÇÃO", y);
+    doc.setFontSize(9);
+    y = wrappedText(doc, motivoReap, MARGIN, y, CONTENT_W);
+    if (mudancasReap && mudancasReap.trim()) {
+      y += 1;
+      doc.setFont("helvetica", "bold");
+      doc.text("Mudanças desde a última votação:", MARGIN, y);
+      y += 4;
+      doc.setFont("helvetica", "normal");
+      y = wrappedText(doc, mudancasReap, MARGIN, y, CONTENT_W);
+    }
+    y += 4;
+  }
+
   // Pleito
   y = sectionTitle(doc, "PLEITO DE CRÉDITO", y);
   doc.setFontSize(9);

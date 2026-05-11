@@ -856,8 +856,11 @@ export type Database = {
           finalidade: string | null
           garantias: string | null
           id: string
+          motivo_reapresentacao: string | null
+          mudancas_reapresentacao: string | null
           observacoes: string | null
           prazo_dias: number | null
+          proposta_anterior_id: string | null
           stage: Database["public"]["Enums"]["proposal_stage"]
           taxa_sugerida: number | null
           updated_at: string
@@ -876,8 +879,11 @@ export type Database = {
           finalidade?: string | null
           garantias?: string | null
           id?: string
+          motivo_reapresentacao?: string | null
+          mudancas_reapresentacao?: string | null
           observacoes?: string | null
           prazo_dias?: number | null
+          proposta_anterior_id?: string | null
           stage?: Database["public"]["Enums"]["proposal_stage"]
           taxa_sugerida?: number | null
           updated_at?: string
@@ -896,8 +902,11 @@ export type Database = {
           finalidade?: string | null
           garantias?: string | null
           id?: string
+          motivo_reapresentacao?: string | null
+          mudancas_reapresentacao?: string | null
           observacoes?: string | null
           prazo_dias?: number | null
+          proposta_anterior_id?: string | null
           stage?: Database["public"]["Enums"]["proposal_stage"]
           taxa_sugerida?: number | null
           updated_at?: string
@@ -917,6 +926,13 @@ export type Database = {
             columns: ["cedente_id"]
             isOneToOne: false
             referencedRelation: "cedentes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_proposals_proposta_anterior_id_fkey"
+            columns: ["proposta_anterior_id"]
+            isOneToOne: false
+            referencedRelation: "credit_proposals"
             referencedColumns: ["id"]
           },
         ]
@@ -1735,6 +1751,14 @@ export type Database = {
       is_team_manager_of: {
         Args: { _target: string; _viewer: string }
         Returns: boolean
+      }
+      reapresentar_proposta_comite: {
+        Args: {
+          _cedente_id: string
+          _justificativa: string
+          _mudancas?: string
+        }
+        Returns: string
       }
     }
     Enums: {

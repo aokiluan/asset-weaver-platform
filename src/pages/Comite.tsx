@@ -7,11 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
-  ArrowRight, Building2, CheckCircle2, Clock, FileDown, Loader2, Search,
+  ArrowRight, Building2, CheckCircle2, Clock, FileDown, Loader2, RotateCcw, Search,
   ThumbsDown, ThumbsUp, Trophy, Users, Vote,
 } from "lucide-react";
 import { toast } from "sonner";
 import { downloadAtaById } from "@/lib/comite-ata-pdf";
+import { ReapresentarComiteDialog } from "@/components/credito/ReapresentarComiteDialog";
 
 type VoteDecision = "favoravel" | "desfavoravel" | "abstencao";
 
@@ -99,6 +100,18 @@ export default function Comite() {
     );
   }, [minutes, search]);
 
+  // Cedentes cuja última ata foi reprovada (passíveis de reapresentação)
+  const reprovados = useMemo(() => {
+    const seen = new Set<string>();
+    const out: Minute[] = [];
+    for (const m of minutes) {
+      if (seen.has(m.cedente_id)) continue;
+      seen.add(m.cedente_id);
+      if (m.decisao === "reprovado") out.push(m);
+    }
+    return out;
+  }, [minutes]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16 text-muted-foreground">
@@ -132,6 +145,7 @@ export default function Comite() {
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="h-8">
           <TabsTrigger value="pauta" className="text-[11px] h-7">Em pauta ({proposals.length})</TabsTrigger>
+          <TabsTrigger value="reprovados" className="text-[11px] h-7">Reprovados ({reprovados.length})</TabsTrigger>
           <TabsTrigger value="atas" className="text-[11px] h-7">Atas ({minutes.length})</TabsTrigger>
         </TabsList>
 
@@ -199,6 +213,71 @@ export default function Comite() {
                   </div>
                 );
               })}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="reprovados" className="mt-3 space-y-2">
+          {reprovados.length === 0 ? (
+            <div className="rounded-lg border bg-card p-8 text-center">
+              <Trophy className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+              <p className="text-[12px] text-muted-foreground">Nenhum cedente reprovado pendente de reapresentação.</p>
+            </div>
+          ) : (
+            <div className="rounded-lg border bg-card overflow-hidden">
+              <table className="w-full text-[11px]">
+                <thead className="bg-muted/40 text-muted-foreground">
+                  <tr>
+                    <th className="text-left px-2.5 py-1.5 font-medium">Cedente</th>
+                    <th className="text-left px-2.5 py-1.5 font-medium">Última ata</th>
+                    <th className="text-left px-2.5 py-1.5 font-medium">Votos</th>
+                    <th className="text-right px-2.5 py-1.5 font-medium">Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {reprovados.map((m) => {
+                    const t = m.totais ?? {};
+                    return (
+                      <tr key={m.id} className="border-t hover:bg-muted/20">
+                        <td className="px-2.5 py-1.5">
+                          <div className="font-medium leading-tight">{m.cedentes?.razao_social ?? "—"}</div>
+                          <div className="text-[10px] text-muted-foreground font-mono leading-none">{m.cedentes?.cnpj}</div>
+                        </td>
+                        <td className="px-2.5 py-1.5">
+                          <span className="font-mono">{m.numero_comite}º</span>
+                          <span className="text-muted-foreground"> · {fmtDate(m.realizado_em)}</span>
+                        </td>
+                        <td className="px-2.5 py-1.5 text-muted-foreground">
+                          <span className="text-green-600">{t.favoraveis ?? 0}</span> × <span className="text-destructive">{t.desfavoraveis ?? 0}</span>
+                        </td>
+                        <td className="px-2.5 py-1.5 text-right">
+                          <div className="inline-flex gap-1">
+                            <Button size="sm" variant="outline" className="h-6 text-[10px] gap-1 px-1.5"
+                              onClick={() => downloadAtaById(m.id).catch((e) => toast.error(e?.message ?? "Falha"))}>
+                              <FileDown className="h-3 w-3" /> Ata
+                            </Button>
+                            {(hasRole("admin") || hasRole("credito") || hasRole("comite")) && (
+                              <ReapresentarComiteDialog
+                                cedenteId={m.cedente_id}
+                                cedenteNome={m.cedentes?.razao_social ?? undefined}
+                                onDone={load}
+                                trigger={
+                                  <Button size="sm" variant="default" className="h-6 text-[10px] gap-1 px-1.5">
+                                    <RotateCcw className="h-3 w-3" /> Reapresentar
+                                  </Button>
+                                }
+                              />
+                            )}
+                            <Button asChild size="sm" variant="ghost" className="h-6 text-[10px] gap-1 px-1.5">
+                              <Link to={`/cedentes/${m.cedente_id}?tab=comite`}>Abrir</Link>
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           )}
         </TabsContent>

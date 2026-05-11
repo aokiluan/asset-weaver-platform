@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { VoteBriefing } from "./VoteBriefing";
 import { ReadingChecklist, ChecklistItem } from "./ReadingChecklist";
 import { downloadAtaById } from "@/lib/comite-ata-pdf";
+import { ReapresentarComiteDialog } from "./ReapresentarComiteDialog";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -275,6 +276,9 @@ export function ComiteGameSession({ proposalId, votosMinimos, proposalStage, ced
               <Button onClick={baixarAta} size="sm" variant="default" className="h-7 text-[11px]">
                 <FileDown className="h-3.5 w-3.5 mr-1.5" /> Baixar ata (PDF)
               </Button>
+            )}
+            {isClosed && decisaoFinal === "reprovado" && cedenteId && (hasRole("admin") || hasRole("credito") || hasRole("comite")) && (
+              <ReapresentarComiteDialog cedenteId={cedenteId} />
             )}
             {canManage && session.status === "aberta" && pendentes.length > 0 && (
               <Button onClick={() => setForceOpen(true)} disabled={busy} size="sm" variant="outline" className="h-7 text-[11px]">

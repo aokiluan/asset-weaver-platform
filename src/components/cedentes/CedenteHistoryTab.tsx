@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Loader2, Send, MessageSquare, ArrowRight, Pencil, FileDown, Vote } from "lucide-react";
+import { Loader2, Send, MessageSquare, ArrowRight, Pencil, FileDown, Vote, Ban, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { CedenteStage, STAGE_LABEL, STAGE_COLORS } from "@/lib/cedente-stages";
 import { downloadAtaById } from "@/lib/comite-ata-pdf";
@@ -17,7 +17,7 @@ interface HistoryItem {
   evento: string;
   stage_anterior: CedenteStage | null;
   stage_novo: CedenteStage | null;
-  detalhes: { comentario?: string; minute_id?: string; decisao?: string } | null;
+  detalhes: { comentario?: string; minute_id?: string; decisao?: string; numero_comite?: number; justificativa?: string; mudancas?: string; nova_proposta_id?: string; proposta_anterior_id?: string } | null;
   created_at: string;
 }
 
@@ -174,19 +174,28 @@ function HistoryRow({ item, profile }: { item: HistoryItem; profile?: ProfileLit
   const isCriado = item.evento === "criado";
   const isStage = item.evento === "mudanca_estagio";
   const isAta = item.evento === "ata_comite";
+  const isReprovado = item.evento === "reprovado_comite";
+  const isReapresentacao = item.evento === "reapresentacao_comite";
   const comentario = item.detalhes?.comentario;
   const minuteId = item.detalhes?.minute_id;
   const decisao = item.detalhes?.decisao;
+  const numero = item.detalhes?.numero_comite;
+  const justificativa = item.detalhes?.justificativa;
+  const mudancas = item.detalhes?.mudancas;
+
+  const systemEvent = isAta || isReprovado;
+  const avatarLabel = isAta || isReprovado ? "CM" : isReapresentacao ? "RC" : initials(nome);
+  const headerName = isAta || isReprovado ? "Comitê de Crédito" : isReapresentacao ? `${nome} (reapresentação)` : nome;
 
   return (
     <li className="flex gap-2.5 rounded-md border bg-background p-2.5">
       <Avatar className="h-7 w-7 shrink-0">
-        <AvatarFallback className="text-[10px]">{isAta ? "CM" : initials(nome)}</AvatarFallback>
+        <AvatarFallback className="text-[10px]">{avatarLabel}</AvatarFallback>
       </Avatar>
       <div className="flex-1 min-w-0 space-y-1">
         <div className="flex items-center gap-2 flex-wrap leading-none">
-          <span className="text-[12px] font-medium">{isAta ? "Comitê de Crédito" : nome}</span>
-          {!isAta && cargo && <span className="text-[10px] text-muted-foreground">· {cargo}</span>}
+          <span className="text-[12px] font-medium">{headerName}</span>
+          {!systemEvent && cargo && <span className="text-[10px] text-muted-foreground">· {cargo}</span>}
           <span className="text-[10px] text-muted-foreground">· {fmtDateTime(item.created_at)}</span>
         </div>
         <div className="flex items-center gap-1.5 flex-wrap leading-none">
@@ -211,7 +220,7 @@ function HistoryRow({ item, profile }: { item: HistoryItem; profile?: ProfileLit
           {isAta && (
             <>
               <Badge className={`h-[18px] text-[10px] font-medium gap-1 px-1.5 ${decisao === "aprovado" ? "bg-green-600" : "bg-destructive"} text-white`}>
-                <Vote className="h-3 w-3" /> Comitê {decisao === "aprovado" ? "aprovou" : "reprovou"}
+                <Vote className="h-3 w-3" /> {numero ? `${numero}º Comitê` : "Comitê"} {decisao === "aprovado" ? "aprovou" : "reprovou"}
               </Badge>
               {minuteId && (
                 <Button
@@ -223,9 +232,25 @@ function HistoryRow({ item, profile }: { item: HistoryItem; profile?: ProfileLit
               )}
             </>
           )}
+          {isReprovado && (
+            <Badge variant="destructive" className="h-[18px] text-[10px] font-medium gap-1 px-1.5">
+              <Ban className="h-3 w-3" /> Cedente arquivado em Inativo
+            </Badge>
+          )}
+          {isReapresentacao && (
+            <Badge variant="outline" className="h-[18px] text-[10px] font-medium gap-1 px-1.5 border-primary/40 text-primary">
+              <RotateCcw className="h-3 w-3" /> Reapresentação ao comitê
+            </Badge>
+          )}
         </div>
         {comentario && (
           <p className="text-[12px] leading-tight whitespace-pre-wrap pt-0.5">{comentario}</p>
+        )}
+        {isReapresentacao && justificativa && (
+          <div className="text-[12px] leading-tight pt-0.5 space-y-1">
+            <p><span className="text-[10px] uppercase tracking-wide text-muted-foreground">Justificativa:</span> {justificativa}</p>
+            {mudancas && <p><span className="text-[10px] uppercase tracking-wide text-muted-foreground">Mudanças:</span> {mudancas}</p>}
+          </div>
         )}
       </div>
     </li>
