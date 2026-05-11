@@ -1,15 +1,17 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+} from "@/components/ui/dialog";
+import {
   CheckCircle2, XCircle, ChevronLeft, ChevronRight, Loader2, FileText,
   Sparkles, Download, PartyPopper, AlertTriangle, Undo2,
 } from "lucide-react";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
 import type { Categoria, Documento } from "./DocumentosUploadKanban";
 
 interface Props {
@@ -30,11 +32,12 @@ const fmtBytes = (b: number | null) => {
   return `${(b / 1024 / 1024).toFixed(2)} MB`;
 };
 
+type MotivoAcao = "devolver" | "reprovar" | null;
+
 export function ConciliacaoDocumentosSheet({
   open, onOpenChange, cedenteId, cedenteRazaoSocial, cedenteCnpj,
   documentos, categorias, onChanged,
 }: Props) {
-  // Filtros da fila
   const [somenteComCategoria, setSomenteComCategoria] = useState(true);
 
   const pendentesTodos = useMemo(
@@ -55,28 +58,25 @@ export function ConciliacaoDocumentosSheet({
   const [idx, setIdx] = useState(0);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
-  const [obs, setObs] = useState("");
-  const obsTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Dialog de motivo (devolver/reprovar)
+  const [acao, setAcao] = useState<MotivoAcao>(null);
+  const [motivo, setMotivo] = useState("");
+  const [enviandoMotivo, setEnviandoMotivo] = useState(false);
 
   const current = fila[idx] ?? null;
 
-  // Reset índice quando reabre
-  useEffect(() => {
-    if (open) setIdx(0);
-  }, [open]);
+  useEffect(() => { if (open) setIdx(0); }, [open]);
 
-  // Se o documento atual saiu da fila (foi aprovado/reprovado), avança
   useEffect(() => {
     if (!open) return;
     if (idx >= fila.length && fila.length > 0) setIdx(fila.length - 1);
   }, [fila.length, idx, open]);
 
-  // Carrega preview ao trocar
   useEffect(() => {
     let cancelled = false;
     setPreviewUrl(null);
-    if (!current) { setObs(""); return; }
-    setObs(current.observacoes ?? "");
+    if (!current) return;
     setPreviewLoading(true);
     supabase.storage.from("cedente-docs")
       .createSignedUrl(current.storage_path, 300)
@@ -88,7 +88,6 @@ export function ConciliacaoDocumentosSheet({
     return () => { cancelled = true; };
   }, [current?.id, current?.storage_path]);
 
-  // Atalhos
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -97,7 +96,7 @@ export function ConciliacaoDocumentosSheet({
       if (e.key === "ArrowRight") { e.preventDefault(); next(); }
       else if (e.key === "ArrowLeft") { e.preventDefault(); prev(); }
       else if (current && (e.key === "v" || e.key === "V")) { e.preventDefault(); verificar(); }
-      else if (current && (e.key === "r" || e.key === "R")) { e.preventDefault(); reprovar(); }
+      else if (current && (e.key === "r" || e.key === "R")) { e.preventDefault(); abrirMotivo("reprovar"); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -106,17 +105,6 @@ export function ConciliacaoDocumentosSheet({
 
   const next = () => setIdx((i) => Math.min(fila.length - 1, i + 1));
   const prev = () => setIdx((i) => Math.max(0, i - 1));
-
-  const saveObs = (v: string) => {
-    setObs(v);
-    if (!current) return;
-    if (obsTimer.current) clearTimeout(obsTimer.current);
-    obsTimer.current = setTimeout(async () => {
-      const { error } = await supabase.from("documentos")
-        .update({ observacoes: v || null }).eq("id", current.id);
-      if (!error) onChanged();
-    }, 600);
-  };
 
   const verificar = async () => {
     if (!current) return;
@@ -127,32 +115,64 @@ export function ConciliacaoDocumentosSheet({
     if (error) { toast.error("Erro", { description: error.message }); return; }
     toast.success("Documento verificado");
     onChanged();
-    // não precisa avançar manualmente — a fila vai diminuir e o índice ajusta
   };
 
-  const reprovar = async () => {
-    if (!current) return;
+  const abrirMotivo = (a: Exclude<MotivoAcao, null>) => {
+    setMotivo("");
+    setAcao(a);
+  };
+
+  const confirmarMotivo = async () => {
+    if (!current || !acao) return;
+    const txt = motivo.trim();
+    if (!txt) { toast.error("Informe o motivo"); return; }
+    setEnviandoMotivo(true);
     const { data: auth } = await supabase.auth.getUser();
-    const { error } = await supabase.from("documentos").update({
-      status: "reprovado", reviewed_by: auth.user?.id, reviewed_at: new Date().toISOString(),
-    }).eq("id", current.id);
-    if (error) { toast.error("Erro", { description: error.message }); return; }
-    toast.success("Documento reprovado");
-    onChanged();
-  };
 
-  const devolverReclassificar = async () => {
-    if (!current) return;
-    const obsAtual = (obs ?? "").trim();
-    const aviso = "Devolvido ao comercial para reclassificação";
-    const novaObs = obsAtual ? `${obsAtual}\n\n${aviso}` : aviso;
-    const { error } = await supabase.from("documentos").update({
-      categoria_id: null,
-      categoria_sugerida_id: null,
-      observacoes: novaObs,
-    }).eq("id", current.id);
-    if (error) { toast.error("Erro", { description: error.message }); return; }
-    toast.success("Devolvido para o comercial reclassificar");
+    let docError: string | null = null;
+    if (acao === "reprovar") {
+      const { error } = await supabase.from("documentos").update({
+        status: "reprovado", reviewed_by: auth.user?.id, reviewed_at: new Date().toISOString(),
+      }).eq("id", current.id);
+      if (error) docError = error.message;
+    } else {
+      const { error } = await supabase.from("documentos").update({
+        categoria_id: null, categoria_sugerida_id: null,
+      }).eq("id", current.id);
+      if (error) docError = error.message;
+    }
+    if (docError) {
+      setEnviandoMotivo(false);
+      toast.error("Erro ao atualizar documento", { description: docError });
+      return;
+    }
+
+    const prefixo = acao === "reprovar"
+      ? "📄 Documento reprovado"
+      : "📄 Documento devolvido para reclassificar";
+    const comentario = `${prefixo} · ${current.nome_arquivo}\n\n${txt}`;
+    const { error: histErr } = await supabase.from("cedente_history").insert({
+      cedente_id: cedenteId,
+      user_id: auth.user?.id ?? null,
+      evento: "COMENTARIO",
+      detalhes: {
+        comentario,
+        documento_id: current.id,
+        acao: acao === "reprovar" ? "reprovado" : "devolvido_reclassificar",
+      } as any,
+    });
+    setEnviandoMotivo(false);
+    if (histErr) {
+      toast.error("Documento atualizado, mas falhou ao publicar no Histórico", {
+        description: histErr.message,
+      });
+    } else {
+      toast.success(acao === "reprovar"
+        ? "Documento reprovado e registrado no Histórico"
+        : "Devolvido ao comercial e registrado no Histórico");
+    }
+    setAcao(null);
+    setMotivo("");
     onChanged();
   };
 
@@ -304,39 +324,6 @@ export function ConciliacaoDocumentosSheet({
                 </div>
               </section>
 
-              <section className="space-y-1.5">
-                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                  Dados do cedente para conferência
-                </p>
-                <div className="rounded-md border bg-card p-2 space-y-1 text-xs">
-                  <div className="flex justify-between gap-2">
-                    <span className="text-muted-foreground">Razão social</span>
-                    <span className="font-medium text-right">{cedenteRazaoSocial}</span>
-                  </div>
-                  <div className="flex justify-between gap-2">
-                    <span className="text-muted-foreground">CNPJ</span>
-                    <span className="font-mono text-right">{cedenteCnpj}</span>
-                  </div>
-                </div>
-                <p className="text-[11px] text-muted-foreground">
-                  Confira se o documento ao lado bate com estes dados antes de verificar.
-                </p>
-              </section>
-
-              <section className="space-y-1.5">
-                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                  Observações do analista
-                </p>
-                <Textarea
-                  value={obs}
-                  onChange={(e) => saveObs(e.target.value)}
-                  placeholder="Anote ressalvas, motivo de reprovação, pedidos ao comercial..."
-                  rows={4}
-                  className="text-xs resize-none"
-                />
-                <p className="text-[10px] text-muted-foreground">Salva automaticamente.</p>
-              </section>
-
               <section>
                 <Button variant="outline" size="sm" className="w-full text-xs" onClick={baixar}>
                   <Download className="h-3.5 w-3.5 mr-1.5" /> Baixar arquivo original
@@ -386,14 +373,14 @@ export function ConciliacaoDocumentosSheet({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={devolverReclassificar}
-                title="Tira a categoria e adiciona observação para o comercial reclassificar"
+                onClick={() => abrirMotivo("devolver")}
+                title="Tira a categoria e publica um aviso no Histórico do cedente"
               >
                 <Undo2 className="h-4 w-4 mr-2" /> Devolver para reclassificar
               </Button>
               <Button
                 variant="outline"
-                onClick={reprovar}
+                onClick={() => abrirMotivo("reprovar")}
                 className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
               >
                 <XCircle className="h-4 w-4 mr-2" /> Reprovar (R)
@@ -412,10 +399,48 @@ export function ConciliacaoDocumentosSheet({
             </Button>
           </div>
         )}
+
+        {/* Dialog de motivo */}
+        <Dialog open={acao !== null} onOpenChange={(v) => { if (!v) { setAcao(null); setMotivo(""); } }}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>
+                {acao === "reprovar" ? "Reprovar documento" : "Devolver para reclassificar"}
+              </DialogTitle>
+              <DialogDescription>
+                O motivo será publicado no <strong>Histórico</strong> do cedente para que os outros perfis vejam.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-1.5">
+              <label className="text-[11px] uppercase tracking-wide text-muted-foreground">Motivo</label>
+              <Textarea
+                rows={4}
+                value={motivo}
+                onChange={(e) => setMotivo(e.target.value)}
+                placeholder={acao === "reprovar"
+                  ? "Ex.: documento ilegível, fora do prazo de validade, divergência de CNPJ…"
+                  : "Ex.: categoria errada — este arquivo é um contrato social, não um cartão CNPJ."}
+                autoFocus
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => { setAcao(null); setMotivo(""); }} disabled={enviandoMotivo}>
+                Cancelar
+              </Button>
+              <Button
+                onClick={confirmarMotivo}
+                disabled={!motivo.trim() || enviandoMotivo}
+                className={acao === "reprovar" ? "bg-destructive hover:bg-destructive/90 text-destructive-foreground" : ""}
+              >
+                {enviandoMotivo && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                {acao === "reprovar" ? "Reprovar e publicar" : "Devolver e publicar"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </SheetContent>
     </Sheet>
   );
 }
 
 export default ConciliacaoDocumentosSheet;
-
