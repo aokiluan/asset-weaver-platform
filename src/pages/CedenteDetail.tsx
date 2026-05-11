@@ -225,13 +225,16 @@ export default function CedenteDetail() {
   }
   const podeAprovarCadastro = pendenciasAnalise.length === 0;
 
-  const advanceStage = async (target: CedenteStage) => {
+  const advanceStage = async (target: CedenteStage, extraObs?: string) => {
     setAdvancing(true);
-    const { error } = await supabase.from("cedentes").update({ stage: target }).eq("id", cedente.id);
+    const updates: { stage: CedenteStage; observacoes?: string } = { stage: target };
+    if (extraObs) updates.observacoes = extraObs;
+    const { error } = await supabase.from("cedentes").update(updates).eq("id", cedente.id);
     setAdvancing(false);
     if (error) { toast.error("Erro ao avançar", { description: error.message }); return; }
     toast.success(`Cedente movido para ${STAGE_LABEL[target]}`);
     setConfirmAdvance(null);
+    setAdvanceObs("");
     load();
   };
 
