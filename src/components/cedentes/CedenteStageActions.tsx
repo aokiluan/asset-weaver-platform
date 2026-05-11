@@ -110,7 +110,7 @@ export function CedenteStageActions({ cedenteId, stage, isOwner, gateInfo, onCha
     if (isCurrent) reason = `Cedente já está na etapa ${STAGE_LABEL[stage]}`;
     else if (!stageOk) reason = `Não disponível na etapa atual (${STAGE_LABEL[stage]})`;
     else if (!roleOk) {
-      reason = "Seu usuário não tem permissão, fale com o administrador";
+      reason = "Seu usuário não tem permissão";
     } else if (!gatesOk) {
       reason = `Pendências:\n• ${gate.pendentes.join("\n• ")}`;
     }
