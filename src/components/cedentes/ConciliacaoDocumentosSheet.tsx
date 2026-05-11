@@ -212,40 +212,28 @@ export function ConciliacaoDocumentosSheet({
     onChanged();
   };
 
-  const abrirMotivo = (a: Exclude<MotivoAcao, null>) => {
+  const abrirReprovar = () => {
     setMotivo("");
-    setAcao(a);
+    setReprovarOpen(true);
   };
 
   const confirmarMotivo = async () => {
-    if (!current || !acao) return;
+    if (!current || !reprovarOpen) return;
     const txt = motivo.trim();
     if (!txt) { toast.error("Informe o motivo"); return; }
     setEnviandoMotivo(true);
     const { data: auth } = await supabase.auth.getUser();
 
-    let docError: string | null = null;
-    if (acao === "reprovar") {
-      const { error } = await supabase.from("documentos").update({
-        status: "reprovado", reviewed_by: auth.user?.id, reviewed_at: new Date().toISOString(),
-      }).eq("id", current.id);
-      if (error) docError = error.message;
-    } else {
-      const { error } = await supabase.from("documentos").update({
-        categoria_id: null, categoria_sugerida_id: null,
-      }).eq("id", current.id);
-      if (error) docError = error.message;
-    }
-    if (docError) {
+    const { error } = await supabase.from("documentos").update({
+      status: "reprovado", reviewed_by: auth.user?.id, reviewed_at: new Date().toISOString(),
+    }).eq("id", current.id);
+    if (error) {
       setEnviandoMotivo(false);
-      toast.error("Erro ao atualizar documento", { description: docError });
+      toast.error("Erro ao atualizar documento", { description: error.message });
       return;
     }
 
-    const prefixo = acao === "reprovar"
-      ? "📄 Documento reprovado"
-      : "📄 Documento devolvido para reclassificar";
-    const comentario = `${prefixo} · ${current.nome_arquivo}\n\n${txt}`;
+    const comentario = `📄 Documento reprovado · ${current.nome_arquivo}\n\n${txt}`;
     const { error: histErr } = await supabase.from("cedente_history").insert({
       cedente_id: cedenteId,
       user_id: auth.user?.id ?? null,
@@ -253,7 +241,7 @@ export function ConciliacaoDocumentosSheet({
       detalhes: {
         comentario,
         documento_id: current.id,
-        acao: acao === "reprovar" ? "reprovado" : "devolvido_reclassificar",
+        acao: "reprovado",
       } as any,
     });
     setEnviandoMotivo(false);
@@ -262,11 +250,9 @@ export function ConciliacaoDocumentosSheet({
         description: histErr.message,
       });
     } else {
-      toast.success(acao === "reprovar"
-        ? "Documento reprovado e registrado no Histórico"
-        : "Devolvido ao comercial e registrado no Histórico");
+      toast.success("Documento reprovado e registrado no Histórico");
     }
-    setAcao(null);
+    setReprovarOpen(false);
     setMotivo("");
     onChanged();
   };
