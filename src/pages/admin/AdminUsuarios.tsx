@@ -60,17 +60,6 @@ export default function AdminUsuarios() {
     load();
   };
 
-  const toggleGestorGeral = async (u: UserRow, on: boolean) => {
-    if (on) {
-      const { error } = await supabase.from("user_roles").insert({ user_id: u.id, role: "gestor_geral" });
-      if (error && !error.message.includes("duplicate")) { toast.error("Erro", { description: error.message }); return; }
-    } else {
-      const { error } = await supabase.from("user_roles").delete().eq("user_id", u.id).eq("role", "gestor_geral");
-      if (error) { toast.error("Erro", { description: error.message }); return; }
-    }
-    toast.success(on ? "Marcado como gestor geral" : "Removido gestor geral");
-    load();
-  };
 
   const setTeam = async (u: UserRow, teamId: string | null) => {
     const { error } = await supabase.from("profiles").update({ team_id: teamId }).eq("id", u.id);
@@ -177,16 +166,13 @@ export default function AdminUsuarios() {
               <TableHead>E-mail</TableHead>
               <TableHead>Funções</TableHead>
               <TableHead>Equipe</TableHead>
-              <TableHead className="w-px text-right pr-3 whitespace-nowrap">Gestor geral</TableHead>
               <TableHead className="w-px text-right pr-3">Ativo</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {loading && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-3 text-[12px]">Carregando...</TableCell></TableRow>}
-            {!loading && users.length === 0 && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-3 text-[12px]">Nenhum usuário.</TableCell></TableRow>}
+            {loading && <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-3 text-[12px]">Carregando...</TableCell></TableRow>}
+            {!loading && users.length === 0 && <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-3 text-[12px]">Nenhum usuário.</TableCell></TableRow>}
             {users.map((u) => {
-              const isGestorGeral = u.roles.includes("gestor_geral");
-              const primaryRoles = u.roles.filter(r => r !== "gestor_geral");
               return (
                 <TableRow key={u.id} className="group">
                   <TableCell>
@@ -196,8 +182,8 @@ export default function AdminUsuarios() {
                   <TableCell>{u.email}</TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
-                      {primaryRoles.length === 0 && <span className="text-[11px] text-muted-foreground">Sem função</span>}
-                      {primaryRoles.map(r => (
+                      {u.roles.length === 0 && <span className="text-[11px] text-muted-foreground">Sem função</span>}
+                      {u.roles.map(r => (
                         <Badge key={r} variant="secondary" className="gap-1 h-5 px-2 text-[11px] font-normal">
                           {ROLE_LABEL[r]}
                           <button onClick={() => removeRole(u, r)} className="hover:text-destructive">
@@ -215,9 +201,6 @@ export default function AdminUsuarios() {
                         {teams.map(t => <SelectItem key={t.id} value={t.id}>{t.nome} ({ROLE_LABEL[t.papel_principal]})</SelectItem>)}
                       </SelectContent>
                     </Select>
-                  </TableCell>
-                  <TableCell className="text-right pr-3">
-                    <Switch className="ml-auto" checked={isGestorGeral} onCheckedChange={(v) => toggleGestorGeral(u, v)} />
                   </TableCell>
                   <TableCell className="text-right pr-3">
                     <Switch className="ml-auto" checked={u.ativo} onCheckedChange={() => toggleAtivo(u)} />
