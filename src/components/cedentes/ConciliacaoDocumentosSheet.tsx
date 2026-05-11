@@ -457,15 +457,7 @@ export function ConciliacaoDocumentosSheet({
             <div className="flex-1 flex items-center justify-center gap-2 flex-wrap">
               <Button
                 variant="outline"
-                size="sm"
-                onClick={() => abrirMotivo("devolver")}
-                title="Tira a categoria e publica um aviso no Histórico do cedente"
-              >
-                <Undo2 className="h-4 w-4 mr-2" /> Devolver para reclassificar
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => abrirMotivo("reprovar")}
+                onClick={abrirReprovar}
                 className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
               >
                 <XCircle className="h-4 w-4 mr-2" /> Reprovar (R)
