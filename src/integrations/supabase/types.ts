@@ -592,6 +592,91 @@ export type Database = {
           },
         ]
       }
+      committee_minutes: {
+        Row: {
+          alcada_nome: string | null
+          cedente_id: string
+          condicoes: string | null
+          created_at: string
+          decisao: string
+          id: string
+          numero_comite: number
+          participantes: Json
+          pleito: Json
+          pontos_atencao: Json
+          pontos_positivos: Json
+          proposal_id: string
+          realizado_em: string
+          recomendacao_credito: string | null
+          session_id: string
+          totais: Json
+          updated_at: string
+          votos_minimos_alcada: number | null
+        }
+        Insert: {
+          alcada_nome?: string | null
+          cedente_id: string
+          condicoes?: string | null
+          created_at?: string
+          decisao: string
+          id?: string
+          numero_comite?: number
+          participantes?: Json
+          pleito?: Json
+          pontos_atencao?: Json
+          pontos_positivos?: Json
+          proposal_id: string
+          realizado_em?: string
+          recomendacao_credito?: string | null
+          session_id: string
+          totais?: Json
+          updated_at?: string
+          votos_minimos_alcada?: number | null
+        }
+        Update: {
+          alcada_nome?: string | null
+          cedente_id?: string
+          condicoes?: string | null
+          created_at?: string
+          decisao?: string
+          id?: string
+          numero_comite?: number
+          participantes?: Json
+          pleito?: Json
+          pontos_atencao?: Json
+          pontos_positivos?: Json
+          proposal_id?: string
+          realizado_em?: string
+          recomendacao_credito?: string | null
+          session_id?: string
+          totais?: Json
+          updated_at?: string
+          votos_minimos_alcada?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "committee_minutes_cedente_id_fkey"
+            columns: ["cedente_id"]
+            isOneToOne: false
+            referencedRelation: "cedentes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "committee_minutes_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "credit_proposals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "committee_minutes_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: true
+            referencedRelation: "committee_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       committee_sessions: {
         Row: {
           abertura: string
@@ -1626,6 +1711,11 @@ export type Database = {
         Args: { _cedente_id: string; _user_id: string }
         Returns: boolean
       }
+      committee_close_if_complete: {
+        Args: { _force?: boolean; _proposal_id: string }
+        Returns: string
+      }
+      committee_eligible_voter_ids: { Args: never; Returns: string[] }
       ensure_committee_session_for_proposal: {
         Args: { _proposal_id: string }
         Returns: string
