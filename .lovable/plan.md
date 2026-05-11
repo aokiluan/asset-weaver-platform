@@ -1,25 +1,21 @@
-## Diagnóstico
+# Remover "Devolver para reclassificar"
 
-Hoje o PDF é carregado diretamente da signed URL do Supabase Storage dentro de um `<iframe>`. Como a sheet roda **dentro do iframe do preview da Lovable**, esse iframe aninhado de outra origem (`*.supabase.co`) é bloqueado pelo Chrome ("Esta página foi bloqueada pelo Chrome"), por causa de site isolation + headers do Storage.
+A reclassificação já acontece direto na tela de conciliação (seletor de tipo/categoria no próprio item), então o botão duplica funcionalidade e ainda força um fluxo mais lento (diálogo de motivo + entrada no histórico) pra algo resolvido em 2 cliques ali mesmo.
 
-## Solução
+## Mudanças em `src/components/cedentes/ConciliacaoDocumentosSheet.tsx`
 
-Trocar a estratégia em `src/components/cedentes/ConciliacaoDocumentosSheet.tsx`:
+1. **Footer** — remover o `<Button>` "Devolver para reclassificar" (linhas ~472-479) e o ícone `Undo2` do import se não for mais usado.
 
-1. Ao trocar o documento atual, em vez de jogar a signed URL direto no `iframe.src`:
-   - `fetch(signedUrl)` → `response.blob()` → `URL.createObjectURL(blob)`
-   - Usar essa URL `blob:` como `src` do iframe.
-   - Como a URL é mesma origem do app, o Chrome não bloqueia.
-2. Liberar memória com `URL.revokeObjectURL(...)` no cleanup do `useEffect` e ao desmontar a sheet.
-3. Manter o estado `previewLoading` cobrindo o tempo do `fetch` (não só o `createSignedUrl`).
-4. Em caso de falha do `fetch` (rede, CORS, etc.), mostrar fallback existente com botão "Baixar / Abrir em nova aba" usando a signed URL original.
-5. Imagens (`isImg`) seguem usando a signed URL direta — não há bloqueio para `<img>`.
+2. **Dialog de motivo** — passar a ser exclusivo de "Reprovar":
+   - Tipo `MotivoAcao` deixa de ser união e vira simplesmente `boolean` (estado `reprovarOpen`).
+   - Função `abrirMotivo("reprovar")` vira `abrirReprovar()`.
+   - Remover branch `acao === "devolver"` em `confirmarMotivo` (mantém só o update de `status: "reprovado"` e a entrada no histórico com prefixo "Documento reprovado").
+   - Títulos/labels/placeholders do diálogo ficam fixos no texto de "Reprovar".
+   - Atalho `R` continua funcionando; remover qualquer referência ao atalho de devolver (não há).
 
-## Arquivos afetados
+3. **Limpeza** — remover constantes/strings não usadas: `"devolvido_reclassificar"`, prefixo "Documento devolvido para reclassificar", `acao === "reprovar" ? ... : ...` ternários redundantes.
 
-- `src/components/cedentes/ConciliacaoDocumentosSheet.tsx` — alterar o `useEffect` que carrega o preview e ajustar o cleanup.
-
-## Fora do escopo
-
-- Trocar `iframe` por `react-pdf` / PDF.js.
-- Mexer em headers/Content-Disposition no Storage.
+## Fora de escopo
+- Não mexer no seletor de categoria existente na conciliação (já é o caminho de reclassificação).
+- Não alterar histórico de eventos passados que já tenham `acao: "devolvido_reclassificar"` no banco — só paramos de gerar novos.
+- Não tocar em backend/migrations.
