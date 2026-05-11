@@ -45,6 +45,7 @@ interface CedenteRow {
   stage: string;
   minuta_assinada: boolean;
   minuta_assinada_em: string | null;
+  cadastro_revisado_em: string | null;
   updated_at: string;
 }
 
