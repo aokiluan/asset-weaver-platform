@@ -60,6 +60,7 @@ export type Database = {
           detalhes: Json | null
           evento: string
           id: string
+          parent_id: string | null
           stage_anterior: Database["public"]["Enums"]["cedente_stage"] | null
           stage_novo: Database["public"]["Enums"]["cedente_stage"] | null
           user_id: string | null
@@ -70,6 +71,7 @@ export type Database = {
           detalhes?: Json | null
           evento: string
           id?: string
+          parent_id?: string | null
           stage_anterior?: Database["public"]["Enums"]["cedente_stage"] | null
           stage_novo?: Database["public"]["Enums"]["cedente_stage"] | null
           user_id?: string | null
@@ -80,11 +82,20 @@ export type Database = {
           detalhes?: Json | null
           evento?: string
           id?: string
+          parent_id?: string | null
           stage_anterior?: Database["public"]["Enums"]["cedente_stage"] | null
           stage_novo?: Database["public"]["Enums"]["cedente_stage"] | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "cedente_history_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "cedente_history"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       cedente_representantes: {
         Row: {
