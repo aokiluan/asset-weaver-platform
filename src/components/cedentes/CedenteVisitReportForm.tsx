@@ -485,9 +485,26 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
               Gerar PDF
             </Button>
             {mode === "view" && existingId && (
-              <Button size="sm" variant="outline" onClick={enterEditMode}>
-                <Pencil className="h-4 w-4 mr-2" /> Alterar relatório
-              </Button>
+              canEdit ? (
+                <Button size="sm" variant="outline" onClick={enterEditMode}>
+                  <Pencil className="h-4 w-4 mr-2" /> Alterar relatório
+                </Button>
+              ) : (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span tabIndex={0}>
+                        <Button size="sm" variant="outline" disabled>
+                          <Pencil className="h-4 w-4 mr-2" /> Alterar relatório
+                        </Button>
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      Apenas Comercial, Gestor geral ou Admin podem alterar o relatório comercial.
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )
             )}
             {mode === "edit" && (
               <Button size="sm" variant="ghost" onClick={cancelEdit} disabled={saving}>
