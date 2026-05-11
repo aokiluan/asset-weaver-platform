@@ -137,6 +137,7 @@ export function CedenteStageActions({ cedenteId, stage, isOwner, gateInfo, onCha
     setConfirmTarget(null);
     setReturnOpen(null);
     setMotivo("");
+    setObservacao("");
     onChanged();
   };
 
@@ -177,30 +178,46 @@ export function CedenteStageActions({ cedenteId, stage, isOwner, gateInfo, onCha
         })}
       </div>
 
-      {/* Confirmação de avanço */}
-      <AlertDialog open={!!confirmTarget} onOpenChange={(o) => !o && setConfirmTarget(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {confirmTarget?.label}?
-            </AlertDialogTitle>
-            <AlertDialogDescription>
+      {/* Confirmação de avanço (com observação opcional) */}
+      <Dialog
+        open={!!confirmTarget}
+        onOpenChange={(o) => { if (!o) { setConfirmTarget(null); setObservacao(""); } }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{confirmTarget?.label}?</DialogTitle>
+            <DialogDescription>
               O cedente será movido para a etapa <strong>{confirmTarget ? STAGE_LABEL[confirmTarget.target] : ""}</strong>.
               Todos os usuários com acesso verão a nova etapa.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={saving}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="obs-envio">Observação para o próximo responsável (opcional)</Label>
+            <Textarea
+              id="obs-envio"
+              rows={4}
+              value={observacao}
+              onChange={(e) => setObservacao(e.target.value)}
+              placeholder="Ex.: priorizar análise, particularidades do cliente, pendências em aberto..."
+            />
+            <p className="text-[11px] text-muted-foreground">
+              A observação aparece no histórico do cedente, junto com a mudança de etapa.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setConfirmTarget(null); setObservacao(""); }} disabled={saving}>
+              Cancelar
+            </Button>
+            <Button
               disabled={saving}
-              onClick={(e) => { e.preventDefault(); if (confirmTarget) doAdvance(confirmTarget.target); }}
+              onClick={() => { if (confirmTarget) doAdvance(confirmTarget.target, observacao.trim() || undefined); }}
             >
-              {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-              Confirmar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+              {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
+              Enviar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Devolução com motivo */}
       <Dialog open={!!returnOpen} onOpenChange={(o) => { if (!o) { setReturnOpen(null); setMotivo(""); } }}>
