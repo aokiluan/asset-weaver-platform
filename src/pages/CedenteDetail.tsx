@@ -271,7 +271,7 @@ export default function CedenteDetail() {
           onAdvance={() => { /* stepper agora é apenas visual; avanço é feito pelos botões abaixo */ }}
         />
 
-        <div className="border-t pt-2.5 flex items-center gap-2 flex-wrap justify-end">
+        <div className="border-t pt-2.5 flex items-center justify-center gap-2 flex-wrap">
           <CedenteStageActions
             cedenteId={cedente.id}
             stage={cedente.stage}
