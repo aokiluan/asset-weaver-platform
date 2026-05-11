@@ -403,7 +403,7 @@ export default function Formalizacao() {
                           </Link>
                         </td>
                         <td className="px-2.5 py-1.5 font-mono text-muted-foreground">{c.cnpj}</td>
-                        <td className="px-2.5 py-1.5 font-mono">{prop?.codigo ?? "—"}</td>
+                        
                         <td className="px-2.5 py-1.5 text-right tabular-nums">{fmtBRL(prop?.valor_aprovado ?? null)}</td>
                         <td className="px-2.5 py-1.5">
                           <span>{fmtDate(c.minuta_assinada_em)}</span>
