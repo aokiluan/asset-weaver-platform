@@ -17,7 +17,7 @@ interface HistoryItem {
   evento: string;
   stage_anterior: CedenteStage | null;
   stage_novo: CedenteStage | null;
-  detalhes: { comentario?: string; minute_id?: string; decisao?: string } | null;
+  detalhes: { comentario?: string; minute_id?: string; decisao?: string; numero_comite?: number; justificativa?: string; mudancas?: string; nova_proposta_id?: string; proposta_anterior_id?: string } | null;
   created_at: string;
 }
 
