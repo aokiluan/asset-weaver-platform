@@ -157,7 +157,8 @@ export default function CedenteDetail() {
     const propsList = (props ?? []) as { id: string; stage: string; created_at: string; approval_levels: { approver: string; votos_minimos: number } | null }[];
 
     setHasPleito(propsList.length > 0);
-    setHasParecer(propsList.some((p) => ["parecer", "comite", "aprovado"].includes(p.stage)));
+    const reportConcluido = !!creditRep && (creditRep as any).completude === 8 && !!(creditRep as any).recomendacao;
+    setHasParecer(reportConcluido || propsList.some((p) => ["parecer", "comite", "aprovado"].includes(p.stage)));
     setComiteDecidido(propsList.some((p) => p.stage === "aprovado"));
     setMinutaAssinada(!!(ced as any)?.minuta_assinada);
     const latest = propsList[0] ?? null;
