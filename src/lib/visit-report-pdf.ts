@@ -1,5 +1,7 @@
 import jsPDF from "jspdf";
 import { supabase } from "@/integrations/supabase/client";
+import { applyS3Branding } from "./pdf-branding";
+
 
 export interface VisitReportSnapshot {
   data_visita?: string | null;
@@ -47,7 +49,7 @@ export async function generateVisitReportPdf(
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
   const margin = 40;
-  let y = margin;
+  let y = margin + 50; // espaço extra na pág. 1 para o logo S3 no canto superior direito
 
   const ensureSpace = (h: number) => {
     if (y + h > pageH - margin) { doc.addPage(); y = margin; }
@@ -185,6 +187,9 @@ export async function generateVisitReportPdf(
     }
   }
 
+  // Branding S3
+  await applyS3Branding(doc, { unit: "pt" });
+
   const versaoSuffix = versaoLabel ? `_${versaoLabel.replace(/[^\w]+/g, "-").toLowerCase()}` : "";
   const fileName = `relatorio-comercial_${(ced?.razao_social || "cedente").replace(/[^\w]+/g, "-").toLowerCase()}_${snapshot.data_visita || new Date().toISOString().slice(0, 10)}${versaoSuffix}.pdf`;
   if (mode === "blob") {
@@ -193,3 +198,4 @@ export async function generateVisitReportPdf(
   }
   doc.save(fileName);
 }
+

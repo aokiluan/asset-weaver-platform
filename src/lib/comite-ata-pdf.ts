@@ -1,5 +1,7 @@
 import jsPDF from "jspdf";
 import { supabase } from "@/integrations/supabase/client";
+import { applyS3HeaderLogo, applyS3Watermark } from "./pdf-branding";
+
 
 const MARGIN = 15;
 const PAGE_W = 210;
@@ -118,10 +120,13 @@ export function generateAtaPdf(d: AtaData): jsPDF {
   if (d.decisao === "aprovado") doc.setFillColor(34, 197, 94);
   else doc.setFillColor(239, 68, 68);
   const badgeW = 32;
-  doc.roundedRect(PAGE_W - MARGIN - badgeW, 6, badgeW, 10, 1.5, 1.5, "F");
+  // badge à esquerda do logo S3 (que ocupa o canto superior direito)
+  const badgeX = PAGE_W - MARGIN - badgeW - 30;
+  doc.roundedRect(badgeX, 6, badgeW, 10, 1.5, 1.5, "F");
   doc.setFontSize(10);
   doc.setFont("helvetica", "bold");
-  doc.text(decisaoLabel, PAGE_W - MARGIN - badgeW / 2, 12.5, { align: "center" });
+  doc.text(decisaoLabel, badgeX + badgeW / 2, 12.5, { align: "center" });
+
 
   doc.setTextColor(20);
   let y = 28;
@@ -324,9 +329,12 @@ export async function downloadAtaById(minuteId: string) {
   };
 
   const doc = generateAtaPdf(data);
+  await applyS3HeaderLogo(doc, { variant: "white", headerWidthMm: 28, headerTopMm: 5, headerRightMm: 15 });
+  await applyS3Watermark(doc, { unit: "mm" });
   doc.save(buildAtaFilename({
     numero: data.numero_comite,
     cedenteNome: data.cedente_nome,
     data: data.realizado_em,
   }));
 }
+

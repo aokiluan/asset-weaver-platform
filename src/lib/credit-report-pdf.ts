@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import { supabase } from "@/integrations/supabase/client";
+import { applyS3HeaderLogo, applyS3Watermark } from "./pdf-branding";
 import {
   SECTION_ORDER,
   SECTION_LABEL,
@@ -7,6 +8,7 @@ import {
   SectionKey,
   RECOMENDACAO_OPTIONS,
 } from "./credit-report";
+
 
 interface Attachment { path: string; name: string; caption?: string }
 
@@ -177,6 +179,10 @@ export async function generateCreditReportPdf(
     doc.setTextColor(150);
     doc.text(`Página ${i} de ${pages}`, PAGE_W - MARGIN, PAGE_H - 8, { align: "right" });
   }
+
+  // Branding S3
+  await applyS3HeaderLogo(doc, { variant: "white", headerWidthMm: 28, headerTopMm: 5, headerRightMm: 15 });
+  await applyS3Watermark(doc, { unit: "mm" });
 
   const filename = `relatorio-credito-${(cedenteNome ?? "cedente").replace(/\s+/g, "-").toLowerCase()}.pdf`;
   if (mode === "blob") {

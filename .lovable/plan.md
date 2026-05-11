@@ -1,136 +1,115 @@
 ## Objetivo
 
-Tornar o comitê uma esteira objetiva: encerramento automático por unanimidade de votos dos membros do perfil `comite`, geração de **ata padrão em PDF** anexada ao histórico do cedente, e transformar a página `/comite` em um **centro operacional** (votação em lote + arquivo de atas), reduzindo a necessidade de entrar cedente por cedente.
+Padronizar a identidade visual de **todos** os PDFs gerados pela aplicação, replicando o tratamento já aplicado em `src/lib/minuta-pdf.ts` (logo horizontal S3 no canto superior + brasão S3 como marca d'água central em todas as páginas), usando os mesmos arquivos de logo azul/dourado já presentes em `src/assets/`.
 
 ---
 
-## 1. Regra de encerramento: "todos os membros do comitê votaram"
+## 1. Inventário de PDFs gerados pelo sistema
 
-Hoje o comitê depende de "votos mínimos" (quórum por alçada) e do clique manual em **Revelar votos** + **Encerrar e registrar decisão**. Vamos mudar para:
+Hoje existem **4 geradores** ativos em `src/lib/`, todos baseados em `jsPDF`:
 
-- **Membros elegíveis** = todos os usuários ativos com role `comite` (`profiles.ativo = true` ∩ `user_roles.role = 'comite'`).
-- **Sessão fica "aberta"** enquanto faltar voto de algum membro elegível.
-- Ao registrar o **último voto faltante**, um trigger no Postgres:
-  1. Atualiza `committee_sessions.status = 'encerrada'`, preenche `revelada_em` e `encerrada_em`.
-  2. Calcula a decisão: `aprovado` se favoráveis > desfavoráveis (empate = `reprovado`; abstenções não contam).
-  3. Atualiza `credit_proposals.stage` para `aprovado`/`reprovado` e, se aprovado, move o cedente para `formalizacao`.
-  4. Gera o registro da **ata** (ver item 2).
-- **Admin** mantém ação manual de "Forçar encerramento" para casos de membro inativo / ausência prolongada.
-- **Painel da sessão** passa a mostrar: `X de N membros votaram` + lista de **pendentes** (nome dos que ainda não votaram). O bloco "Quórum mínimo" some — passa a ser sempre unanimidade de presença.
+| # | Arquivo | O que gera | Onde é chamado |
+|---|---------|-----------|----------------|
+| 1 | `src/lib/minuta-pdf.ts` | **Contrato-mãe de cessão (minuta)** | `Formalizacao.tsx`, `CedenteDetail.tsx` (aba Formalização) — **já tem logo + watermark** ✅ |
+| 2 | `src/lib/credit-report-pdf.ts` | **Relatório de Análise de Crédito** | `CreditReportForm.tsx`, `CreditReportVersionsPanel.tsx`, `ComiteGameSession.tsx` |
+| 3 | `src/lib/visit-report-pdf.ts` | **Relatório Comercial de Visita** | `CedenteVisitReportForm.tsx`, `VisitReportVersionsPanel.tsx` |
+| 4 | `src/lib/comite-ata-pdf.ts` | **Ata de Comitê** | `ComiteGameSession.tsx`, `Comite.tsx`, `CedenteHistoryTab.tsx` |
 
-UX no `ComiteGameSession`:
-- Remove botões "Revelar votos" e "Encerrar" do fluxo normal (ficam só num menu admin).
-- Banner verde de sucesso quando sessão fecha automaticamente.
+Os PDFs 2, 3 e 4 hoje saem **sem nenhum branding** — é o que vamos corrigir.
+
+> Observação: relatórios do BI / dashboards atualmente são exportados em XLSX/CSV (sem PDF). Edge functions (`classify-documento`, `ingest-report`, `excel-graph`, etc.) não geram PDFs. Portanto o escopo se encerra nesses 4 arquivos.
 
 ---
 
-## 2. Ata padrão de comitê (registro + PDF)
+## 2. Padrão visual a replicar (referência: `minuta-pdf.ts`)
 
-Criar tabela **`committee_minutes`** (1 linha por sessão encerrada) com snapshot imutável:
+Dois elementos de marca, usando os PNGs já no projeto:
+
+- **Cabeçalho** — `s3-logo-horizontal.png` (versão azul + dourada), no canto **superior direito da primeira página**, largura ~38 mm.
+- **Marca d'água** — `s3-logo-brand.png` (brasão), **centralizado em todas as páginas**, largura ~90 mm, opacidade `0.06` via `GState`.
+
+Ambos já estão importáveis como ES modules (`@/assets/s3-logo-*.png`). O fluxo é: `urlToDataUrl()` → `addImage("PNG", ...)`.
+
+---
+
+## 3. Refatoração: extrair helper compartilhado
+
+Para evitar duplicar a lógica em 4 arquivos, criar:
+
+**`src/lib/pdf-branding.ts`** (novo) — exporta:
 
 ```text
-committee_minutes
-├─ session_id, proposal_id, cedente_id
-├─ numero_comite        (sequencial global, ex. "87º Comitê")
-├─ realizado_em         (data da última votação)
-├─ participantes        (jsonb: [{nome, voto, justificativa, votou_em}])
-├─ pleito               (jsonb: limite, prazo, taxa, modalidades)
-├─ recomendacao_credito (texto do parecer)
-├─ pontos_positivos / pontos_atencao (jsonb[])
-├─ decisao              ('aprovado' | 'reprovado')
-├─ condicoes            (texto livre — opcional, editável por admin/comitê antes do "fechar ata")
-├─ pdf_storage_path
-└─ created_at
+loadS3Brand()                     -> data URL do brasão (cache em memória)
+loadS3Horizontal()                -> data URL do logo horizontal (cache)
+applyS3Watermark(doc)             -> aplica brasão em TODAS as páginas
+applyS3HeaderLogo(doc, opts?)     -> aplica logo horizontal na pág. 1 (ou em todas, via opt)
+applyS3Branding(doc, opts?)       -> wrapper conveniência: chama header + watermark
 ```
 
-Geração:
-- Snapshot é montado pelo trigger de encerramento (item 1).
-- Botão **"Gerar/Baixar ata (PDF)"** disponível para `admin`, `comite`, `credito`, `formalizacao` na aba Comitê do cedente e na seção de atas (`/comite`).
-- Layout do PDF inspirado nos modelos enviados:
-  - Cabeçalho: logo + "Nº Comitê", data/hora, participantes.
-  - Bloco do cedente: razão social, CNPJ, código da proposta.
-  - Pleito (tabela compacta) e Decisão em destaque.
-  - Lista de votos (nome → favorável/desfavorável + justificativa).
-  - Pontos positivos / pontos de atenção (do briefing).
-  - Condições e observações.
-  - Rodapé institucional.
-- Implementação: `src/lib/comite-ata-pdf.ts` usando `jsPDF` (mesmo stack de `minuta-pdf.ts` e `credit-report-pdf.ts`).
-- Ata também é registrada em `cedente_history` (`evento = 'ata_comite'`) com link para o PDF — fica visível na aba **Histórico** do cedente.
+Opções suportadas (`opts`):
+- `unit`: `"mm" | "pt"` (necessário porque `visit-report-pdf.ts` usa `pt` e os outros usam `mm` — o helper converte internamente).
+- `headerOnAllPages`: `boolean` (default `false`).
+- `watermarkOpacity`: `number` (default `0.06`).
+- `headerWidth`: `number` (em unidades do doc; default 38mm equivalente).
+- `topMargin`: número de pixels reservados no topo (para callers ajustarem o `y` inicial e não escreverem por cima do logo).
+
+Em seguida, **migrar `minuta-pdf.ts`** para usar o helper (remove `applyWatermark`/`applyHeaderLogo` locais), garantindo zero regressão visual.
 
 ---
 
-## 3. Padrão de nomeação do PDF
+## 4. Aplicação em cada PDF
 
-Hoje os PDFs do projeto seguem `tipo-<slug-cedente>.pdf` (ver `credit-report-pdf.ts`). Vamos estender para incluir data e número do comitê, mantendo o mesmo estilo (kebab-case, lowercase, sem acentos):
+### 4.1. `credit-report-pdf.ts` (Relatório de Crédito)
+- Hoje desenha um **cabeçalho azul-marinho sólido** (`doc.setFillColor(15,23,42); doc.rect(0,0,PAGE_W,22,"F")`) com o título e nome do cedente em branco.
+- **Mudança:** manter a faixa azul institucional (alinhada à brand), mas **adicionar o logo horizontal S3** dentro dessa faixa, à direita (sobre fundo escuro a versão `s3-logo-horizontal-white.png` fica melhor — usar essa variante quando o fundo for escuro, configurável via `applyS3HeaderLogo({ variant: "white" | "color" })`).
+- Adicionar **marca d'água do brasão** em todas as páginas via `applyS3Watermark(doc)` ao final, antes do loop de paginação.
+- Nenhuma mudança no conteúdo / seções.
 
-```
-ata-comite-<numero>-<slug-cedente>-<yyyy-mm-dd>.pdf
-ex.: ata-comite-87-eco-pack-distribuidora-2026-05-11.pdf
-```
+### 4.2. `visit-report-pdf.ts` (Relatório Comercial)
+- Hoje cabeça apenas com texto "Relatório Comercial de Visita" + data.
+- **Mudança:** chamar `applyS3HeaderLogo(doc, { unit: "pt" })` para colocar o logo horizontal no topo direito da pág. 1; ajustar `y` inicial (`margin += 30pt`) para não colidir.
+- Aplicar `applyS3Watermark(doc, { unit: "pt" })` ao final.
+- As páginas extras de fotos também receberão a marca d'água (consequência natural do loop de páginas).
 
-Função utilitária `buildAtaFilename({ numero, cedenteNome, data })` colocada em `src/lib/comite-ata-pdf.ts` e reusada em todos os pontos de download.
+### 4.3. `comite-ata-pdf.ts` (Ata de Comitê)
+- Adicionar header logo (versão color) na primeira página, ao lado do bloco "Nº Comitê / data".
+- Adicionar watermark central em todas as páginas.
+- Reservar topo da pág. 1 para não sobrepor o título.
 
----
-
-## 4. Página `/comite` — central de votação + arquivo de atas
-
-A página passa a ter três abas (`PageTabs`):
-
-### Aba "Em pauta" (default)
-Foco em **votar em lote sem entrar em cada cedente**:
-- Lista de propostas em `stage = 'comite'` agrupadas por **dia de entrada**.
-- Cada card mostra: cedente, CNPJ, pleito resumido (limite, prazo, taxa, modalidades), e badges:
-  - "Aguarda seu voto" (pulsante) / "Você já votou" / "Faltam N votos".
-- Botão primário **"Votar agora"** abre **modal lateral (Sheet)** com:
-  - Briefing (`VoteBriefing`) + checklist de leitura (`ReadingChecklist`).
-  - Botões Favorável / Desfavorável + justificativa.
-  - **"Salvar e ir para a próxima"** → fecha o sheet e abre o próximo cedente pendente automaticamente (modo "fila de votação").
-- Filtro rápido: `Apenas pendentes meus` (default ON para perfil `comite`).
-- Indicador no topo: "Você tem **3 cedentes** aguardando seu voto" com CTA "Iniciar fila de votação".
-
-### Aba "Encerrados"
-- Cedentes cujo comitê fechou nos últimos 90 dias.
-- Cada linha: data, nº comitê, cedente, decisão (badge verde/vermelho), participantes, link para a ata (PDF) e para o cedente.
-
-### Aba "Atas"
-- Tabela de todas as atas (`committee_minutes`) com busca por cedente / nº comitê / período.
-- Ações: **Baixar PDF** e **Abrir cedente**.
-- Para `admin`: gerar ata consolidada de uma data (PDF único agregando todos os cedentes votados naquele dia, no formato do segundo modelo enviado — "86º Comitê 31/10/2025").
-
-### Painel do membro (topo)
-Cards mantidos mas reorientados para o novo fluxo:
-- "Aguardando seu voto"
-- "Você já votou (em pauta)"
-- "Atas dos últimos 30 dias"
+### 4.4. `minuta-pdf.ts` (Contrato-mãe)
+- **Sem mudança visual** — apenas refator interno para usar o helper compartilhado.
 
 ---
 
-## 5. Detalhes técnicos (resumo p/ implementação)
+## 5. QA visual (obrigatório)
 
-**Migrations**
-- Função `public.committee_eligible_voters()` → conta membros ativos com role `comite`.
-- Função `public.committee_close_if_complete(_proposal_id)` → fecha sessão, decide, atualiza proposta + cedente, snapshota `committee_minutes`.
-- Trigger `AFTER INSERT/UPDATE` em `committee_votes` → chama a função acima.
-- Tabela `committee_minutes` + RLS (SELECT segue `can_view_proposal`; INSERT só via SECURITY DEFINER; UPDATE de `condicoes` para `admin`/`comite`).
-- Sequence `committee_minutes_numero_seq` para `numero_comite`.
-
-**Frontend**
-- `src/lib/comite-ata-pdf.ts` (novo): geração do PDF + helper de nomeação.
-- `src/components/credito/ComiteGameSession.tsx`: remove "Revelar/Encerrar" do fluxo normal, adiciona "X/N membros votaram" + lista de pendentes + botão "Baixar ata" quando encerrada.
-- `src/pages/Comite.tsx`: reescrever com `PageTabs` (Em pauta / Encerrados / Atas) + modo "fila de votação" via `Sheet`.
-- `src/components/cedentes/CedenteHistoryTab.tsx`: novo evento `ata_comite` com link de download.
-
-**Permissões**
-- Votar: `comite` + `admin`.
-- Forçar encerramento / editar condições da ata: `admin`.
-- Baixar ata: qualquer perfil que já consegue ver a proposta.
-
-**Compatibilidade**
-- `votos_minimos` da `approval_levels` deixa de governar o fechamento, mas continua exibido como **"alçada original"** na ata para registro histórico.
+Para cada um dos 4 PDFs, gerar um exemplo, converter páginas em imagens (`pdftoppm -jpeg -r 150`) e validar:
+- Logo horizontal nítido, posicionado no canto superior direito da pág. 1, sem cortar a margem.
+- Marca d'água visível mas suave (opacidade ~6 %), centralizada, **não interferindo na legibilidade** do texto.
+- Conteúdo existente não foi empurrado/sobreposto pelo header.
+- Quebras de página continuam corretas (especialmente na ata e no relatório de crédito que têm múltiplas seções).
+- No relatório de crédito, o logo branco aparece corretamente sobre a faixa azul.
 
 ---
 
-## Fora do escopo deste plano
-- Notificações por e-mail aos membros pendentes (pode ser próximo passo).
-- Assinatura digital da ata.
-- Edição da ata após o fechamento (apenas o campo `condicoes` é editável por admin).
+## 6. Arquivos a criar / editar
+
+**Criar:**
+- `src/lib/pdf-branding.ts`
+
+**Editar:**
+- `src/lib/minuta-pdf.ts` (refator, sem mudança visual)
+- `src/lib/credit-report-pdf.ts` (header logo + watermark)
+- `src/lib/visit-report-pdf.ts` (header logo + watermark, atenção à unidade `pt`)
+- `src/lib/comite-ata-pdf.ts` (header logo + watermark)
+
+**Sem mudanças em:**
+- Componentes/pages que chamam esses geradores (a API pública das funções `generate*Pdf()` permanece igual).
+- Arquivos de assets (logos já presentes em `src/assets/`).
+
+---
+
+## Fora do escopo
+- Alterar layout/conteúdo dos PDFs além da inclusão de marca.
+- Gerar novos PDFs (ex.: ficha do cedente, exportação de pipeline) — pode ser próximo passo.
+- Trocar a paleta de cores/tipografia dos PDFs.
