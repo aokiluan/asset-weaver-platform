@@ -216,12 +216,13 @@ export function ComiteGameSession({ proposalId, votosMinimos, proposalStage, ced
     toast.success(checklistInfo.allDone ? "Voto registrado 🗳️" : "Voto registrado (sem checklist completo)");
   };
 
+  const checklistBloqueia = checklistInfo.total > 0 && !checklistInfo.allDone;
   const handleVoteClick = () => {
-    if (!checklistInfo.allDone && checklistInfo.total > 0) {
-      setConfirmOpen(true);
-    } else {
-      votar();
+    if (checklistBloqueia) {
+      toast.error("Conclua a leitura do relatório comercial e da análise de crédito antes de votar.");
+      return;
     }
+    votar();
   };
 
   if (loading) return <div className="flex items-center justify-center py-8 text-muted-foreground text-[12px]"><Loader2 className="h-3.5 w-3.5 animate-spin mr-2" /> Carregando comitê…</div>;
