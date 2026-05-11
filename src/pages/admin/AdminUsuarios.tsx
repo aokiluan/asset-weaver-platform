@@ -116,8 +116,18 @@ export default function AdminUsuarios() {
               </DialogHeader>
               <div className="space-y-3">
                 <div className="space-y-2">
-                  <Label>E-mail do usuário</Label>
-                  <Input type="email" value={emailLookup} onChange={(e) => setEmailLookup(e.target.value)} placeholder="usuario@empresa.com" />
+                  <Label>Usuário</Label>
+                  <Select value={emailLookup} onValueChange={setEmailLookup}>
+                    <SelectTrigger><SelectValue placeholder="Selecione um usuário" /></SelectTrigger>
+                    <SelectContent className="max-h-[280px]">
+                      {users.map((u) => (
+                        <SelectItem key={u.id} value={u.email}>
+                          <span className="font-medium">{u.nome}</span>
+                          <span className="text-muted-foreground ml-2 text-[11px]">{u.email}</span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>Função</Label>
