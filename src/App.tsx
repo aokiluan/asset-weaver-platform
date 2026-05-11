@@ -31,6 +31,8 @@ import GestaoFinanceiro from "./pages/gestao/GestaoFinanceiro.tsx";
 import GestaoDiario from "./pages/gestao/GestaoDiario.tsx";
 import Comite from "./pages/Comite.tsx";
 import Formalizacao from "./pages/Formalizacao.tsx";
+import Diretorio from "./pages/Diretorio.tsx";
+import DiretorioDetail from "./pages/DiretorioDetail.tsx";
 import RoleGuard from "@/components/RoleGuard";
 import NotFound from "./pages/NotFound.tsx";
 
@@ -60,6 +62,8 @@ const App = () => (
               <Route path="/cedentes/novo" element={<CedenteCadastro />} />
               <Route path="/cedentes/:id/editar" element={<CedenteCadastro />} />
               <Route path="/cedentes/:id" element={<CedenteDetail />} />
+              <Route path="/diretorio" element={<Diretorio />} />
+              <Route path="/diretorio/:id" element={<DiretorioDetail />} />
               {/* Rotas legadas redirecionam para a tela do cedente */}
               <Route path="/credito" element={<Navigate to="/cedentes" replace />} />
               <Route path="/credito/:id" element={<Navigate to="/cedentes" replace />} />
