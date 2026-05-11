@@ -453,6 +453,7 @@ export default function CedenteDetail() {
           latestProposalId={latestProposal?.id ?? null}
           minutaAssinada={minutaAssinada}
           canSign={hasRole("admin") || hasRole("formalizacao") || hasRole("financeiro")}
+          canGenerate={hasRole("admin") || hasRole("formalizacao")}
           onChanged={load}
         />
       )}
@@ -563,12 +564,14 @@ function FormalizacaoTabContent({
   latestProposalId,
   minutaAssinada,
   canSign,
+  canGenerate,
   onChanged,
 }: {
   cedente: Cedente;
   latestProposalId: string | null;
   minutaAssinada: boolean;
   canSign: boolean;
+  canGenerate: boolean;
   onChanged: () => void;
 }) {
   const [generating, setGenerating] = useState(false);
@@ -723,10 +726,12 @@ function FormalizacaoTabContent({
               Gera o PDF padrão da S3 Capital preenchido com a qualificação do cedente, dos representantes legais e dos fiadores.
             </p>
           </div>
-          <Button onClick={handleGerar} disabled={generating} size="sm" className="h-7 text-[11px] shrink-0">
-            {generating ? <Loader2 className="size-3.5 mr-1.5 animate-spin" /> : <Download className="size-3.5 mr-1.5" />}
-            Gerar minuta (PDF)
-          </Button>
+          {canGenerate && (
+            <Button onClick={handleGerar} disabled={generating} size="sm" className="h-7 text-[11px] shrink-0">
+              {generating ? <Loader2 className="size-3.5 mr-1.5 animate-spin" /> : <Download className="size-3.5 mr-1.5" />}
+              Gerar minuta (PDF)
+            </Button>
+          )}
         </div>
         {repsCount === 0 && (
           <div className="rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-700 p-2 text-[11px] flex items-start gap-1.5 leading-tight">

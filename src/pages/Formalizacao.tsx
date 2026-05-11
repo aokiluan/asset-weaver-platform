@@ -61,6 +61,7 @@ export default function Formalizacao() {
 
   const canSign =
     hasRole("admin") || hasRole("formalizacao") || hasRole("gestor_geral");
+  const canGenerate = hasRole("admin") || hasRole("formalizacao");
 
   useEffect(() => {
     document.title = "Formalização | Securitizadora";
@@ -228,9 +229,11 @@ export default function Formalizacao() {
                 )}
 
                 <div className="flex flex-wrap gap-2">
-                  <Button size="sm" variant="outline" onClick={() => handleGerarPDF(c)}>
-                    <Download className="h-4 w-4 mr-2" /> Gerar minuta (PDF)
-                  </Button>
+                  {canGenerate && (
+                    <Button size="sm" variant="outline" onClick={() => handleGerarPDF(c)}>
+                      <Download className="h-4 w-4 mr-2" /> Gerar minuta (PDF)
+                    </Button>
+                  )}
 
                   {canSign && !c.minuta_assinada && (
                     <Button
