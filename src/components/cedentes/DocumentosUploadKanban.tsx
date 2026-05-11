@@ -800,7 +800,7 @@ export function DocumentosUploadKanban({
                 </span>
               </TooltipTrigger>
               <TooltipContent className="text-xs max-w-xs">
-                Seu usuário não tem permissão, fale com o administrador
+                Seu usuário não tem permissão
               </TooltipContent>
             </Tooltip>
           )}

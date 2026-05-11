@@ -40,7 +40,7 @@ export function CedenteStageStepper({ stage, isOwner, gateInfo, onAdvance }: Pro
   const nextTooltip = (() => {
     if (!next) return "Etapa final";
     if (!userHasRole) {
-      return "Seu usuário não tem permissão, fale com o administrador";
+      return "Seu usuário não tem permissão";
     }
     if (!gatesOk) return `Pendências:\n• ${gate.pendentes.join("\n• ")}`;
     return `Avançar para ${STAGE_LABEL[next]}`;

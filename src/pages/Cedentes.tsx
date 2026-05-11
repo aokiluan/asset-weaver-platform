@@ -140,7 +140,7 @@ export default function Cedentes() {
             </TooltipTrigger>
             {!canCreate && !authLoading && (
               <TooltipContent side="bottom" className="max-w-xs text-xs">
-                Seu usuário não tem permissão, fale com o administrador
+                Seu usuário não tem permissão
               </TooltipContent>
             )}
           </Tooltip>

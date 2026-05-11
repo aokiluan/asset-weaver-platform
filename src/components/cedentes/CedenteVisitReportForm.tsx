@@ -500,7 +500,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
                       </span>
                     </TooltipTrigger>
                     <TooltipContent>
-                      Seu usuário não tem permissão, fale com o administrador
+                      Seu usuário não tem permissão
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -794,7 +794,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
       )}
       {!canEdit && mode !== "view" && (
         <div className="rounded-md border border-dashed p-3 text-xs text-muted-foreground">
-          Seu usuário não tem permissão, fale com o administrador
+          Seu usuário não tem permissão
         </div>
       )}
     </div>
