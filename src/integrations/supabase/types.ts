@@ -1185,6 +1185,7 @@ export type Database = {
           nome: string
           obrigatorio: boolean
           ordem: number
+          requer_conciliacao: boolean
         }
         Insert: {
           ativo?: boolean
@@ -1194,6 +1195,7 @@ export type Database = {
           nome: string
           obrigatorio?: boolean
           ordem?: number
+          requer_conciliacao?: boolean
         }
         Update: {
           ativo?: boolean
@@ -1203,6 +1205,7 @@ export type Database = {
           nome?: string
           obrigatorio?: boolean
           ordem?: number
+          requer_conciliacao?: boolean
         }
         Relationships: []
       }
