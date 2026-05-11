@@ -772,7 +772,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
         <VisitReportVersionsPanel reportId={existingId} cedenteId={cedenteId} refreshKey={versionsRefresh} />
       </div>
 
-      {mode !== "view" && (
+      {mode !== "view" && canEdit && (
         <div className="flex items-center justify-between pt-2 gap-3 flex-wrap">
           <DraftIndicator
             lastSavedAt={lastSavedAt}
@@ -790,6 +790,11 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
               {mode === "edit" ? "Salvar nova versão" : "Salvar relatório"}
             </Button>
           </div>
+        </div>
+      )}
+      {!canEdit && mode !== "view" && (
+        <div className="rounded-md border border-dashed p-3 text-xs text-muted-foreground">
+          Apenas usuários com perfil Comercial, Gestor geral ou Admin podem criar/alterar o relatório comercial.
         </div>
       )}
     </div>
