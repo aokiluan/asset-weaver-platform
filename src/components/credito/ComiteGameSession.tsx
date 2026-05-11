@@ -253,50 +253,65 @@ export function ComiteGameSession({ proposalId, votosMinimos, proposalStage, ced
       <Card className="p-2.5">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2">
-            <Badge variant={session.status === "encerrada" ? "outline" : "default"} className="uppercase tracking-wide text-[10px] h-5 px-1.5">
+            <Badge variant={isClosed ? "outline" : "default"} className="uppercase tracking-wide text-[10px] h-5 px-1.5">
               {session.status}
             </Badge>
-            {session.voto_secreto && !revealed && (
+            {!revealed && (
               <Badge variant="secondary" className="text-[10px] h-5 px-1.5"><Lock className="h-3 w-3 mr-1" /> Voto secreto</Badge>
             )}
             {revealed && <Badge variant="secondary" className="text-[10px] h-5 px-1.5"><Eye className="h-3 w-3 mr-1" /> Revelado</Badge>}
-            {deadlineStr && <Badge variant="outline" className="text-[10px] h-5 px-1.5"><Clock className="h-3 w-3 mr-1" /> {deadlineStr}</Badge>}
+            {isClosed && (
+              <Badge className={`text-[10px] h-5 px-1.5 ${decisaoFinal === "aprovado" ? "bg-green-600" : "bg-destructive"} text-white`}>
+                <Trophy className="h-3 w-3 mr-1" /> {decisaoFinal === "aprovado" ? "Aprovado" : "Reprovado"}
+              </Badge>
+            )}
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-[11px] text-muted-foreground leading-none">{votes.length} voto{votes.length === 1 ? "" : "s"} registrado{votes.length === 1 ? "" : "s"}</span>
-            {canManage && session.status === "aberta" && votes.length > 0 && (
-              <Button onClick={revelar} disabled={busy} size="sm" variant="default" className="h-7 text-[11px]">
-                <Eye className="h-3.5 w-3.5 mr-1.5" /> Revelar votos
+            <span className="text-[11px] text-muted-foreground leading-none">
+              {votedEligibleIds.size}/{eligibleVoters.length} membro{eligibleVoters.length === 1 ? "" : "s"} votaram
+            </span>
+            {isClosed && minuteId && (
+              <Button onClick={baixarAta} size="sm" variant="default" className="h-7 text-[11px]">
+                <FileDown className="h-3.5 w-3.5 mr-1.5" /> Baixar ata (PDF)
               </Button>
             )}
-            {canManage && session.status === "revelada" && (
-              <Button onClick={encerrar} disabled={busy} size="sm" variant="default" className="h-7 text-[11px]">
-                <Trophy className="h-3.5 w-3.5 mr-1.5" /> Encerrar e registrar decisão
+            {canManage && session.status === "aberta" && pendentes.length > 0 && (
+              <Button onClick={() => setForceOpen(true)} disabled={busy} size="sm" variant="outline" className="h-7 text-[11px]">
+                <ShieldAlert className="h-3.5 w-3.5 mr-1.5" /> Forçar encerramento
               </Button>
             )}
           </div>
         </div>
       </Card>
 
-      {/* Placar / contagem */}
+      {/* Placar */}
       <div className="grid grid-cols-2 gap-2">
         <ScoreCard label="Favoráveis" count={favoraveis} icon={<ThumbsUp className="h-3 w-3" />} color="text-green-600" hidden={!revealed} mask={votes.length} />
         <ScoreCard label="Contrários" count={contrarios} icon={<ThumbsDown className="h-3 w-3" />} color="text-destructive" hidden={!revealed} mask={votes.length} />
       </div>
 
-      {/* Quórum */}
-      <Card className={`p-2.5 ${revealed && quorumOk ? "border-green-500 bg-green-500/5" : ""}`}>
-        <div className="flex items-center gap-2.5">
-          <Trophy className={`h-5 w-5 shrink-0 ${revealed && quorumOk ? "text-green-600" : "text-muted-foreground"}`} />
+      {/* Quórum por presença total */}
+      <Card className={`p-2.5 ${isClosed ? (decisaoFinal === "aprovado" ? "border-green-500 bg-green-500/5" : "border-destructive/40 bg-destructive/5") : ""}`}>
+        <div className="flex items-start gap-2.5">
+          <Users className="h-5 w-5 shrink-0 text-muted-foreground mt-0.5" />
           <div className="flex-1 min-w-0">
             <div className="text-[12px] font-medium leading-tight">
-              {revealed
-                ? (quorumOk ? "Quórum atingido — pronto para decisão final ✅" : "Quórum não atingido")
-                : "Aguardando revelação dos votos"}
+              {isClosed
+                ? `Sessão encerrada — decisão: ${decisaoFinal}`
+                : pendentes.length === 0
+                  ? "Todos os membros votaram — encerrando…"
+                  : `Aguardando voto de ${pendentes.length} membro${pendentes.length === 1 ? "" : "s"}`}
             </div>
-            <div className="text-[11px] text-muted-foreground leading-tight">
-              {revealed ? `${favoraveis} de ${votosMinimos} votos favoráveis necessários` : `Mínimo: ${votosMinimos} favorável(is)`}
-            </div>
+            {!isClosed && pendentes.length > 0 && (
+              <div className="text-[11px] text-muted-foreground leading-tight mt-0.5">
+                Pendentes: {pendentes.map(p => p.nome).join(", ")}
+              </div>
+            )}
+            {isClosed && (
+              <div className="text-[11px] text-muted-foreground leading-tight mt-0.5">
+                {favoraveis} favorável(is) × {contrarios} contrário(s){votosMinimos ? ` • alçada original: mín. ${votosMinimos}` : ""}
+              </div>
+            )}
           </div>
         </div>
       </Card>
