@@ -346,16 +346,7 @@ export function ConciliacaoDocumentosSheet({
         </div>
 
         {/* Conteúdo */}
-        {fila.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center gap-3 p-6 text-center">
-            <PartyPopper className="h-12 w-12 text-primary" />
-            <h3 className="text-lg font-semibold">Tudo conciliado!</h3>
-            <p className="text-sm text-muted-foreground max-w-sm">
-              Não há documentos pendentes de validação para este cedente.
-            </p>
-            <Button onClick={() => onOpenChange(false)}>Fechar</Button>
-          </div>
-        ) : !current ? null : (
+        {!current ? null : (
           <div className="flex-1 grid lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] overflow-hidden">
             {/* FICHA */}
             <div className="border-r overflow-y-auto p-4 space-y-3 bg-muted/10">
