@@ -49,7 +49,7 @@ export async function generateVisitReportPdf(
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
   const margin = 40;
-  let y = margin;
+  let y = margin + 50; // espaço extra na pág. 1 para o logo S3 no canto superior direito
 
   const ensureSpace = (h: number) => {
     if (y + h > pageH - margin) { doc.addPage(); y = margin; }
