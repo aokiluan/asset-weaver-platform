@@ -95,6 +95,7 @@ export function CedenteStageActions({ cedenteId, stage, isOwner, gateInfo, onCha
   const [confirmTarget, setConfirmTarget] = useState<Transition | null>(null);
   const [returnOpen, setReturnOpen] = useState<Transition | null>(null);
   const [motivo, setMotivo] = useState("");
+  const [observacao, setObservacao] = useState("");
   const [saving, setSaving] = useState(false);
 
   // Pendências da etapa atual (somente para botões "para frente")
