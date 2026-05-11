@@ -16,6 +16,7 @@ import { DocumentosUploadKanban } from "@/components/cedentes/DocumentosUploadKa
 import { EnviarAnaliseDialog } from "@/components/cedentes/EnviarAnaliseDialog";
 import { CedenteStageStepper } from "@/components/cedentes/CedenteStageStepper";
 import { CedenteStageActions } from "@/components/cedentes/CedenteStageActions";
+import { CedenteHistoryTab } from "@/components/cedentes/CedenteHistoryTab";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
@@ -450,27 +451,7 @@ export default function CedenteDetail() {
 
       {tab === "historico" && (
         <div className="mt-4">
-          <div className="rounded-lg border bg-card p-3">
-            <h2 className="text-lg font-semibold mb-4">Histórico de estágios</h2>
-            {history.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Sem registros.</p>
-            ) : (
-              <ol className="space-y-3 text-sm">
-                {history.map(h => (
-                  <li key={h.id} className="flex gap-3 border-l-2 border-primary pl-3">
-                    <div>
-                      <div className="font-medium">
-                        {h.evento === "criado"
-                          ? <>Criado em <span className="text-primary">{STAGE_LABEL[h.stage_novo!]}</span></>
-                          : <>{STAGE_LABEL[h.stage_anterior!]} → <span className="text-primary">{STAGE_LABEL[h.stage_novo!]}</span></>}
-                      </div>
-                      <div className="text-[11px] text-muted-foreground leading-tight">{new Date(h.created_at).toLocaleString("pt-BR")}</div>
-                    </div>
-                  </li>
-                ))}
-              </ol>
-            )}
-          </div>
+          <CedenteHistoryTab cedenteId={cedente.id} />
         </div>
       )}
 
