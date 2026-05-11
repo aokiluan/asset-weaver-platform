@@ -1,60 +1,48 @@
-## Fluxo do cedente reprovado em comitê
+# Histórico de contratos na Formalização
 
-Hoje, ao reprovar, a função `committee_close_if_complete` apenas marca a proposta como `reprovado` e gera a ata, mas o `cedentes.stage` continua em `'comite'` — o cedente fica "preso". Vamos definir um fluxo claro de arquivamento + reapresentação.
+Hoje a página `/formalizacao` mostra apenas os cedentes com `stage = 'formalizacao'`. Depois que a minuta é assinada e o cedente é ativado, ele desaparece da tela — para reaver o contrato é preciso entrar pelo cadastro do cedente.
 
-### 1. O que acontece automaticamente quando o comitê reprova
+Vamos replicar o padrão usado em `/comite` (abas "Em pauta" / "Reprovados" / "Atas") para que a Formalização tenha um **histórico permanente de contratos**, com busca, download do PDF e atalho para o cedente.
 
-Ao fechar a sessão com decisão `reprovado`:
+## O que muda na UI
 
-- `credit_proposals.stage` → `'reprovado'` (já existe).
-- Ata é gerada normalmente, registrada no histórico (`cedente_history.evento = 'ata_comite'`).
-- **Novo:** `cedentes.stage` → `'inativo'` automaticamente (espelho do que já é feito para `aprovado → formalizacao`).
-- **Novo:** registro extra em `cedente_history` com evento `'reprovado_comite'` contendo `minute_id`, `proposal_id` e número do comitê — para destacar visualmente no histórico (separado do `'ata_comite'`).
-- O kanban / pipeline passa a mostrar o cedente na coluna **Inativo**, fora da esteira ativa.
+A página `Formalizacao.tsx` passa a usar `Tabs` com três abas no mesmo padrão visual do Comitê:
 
-### 2. Reapresentação ao comitê (com justificativa)
+1. **Em formalização** (atual) — cedentes com `stage = 'formalizacao'`. Comportamento, cards e ações exatamente como hoje.
+2. **Aguardando assinatura** — atalho filtrado: apenas os de `stage = 'formalizacao'` que ainda têm `minuta_assinada = false`. (Reaproveita os mesmos cards.)
+3. **Contratos assinados** — nova lista/histórico, mostrando todos os cedentes que já tiveram minuta marcada como assinada (`minuta_assinada = true`), independentemente do `stage` atual. Inclui, portanto, cedentes já `ativo` e `inativo`.
 
-Permitido a `admin`, `credito` e `comite`. Fluxo:
+Os 3 StatCards no topo continuam idênticos (Em formalização / Aguardando / Prontos para ativar).
 
-1. Na aba **Comitê** (ou na tela de detalhe do cedente inativo por reprovação), aparece o botão **"Reapresentar ao comitê"**.
-2. Abre dialog exigindo:
-   - Justificativa da reapresentação (textarea obrigatória, mín. 30 caracteres).
-   - O que mudou desde a última votação (campo livre opcional, mas sugerido).
-3. Ao confirmar:
-   - Move `cedentes.stage` de `'inativo'` → `'analise'` (volta para Crédito revisar parecer antes de submeter de novo).
-   - Cria nova `credit_proposals` (não reaproveita a reprovada) já vinculada ao cedente, com a justificativa em `observacoes` e referência à proposta anterior em `detalhes`.
-   - Registra `cedente_history` com evento `'reapresentacao_comite'` (justificativa + id da proposta anterior + id da nova proposta).
-   - A justificativa é persistida e aparece na próxima ata gerada (campo "Motivo da reapresentação").
-4. A partir daí o fluxo segue normal: Crédito revisa → envia para Comitê → nova rodada gera **nova ata numerada** (a anterior continua íntegra no histórico).
+## Aba "Contratos assinados" — layout
 
-### 3. UI / UX
+Tabela compacta no padrão das Atas, ordenada por `minuta_assinada_em` desc:
 
-- **Stepper do cedente:** quando `stage = 'inativo'` por reprovação de comitê, mostrar badge vermelho "Reprovado em comitê" sobre o passo Comitê (sem criar novo stage; apenas indicador derivado do último evento de histórico).
-- **Aba Comitê do cedente:** ao invés do painel de votação, exibir card resumo da última ata (decisão, data, número, link para PDF) + CTA "Reapresentar ao comitê".
-- **Página `/comite` (sidebar):**
-  - Filtro adicional "Reprovados" (lista cedentes com última ata reprovada e botão de reapresentação rápida).
-  - Histórico mostra todas as atas (aprovadas e reprovadas) com badge de decisão.
-- **Histórico do cedente (`CedenteHistoryTab`):** adicionar ícones/labels para os novos eventos `reprovado_comite` e `reapresentacao_comite`.
+| Cedente | CNPJ | Proposta | Valor aprovado | Assinado em | Status atual | Ações |
 
-### 4. Arquivos impactados
+- **Cedente / CNPJ:** link para `/cedentes/:id?tab=formalizacao`.
+- **Proposta:** código + valor aprovado (vindos de `credit_proposals` aprovada mais recente daquele cedente).
+- **Assinado em:** `minuta_assinada_em` formatado pt-BR + "há Xd".
+- **Status atual:** Badge — `Ativo` (verde), `Inativo` (cinza), ou `Em formalização` (âmbar) caso ainda não tenha sido ativado.
+- **Ações:** botão `Baixar minuta (PDF)` (reusa `downloadMinutaPDF` já existente) e botão `Abrir cadastro`.
 
-**Banco (`supabase/migrations/...`):**
-- Atualizar `committee_close_if_complete` para, no caso `reprovado`, mover `cedentes.stage` para `inativo` e inserir o evento `reprovado_comite`.
-- Nova função `reapresentar_proposta_comite(_cedente_id uuid, _justificativa text, _mudancas text)` (SECURITY DEFINER) que valida role, cria a nova `credit_proposals` ligada à anterior, move o cedente para `analise` e registra histórico.
-- Ajuste em `credit_proposals`: adicionar coluna `proposta_anterior_id uuid` (nullable, FK lógica) e `motivo_reapresentacao text` para alimentar a próxima ata.
-- RLS: garantir que apenas `admin`/`credito`/`comite` podem invocar a RPC.
+Campo de busca acima da tabela (mesmo componente `Input` usado no Comitê) que filtra por razão social, CNPJ ou código de proposta.
 
-**Frontend:**
-- `src/lib/cedente-stages.ts`: helper `isReprovadoEmComite(cedente)` (lê último evento) — sem alterar `STAGE_ORDER`.
-- `src/components/cedentes/CedenteStageStepper.tsx`: badge "Reprovado em comitê" sobre o passo Comitê quando aplicável.
-- `src/components/credito/ComiteGameSession.tsx` (ou nova `ComiteResultadoCard.tsx`): card de resultado + CTA reapresentação quando sessão encerrada.
-- Novo `src/components/credito/ReapresentarComiteDialog.tsx`.
-- `src/pages/Comite.tsx`: aba/filtro "Reprovados" + lista com ação de reapresentar.
-- `src/components/cedentes/CedenteHistoryTab.tsx`: renderizar os dois novos eventos.
-- `src/lib/comite-ata-pdf.ts`: incluir bloco "Motivo da reapresentação" quando a proposta tiver `motivo_reapresentacao` preenchido.
+Estado vazio: ícone `FileSignature` + "Nenhum contrato assinado ainda."
 
-### 5. Fora de escopo
+## Permissões
 
-- Não criamos novo `cedente_stage` "reprovado" (a etapa terminal é `inativo`, conforme decisão).
-- Notificações por e-mail ficam para próxima rodada.
-- Limite de quantas reapresentações são permitidas (por enquanto, ilimitado, mas todas ficam rastreadas no histórico).
+Reusa `canGenerate = admin | formalizacao` para o botão de baixar PDF. A leitura da aba "Contratos assinados" é liberada para todos que já enxergam a página (`admin`, `formalizacao`, `gestor_geral`) — controlado pelas RLS atuais de `cedentes` e `credit_proposals`, não exige migração.
+
+## Detalhes técnicos
+
+- **Sem mudanças no banco.** Já existem as colunas `minuta_assinada`, `minuta_assinada_em`, `minuta_assinada_por` em `cedentes`. As RLS atuais já permitem o `select` desses registros para os papéis envolvidos.
+- **Carregamento:** ao montar a página, fazer um `select` adicional em `cedentes` filtrando `minuta_assinada = true` (limit 200, ordenado por `minuta_assinada_em desc`) e um `select` em `credit_proposals` (`stage = 'aprovado'`, `in cedente_id`) para enriquecer a linha. Reaproveita o mapeamento `propostas` já feito no `load()`.
+- **Reuso de PDF:** o helper `downloadMinutaPDF` em `src/lib/minuta-pdf.ts` já gera a minuta a partir do cedente + proposta — usa o mesmo branding S3 Capital aplicado no plano anterior.
+- **Sem novas rotas:** tudo dentro de `/formalizacao` via `Tabs` controladas por estado local (`useState`), igual ao `Comite.tsx`.
+
+## Arquivos a editar
+
+- `src/pages/Formalizacao.tsx` — refatorar para usar `Tabs`, separar a lista atual em duas abas (Em formalização / Aguardando) e adicionar a aba "Contratos assinados" com busca, badge de status, botões de baixar minuta e abrir cadastro.
+
+Nenhum arquivo novo, nenhuma migração, nenhum impacto em outras páginas.
