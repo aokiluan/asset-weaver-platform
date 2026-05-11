@@ -479,6 +479,8 @@ export type Database = {
       cedentes: {
         Row: {
           bairro: string | null
+          cadastro_revisado_em: string | null
+          cadastro_revisado_por: string | null
           capital_social: number | null
           cep: string | null
           cidade: string | null
@@ -514,6 +516,8 @@ export type Database = {
         }
         Insert: {
           bairro?: string | null
+          cadastro_revisado_em?: string | null
+          cadastro_revisado_por?: string | null
           capital_social?: number | null
           cep?: string | null
           cidade?: string | null
@@ -549,6 +553,8 @@ export type Database = {
         }
         Update: {
           bairro?: string | null
+          cadastro_revisado_em?: string | null
+          cadastro_revisado_por?: string | null
           capital_social?: number | null
           cep?: string | null
           cidade?: string | null
@@ -1751,6 +1757,10 @@ export type Database = {
       is_team_manager_of: {
         Args: { _target: string; _viewer: string }
         Returns: boolean
+      }
+      marcar_cadastro_revisado: {
+        Args: { _cedente_id: string; _observacao?: string }
+        Returns: string
       }
       reapresentar_proposta_comite: {
         Args: {
