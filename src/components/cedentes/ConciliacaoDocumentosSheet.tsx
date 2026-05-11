@@ -145,8 +145,8 @@ export function ConciliacaoDocumentosSheet({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
 
-  // Dialog de motivo (devolver/reprovar)
-  const [acao, setAcao] = useState<MotivoAcao>(null);
+  // Dialog de motivo (reprovar)
+  const [reprovarOpen, setReprovarOpen] = useState(false);
   const [motivo, setMotivo] = useState("");
   const [enviandoMotivo, setEnviandoMotivo] = useState(false);
 
