@@ -500,7 +500,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
                       </span>
                     </TooltipTrigger>
                     <TooltipContent>
-                      Apenas Comercial, Gestor geral ou Admin podem alterar o relatório comercial.
+                      Seu usuário não tem permissão, fale com o administrador
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
