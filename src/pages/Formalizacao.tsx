@@ -64,6 +64,7 @@ export default function Formalizacao() {
   const [cedentes, setCedentes] = useState<CedenteRow[]>([]);
   const [historico, setHistorico] = useState<CedenteRow[]>([]);
   const [propostas, setPropostas] = useState<Record<string, PropostaAprovada>>({});
+  const [contratos, setContratos] = useState<Record<string, { storage_path: string; nome_arquivo: string }>>({});
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [tab, setTab] = useState("ativos");
