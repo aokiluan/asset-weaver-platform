@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Loader2, Send, MessageSquare, ArrowRight, Pencil } from "lucide-react";
+import { Loader2, Send, MessageSquare, ArrowRight, Pencil, FileDown, Vote } from "lucide-react";
 import { toast } from "sonner";
 import { CedenteStage, STAGE_LABEL, STAGE_COLORS } from "@/lib/cedente-stages";
+import { downloadAtaById } from "@/lib/comite-ata-pdf";
 
 interface HistoryItem {
   id: string;
@@ -16,7 +17,7 @@ interface HistoryItem {
   evento: string;
   stage_anterior: CedenteStage | null;
   stage_novo: CedenteStage | null;
-  detalhes: { comentario?: string } | null;
+  detalhes: { comentario?: string; minute_id?: string; decisao?: string } | null;
   created_at: string;
 }
 
