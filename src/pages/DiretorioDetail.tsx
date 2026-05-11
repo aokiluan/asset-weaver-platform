@@ -527,7 +527,7 @@ export default function DiretorioDetail() {
                               variant="ghost"
                               size="sm"
                               className="h-6 text-[11px]"
-                              onClick={() => downloadAtaPDF(a.id).catch((e) =>
+                              onClick={() => downloadAtaById(a.id).catch((e) =>
                                 toast.error("Erro ao gerar PDF", { description: e.message }),
                               )}
                             >
