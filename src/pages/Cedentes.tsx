@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Trash2, ExternalLink, Building2 } from "lucide-react";
+import { Plus, Search, Trash2, ExternalLink, Building2, History } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
@@ -234,6 +234,13 @@ export default function Cedentes() {
                 <div className="flex gap-2 shrink-0">
                   <Button size="sm" onClick={() => navigate(`/cedentes/${selected.id}`)}>
                     <ExternalLink className="h-4 w-4 mr-2" /> Abrir cadastro completo
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => navigate(`/cedentes/${selected.id}?tab=historico`)}
+                  >
+                    <History className="h-4 w-4 mr-2" /> Histórico
                   </Button>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
