@@ -79,10 +79,13 @@ export default function Formalizacao() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [tab, setTab] = useState("ativos");
   const [search, setSearch] = useState("");
+  const [revisarTarget, setRevisarTarget] = useState<CedenteRow | null>(null);
 
   const canSign =
     hasRole("admin") || hasRole("formalizacao") || hasRole("gestor_geral");
   const canGenerate = hasRole("admin") || hasRole("formalizacao");
+  const canRevisar =
+    hasRole("admin") || hasRole("formalizacao") || hasRole("cadastro") || hasRole("gestor_geral");
 
   useEffect(() => {
     document.title = "Formalização | Securitizadora";
