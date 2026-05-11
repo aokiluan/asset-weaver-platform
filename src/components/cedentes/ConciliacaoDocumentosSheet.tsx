@@ -161,12 +161,9 @@ export function ConciliacaoDocumentosSheet({
 
   useEffect(() => {
     let cancelled = false;
-    let createdBlobUrl: string | null = null;
     setPreviewUrl(null);
     if (!current) return;
     setPreviewLoading(true);
-
-    const isPdfDoc = current.mime_type?.includes("pdf");
 
     (async () => {
       const { data, error } = await supabase.storage
@@ -177,28 +174,12 @@ export function ConciliacaoDocumentosSheet({
         setPreviewLoading(false);
         return;
       }
-      // Para PDF: baixar como blob e usar blob: URL (mesma origem) — evita
-      // bloqueio do Chrome em iframes aninhados de outra origem.
-      if (isPdfDoc) {
-        try {
-          const res = await fetch(data.signedUrl);
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          const blob = await res.blob();
-          if (cancelled) return;
-          createdBlobUrl = URL.createObjectURL(blob);
-          setPreviewUrl(createdBlobUrl);
-        } catch {
-          if (!cancelled) setPreviewUrl(data.signedUrl); // fallback
-        }
-      } else {
-        setPreviewUrl(data.signedUrl);
-      }
+      setPreviewUrl(data.signedUrl);
       if (!cancelled) setPreviewLoading(false);
     })();
 
     return () => {
       cancelled = true;
-      if (createdBlobUrl) URL.revokeObjectURL(createdBlobUrl);
     };
   }, [current?.id, current?.storage_path, current?.mime_type]);
 
@@ -453,7 +434,11 @@ export function ConciliacaoDocumentosSheet({
                 </div>
               )}
               {previewUrl && isPdf && (
-                <iframe src={previewUrl} title="preview" className="w-full h-full border-0" />
+                <PdfCanvasPreview
+                  key={current.id}
+                  pdfUrl={previewUrl}
+                  fileName={current.nome_arquivo}
+                />
               )}
               {previewUrl && isImg && (
                 <div className="w-full h-full overflow-auto flex items-center justify-center p-4">
