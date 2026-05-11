@@ -21,7 +21,7 @@ export const STAGE_ORDER: CedenteStage[] = [
 export const STAGE_LABEL: Record<CedenteStage, string> = {
   novo: "Novo",
   cadastro: "Cadastro",
-  analise: "Análise",
+  analise: "Análise de crédito",
   comite: "Comitê",
   formalizacao: "Formalização",
   ativo: "Ativo",
