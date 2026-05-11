@@ -1,5 +1,7 @@
 import jsPDF from "jspdf";
 import { supabase } from "@/integrations/supabase/client";
+import { applyS3HeaderLogo, applyS3Watermark } from "./pdf-branding";
+
 
 const MARGIN = 15;
 const PAGE_W = 210;
