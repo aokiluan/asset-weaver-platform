@@ -217,6 +217,71 @@ export default function Comite() {
           )}
         </TabsContent>
 
+        <TabsContent value="reprovados" className="mt-3 space-y-2">
+          {reprovados.length === 0 ? (
+            <div className="rounded-lg border bg-card p-8 text-center">
+              <Trophy className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+              <p className="text-[12px] text-muted-foreground">Nenhum cedente reprovado pendente de reapresentação.</p>
+            </div>
+          ) : (
+            <div className="rounded-lg border bg-card overflow-hidden">
+              <table className="w-full text-[11px]">
+                <thead className="bg-muted/40 text-muted-foreground">
+                  <tr>
+                    <th className="text-left px-2.5 py-1.5 font-medium">Cedente</th>
+                    <th className="text-left px-2.5 py-1.5 font-medium">Última ata</th>
+                    <th className="text-left px-2.5 py-1.5 font-medium">Votos</th>
+                    <th className="text-right px-2.5 py-1.5 font-medium">Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {reprovados.map((m) => {
+                    const t = m.totais ?? {};
+                    return (
+                      <tr key={m.id} className="border-t hover:bg-muted/20">
+                        <td className="px-2.5 py-1.5">
+                          <div className="font-medium leading-tight">{m.cedentes?.razao_social ?? "—"}</div>
+                          <div className="text-[10px] text-muted-foreground font-mono leading-none">{m.cedentes?.cnpj}</div>
+                        </td>
+                        <td className="px-2.5 py-1.5">
+                          <span className="font-mono">{m.numero_comite}º</span>
+                          <span className="text-muted-foreground"> · {fmtDate(m.realizado_em)}</span>
+                        </td>
+                        <td className="px-2.5 py-1.5 text-muted-foreground">
+                          <span className="text-green-600">{t.favoraveis ?? 0}</span> × <span className="text-destructive">{t.desfavoraveis ?? 0}</span>
+                        </td>
+                        <td className="px-2.5 py-1.5 text-right">
+                          <div className="inline-flex gap-1">
+                            <Button size="sm" variant="outline" className="h-6 text-[10px] gap-1 px-1.5"
+                              onClick={() => downloadAtaById(m.id).catch((e) => toast.error(e?.message ?? "Falha"))}>
+                              <FileDown className="h-3 w-3" /> Ata
+                            </Button>
+                            {(hasRole("admin") || hasRole("credito") || hasRole("comite")) && (
+                              <ReapresentarComiteDialog
+                                cedenteId={m.cedente_id}
+                                cedenteNome={m.cedentes?.razao_social ?? undefined}
+                                onDone={load}
+                                trigger={
+                                  <Button size="sm" variant="default" className="h-6 text-[10px] gap-1 px-1.5">
+                                    <RotateCcw className="h-3 w-3" /> Reapresentar
+                                  </Button>
+                                }
+                              />
+                            )}
+                            <Button asChild size="sm" variant="ghost" className="h-6 text-[10px] gap-1 px-1.5">
+                              <Link to={`/cedentes/${m.cedente_id}?tab=comite`}>Abrir</Link>
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </TabsContent>
+
         <TabsContent value="atas" className="mt-3 space-y-2">
           <div className="relative">
             <Search className="h-3.5 w-3.5 absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
