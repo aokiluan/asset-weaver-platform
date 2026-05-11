@@ -162,6 +162,27 @@ export default function Formalizacao() {
     });
   };
 
+  const handleBaixarContrato = async (c: CedenteRow) => {
+    const doc = contratos[c.id];
+    if (!doc) {
+      toast.info("Contrato não anexado", {
+        description: "Abra o cadastro do cedente para anexar o PDF assinado.",
+      });
+      return;
+    }
+    const { data, error } = await supabase.storage
+      .from("cedente-docs")
+      .createSignedUrl(doc.storage_path, 60);
+    if (error) {
+      toast.error("Erro ao baixar contrato", { description: error.message });
+      return;
+    }
+    const a = document.createElement("a");
+    a.href = data.signedUrl;
+    a.download = doc.nome_arquivo;
+    a.click();
+  };
+
   const handleMarcarAssinada = async (c: CedenteRow) => {
     if (!user) return;
     setBusyId(c.id);
