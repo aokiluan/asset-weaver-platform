@@ -61,6 +61,7 @@ export default function Formalizacao() {
 
   const canSign =
     hasRole("admin") || hasRole("formalizacao") || hasRole("gestor_geral");
+  const canGenerate = hasRole("admin") || hasRole("formalizacao");
 
   useEffect(() => {
     document.title = "Formalização | Securitizadora";
