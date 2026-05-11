@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import { supabase } from "@/integrations/supabase/client";
+import { applyS3Branding, applyS3HeaderLogo } from "./pdf-branding";
 import {
   SECTION_ORDER,
   SECTION_LABEL,
@@ -7,6 +8,7 @@ import {
   SectionKey,
   RECOMENDACAO_OPTIONS,
 } from "./credit-report";
+
 
 interface Attachment { path: string; name: string; caption?: string }
 
