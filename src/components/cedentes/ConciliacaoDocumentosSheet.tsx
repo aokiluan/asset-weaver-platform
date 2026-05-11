@@ -142,6 +142,7 @@ export function ConciliacaoDocumentosSheet({
   );
 
   const [idx, setIdx] = useState(0);
+  const [totalInicial, setTotalInicial] = useState(0);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
 

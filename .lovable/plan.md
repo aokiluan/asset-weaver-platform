@@ -1,21 +1,33 @@
-# Remover "Devolver para reclassificar"
+# Corrigir contador da Conciliação (progresso real)
 
-A reclassificação já acontece direto na tela de conciliação (seletor de tipo/categoria no próprio item), então o botão duplica funcionalidade e ainda força um fluxo mais lento (diálogo de motivo + entrada no histórico) pra algo resolvido em 2 cliques ali mesmo.
+## Problema
+Em `ConciliacaoDocumentosSheet.tsx` (linha 324) o contador mostra `idx+1 de fila.length`. Como `fila` é derivada de `documentos.filter(status === "pendente")`, ao marcar um doc como verificado ele sai da fila e o denominador diminui — "1 de 4" → "1 de 3" em vez de "2 de 4".
 
-## Mudanças em `src/components/cedentes/ConciliacaoDocumentosSheet.tsx`
+## Lógica proposta
+Mostrar **tratados de total**, congelando o denominador ao abrir a sheet (snapshot do tamanho inicial da fila).
 
-1. **Footer** — remover o `<Button>` "Devolver para reclassificar" (linhas ~472-479) e o ícone `Undo2` do import se não for mais usado.
+- `totalInicial` = tamanho da fila no momento em que a sheet abriu (e quando o filtro "Apenas com categoria" muda, pois muda o universo).
+- `tratados` = `totalInicial - fila.length` (quantos já saíram do pendente).
+- Exibição: `{tratados + (current ? 1 : 0)} de {totalInicial}` — o "+1" representa o doc que está sendo analisado agora (o atual ainda não foi tratado, mas está em foco), garantindo que ao abrir mostre "1 de 4" e ao verificar pule para "2 de 4".
+- Quando `current` for null (acabou a fila), mostrar `{totalInicial} de {totalInicial}` — "tudo concluído".
 
-2. **Dialog de motivo** — passar a ser exclusivo de "Reprovar":
-   - Tipo `MotivoAcao` deixa de ser união e vira simplesmente `boolean` (estado `reprovarOpen`).
-   - Função `abrirMotivo("reprovar")` vira `abrirReprovar()`.
-   - Remover branch `acao === "devolver"` em `confirmarMotivo` (mantém só o update de `status: "reprovado"` e a entrada no histórico com prefixo "Documento reprovado").
-   - Títulos/labels/placeholders do diálogo ficam fixos no texto de "Reprovar".
-   - Atalho `R` continua funcionando; remover qualquer referência ao atalho de devolver (não há).
+## Mudanças
 
-3. **Limpeza** — remover constantes/strings não usadas: `"devolvido_reclassificar"`, prefixo "Documento devolvido para reclassificar", `acao === "reprovar" ? ... : ...` ternários redundantes.
+`src/components/cedentes/ConciliacaoDocumentosSheet.tsx`:
+
+1. Adicionar `const [totalInicial, setTotalInicial] = useState(0);`.
+2. `useEffect` que dispara em:
+   - `open` virando `true` → `setTotalInicial(fila.length)`.
+   - `somenteComCategoria` mudando enquanto aberto → `setTotalInicial(fila.length)`.
+3. Substituir o JSX da linha 322-326 por:
+   ```tsx
+   {totalInicial > 0 && (
+     <span className="text-sm text-muted-foreground whitespace-nowrap">
+       {current ? Math.min(totalInicial - fila.length + 1, totalInicial) : totalInicial} de {totalInicial}
+     </span>
+   )}
+   ```
 
 ## Fora de escopo
-- Não mexer no seletor de categoria existente na conciliação (já é o caminho de reclassificação).
-- Não alterar histórico de eventos passados que já tenham `acao: "devolvido_reclassificar"` no banco — só paramos de gerar novos.
-- Não tocar em backend/migrations.
+- Não alterar a lógica de navegação (`next`/`prev`) nem o filtro.
+- Não persistir progresso entre aberturas da sheet.
