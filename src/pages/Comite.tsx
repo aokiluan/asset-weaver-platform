@@ -66,7 +66,7 @@ export default function Comite() {
 
     const list = ((props as any[]) ?? []) as Proposal[];
     setProposals(list);
-    setEligibleCount(((elig as any[]) ?? []).filter((r) => r.profiles?.ativo).length);
+    setEligibleCount(Array.isArray(elig) ? (elig as string[]).length : 0);
     setMinutes(((mins as any[]) ?? []) as Minute[]);
 
     if (list.length) {
