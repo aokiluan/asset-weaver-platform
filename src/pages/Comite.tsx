@@ -58,7 +58,7 @@ export default function Comite() {
       supabase.from("credit_proposals")
         .select("id,codigo,cedente_id,valor_solicitado,prazo_dias,taxa_sugerida,stage,created_at,cedentes(razao_social,cnpj)")
         .eq("stage", "comite").order("created_at", { ascending: true }),
-      supabase.from("user_roles").select("user_id, profiles!inner(ativo)").eq("role", "comite"),
+      supabase.rpc("committee_eligible_voter_ids" as any),
       supabase.from("committee_minutes")
         .select("id,numero_comite,realizado_em,cedente_id,decisao,totais,cedentes(razao_social,cnpj)")
         .order("realizado_em", { ascending: false }).limit(200),
