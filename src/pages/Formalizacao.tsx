@@ -296,10 +296,17 @@ export default function Formalizacao() {
         </p>
       </header>
 
-      <div className="grid gap-2 md:grid-cols-3">
+      <div className="grid gap-2 md:grid-cols-4">
         <StatCard label="Em formalização" value={cedentes.length} icon={<FileSignature className="h-3.5 w-3.5" />} />
         <StatCard label="Aguardando assinatura" value={aguardandoAssinatura} icon={<Clock className="h-3.5 w-3.5" />} highlight={aguardandoAssinatura > 0} />
         <StatCard label="Prontos para ativar" value={prontos} icon={<CheckCircle2 className="h-3.5 w-3.5" />} />
+        <StatCard
+          label={renovacoesVencidas > 0 ? "Renovações vencidas" : "Renovação cadastral"}
+          value={renovacoesVencidas > 0 ? renovacoesVencidas : renovacoesAtencao}
+          icon={renovacoesVencidas > 0 ? <AlertTriangle className="h-3.5 w-3.5" /> : <RotateCcw className="h-3.5 w-3.5" />}
+          tone={renovacoesVencidas > 0 ? "danger" : renovacoesAtencao > 0 ? "warning" : undefined}
+          hint={renovacoesVencidas > 0 ? `+ ${renovacoesAtencao} próx. do vencimento` : renovacoesAtencao > 0 ? "vencendo em até 30d" : "todos em dia"}
+        />
       </div>
 
       <Tabs value={tab} onValueChange={setTab}>
