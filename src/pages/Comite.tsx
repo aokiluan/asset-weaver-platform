@@ -7,11 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
-  ArrowRight, Building2, CheckCircle2, Clock, FileDown, Loader2, Search,
+  ArrowRight, Building2, CheckCircle2, Clock, FileDown, Loader2, RotateCcw, Search,
   ThumbsDown, ThumbsUp, Trophy, Users, Vote,
 } from "lucide-react";
 import { toast } from "sonner";
 import { downloadAtaById } from "@/lib/comite-ata-pdf";
+import { ReapresentarComiteDialog } from "@/components/credito/ReapresentarComiteDialog";
 
 type VoteDecision = "favoravel" | "desfavoravel" | "abstencao";
 
