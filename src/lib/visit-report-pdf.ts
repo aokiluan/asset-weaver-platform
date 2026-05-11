@@ -187,6 +187,9 @@ export async function generateVisitReportPdf(
     }
   }
 
+  // Branding S3
+  await applyS3Branding(doc, { unit: "pt" });
+
   const versaoSuffix = versaoLabel ? `_${versaoLabel.replace(/[^\w]+/g, "-").toLowerCase()}` : "";
   const fileName = `relatorio-comercial_${(ced?.razao_social || "cedente").replace(/[^\w]+/g, "-").toLowerCase()}_${snapshot.data_visita || new Date().toISOString().slice(0, 10)}${versaoSuffix}.pdf`;
   if (mode === "blob") {
@@ -195,3 +198,4 @@ export async function generateVisitReportPdf(
   }
   doc.save(fileName);
 }
+
