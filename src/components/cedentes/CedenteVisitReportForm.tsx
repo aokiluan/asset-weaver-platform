@@ -794,7 +794,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
       )}
       {!canEdit && mode !== "view" && (
         <div className="rounded-md border border-dashed p-3 text-xs text-muted-foreground">
-          Apenas usuários com perfil Comercial, Gestor geral ou Admin podem criar/alterar o relatório comercial.
+          Seu usuário não tem permissão, fale com o administrador
         </div>
       )}
     </div>
