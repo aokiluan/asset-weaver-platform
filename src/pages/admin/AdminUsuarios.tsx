@@ -60,17 +60,6 @@ export default function AdminUsuarios() {
     load();
   };
 
-  const toggleGestorGeral = async (u: UserRow, on: boolean) => {
-    if (on) {
-      const { error } = await supabase.from("user_roles").insert({ user_id: u.id, role: "gestor_geral" });
-      if (error && !error.message.includes("duplicate")) { toast.error("Erro", { description: error.message }); return; }
-    } else {
-      const { error } = await supabase.from("user_roles").delete().eq("user_id", u.id).eq("role", "gestor_geral");
-      if (error) { toast.error("Erro", { description: error.message }); return; }
-    }
-    toast.success(on ? "Marcado como gestor geral" : "Removido gestor geral");
-    load();
-  };
 
   const setTeam = async (u: UserRow, teamId: string | null) => {
     const { error } = await supabase.from("profiles").update({ team_id: teamId }).eq("id", u.id);
