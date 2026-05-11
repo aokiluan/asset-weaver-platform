@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
+  AlertTriangle,
   ArrowRight,
   Building2,
   CheckCircle2,
@@ -15,10 +16,18 @@ import {
   FileSignature,
   History,
   Loader2,
+  RotateCcw,
   Search,
 } from "lucide-react";
 import { toast } from "sonner";
 import { downloadMinutaPDF } from "@/lib/minuta-pdf";
+import {
+  computeRenovacao,
+  renovacaoLabel,
+  renovacaoSortKey,
+  type RenovacaoInfo,
+} from "@/lib/cadastro-renovacao";
+import MarcarRevisadoDialog from "@/components/cedentes/MarcarRevisadoDialog";
 
 interface CedenteRow {
   id: string;
