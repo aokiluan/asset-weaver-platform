@@ -321,9 +321,9 @@ export function ConciliacaoDocumentosSheet({
                 />
                 Apenas com categoria
               </label>
-              {fila.length > 0 && (
+              {totalInicial > 0 && (
                 <span className="text-sm text-muted-foreground whitespace-nowrap">
-                  {Math.min(idx + 1, fila.length)} de {fila.length}
+                  {current ? Math.min(totalInicial - fila.length + 1, totalInicial) : totalInicial} de {totalInicial}
                 </span>
               )}
             </div>
