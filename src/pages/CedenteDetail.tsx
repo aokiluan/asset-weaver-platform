@@ -564,12 +564,14 @@ function FormalizacaoTabContent({
   latestProposalId,
   minutaAssinada,
   canSign,
+  canGenerate,
   onChanged,
 }: {
   cedente: Cedente;
   latestProposalId: string | null;
   minutaAssinada: boolean;
   canSign: boolean;
+  canGenerate: boolean;
   onChanged: () => void;
 }) {
   const [generating, setGenerating] = useState(false);
