@@ -1,5 +1,7 @@
 import jsPDF from "jspdf";
 import { supabase } from "@/integrations/supabase/client";
+import { applyS3Branding } from "./pdf-branding";
+
 
 export interface VisitReportSnapshot {
   data_visita?: string | null;
