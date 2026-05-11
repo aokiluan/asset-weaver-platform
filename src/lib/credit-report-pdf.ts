@@ -1,6 +1,6 @@
 import jsPDF from "jspdf";
 import { supabase } from "@/integrations/supabase/client";
-import { applyS3Branding, applyS3HeaderLogo } from "./pdf-branding";
+import { applyS3HeaderLogo, applyS3Watermark } from "./pdf-branding";
 import {
   SECTION_ORDER,
   SECTION_LABEL,
