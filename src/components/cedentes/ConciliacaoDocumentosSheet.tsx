@@ -459,13 +459,14 @@ export function ConciliacaoDocumentosSheet({
             <div className="flex-1 flex items-center justify-center gap-2 flex-wrap">
               <Button
                 variant="outline"
+                size="sm"
                 onClick={abrirReprovar}
                 className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
               >
-                <XCircle className="h-4 w-4 mr-2" /> Reprovar (R)
+                <XCircle className="h-3.5 w-3.5 mr-1.5" /> Reprovar
               </Button>
-              <Button onClick={verificar} className="bg-green-600 hover:bg-green-700 text-white">
-                <CheckCircle2 className="h-4 w-4 mr-2" /> Marcar como verificado (V)
+              <Button size="sm" onClick={verificar} className="bg-green-600 hover:bg-green-700 text-white">
+                <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" /> Verificar
               </Button>
             </div>
             <Button
