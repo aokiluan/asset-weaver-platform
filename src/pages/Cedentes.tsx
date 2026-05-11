@@ -140,9 +140,7 @@ export default function Cedentes() {
             </TooltipTrigger>
             {!canCreate && !authLoading && (
               <TooltipContent side="bottom" className="max-w-xs text-xs">
-                {roles.length === 0
-                  ? "Seu usuário ainda não tem perfil atribuído. Peça a um administrador para liberar o acesso."
-                  : "Apenas Comercial, Gestor geral ou Admin podem cadastrar cedentes."}
+                Seu usuário não tem permissão, fale com o administrador
               </TooltipContent>
             )}
           </Tooltip>
