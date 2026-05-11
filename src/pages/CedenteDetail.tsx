@@ -526,32 +526,12 @@ function ComiteTabContent({
   cedenteId,
   cedenteStage,
   latestProposal,
-  onProvisioned,
 }: {
   cedenteId: string;
   cedenteStage: CedenteStage;
   latestProposal: { id: string; stage: string; approver: string | null; votos_minimos: number } | null;
-  onProvisioned: () => void;
+  onProvisioned?: () => void;
 }) {
-  const [provisioning, setProvisioning] = useState(false);
-
-  useEffect(() => {
-    if (!latestProposal && !provisioning) {
-      setProvisioning(true);
-      supabase
-        .rpc("ensure_proposal_for_cedente", { _cedente_id: cedenteId })
-        .then(({ error }) => {
-          if (error) {
-            toast.error("Não foi possível abrir o comitê", { description: error.message });
-          } else {
-            onProvisioned();
-          }
-        })
-        .then(() => setProvisioning(false));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [latestProposal?.id]);
-
   if (latestProposal) {
     return (
       <div className="mt-4 space-y-3">
@@ -565,10 +545,15 @@ function ComiteTabContent({
     );
   }
 
+  // Sem proposta: o cedente ainda não chegou ao comitê. A criação ocorre
+  // automaticamente via trigger ao mover o cedente para a etapa "comite".
   return (
     <div className="mt-4 rounded-lg border bg-card p-10 text-center space-y-2">
-      <Loader2 className="h-6 w-6 mx-auto animate-spin text-muted-foreground" />
-      <p className="text-sm text-muted-foreground">Preparando sessão do comitê…</p>
+      <p className="text-sm text-muted-foreground">
+        {cedenteStage === "comite"
+          ? "Aguardando criação da sessão do comitê…"
+          : "Esta sessão fica disponível quando o cedente entra na etapa Comitê."}
+      </p>
     </div>
   );
 }
