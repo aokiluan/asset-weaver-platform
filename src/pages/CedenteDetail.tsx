@@ -126,15 +126,6 @@ export default function CedenteDetail() {
       if (!prev) setLoading(true);
       return prev;
     });
-    const needsProposals = ["comite", "formalizacao", "ativo", "inativo"].includes(
-      // optimistic: we need stage; query cedente alone first would be a serial step.
-      // Cheap approach: always query but only when stage matches we use it; we still skip the query for early stages.
-      ""
-    );
-    // We can't know stage before loading; do a single load and decide based on previous state.
-    const prevStage = (cedente as any)?.stage as string | undefined;
-    const skipProposals = prevStage && ["novo", "cadastro", "analise"].includes(prevStage);
-
     const [{ data: ced, error: e1 }, { data: cats }, { data: docs }, { data: visit }, { data: hist }, { data: creditRep }] =
       await Promise.all([
         supabase.from("cedentes").select("*").eq("id", id).maybeSingle(),
