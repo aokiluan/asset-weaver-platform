@@ -100,6 +100,18 @@ export default function Comite() {
     );
   }, [minutes, search]);
 
+  // Cedentes cuja última ata foi reprovada (passíveis de reapresentação)
+  const reprovados = useMemo(() => {
+    const seen = new Set<string>();
+    const out: Minute[] = [];
+    for (const m of minutes) {
+      if (seen.has(m.cedente_id)) continue;
+      seen.add(m.cedente_id);
+      if (m.decisao === "reprovado") out.push(m);
+    }
+    return out;
+  }, [minutes]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16 text-muted-foreground">
