@@ -329,9 +329,12 @@ export async function downloadAtaById(minuteId: string) {
   };
 
   const doc = generateAtaPdf(data);
+  await applyS3HeaderLogo(doc, { variant: "white", headerWidthMm: 28, headerTopMm: 5, headerRightMm: 15 });
+  await applyS3Watermark(doc, { unit: "mm" });
   doc.save(buildAtaFilename({
     numero: data.numero_comite,
     cedenteNome: data.cedente_nome,
     data: data.realizado_em,
   }));
 }
+
