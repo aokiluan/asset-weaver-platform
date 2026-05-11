@@ -127,7 +127,7 @@ export default function CedenteDetail() {
       if (!prev) setLoading(true);
       return prev;
     });
-    const [{ data: ced, error: e1 }, { data: cats }, { data: docs }, { data: visit }, { data: props }, { data: hist }] =
+    const [{ data: ced, error: e1 }, { data: cats }, { data: docs }, { data: visit }, { data: props }, { data: hist }, { data: creditRep }] =
       await Promise.all([
         supabase.from("cedentes").select("*").eq("id", id).maybeSingle(),
         supabase.from("documento_categorias").select("id,nome,obrigatorio,ordem").eq("ativo", true).order("ordem"),
@@ -135,6 +135,7 @@ export default function CedenteDetail() {
         supabase.from("cedente_visit_reports").select("id").eq("cedente_id", id).maybeSingle(),
         supabase.from("credit_proposals").select("id,stage,created_at,approval_levels(approver,votos_minimos)").eq("cedente_id", id).order("created_at", { ascending: false }),
         supabase.from("cedente_history").select("*").eq("cedente_id", id).order("created_at", { ascending: false }),
+        supabase.from("credit_reports").select("completude,recomendacao").eq("cedente_id", id).maybeSingle(),
       ]);
     setLoading(false);
     if (e1) { toast.error("Erro ao carregar", { description: e1.message }); return; }
