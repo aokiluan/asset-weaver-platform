@@ -191,7 +191,7 @@ export function ConciliacaoDocumentosSheet({
       if (e.key === "ArrowRight") { e.preventDefault(); next(); }
       else if (e.key === "ArrowLeft") { e.preventDefault(); prev(); }
       else if (current && (e.key === "v" || e.key === "V")) { e.preventDefault(); verificar(); }
-      else if (current && (e.key === "r" || e.key === "R")) { e.preventDefault(); abrirMotivo("reprovar"); }
+      else if (current && (e.key === "r" || e.key === "R")) { e.preventDefault(); abrirReprovar(); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
