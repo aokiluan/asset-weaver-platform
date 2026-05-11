@@ -389,15 +389,15 @@ export function ComiteGameSession({ proposalId, votosMinimos, proposalStage, ced
               <Label className="text-[10px] leading-none">Justificativa (opcional)</Label>
               <Textarea rows={2} value={voteJust} onChange={(e) => setVoteJust(e.target.value)} className="text-[11px]" />
             </div>
-            {!checklistInfo.allDone && checklistInfo.total > 0 && (
+            {checklistBloqueia && (
               <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/5 p-2 text-[11px] text-amber-700 dark:text-amber-400 leading-tight">
                 <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
                 <span>
-                  Você revisou {checklistInfo.completed} de {checklistInfo.total} itens. Recomendamos completar antes de votar.
+                  Conclua a leitura ({checklistInfo.completed}/{checklistInfo.total}) do relatório comercial e da análise de crédito para liberar o voto.
                 </span>
               </div>
             )}
-            <Button onClick={handleVoteClick} disabled={busy} className="w-full h-7 text-[11px]">
+            <Button onClick={handleVoteClick} disabled={busy || checklistBloqueia} className="w-full h-7 text-[11px]">
               {busy ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Vote className="h-3.5 w-3.5 mr-1.5" />}
               {ownVote ? "Atualizar voto" : "Confirmar voto"}
             </Button>
