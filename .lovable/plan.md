@@ -1,48 +1,42 @@
-# Histórico de contratos na Formalização
+# Download do contrato assinado real (em vez da minuta)
 
-Hoje a página `/formalizacao` mostra apenas os cedentes com `stage = 'formalizacao'`. Depois que a minuta é assinada e o cedente é ativado, ele desaparece da tela — para reaver o contrato é preciso entrar pelo cadastro do cedente.
+Hoje, na aba **"Contratos assinados"** da página `/formalizacao`, o botão **Minuta** chama `downloadMinutaPDF`, que regera o template em branco para subir no CRDC. O correto é baixar o **PDF assinado pelas partes** que foi anexado pelo time de formalização dentro do cedente.
 
-Vamos replicar o padrão usado em `/comite` (abas "Em pauta" / "Reprovados" / "Atas") para que a Formalização tenha um **histórico permanente de contratos**, com busca, download do PDF e atalho para o cedente.
+## Como o contrato assinado é armazenado hoje
 
-## O que muda na UI
+Em `CedenteDetail.tsx` (aba Formalização), o usuário faz upload do PDF assinado:
 
-A página `Formalizacao.tsx` passa a usar `Tabs` com três abas no mesmo padrão visual do Comitê:
+- Bucket de storage: **`cedente-docs`**, em `<cedente_id>/contratos/<timestamp>_<nome>.pdf`.
+- Registrado em `public.documentos` com `categoria_id` da categoria fixa **"Contrato de cessão assinado"** (criada na migration `20260508141338`).
+- Vários uploads são possíveis; o mais recente (`order by created_at desc`) é o vigente.
 
-1. **Em formalização** (atual) — cedentes com `stage = 'formalizacao'`. Comportamento, cards e ações exatamente como hoje.
-2. **Aguardando assinatura** — atalho filtrado: apenas os de `stage = 'formalizacao'` que ainda têm `minuta_assinada = false`. (Reaproveita os mesmos cards.)
-3. **Contratos assinados** — nova lista/histórico, mostrando todos os cedentes que já tiveram minuta marcada como assinada (`minuta_assinada = true`), independentemente do `stage` atual. Inclui, portanto, cedentes já `ativo` e `inativo`.
+## Mudanças
 
-Os 3 StatCards no topo continuam idênticos (Em formalização / Aguardando / Prontos para ativar).
+### `src/pages/Formalizacao.tsx`
 
-## Aba "Contratos assinados" — layout
+1. **Carregar os documentos do contrato assinado** junto com o histórico:
+   - Buscar o `id` da categoria `"Contrato de cessão assinado"` (uma vez).
+   - Após carregar `historico`, fazer `select` em `documentos` filtrando `cedente_id IN (...)` + `categoria_id = catId`, ordenado por `created_at desc`.
+   - Montar `Record<cedente_id, { storage_path, nome_arquivo }>` mantendo apenas o mais recente por cedente.
 
-Tabela compacta no padrão das Atas, ordenada por `minuta_assinada_em` desc:
+2. **Substituir a ação de download na linha do histórico:**
+   - Trocar o handler `handleGerarPDF(c)` por um novo `handleBaixarContrato(c)` que:
+     - Pega `contratosAssinados[c.id]`.
+     - Chama `supabase.storage.from("cedente-docs").createSignedUrl(path, 60)`.
+     - Dispara o download via `<a download>` com o `nome_arquivo` original.
+     - Se não houver documento (caso raro: marcado como assinado sem upload), mostra `toast.info("Contrato assinado não anexado — abra o cadastro para anexar.")` e desabilita o botão.
+   - Renomear o rótulo do botão de **"Minuta"** para **"Contrato"** e ícone continua `Download`.
+   - O botão fica desabilitado (visual `opacity-50`) quando não há contrato anexado para aquele cedente; tooltip explicando.
 
-| Cedente | CNPJ | Proposta | Valor aprovado | Assinado em | Status atual | Ações |
+3. **Permissão:** download liberado para qualquer usuário que já enxergue a página (`admin`, `formalizacao`, `gestor_geral`) — não mais restrito a `canGenerate`, já que não está gerando PDF, está baixando o documento já existente. RLS de `documentos` + storage continuam regendo o acesso.
 
-- **Cedente / CNPJ:** link para `/cedentes/:id?tab=formalizacao`.
-- **Proposta:** código + valor aprovado (vindos de `credit_proposals` aprovada mais recente daquele cedente).
-- **Assinado em:** `minuta_assinada_em` formatado pt-BR + "há Xd".
-- **Status atual:** Badge — `Ativo` (verde), `Inativo` (cinza), ou `Em formalização` (âmbar) caso ainda não tenha sido ativado.
-- **Ações:** botão `Baixar minuta (PDF)` (reusa `downloadMinutaPDF` já existente) e botão `Abrir cadastro`.
+4. **Aba "Em formalização" continua igual** — ali o botão **"Gerar minuta (PDF)"** ainda faz sentido (template em branco para subir no CRDC).
 
-Campo de busca acima da tabela (mesmo componente `Input` usado no Comitê) que filtra por razão social, CNPJ ou código de proposta.
+### Fora de escopo
 
-Estado vazio: ícone `FileSignature` + "Nenhum contrato assinado ainda."
-
-## Permissões
-
-Reusa `canGenerate = admin | formalizacao` para o botão de baixar PDF. A leitura da aba "Contratos assinados" é liberada para todos que já enxergam a página (`admin`, `formalizacao`, `gestor_geral`) — controlado pelas RLS atuais de `cedentes` e `credit_proposals`, não exige migração.
-
-## Detalhes técnicos
-
-- **Sem mudanças no banco.** Já existem as colunas `minuta_assinada`, `minuta_assinada_em`, `minuta_assinada_por` em `cedentes`. As RLS atuais já permitem o `select` desses registros para os papéis envolvidos.
-- **Carregamento:** ao montar a página, fazer um `select` adicional em `cedentes` filtrando `minuta_assinada = true` (limit 200, ordenado por `minuta_assinada_em desc`) e um `select` em `credit_proposals` (`stage = 'aprovado'`, `in cedente_id`) para enriquecer a linha. Reaproveita o mapeamento `propostas` já feito no `load()`.
-- **Reuso de PDF:** o helper `downloadMinutaPDF` em `src/lib/minuta-pdf.ts` já gera a minuta a partir do cedente + proposta — usa o mesmo branding S3 Capital aplicado no plano anterior.
-- **Sem novas rotas:** tudo dentro de `/formalizacao` via `Tabs` controladas por estado local (`useState`), igual ao `Comite.tsx`.
+- Sem mudanças em banco, RLS, ou no fluxo de upload em `CedenteDetail.tsx`.
+- Sem mudanças em `minuta-pdf.ts`.
 
 ## Arquivos a editar
 
-- `src/pages/Formalizacao.tsx` — refatorar para usar `Tabs`, separar a lista atual em duas abas (Em formalização / Aguardando) e adicionar a aba "Contratos assinados" com busca, badge de status, botões de baixar minuta e abrir cadastro.
-
-Nenhum arquivo novo, nenhuma migração, nenhum impacto em outras páginas.
+- `src/pages/Formalizacao.tsx` — carregar contratos assinados, novo handler de download, ajuste do botão na tabela do histórico.

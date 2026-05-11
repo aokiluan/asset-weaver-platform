@@ -64,6 +64,7 @@ export default function Formalizacao() {
   const [cedentes, setCedentes] = useState<CedenteRow[]>([]);
   const [historico, setHistorico] = useState<CedenteRow[]>([]);
   const [propostas, setPropostas] = useState<Record<string, PropostaAprovada>>({});
+  const [contratos, setContratos] = useState<Record<string, { storage_path: string; nome_arquivo: string }>>({});
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [tab, setTab] = useState("ativos");
@@ -107,22 +108,44 @@ export default function Formalizacao() {
     const ids = Array.from(idsSet);
 
     if (ids.length > 0) {
-      const { data: props } = await supabase
-        .from("credit_proposals")
-        .select(
-          "cedente_id,codigo,valor_aprovado,prazo_dias,taxa_sugerida,finalidade,garantias,decided_at",
-        )
-        .in("cedente_id", ids)
-        .eq("stage", "aprovado")
-        .order("decided_at", { ascending: false });
+      const [{ data: props }, { data: cat }] = await Promise.all([
+        supabase
+          .from("credit_proposals")
+          .select(
+            "cedente_id,codigo,valor_aprovado,prazo_dias,taxa_sugerida,finalidade,garantias,decided_at",
+          )
+          .in("cedente_id", ids)
+          .eq("stage", "aprovado")
+          .order("decided_at", { ascending: false }),
+        supabase.from("documento_categorias").select("id").eq("nome", "Contrato de cessão assinado").maybeSingle(),
+      ]);
 
       const map: Record<string, PropostaAprovada> = {};
       for (const p of (props as PropostaAprovada[]) ?? []) {
         if (!map[p.cedente_id]) map[p.cedente_id] = p;
       }
       setPropostas(map);
+
+      const catId = (cat as any)?.id ?? null;
+      if (catId && hist.length > 0) {
+        const histIds = hist.map((c) => c.id);
+        const { data: docs } = await supabase
+          .from("documentos")
+          .select("cedente_id,storage_path,nome_arquivo,created_at")
+          .in("cedente_id", histIds)
+          .eq("categoria_id", catId)
+          .order("created_at", { ascending: false });
+        const cmap: Record<string, { storage_path: string; nome_arquivo: string }> = {};
+        for (const d of (docs as any[]) ?? []) {
+          if (!cmap[d.cedente_id]) cmap[d.cedente_id] = { storage_path: d.storage_path, nome_arquivo: d.nome_arquivo };
+        }
+        setContratos(cmap);
+      } else {
+        setContratos({});
+      }
     } else {
       setPropostas({});
+      setContratos({});
     }
     setLoading(false);
   };
@@ -137,6 +160,27 @@ export default function Formalizacao() {
     toast.success("Minuta gerada", {
       description: "Suba o PDF na ferramenta de assinatura (CRDC).",
     });
+  };
+
+  const handleBaixarContrato = async (c: CedenteRow) => {
+    const doc = contratos[c.id];
+    if (!doc) {
+      toast.info("Contrato não anexado", {
+        description: "Abra o cadastro do cedente para anexar o PDF assinado.",
+      });
+      return;
+    }
+    const { data, error } = await supabase.storage
+      .from("cedente-docs")
+      .createSignedUrl(doc.storage_path, 60);
+    if (error) {
+      toast.error("Erro ao baixar contrato", { description: error.message });
+      return;
+    }
+    const a = document.createElement("a");
+    a.href = data.signedUrl;
+    a.download = doc.nome_arquivo;
+    a.click();
   };
 
   const handleMarcarAssinada = async (c: CedenteRow) => {
@@ -370,11 +414,16 @@ export default function Formalizacao() {
                         <td className="px-2.5 py-1.5">{statusBadge(c.stage)}</td>
                         <td className="px-2.5 py-1.5 text-right">
                           <div className="flex items-center justify-end gap-1">
-                            {canGenerate && (
-                              <Button size="sm" variant="ghost" className="h-6 px-2 text-[11px]" onClick={() => handleGerarPDF(c)}>
-                                <Download className="h-3.5 w-3.5 mr-1" /> Minuta
-                              </Button>
-                            )}
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-6 px-2 text-[11px]"
+                              onClick={() => handleBaixarContrato(c)}
+                              disabled={!contratos[c.id]}
+                              title={contratos[c.id] ? "Baixar contrato assinado" : "Contrato assinado não anexado"}
+                            >
+                              <Download className="h-3.5 w-3.5 mr-1" /> Contrato
+                            </Button>
                             <Button size="sm" variant="ghost" className="h-6 px-2 text-[11px]" asChild>
                               <Link to={`/cedentes/${c.id}?tab=formalizacao`}>Abrir</Link>
                             </Button>
