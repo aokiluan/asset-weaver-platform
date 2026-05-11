@@ -421,9 +421,8 @@ export function generateMinutaPDF(data: MinutaData): jsPDF {
 
 export async function downloadMinutaPDF(data: MinutaData) {
   const doc = generateMinutaPDF(data);
-  const [brand, horizontal] = await Promise.all([loadS3Brand(), loadS3Horizontal()]);
-  if (horizontal) applyHeaderLogo(doc, horizontal);
-  if (brand) applyWatermark(doc, brand);
+  await applyS3Branding(doc, { unit: "mm", headerRightMm: 20 });
   const safeName = data.cedente.razao_social.replace(/[^\w\s-]+/g, "").trim().replace(/\s+/g, "_");
   doc.save(`contrato_fomento_${safeName}_${Date.now()}.pdf`);
 }
+
