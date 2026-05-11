@@ -129,7 +129,7 @@ export default function CedenteDetail() {
     const [{ data: ced, error: e1 }, { data: cats }, { data: docs }, { data: visit }, { data: hist }, { data: creditRep }] =
       await Promise.all([
         supabase.from("cedentes").select("*").eq("id", id).maybeSingle(),
-        supabase.from("documento_categorias").select("id,nome,obrigatorio,ordem").eq("ativo", true).order("ordem"),
+        supabase.from("documento_categorias").select("id,nome,obrigatorio,ordem,requer_conciliacao").eq("ativo", true).order("ordem"),
         supabase.from("documentos").select("*").eq("cedente_id", id).order("created_at", { ascending: false }),
         supabase.from("cedente_visit_reports").select("id").eq("cedente_id", id).maybeSingle(),
         supabase.from("cedente_history").select("*").eq("cedente_id", id).order("created_at", { ascending: false }),

@@ -1,95 +1,138 @@
-# Alerta de renovação cadastral semestral
 
-Cedentes ativos precisam ter o cadastro revisado a cada **6 meses** (compliance/KYC). Hoje não há nenhum controle disso — depois que o contrato é assinado, ninguém é avisado de que os dados envelheceram.
+# Plano: Seção "Diretório" (dossiê por cedente)
 
-## Solução proposta — simples, baseada em uma única coluna
+## Objetivo
 
-Tudo gira em torno de uma data: **`cadastro_revisado_em`** em `cedentes`. Não precisa de tabela nova, job agendado nem cron — o status é **calculado em tempo real** a partir dessa data.
+Criar uma seção `/diretorio` no sidebar que funciona como "pasta no computador" de cada cedente, consolidando, ao longo do tempo, **toda a documentação histórica** (cadastro, renovações, atas, pareceres, anexos livres) — sem interferir na fila operacional do perfil Cadastro.
 
-### Regras de status (computadas no front)
+## Resolvendo o conflito de uploads (decisão)
 
-| Meses desde a última revisão | Status | Cor |
-|---|---|---|
-| < 5 meses | **Em dia** | verde (sem alerta) |
-| ≥ 5 e < 6 meses | **Vence em breve** | âmbar |
-| ≥ 6 meses | **Renovação vencida** | vermelho |
-| `cadastro_revisado_em` nulo | herda de `minuta_assinada_em` (data da assinatura conta como primeira revisão) |
+Hoje todo upload em `documentos` cai na fila de conciliação do Cadastro (porque tem `status='pendente'` + `categoria_id` obrigatória). Se o comercial/formalização anexar algo "extra" (foto, e-mail, ata externa), polui a fila.
 
-Função utilitária pura em `src/lib/cadastro-renovacao.ts` exportando `computeRenovacao(date)` que devolve `{ status, mesesRestantes, vencidoEm }` — usada em qualquer tela.
+**Solução:** criar uma categoria especial **"Outros / Anexos gerais"** com flags:
+- `obrigatorio = false`
+- novo campo `requer_conciliacao = false` em `documento_categorias`
 
-### Banco (migration única)
+Documentos nessa categoria:
+- Entram normalmente em `documentos` (mesma tabela, mesma storage, mesmas RLS)
+- São **filtrados fora** do Kanban de conciliação do Cadastro
+- Já nascem com `status = 'aprovado'` (não precisam de revisão)
+- Aparecem normalmente no Diretório, marcados visualmente como "Anexo livre"
 
-- Adicionar `cadastro_revisado_em timestamptz` em `public.cedentes` (nullable).
-- Adicionar `cadastro_revisado_por uuid` (quem confirmou a revisão).
-- **Backfill:** `UPDATE cedentes SET cadastro_revisado_em = minuta_assinada_em WHERE minuta_assinada = true` para que cedentes já ativos tenham um marco inicial.
-- RPC `marcar_cadastro_revisado(_cedente_id uuid, _observacao text)`:
-  - Permite `admin`, `formalizacao`, `cadastro`, `gestor_geral`.
-  - Atualiza as duas colunas com `now()` e `auth.uid()`.
-  - Insere evento `'cadastro_revisado'` em `cedente_history` com a observação.
+Vantagem: zero migração de dados, zero duplicação de lógica. Só um filtro a mais no kanban e uma flag na categoria.
 
-Sem cron, sem trigger pesado — o cálculo é trivial em SQL/JS quando precisar.
+## Estrutura da seção Diretório
 
-### UI — onde o alerta aparece
+### Sidebar
+Novo item no grupo "Operação", abaixo de "Cedentes":
+- Label: **Diretório**
+- Ícone: `FolderOpen` (Phosphor, weight thin)
+- Roles: mesmas de `/cedentes` (visibilidade controlada via `can_view_cedente`)
 
-**1. Página `/formalizacao` — aba "Contratos assinados"**
+### Tela `/diretorio` (lista de cedentes)
+Tabela enxuta no padrão Nibo ultracompacto, com:
+- Razão social / CNPJ / Stage atual
+- Nº de documentos
+- Última renovação cadastral (badge 🟢🟡🔴 reusando `computeRenovacao`)
+- Última ata
+- Botão "Abrir dossiê" → navega para `/diretorio/:cedenteId`
 
-Adicionar **coluna nova "Renovação"** (entre Status e Ações) com badge:
-- 🟢 `Em dia · 4 meses`
-- 🟡 `Vence em 18d`
-- 🔴 `Vencida há 12d`
+Filtros: busca por razão/CNPJ, filtro por stage, filtro por status de renovação.
 
-Ordenação padrão: cedentes vencidos primeiro, depois "vence em breve", depois "em dia".
+### Tela `/diretorio/:cedenteId` (dossiê)
+Layout com `<PageTabs>` no topo (4 abas):
 
-Na linha vencida/atenção, o botão **Ações** ganha um ícone secundário **"Marcar revisado"** (`RotateCcw`) que dispara a RPC e recarrega.
+```text
++------------------------------------------------------------+
+| [Cedente XYZ - CNPJ ...] [stage] [renovação 🟡 vence em 12d]|
++------------------------------------------------------------+
+| Documentos | Renovações | Atas de comitê | Pareceres       |
++------------------------------------------------------------+
+```
 
-**2. StatCards do topo da Formalização**
+**Aba 1 — Documentos (default)**
+- Lista única consolidando TODOS os uploads de `documentos` daquele cedente
+- Agrupada por categoria, ordenada por data desc
+- Colunas: nome, categoria (badge), origem (Cadastro / Anexo livre), status (aprovado/pendente/recusado), data, quem subiu, ações (download/visualizar)
+- Botão "Adicionar anexo livre" no topo → upload direto na categoria "Outros / Anexos gerais", sem entrar na fila
 
-Trocar/adicionar um card destacado quando houver pendências:
-- "Renovações vencidas: **N**" (vermelho se N>0)
+**Aba 2 — Renovações cadastrais**
+- Timeline lendo `cedente_history` onde `evento = 'cadastro_revisado'`
+- Mostra data, responsável, observação
+- Linha do estado atual no topo (badge 🟢🟡🔴)
 
-Isso já entrega o alerta visual logo que o usuário entra na página.
+**Aba 3 — Atas de comitê**
+- Lista de `committee_minutes` daquele cedente
+- Colunas: nº comitê, data, decisão (aprovado/reprovado), valor, alçada
+- Ação: baixar PDF (já existe `comite-ata-pdf.ts`)
 
-**3. Sidebar**
+**Aba 4 — Pareceres e relatórios**
+- Duas sub-listas:
+  - **Relatórios de crédito**: versões de `credit_report_versions` (data, versão, recomendação, autor)
+  - **Pareceres comerciais (visita)**: versões de `cedente_visit_report_versions`
+- Ação: baixar PDF (reusar `credit-report-pdf.ts` e `visit-report-pdf.ts`)
 
-Adicionar um pequeno badge numérico ao lado do item **"Formalização"** quando houver renovações vencidas (`N`). Reusa a mesma query rápida (`count` em `cedentes` onde `minuta_assinada = true AND cadastro_revisado_em < now() - interval '6 months'`). Pequeno hook compartilhado em `useRenovacaoCount()`.
+## Detalhes técnicos
 
-**4. Página do cedente (`/cedentes/:id`, aba Formalização)**
+### Migração (DB)
 
-Banner topo da aba:
-- 🔴 "Renovação cadastral vencida há Xd. **[Marcar como revisado]**"
-- 🟡 "Próxima renovação em Xd. **[Marcar como revisado]**"
-- (silencioso quando em dia)
+```sql
+-- 1. Nova flag na tabela de categorias
+ALTER TABLE public.documento_categorias
+  ADD COLUMN requer_conciliacao boolean NOT NULL DEFAULT true;
 
-O botão abre um pequeno dialog com textarea opcional (observação) → chama a RPC.
+-- 2. Cria categoria "Outros / Anexos gerais"
+INSERT INTO public.documento_categorias (nome, descricao, obrigatorio, requer_conciliacao, ordem)
+VALUES ('Outros / Anexos gerais',
+        'Documentos complementares ao dossiê do cedente (não entram na fila de conciliação)',
+        false, false, 999);
+```
 
-### Por que essa solução é a mais simples e robusta
+Sem mudança em `documentos`, sem nova tabela, sem mexer em RLS.
 
-- **Uma coluna, um cálculo** — sem cron, sem worker, sem fila de notificações. O alerta "se calcula sozinho" toda vez que a tela renderiza.
-- **Histórico já vem de graça** via `cedente_history` (cada revisão vira um evento `cadastro_revisado`, visível na timeline do cedente).
-- **Backfill automático** garante que cedentes antigos não apareçam todos como "vencidos" no primeiro deploy — começam a contar a partir da assinatura.
-- **Escalável** — mais tarde dá para plugar em cima:
-  - e-mail/notificação 30 dias antes de vencer (edge function diária),
-  - bloqueio automático para passar para `inativo` após X dias vencidos,
-  - dashboard de compliance.
+### Filtro no Kanban de conciliação (Cadastro)
+Em `DocumentosUploadKanban.tsx` / `ConciliacaoDocumentosSheet.tsx`:
+```ts
+.eq('categoria.requer_conciliacao', true) // ou filtrar client-side
+```
 
-### Arquivos
+### Upload "anexo livre" no Diretório
+Reutiliza o storage `cedente-docs` e a tabela `documentos`, forçando:
+- `categoria_id` = id da categoria "Outros / Anexos gerais"
+- `status = 'aprovado'`
+- `classificacao_status = 'manual'`
 
-**Migration**
-- `supabase/migrations/<timestamp>_add_renovacao_cadastral.sql` — colunas + backfill + RPC `marcar_cadastro_revisado`.
+### Rotas (App.tsx)
+```tsx
+<Route path="/diretorio" element={<Diretorio />} />
+<Route path="/diretorio/:id" element={<DiretorioDetail />} />
+```
+RoleGuard com mesmas roles de `/cedentes`.
 
-**Novos**
-- `src/lib/cadastro-renovacao.ts` — função `computeRenovacao()` + tipos.
-- `src/hooks/useRenovacaoCount.ts` — hook leve com count para sidebar.
-- `src/components/cedentes/MarcarRevisadoDialog.tsx` — dialog com observação opcional.
+### Arquivos a criar/editar
+**Novos:**
+- `src/pages/Diretorio.tsx` (lista)
+- `src/pages/DiretorioDetail.tsx` (dossiê com PageTabs)
+- `src/components/diretorio/DiretorioDocumentosTab.tsx`
+- `src/components/diretorio/DiretorioRenovacoesTab.tsx`
+- `src/components/diretorio/DiretorioAtasTab.tsx`
+- `src/components/diretorio/DiretorioParecaresTab.tsx`
+- `src/components/diretorio/UploadAnexoLivreDialog.tsx`
+- `supabase/migrations/<timestamp>_diretorio.sql`
 
-**Editar**
-- `src/pages/Formalizacao.tsx` — nova coluna, novo StatCard, ordenação, botão "Marcar revisado".
-- `src/components/AppSidebar.tsx` — badge no item Formalização.
-- `src/pages/CedenteDetail.tsx` (aba Formalização) — banner contextual + botão.
-- `src/components/cedentes/CedenteHistoryTab.tsx` — render do evento `cadastro_revisado`.
+**Editar:**
+- `src/App.tsx` (rotas)
+- `src/components/AppSidebar.tsx` (item "Diretório" no grupo Operação)
+- `src/components/cedentes/DocumentosUploadKanban.tsx` (filtrar `requer_conciliacao = true`)
+- `src/components/cedentes/ConciliacaoDocumentosSheet.tsx` (mesmo filtro)
 
-### Fora de escopo (para depois, se você quiser)
+## Fora de escopo desta v1
+- Notificações (já decidido)
+- Versionamento de documentos individuais (manter histórico simples por upload)
+- Comparação visual entre versões de cadastro/renovação
+- Busca full-text no conteúdo dos PDFs
+- Compartilhamento externo do dossiê (link público)
 
-- Notificações por e-mail.
-- Mudança automática de stage para "inativo" quando muito vencido.
-- Periodicidade configurável por cedente/setor (hoje fixa em 6 meses, mas o número fica num único lugar — `RENOVACAO_MESES = 6` — fácil de virar setting).
+## Próximos passos sugeridos (futuro)
+- "Snapshot do dossiê" (PDF consolidado para auditoria/regulador)
+- Marcação de documentos como "vigente" vs "histórico" automaticamente por categoria

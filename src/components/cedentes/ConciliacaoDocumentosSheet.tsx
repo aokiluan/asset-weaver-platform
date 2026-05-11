@@ -126,9 +126,17 @@ export function ConciliacaoDocumentosSheet({
 }: Props) {
   const [somenteComCategoria, setSomenteComCategoria] = useState(true);
 
+  // IDs de categorias que NÃO exigem conciliação (anexos livres do dossiê).
+  const catsLivres = useMemo(
+    () => new Set(categorias.filter((c) => c.requer_conciliacao === false).map((c) => c.id)),
+    [categorias],
+  );
+
   const pendentesTodos = useMemo(
-    () => documentos.filter((d) => d.status === "pendente"),
-    [documentos],
+    () => documentos.filter(
+      (d) => d.status === "pendente" && !(d.categoria_id && catsLivres.has(d.categoria_id)),
+    ),
+    [documentos, catsLivres],
   );
   const pendentesSemCategoria = useMemo(
     () => pendentesTodos.filter((d) => !d.categoria_id).length,
