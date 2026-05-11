@@ -75,42 +75,53 @@ export function ComiteGameSession({ proposalId, votosMinimos, proposalStage, ced
   const [session, setSession] = useState<CommitteeSession | null>(null);
   const [votes, setVotes] = useState<VoteRow[]>([]);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
+  const [eligible, setEligible] = useState<Profile[]>([]);
+  const [minuteId, setMinuteId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [voteDec, setVoteDec] = useState<VoteDecision>("favoravel");
   const [voteJust, setVoteJust] = useState("");
   const [checklistInfo, setChecklistInfo] = useState<{ completed: number; total: number; allDone: boolean }>({ completed: 0, total: 0, allDone: false });
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [forceOpen, setForceOpen] = useState(false);
 
   const canVote = hasRole("comite") || hasRole("admin");
-  const canManage = hasRole("admin") || hasRole("credito") || hasRole("comite");
+  const canManage = hasRole("admin");
 
   // Initial load
   useEffect(() => {
     let active = true;
     (async () => {
       setLoading(true);
-      const { data: sess } = await supabase
-        .from("committee_sessions")
-        .select("*")
-        .eq("proposal_id", proposalId)
-        .maybeSingle();
-      const { data: vs } = await supabase
-        .from("committee_votes")
-        .select("*")
-        .eq("proposal_id", proposalId)
-        .order("created_at");
+      const [{ data: sess }, { data: vs }, { data: elig }] = await Promise.all([
+        supabase.from("committee_sessions").select("*").eq("proposal_id", proposalId).maybeSingle(),
+        supabase.from("committee_votes").select("*").eq("proposal_id", proposalId).order("created_at"),
+        supabase.from("user_roles").select("user_id, profiles!inner(id,nome,ativo)").eq("role", "comite"),
+      ]);
       if (!active) return;
       setSession(sess as any);
       setVotes((vs as any) ?? []);
       const own = (vs as VoteRow[] | null)?.find(v => v.voter_id === user?.id);
       if (own) { setVoteDec(own.decisao); setVoteJust(own.justificativa ?? ""); }
 
-      // Carrega nomes dos votantes (para placar)
-      const ids = Array.from(new Set([...(vs ?? []).map((v: any) => v.voter_id)]));
+      const eligibleProfiles = ((elig as any[]) ?? [])
+        .map((r) => r.profiles)
+        .filter((p: any) => p && p.ativo)
+        .map((p: any) => ({ id: p.id, nome: p.nome })) as Profile[];
+      setEligible(eligibleProfiles);
+
+      const ids = Array.from(new Set([
+        ...(vs ?? []).map((v: any) => v.voter_id),
+        ...eligibleProfiles.map((p) => p.id),
+      ]));
       if (ids.length) {
         const { data: profs } = await supabase.from("profiles").select("id,nome").in("id", ids);
         if (active && profs) setProfiles(Object.fromEntries(profs.map(p => [p.id, p as Profile])));
+      }
+
+      if ((sess as any)?.status === "encerrada") {
+        const { data: m } = await supabase.from("committee_minutes").select("id").eq("session_id", (sess as any).id).maybeSingle();
+        if (active && m) setMinuteId((m as any).id);
       }
       setLoading(false);
     })();
