@@ -9,11 +9,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card } from "@/components/ui/card";
 import {
   Vote, ThumbsUp, ThumbsDown, MinusCircle, EyeOff, Eye,
-  Trophy, Loader2, Lock, Sparkles, Clock, AlertTriangle,
+  Trophy, Loader2, Lock, Sparkles, Clock, AlertTriangle, Users, FileDown, ShieldAlert,
 } from "lucide-react";
 import { toast } from "sonner";
 import { VoteBriefing } from "./VoteBriefing";
 import { ReadingChecklist, ChecklistItem } from "./ReadingChecklist";
+import { downloadAtaById } from "@/lib/comite-ata-pdf";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -74,49 +75,59 @@ export function ComiteGameSession({ proposalId, votosMinimos, proposalStage, ced
   const [session, setSession] = useState<CommitteeSession | null>(null);
   const [votes, setVotes] = useState<VoteRow[]>([]);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
+  const [eligible, setEligible] = useState<Profile[]>([]);
+  const [minuteId, setMinuteId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [voteDec, setVoteDec] = useState<VoteDecision>("favoravel");
   const [voteJust, setVoteJust] = useState("");
   const [checklistInfo, setChecklistInfo] = useState<{ completed: number; total: number; allDone: boolean }>({ completed: 0, total: 0, allDone: false });
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [forceOpen, setForceOpen] = useState(false);
 
   const canVote = hasRole("comite") || hasRole("admin");
-  const canManage = hasRole("admin") || hasRole("credito") || hasRole("comite");
+  const canManage = hasRole("admin");
 
   // Initial load
   useEffect(() => {
     let active = true;
     (async () => {
       setLoading(true);
-      const { data: sess } = await supabase
-        .from("committee_sessions")
-        .select("*")
-        .eq("proposal_id", proposalId)
-        .maybeSingle();
-      const { data: vs } = await supabase
-        .from("committee_votes")
-        .select("*")
-        .eq("proposal_id", proposalId)
-        .order("created_at");
+      const [{ data: sess }, { data: vs }, { data: elig }] = await Promise.all([
+        supabase.from("committee_sessions").select("*").eq("proposal_id", proposalId).maybeSingle(),
+        supabase.from("committee_votes").select("*").eq("proposal_id", proposalId).order("created_at"),
+        supabase.from("user_roles").select("user_id, profiles!inner(id,nome,ativo)").eq("role", "comite"),
+      ]);
       if (!active) return;
       setSession(sess as any);
       setVotes((vs as any) ?? []);
       const own = (vs as VoteRow[] | null)?.find(v => v.voter_id === user?.id);
       if (own) { setVoteDec(own.decisao); setVoteJust(own.justificativa ?? ""); }
 
-      // Carrega nomes dos votantes (para placar)
-      const ids = Array.from(new Set([...(vs ?? []).map((v: any) => v.voter_id)]));
+      const eligibleProfiles = ((elig as any[]) ?? [])
+        .map((r) => r.profiles)
+        .filter((p: any) => p && p.ativo)
+        .map((p: any) => ({ id: p.id, nome: p.nome })) as Profile[];
+      setEligible(eligibleProfiles);
+
+      const ids = Array.from(new Set([
+        ...(vs ?? []).map((v: any) => v.voter_id),
+        ...eligibleProfiles.map((p) => p.id),
+      ]));
       if (ids.length) {
         const { data: profs } = await supabase.from("profiles").select("id,nome").in("id", ids);
         if (active && profs) setProfiles(Object.fromEntries(profs.map(p => [p.id, p as Profile])));
+      }
+
+      if ((sess as any)?.status === "encerrada") {
+        const { data: m } = await supabase.from("committee_minutes").select("id").eq("session_id", (sess as any).id).maybeSingle();
+        if (active && m) setMinuteId((m as any).id);
       }
       setLoading(false);
     })();
     return () => { active = false; };
   }, [proposalId, user?.id]);
 
-  // Realtime
   useEffect(() => {
     const ch = supabase
       .channel(`comite-${proposalId}`)
@@ -132,26 +143,29 @@ export function ComiteGameSession({ proposalId, votosMinimos, proposalStage, ced
           }
         })
       .on("postgres_changes", { event: "*", schema: "public", table: "committee_sessions", filter: `proposal_id=eq.${proposalId}` },
-        (payload) => setSession(payload.new as any))
+        async (payload) => {
+          const next = payload.new as any;
+          setSession(next);
+          if (next?.status === "encerrada") {
+            const { data: m } = await supabase.from("committee_minutes").select("id").eq("session_id", next.id).maybeSingle();
+            if (m) setMinuteId((m as any).id);
+          }
+        })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [proposalId, profiles]);
 
-  // Countdown
-  const [now, setNow] = useState(Date.now());
-  useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, []);
-
   const ownVote = useMemo(() => votes.find(v => v.voter_id === user?.id), [votes, user?.id]);
   const favoraveis = useMemo(() => votes.filter(v => v.decisao === "favoravel").length, [votes]);
   const contrarios = useMemo(() => votes.filter(v => v.decisao === "desfavoravel").length, [votes]);
-  const abstencoes = useMemo(() => votes.filter(v => v.decisao === "abstencao").length, [votes]);
-  const revealed = session?.status === "revelada" || session?.status === "encerrada" || !session?.voto_secreto;
-  const quorumOk = favoraveis >= votosMinimos;
-
-  const deadlineMs = session?.deadline ? new Date(session.deadline).getTime() - now : null;
-  const deadlineStr = deadlineMs == null ? null
-    : deadlineMs <= 0 ? "Expirado"
-    : `${Math.floor(deadlineMs / 60000)}m ${Math.floor((deadlineMs % 60000) / 1000)}s`;
+  const eligibleVoters = useMemo(() => eligible, [eligible]);
+  const eligibleIds = useMemo(() => new Set(eligibleVoters.map(p => p.id)), [eligibleVoters]);
+  const votedEligibleIds = useMemo(() => new Set(votes.filter(v => eligibleIds.has(v.voter_id)).map(v => v.voter_id)), [votes, eligibleIds]);
+  const pendentes = useMemo(() => eligibleVoters.filter(p => !votedEligibleIds.has(p.id)), [eligibleVoters, votedEligibleIds]);
+  const allVoted = pendentes.length === 0 && eligibleVoters.length > 0;
+  const revealed = session?.status === "revelada" || session?.status === "encerrada" || allVoted;
+  const isClosed = session?.status === "encerrada";
+  const decisaoFinal: "aprovado" | "reprovado" = favoraveis > contrarios ? "aprovado" : "reprovado";
 
   const abrirSessao = async () => {
     if (!user) return;
@@ -166,39 +180,20 @@ export function ComiteGameSession({ proposalId, votosMinimos, proposalStage, ced
     toast.success("Sessão de comitê aberta");
   };
 
-  const revelar = async () => {
-    if (!session || !user) return;
+  const forcarEncerramento = async () => {
     setBusy(true);
-    const { error } = await supabase.from("committee_sessions")
-      .update({ status: "revelada", revelada_em: new Date().toISOString(), revelada_por: user.id })
-      .eq("id", session.id);
+    const { data, error } = await supabase.rpc("committee_close_if_complete" as any, { _proposal_id: proposalId, _force: true });
     setBusy(false);
+    setForceOpen(false);
     if (error) { toast.error(error.message); return; }
-    toast.success("Votos revelados! 🎉");
+    if (data) setMinuteId(data as string);
+    toast.success("Comitê encerrado por decisão administrativa");
   };
 
-  const encerrar = async () => {
-    if (!session || !user || !cedenteId) return;
-    setBusy(true);
-    const decisao: "aprovado" | "reprovado" = quorumOk ? "aprovado" : "reprovado";
-    const { error: e1 } = await supabase.from("credit_proposals")
-      .update({ stage: decisao, decided_at: new Date().toISOString(), decided_by: user.id })
-      .eq("id", proposalId);
-    if (e1) { setBusy(false); toast.error(e1.message); return; }
-    const { error: e2 } = await supabase.from("committee_sessions")
-      .update({ status: "encerrada", encerrada_em: new Date().toISOString(), encerrada_por: user.id })
-      .eq("id", session.id);
-    if (e2) { setBusy(false); toast.error(e2.message); return; }
-    if (decisao === "aprovado") {
-      const { error: e3 } = await supabase.from("cedentes")
-        .update({ stage: "formalizacao" })
-        .eq("id", cedenteId);
-      if (e3) { setBusy(false); toast.error(e3.message); return; }
-      toast.success("Comitê encerrado — cedente movido para Formalização ✅");
-    } else {
-      toast.success("Comitê encerrado — proposta reprovada");
-    }
-    setBusy(false);
+  const baixarAta = async () => {
+    if (!minuteId) return;
+    try { await downloadAtaById(minuteId); }
+    catch (e: any) { toast.error(e?.message ?? "Falha ao gerar PDF"); }
   };
 
   const votar = async () => {
@@ -258,50 +253,65 @@ export function ComiteGameSession({ proposalId, votosMinimos, proposalStage, ced
       <Card className="p-2.5">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2">
-            <Badge variant={session.status === "encerrada" ? "outline" : "default"} className="uppercase tracking-wide text-[10px] h-5 px-1.5">
+            <Badge variant={isClosed ? "outline" : "default"} className="uppercase tracking-wide text-[10px] h-5 px-1.5">
               {session.status}
             </Badge>
-            {session.voto_secreto && !revealed && (
+            {!revealed && (
               <Badge variant="secondary" className="text-[10px] h-5 px-1.5"><Lock className="h-3 w-3 mr-1" /> Voto secreto</Badge>
             )}
             {revealed && <Badge variant="secondary" className="text-[10px] h-5 px-1.5"><Eye className="h-3 w-3 mr-1" /> Revelado</Badge>}
-            {deadlineStr && <Badge variant="outline" className="text-[10px] h-5 px-1.5"><Clock className="h-3 w-3 mr-1" /> {deadlineStr}</Badge>}
+            {isClosed && (
+              <Badge className={`text-[10px] h-5 px-1.5 ${decisaoFinal === "aprovado" ? "bg-green-600" : "bg-destructive"} text-white`}>
+                <Trophy className="h-3 w-3 mr-1" /> {decisaoFinal === "aprovado" ? "Aprovado" : "Reprovado"}
+              </Badge>
+            )}
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-[11px] text-muted-foreground leading-none">{votes.length} voto{votes.length === 1 ? "" : "s"} registrado{votes.length === 1 ? "" : "s"}</span>
-            {canManage && session.status === "aberta" && votes.length > 0 && (
-              <Button onClick={revelar} disabled={busy} size="sm" variant="default" className="h-7 text-[11px]">
-                <Eye className="h-3.5 w-3.5 mr-1.5" /> Revelar votos
+            <span className="text-[11px] text-muted-foreground leading-none">
+              {votedEligibleIds.size}/{eligibleVoters.length} membro{eligibleVoters.length === 1 ? "" : "s"} votaram
+            </span>
+            {isClosed && minuteId && (
+              <Button onClick={baixarAta} size="sm" variant="default" className="h-7 text-[11px]">
+                <FileDown className="h-3.5 w-3.5 mr-1.5" /> Baixar ata (PDF)
               </Button>
             )}
-            {canManage && session.status === "revelada" && (
-              <Button onClick={encerrar} disabled={busy} size="sm" variant="default" className="h-7 text-[11px]">
-                <Trophy className="h-3.5 w-3.5 mr-1.5" /> Encerrar e registrar decisão
+            {canManage && session.status === "aberta" && pendentes.length > 0 && (
+              <Button onClick={() => setForceOpen(true)} disabled={busy} size="sm" variant="outline" className="h-7 text-[11px]">
+                <ShieldAlert className="h-3.5 w-3.5 mr-1.5" /> Forçar encerramento
               </Button>
             )}
           </div>
         </div>
       </Card>
 
-      {/* Placar / contagem */}
+      {/* Placar */}
       <div className="grid grid-cols-2 gap-2">
         <ScoreCard label="Favoráveis" count={favoraveis} icon={<ThumbsUp className="h-3 w-3" />} color="text-green-600" hidden={!revealed} mask={votes.length} />
         <ScoreCard label="Contrários" count={contrarios} icon={<ThumbsDown className="h-3 w-3" />} color="text-destructive" hidden={!revealed} mask={votes.length} />
       </div>
 
-      {/* Quórum */}
-      <Card className={`p-2.5 ${revealed && quorumOk ? "border-green-500 bg-green-500/5" : ""}`}>
-        <div className="flex items-center gap-2.5">
-          <Trophy className={`h-5 w-5 shrink-0 ${revealed && quorumOk ? "text-green-600" : "text-muted-foreground"}`} />
+      {/* Quórum por presença total */}
+      <Card className={`p-2.5 ${isClosed ? (decisaoFinal === "aprovado" ? "border-green-500 bg-green-500/5" : "border-destructive/40 bg-destructive/5") : ""}`}>
+        <div className="flex items-start gap-2.5">
+          <Users className="h-5 w-5 shrink-0 text-muted-foreground mt-0.5" />
           <div className="flex-1 min-w-0">
             <div className="text-[12px] font-medium leading-tight">
-              {revealed
-                ? (quorumOk ? "Quórum atingido — pronto para decisão final ✅" : "Quórum não atingido")
-                : "Aguardando revelação dos votos"}
+              {isClosed
+                ? `Sessão encerrada — decisão: ${decisaoFinal}`
+                : pendentes.length === 0
+                  ? "Todos os membros votaram — encerrando…"
+                  : `Aguardando voto de ${pendentes.length} membro${pendentes.length === 1 ? "" : "s"}`}
             </div>
-            <div className="text-[11px] text-muted-foreground leading-tight">
-              {revealed ? `${favoraveis} de ${votosMinimos} votos favoráveis necessários` : `Mínimo: ${votosMinimos} favorável(is)`}
-            </div>
+            {!isClosed && pendentes.length > 0 && (
+              <div className="text-[11px] text-muted-foreground leading-tight mt-0.5">
+                Pendentes: {pendentes.map(p => p.nome).join(", ")}
+              </div>
+            )}
+            {isClosed && (
+              <div className="text-[11px] text-muted-foreground leading-tight mt-0.5">
+                {favoraveis} favorável(is) × {contrarios} contrário(s){votosMinimos ? ` • alçada original: mín. ${votosMinimos}` : ""}
+              </div>
+            )}
           </div>
         </div>
       </Card>
@@ -409,6 +419,22 @@ export function ComiteGameSession({ proposalId, votosMinimos, proposalStage, ced
           <AlertDialogFooter>
             <AlertDialogCancel className="h-7 text-[11px]">Voltar e revisar</AlertDialogCancel>
             <AlertDialogAction onClick={votar} className="h-7 text-[11px]">Votar mesmo assim</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={forceOpen} onOpenChange={setForceOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-[14px] leading-tight">Forçar encerramento do comitê?</AlertDialogTitle>
+            <AlertDialogDescription className="text-[12px] leading-tight">
+              Ainda faltam {pendentes.length} membro(s) votar(em). A decisão será calculada com os votos já registrados
+              ({favoraveis} favorável × {contrarios} contrário) e a ata será gerada automaticamente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="h-7 text-[11px]">Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={forcarEncerramento} className="h-7 text-[11px]">Encerrar agora</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
