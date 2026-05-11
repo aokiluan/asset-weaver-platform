@@ -9,11 +9,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card } from "@/components/ui/card";
 import {
   Vote, ThumbsUp, ThumbsDown, MinusCircle, EyeOff, Eye,
-  Trophy, Loader2, Lock, Sparkles, Clock, AlertTriangle,
+  Trophy, Loader2, Lock, Sparkles, Clock, AlertTriangle, Users, FileDown, ShieldAlert,
 } from "lucide-react";
 import { toast } from "sonner";
 import { VoteBriefing } from "./VoteBriefing";
 import { ReadingChecklist, ChecklistItem } from "./ReadingChecklist";
+import { downloadAtaById } from "@/lib/comite-ata-pdf";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
