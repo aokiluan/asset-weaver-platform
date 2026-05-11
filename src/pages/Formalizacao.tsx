@@ -414,11 +414,16 @@ export default function Formalizacao() {
                         <td className="px-2.5 py-1.5">{statusBadge(c.stage)}</td>
                         <td className="px-2.5 py-1.5 text-right">
                           <div className="flex items-center justify-end gap-1">
-                            {canGenerate && (
-                              <Button size="sm" variant="ghost" className="h-6 px-2 text-[11px]" onClick={() => handleGerarPDF(c)}>
-                                <Download className="h-3.5 w-3.5 mr-1" /> Minuta
-                              </Button>
-                            )}
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-6 px-2 text-[11px]"
+                              onClick={() => handleBaixarContrato(c)}
+                              disabled={!contratos[c.id]}
+                              title={contratos[c.id] ? "Baixar contrato assinado" : "Contrato assinado não anexado"}
+                            >
+                              <Download className="h-3.5 w-3.5 mr-1" /> Contrato
+                            </Button>
                             <Button size="sm" variant="ghost" className="h-6 px-2 text-[11px]" asChild>
                               <Link to={`/cedentes/${c.id}?tab=formalizacao`}>Abrir</Link>
                             </Button>
