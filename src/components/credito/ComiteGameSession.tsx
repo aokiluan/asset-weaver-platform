@@ -128,7 +128,6 @@ export function ComiteGameSession({ proposalId, votosMinimos, proposalStage, ced
     return () => { active = false; };
   }, [proposalId, user?.id]);
 
-  // Realtime
   useEffect(() => {
     const ch = supabase
       .channel(`comite-${proposalId}`)
@@ -144,26 +143,29 @@ export function ComiteGameSession({ proposalId, votosMinimos, proposalStage, ced
           }
         })
       .on("postgres_changes", { event: "*", schema: "public", table: "committee_sessions", filter: `proposal_id=eq.${proposalId}` },
-        (payload) => setSession(payload.new as any))
+        async (payload) => {
+          const next = payload.new as any;
+          setSession(next);
+          if (next?.status === "encerrada") {
+            const { data: m } = await supabase.from("committee_minutes").select("id").eq("session_id", next.id).maybeSingle();
+            if (m) setMinuteId((m as any).id);
+          }
+        })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [proposalId, profiles]);
 
-  // Countdown
-  const [now, setNow] = useState(Date.now());
-  useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, []);
-
   const ownVote = useMemo(() => votes.find(v => v.voter_id === user?.id), [votes, user?.id]);
   const favoraveis = useMemo(() => votes.filter(v => v.decisao === "favoravel").length, [votes]);
   const contrarios = useMemo(() => votes.filter(v => v.decisao === "desfavoravel").length, [votes]);
-  const abstencoes = useMemo(() => votes.filter(v => v.decisao === "abstencao").length, [votes]);
-  const revealed = session?.status === "revelada" || session?.status === "encerrada" || !session?.voto_secreto;
-  const quorumOk = favoraveis >= votosMinimos;
-
-  const deadlineMs = session?.deadline ? new Date(session.deadline).getTime() - now : null;
-  const deadlineStr = deadlineMs == null ? null
-    : deadlineMs <= 0 ? "Expirado"
-    : `${Math.floor(deadlineMs / 60000)}m ${Math.floor((deadlineMs % 60000) / 1000)}s`;
+  const eligibleVoters = useMemo(() => eligible, [eligible]);
+  const eligibleIds = useMemo(() => new Set(eligibleVoters.map(p => p.id)), [eligibleVoters]);
+  const votedEligibleIds = useMemo(() => new Set(votes.filter(v => eligibleIds.has(v.voter_id)).map(v => v.voter_id)), [votes, eligibleIds]);
+  const pendentes = useMemo(() => eligibleVoters.filter(p => !votedEligibleIds.has(p.id)), [eligibleVoters, votedEligibleIds]);
+  const allVoted = pendentes.length === 0 && eligibleVoters.length > 0;
+  const revealed = session?.status === "revelada" || session?.status === "encerrada" || allVoted;
+  const isClosed = session?.status === "encerrada";
+  const decisaoFinal: "aprovado" | "reprovado" = favoraveis > contrarios ? "aprovado" : "reprovado";
 
   const abrirSessao = async () => {
     if (!user) return;
@@ -178,39 +180,20 @@ export function ComiteGameSession({ proposalId, votosMinimos, proposalStage, ced
     toast.success("Sessão de comitê aberta");
   };
 
-  const revelar = async () => {
-    if (!session || !user) return;
+  const forcarEncerramento = async () => {
     setBusy(true);
-    const { error } = await supabase.from("committee_sessions")
-      .update({ status: "revelada", revelada_em: new Date().toISOString(), revelada_por: user.id })
-      .eq("id", session.id);
+    const { data, error } = await supabase.rpc("committee_close_if_complete" as any, { _proposal_id: proposalId, _force: true });
     setBusy(false);
+    setForceOpen(false);
     if (error) { toast.error(error.message); return; }
-    toast.success("Votos revelados! 🎉");
+    if (data) setMinuteId(data as string);
+    toast.success("Comitê encerrado por decisão administrativa");
   };
 
-  const encerrar = async () => {
-    if (!session || !user || !cedenteId) return;
-    setBusy(true);
-    const decisao: "aprovado" | "reprovado" = quorumOk ? "aprovado" : "reprovado";
-    const { error: e1 } = await supabase.from("credit_proposals")
-      .update({ stage: decisao, decided_at: new Date().toISOString(), decided_by: user.id })
-      .eq("id", proposalId);
-    if (e1) { setBusy(false); toast.error(e1.message); return; }
-    const { error: e2 } = await supabase.from("committee_sessions")
-      .update({ status: "encerrada", encerrada_em: new Date().toISOString(), encerrada_por: user.id })
-      .eq("id", session.id);
-    if (e2) { setBusy(false); toast.error(e2.message); return; }
-    if (decisao === "aprovado") {
-      const { error: e3 } = await supabase.from("cedentes")
-        .update({ stage: "formalizacao" })
-        .eq("id", cedenteId);
-      if (e3) { setBusy(false); toast.error(e3.message); return; }
-      toast.success("Comitê encerrado — cedente movido para Formalização ✅");
-    } else {
-      toast.success("Comitê encerrado — proposta reprovada");
-    }
-    setBusy(false);
+  const baixarAta = async () => {
+    if (!minuteId) return;
+    try { await downloadAtaById(minuteId); }
+    catch (e: any) { toast.error(e?.message ?? "Falha ao gerar PDF"); }
   };
 
   const votar = async () => {
