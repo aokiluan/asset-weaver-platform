@@ -126,22 +126,42 @@ export default function CedenteDetail() {
       if (!prev) setLoading(true);
       return prev;
     });
-    const [{ data: ced, error: e1 }, { data: cats }, { data: docs }, { data: visit }, { data: props }, { data: hist }, { data: creditRep }] =
+    const needsProposals = ["comite", "formalizacao", "ativo", "inativo"].includes(
+      // optimistic: we need stage; query cedente alone first would be a serial step.
+      // Cheap approach: always query but only when stage matches we use it; we still skip the query for early stages.
+      ""
+    );
+    // We can't know stage before loading; do a single load and decide based on previous state.
+    const prevStage = (cedente as any)?.stage as string | undefined;
+    const skipProposals = prevStage && ["novo", "cadastro", "analise"].includes(prevStage);
+
+    const [{ data: ced, error: e1 }, { data: cats }, { data: docs }, { data: visit }, { data: hist }, { data: creditRep }] =
       await Promise.all([
         supabase.from("cedentes").select("*").eq("id", id).maybeSingle(),
         supabase.from("documento_categorias").select("id,nome,obrigatorio,ordem").eq("ativo", true).order("ordem"),
         supabase.from("documentos").select("*").eq("cedente_id", id).order("created_at", { ascending: false }),
         supabase.from("cedente_visit_reports").select("id").eq("cedente_id", id).maybeSingle(),
-        supabase.from("credit_proposals").select("id,stage,created_at,approval_levels(approver,votos_minimos)").eq("cedente_id", id).order("created_at", { ascending: false }),
         supabase.from("cedente_history").select("*").eq("cedente_id", id).order("created_at", { ascending: false }),
         supabase.from("credit_reports").select("completude,recomendacao").eq("cedente_id", id).maybeSingle(),
       ]);
     setLoading(false);
     if (e1) { toast.error("Erro ao carregar", { description: e1.message }); return; }
+
+    // Carrega propostas só se o cedente já chegou ao comitê (ou além).
+    const stageNow = (ced as Cedente)?.stage as string | undefined;
+    let propsList: { id: string; stage: string; created_at: string; approval_levels: { approver: string; votos_minimos: number } | null }[] = [];
+    if (stageNow && ["comite", "formalizacao", "ativo", "inativo"].includes(stageNow)) {
+      const { data: props } = await supabase
+        .from("credit_proposals")
+        .select("id,stage,created_at,approval_levels(approver,votos_minimos)")
+        .eq("cedente_id", id)
+        .order("created_at", { ascending: false });
+      propsList = (props ?? []) as typeof propsList;
+    }
+
     setCedente(ced as Cedente);
     setCategorias(cats ?? []);
     const docsList = (docs as Documento[]) ?? [];
-    // Hidrata nome do reviewer p/ exibir o selo "Verificado por X"
     const reviewerIds = Array.from(new Set(docsList.map((d) => d.reviewed_by).filter(Boolean) as string[]));
     let reviewerMap: Record<string, string> = {};
     if (reviewerIds.length > 0) {
@@ -153,11 +173,10 @@ export default function CedenteDetail() {
       reviewer_nome: d.reviewed_by ? reviewerMap[d.reviewed_by] ?? null : null,
     })));
     setHasVisitReport(!!visit);
-    const propsList = (props ?? []) as { id: string; stage: string; created_at: string; approval_levels: { approver: string; votos_minimos: number } | null }[];
 
-    setHasPleito(propsList.length > 0);
+    // Gate "Parecer de crédito concluído" lê SOMENTE de credit_reports (fluxo novo).
     const reportConcluido = !!creditRep && (creditRep as any).completude === 8 && !!(creditRep as any).recomendacao;
-    setHasParecer(reportConcluido || propsList.some((p) => ["parecer", "comite", "aprovado"].includes(p.stage)));
+    setHasParecer(reportConcluido);
     setComiteDecidido(propsList.some((p) => p.stage === "aprovado"));
     setMinutaAssinada(!!(ced as any)?.minuta_assinada);
     const latest = propsList[0] ?? null;
