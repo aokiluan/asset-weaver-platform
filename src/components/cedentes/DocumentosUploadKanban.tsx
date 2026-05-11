@@ -759,7 +759,8 @@ export function DocumentosUploadKanban({
             </div>
             {obrigatoriasProgress.preenchidas === obrigatoriasProgress.total && (
               <Badge className="bg-green-600 hover:bg-green-600 text-white h-5 text-[10px]">
-                <CheckCircle2 className="h-2.5 w-2.5 mr-1" /> Pronto para conciliar
+                <CheckCircle2 className="h-2.5 w-2.5 mr-1" />
+                {pendentesCount === 0 ? "Conciliado" : "Pronto para conciliar"}
               </Badge>
             )}
           </div>
