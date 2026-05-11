@@ -514,19 +514,58 @@ function StatCard({
   value,
   icon,
   highlight,
+  tone,
+  hint,
 }: {
   label: string;
   value: number;
   icon: React.ReactNode;
   highlight?: boolean;
+  tone?: "danger" | "warning";
+  hint?: string;
 }) {
+  const toneCls =
+    tone === "danger"
+      ? "border-destructive/50 bg-destructive/5 text-destructive"
+      : tone === "warning"
+      ? "border-amber-500/40 bg-amber-500/5 text-amber-700 dark:text-amber-400"
+      : highlight
+      ? "border-primary/40 bg-primary/5"
+      : "";
   return (
-    <div className={`rounded-lg border bg-card p-2.5 ${highlight ? "border-primary/40 bg-primary/5" : ""}`}>
+    <div className={`rounded-lg border bg-card p-2.5 ${toneCls}`}>
       <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
         {icon}
         <span>{label}</span>
       </div>
       <div className="text-[16px] font-medium tracking-tight mt-1 tabular-nums leading-none">{value}</div>
+      {hint && <div className="text-[10px] text-muted-foreground mt-1 leading-none">{hint}</div>}
     </div>
+  );
+}
+
+function RenovacaoBadge({ info }: { info: RenovacaoInfo }) {
+  const label = renovacaoLabel(info);
+  if (info.status === "vencida") {
+    return (
+      <Badge variant="outline" className="gap-1 text-[10px] h-5 border-destructive/50 text-destructive bg-destructive/5">
+        <AlertTriangle className="h-3 w-3" /> {label}
+      </Badge>
+    );
+  }
+  if (info.status === "atencao") {
+    return (
+      <Badge variant="outline" className="gap-1 text-[10px] h-5 border-amber-500/40 text-amber-700 dark:text-amber-400 bg-amber-500/5">
+        <Clock className="h-3 w-3" /> {label}
+      </Badge>
+    );
+  }
+  if (info.status === "sem_dados") {
+    return <Badge variant="outline" className="text-[10px] h-5 text-muted-foreground">—</Badge>;
+  }
+  return (
+    <Badge variant="outline" className="gap-1 text-[10px] h-5 text-muted-foreground">
+      <CheckCircle2 className="h-3 w-3" /> {label}
+    </Badge>
   );
 }
