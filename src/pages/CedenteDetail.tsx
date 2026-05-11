@@ -249,30 +249,11 @@ export default function CedenteDetail() {
       </div>
 
       <div className="rounded-lg border bg-card p-3 space-y-2.5">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="leading-tight">
-            <h1 className="text-[18px] font-medium tracking-tight">{cedente.razao_social}</h1>
-            <p className="text-[12px] text-muted-foreground mt-0.5">
-              {cedente.nome_fantasia ? `${cedente.nome_fantasia} · ` : ""}CNPJ: {cedente.cnpj}
-            </p>
-          </div>
-          <div className="flex items-center gap-2 flex-wrap justify-end">
-            <CedenteStageActions
-              cedenteId={cedente.id}
-              stage={cedente.stage}
-              isOwner={isOwner}
-              gateInfo={{
-                hasVisitReport,
-                hasPleito,
-                obrigatoriosFaltando,
-                docsRejeitados,
-                hasParecer,
-                comiteDecidido,
-                minutaAssinada,
-              }}
-              onChanged={load}
-            />
-          </div>
+        <div className="leading-tight">
+          <h1 className="text-[18px] font-medium tracking-tight">{cedente.razao_social}</h1>
+          <p className="text-[12px] text-muted-foreground mt-0.5">
+            {cedente.nome_fantasia ? `${cedente.nome_fantasia} · ` : ""}CNPJ: {cedente.cnpj}
+          </p>
         </div>
 
         <CedenteStageStepper
@@ -287,8 +268,26 @@ export default function CedenteDetail() {
             comiteDecidido,
             minutaAssinada,
           }}
-          onAdvance={() => { /* stepper agora é apenas visual; avanço é feito pelos botões acima */ }}
+          onAdvance={() => { /* stepper agora é apenas visual; avanço é feito pelos botões abaixo */ }}
         />
+
+        <div className="border-t pt-2.5 flex items-center gap-2 flex-wrap justify-end">
+          <CedenteStageActions
+            cedenteId={cedente.id}
+            stage={cedente.stage}
+            isOwner={isOwner}
+            gateInfo={{
+              hasVisitReport,
+              hasPleito,
+              obrigatoriosFaltando,
+              docsRejeitados,
+              hasParecer,
+              comiteDecidido,
+              minutaAssinada,
+            }}
+            onChanged={load}
+          />
+        </div>
       </div>
 
       {(() => {
