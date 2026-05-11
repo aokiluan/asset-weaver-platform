@@ -153,7 +153,8 @@ export function ConciliacaoDocumentosSheet({
 
   const current = fila[idx] ?? null;
 
-  useEffect(() => { if (open) setIdx(0); }, [open]);
+  useEffect(() => { if (open) { setIdx(0); setTotalInicial(fila.length); } }, [open]);
+  useEffect(() => { if (open) setTotalInicial(fila.length); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [somenteComCategoria]);
 
   useEffect(() => {
     if (!open) return;
