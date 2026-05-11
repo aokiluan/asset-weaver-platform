@@ -36,7 +36,7 @@ const fmtBytes = (b: number | null) => {
   return `${(b / 1024 / 1024).toFixed(2)} MB`;
 };
 
-type MotivoAcao = "devolver" | "reprovar" | null;
+// (anteriormente havia ação "devolver"; removida — reclassificação acontece direto na conciliação)
 
 function PdfCanvasPreview({ pdfUrl, fileName }: { pdfUrl: string; fileName: string }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
