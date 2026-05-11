@@ -19,6 +19,10 @@ import { useFormDraft } from "@/hooks/useFormDraft";
 import { DraftIndicator } from "@/components/ui/draft-indicator";
 import { VisitReportVersionsPanel } from "./VisitReportVersionsPanel";
 import { generateVisitReportPdf } from "@/lib/visit-report-pdf";
+import { useAuth } from "@/hooks/useAuth";
+import {
+  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface Props {
   cedenteId: string;
