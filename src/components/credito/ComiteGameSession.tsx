@@ -277,6 +277,9 @@ export function ComiteGameSession({ proposalId, votosMinimos, proposalStage, ced
                 <FileDown className="h-3.5 w-3.5 mr-1.5" /> Baixar ata (PDF)
               </Button>
             )}
+            {isClosed && decisaoFinal === "reprovado" && cedenteId && (hasRole("admin") || hasRole("credito") || hasRole("comite")) && (
+              <ReapresentarComiteDialog cedenteId={cedenteId} />
+            )}
             {canManage && session.status === "aberta" && pendentes.length > 0 && (
               <Button onClick={() => setForceOpen(true)} disabled={busy} size="sm" variant="outline" className="h-7 text-[11px]">
                 <ShieldAlert className="h-3.5 w-3.5 mr-1.5" /> Forçar encerramento
