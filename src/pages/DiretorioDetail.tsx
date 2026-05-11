@@ -33,7 +33,7 @@ import {
   renovacaoLabel,
   type RenovacaoInfo,
 } from "@/lib/cadastro-renovacao";
-import { downloadAtaPDF } from "@/lib/comite-ata-pdf";
+import { downloadAtaById } from "@/lib/comite-ata-pdf";
 
 interface Cedente {
   id: string;
