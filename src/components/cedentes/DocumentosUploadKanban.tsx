@@ -800,7 +800,7 @@ export function DocumentosUploadKanban({
                 </span>
               </TooltipTrigger>
               <TooltipContent className="text-xs max-w-xs">
-                Apenas o time de cadastro pode conciliar documentos.
+                Seu usuário não tem permissão, fale com o administrador
               </TooltipContent>
             </Tooltip>
           )}
