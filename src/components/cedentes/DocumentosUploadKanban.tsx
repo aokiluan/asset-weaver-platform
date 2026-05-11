@@ -929,7 +929,7 @@ export function DocumentosUploadKanban({
 
                   let statusTxt: React.ReactNode;
                   if (total === 0) {
-                    statusTxt = <span className="text-muted-foreground/60">0 anexos</span>;
+                    statusTxt = <span className="text-muted-foreground/60 tabular-nums">0 · 0 verif.</span>;
                   } else if (completo) {
                     statusTxt = <span className="text-green-600 font-medium tabular-nums">{total} · {aprovados} verif. ✓</span>;
                   } else {

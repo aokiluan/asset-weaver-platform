@@ -1,11 +1,16 @@
-# Centralizar botões da esteira
+# Padronizar status das categorias
 
-Em `src/pages/CedenteDetail.tsx`, na linha do wrapper que envolve `<CedenteStageActions>`, trocar `justify-end` por `justify-center` para que a barra de botões fique centralizada em relação ao card do cedente (em vez de alinhada à direita).
+Hoje em `DocumentosUploadKanban.tsx` (linha 930-937), categorias sem anexos mostram `"0 anexos"` (formato diferente), enquanto categorias com anexos usam `"X · Y verif."` — o que cria duas linguagens visuais distintas e faz os "não obrigatórios" parecerem outra coisa.
 
-Mudança pontual:
-```diff
-- <div className="border-t pt-2.5 flex items-center gap-2 flex-wrap justify-end">
-+ <div className="border-t pt-2.5 flex items-center justify-center gap-2 flex-wrap">
-```
+## Mudança
+Unificar para o mesmo padrão `"X · Y verif."` em todos os casos:
 
-Sem outras alterações.
+- `total === 0` → `<span className="text-muted-foreground/60 tabular-nums">0 · 0 verif.</span>`
+- `completo` → mantém `<span className="text-green-600 font-medium tabular-nums">{total} · {aprovados} verif. ✓</span>`
+- demais → mantém `<span className="text-muted-foreground tabular-nums">{total} · {aprovados} verif.</span>`
+
+Resultado: tanto obrigatórios quanto não obrigatórios usam a mesma estrutura `N · N verif.`, variando apenas a cor (mais apagada quando vazio).
+
+## Fora de escopo
+- Não mexer no bullet (●) à esquerda nem no marcador `*` de obrigatório.
+- Não mudar nada na coluna de ações.
