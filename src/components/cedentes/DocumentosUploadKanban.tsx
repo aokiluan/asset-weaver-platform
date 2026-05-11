@@ -28,6 +28,7 @@ export interface Categoria {
   nome: string;
   obrigatorio: boolean;
   ordem: number;
+  requer_conciliacao?: boolean;
 }
 
 export interface Documento {
