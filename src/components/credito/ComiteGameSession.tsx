@@ -422,6 +422,22 @@ export function ComiteGameSession({ proposalId, votosMinimos, proposalStage, ced
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={forceOpen} onOpenChange={setForceOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-[14px] leading-tight">Forçar encerramento do comitê?</AlertDialogTitle>
+            <AlertDialogDescription className="text-[12px] leading-tight">
+              Ainda faltam {pendentes.length} membro(s) votar(em). A decisão será calculada com os votos já registrados
+              ({favoraveis} favorável × {contrarios} contrário) e a ata será gerada automaticamente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="h-7 text-[11px]">Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={forcarEncerramento} className="h-7 text-[11px]">Encerrar agora</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
