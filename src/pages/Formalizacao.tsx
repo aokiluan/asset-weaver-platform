@@ -231,18 +231,36 @@ export default function Formalizacao() {
     load();
   };
 
+  const renovacaoMap = useMemo(() => {
+    const map = new Map<string, RenovacaoInfo>();
+    for (const c of historico) {
+      map.set(c.id, computeRenovacao(c.cadastro_revisado_em, c.minuta_assinada_em));
+    }
+    return map;
+  }, [historico]);
+
   const filteredHistorico = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return historico;
-    return historico.filter((c) => {
-      const prop = propostas[c.id];
-      return (
-        c.razao_social?.toLowerCase().includes(q) ||
-        c.cnpj?.includes(q) ||
-        prop?.codigo?.toLowerCase().includes(q)
-      );
+    const base = !q
+      ? [...historico]
+      : historico.filter((c) => {
+          const prop = propostas[c.id];
+          return (
+            c.razao_social?.toLowerCase().includes(q) ||
+            c.cnpj?.includes(q) ||
+            prop?.codigo?.toLowerCase().includes(q)
+          );
+        });
+    base.sort((a, b) => {
+      const ka = renovacaoSortKey(renovacaoMap.get(a.id) ?? { status: "sem_dados", proximaEm: null, diasParaVencer: null });
+      const kb = renovacaoSortKey(renovacaoMap.get(b.id) ?? { status: "sem_dados", proximaEm: null, diasParaVencer: null });
+      if (ka !== kb) return ka - kb;
+      const da = a.minuta_assinada_em ? new Date(a.minuta_assinada_em).getTime() : 0;
+      const db = b.minuta_assinada_em ? new Date(b.minuta_assinada_em).getTime() : 0;
+      return db - da;
     });
-  }, [historico, propostas, search]);
+    return base;
+  }, [historico, propostas, search, renovacaoMap]);
 
   if (loading) {
     return (
@@ -254,6 +272,8 @@ export default function Formalizacao() {
 
   const aguardandoAssinatura = cedentes.filter((c) => !c.minuta_assinada).length;
   const prontos = cedentes.filter((c) => c.minuta_assinada).length;
+  const renovacoesVencidas = Array.from(renovacaoMap.values()).filter((r) => r.status === "vencida").length;
+  const renovacoesAtencao = Array.from(renovacaoMap.values()).filter((r) => r.status === "atencao").length;
 
   const statusBadge = (stage: string) => {
     if (stage === "ativo")
