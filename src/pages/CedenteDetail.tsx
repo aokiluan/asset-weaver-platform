@@ -127,7 +127,7 @@ export default function CedenteDetail() {
       if (!prev) setLoading(true);
       return prev;
     });
-    const [{ data: ced, error: e1 }, { data: cats }, { data: docs }, { data: visit }, { data: props }, { data: hist }] =
+    const [{ data: ced, error: e1 }, { data: cats }, { data: docs }, { data: visit }, { data: props }, { data: hist }, { data: creditRep }] =
       await Promise.all([
         supabase.from("cedentes").select("*").eq("id", id).maybeSingle(),
         supabase.from("documento_categorias").select("id,nome,obrigatorio,ordem").eq("ativo", true).order("ordem"),
@@ -135,6 +135,7 @@ export default function CedenteDetail() {
         supabase.from("cedente_visit_reports").select("id").eq("cedente_id", id).maybeSingle(),
         supabase.from("credit_proposals").select("id,stage,created_at,approval_levels(approver,votos_minimos)").eq("cedente_id", id).order("created_at", { ascending: false }),
         supabase.from("cedente_history").select("*").eq("cedente_id", id).order("created_at", { ascending: false }),
+        supabase.from("credit_reports").select("completude,recomendacao").eq("cedente_id", id).maybeSingle(),
       ]);
     setLoading(false);
     if (e1) { toast.error("Erro ao carregar", { description: e1.message }); return; }
@@ -156,7 +157,8 @@ export default function CedenteDetail() {
     const propsList = (props ?? []) as { id: string; stage: string; created_at: string; approval_levels: { approver: string; votos_minimos: number } | null }[];
 
     setHasPleito(propsList.length > 0);
-    setHasParecer(propsList.some((p) => ["parecer", "comite", "aprovado"].includes(p.stage)));
+    const reportConcluido = !!creditRep && (creditRep as any).completude === 8 && !!(creditRep as any).recomendacao;
+    setHasParecer(reportConcluido || propsList.some((p) => ["parecer", "comite", "aprovado"].includes(p.stage)));
     setComiteDecidido(propsList.some((p) => p.stage === "aprovado"));
     setMinutaAssinada(!!(ced as any)?.minuta_assinada);
     const latest = propsList[0] ?? null;
