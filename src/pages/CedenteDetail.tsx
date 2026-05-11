@@ -16,10 +16,12 @@ import { DocumentosUploadKanban } from "@/components/cedentes/DocumentosUploadKa
 import { EnviarAnaliseDialog } from "@/components/cedentes/EnviarAnaliseDialog";
 import { CedenteStageStepper } from "@/components/cedentes/CedenteStageStepper";
 import { CedenteStageActions } from "@/components/cedentes/CedenteStageActions";
+import { CedenteHistoryTab } from "@/components/cedentes/CedenteHistoryTab";
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
 import { CedenteStage, STAGE_LABEL } from "@/lib/cedente-stages";
 
@@ -98,6 +100,7 @@ export default function CedenteDetail() {
   const [enviarOpen, setEnviarOpen] = useState(false);
   const [confirmAdvance, setConfirmAdvance] = useState<CedenteStage | null>(null);
   const [advancing, setAdvancing] = useState(false);
+  const [advanceObs, setAdvanceObs] = useState("");
   
   const initialTab = searchParams.get("tab") ?? "resumo";
   const [tab, setTab] = useState(initialTab);
@@ -225,13 +228,16 @@ export default function CedenteDetail() {
   }
   const podeAprovarCadastro = pendenciasAnalise.length === 0;
 
-  const advanceStage = async (target: CedenteStage) => {
+  const advanceStage = async (target: CedenteStage, extraObs?: string) => {
     setAdvancing(true);
-    const { error } = await supabase.from("cedentes").update({ stage: target }).eq("id", cedente.id);
+    const updates: { stage: CedenteStage; observacoes?: string } = { stage: target };
+    if (extraObs) updates.observacoes = extraObs;
+    const { error } = await supabase.from("cedentes").update(updates).eq("id", cedente.id);
     setAdvancing(false);
     if (error) { toast.error("Erro ao avançar", { description: error.message }); return; }
     toast.success(`Cedente movido para ${STAGE_LABEL[target]}`);
     setConfirmAdvance(null);
+    setAdvanceObs("");
     load();
   };
 
@@ -445,27 +451,7 @@ export default function CedenteDetail() {
 
       {tab === "historico" && (
         <div className="mt-4">
-          <div className="rounded-lg border bg-card p-3">
-            <h2 className="text-lg font-semibold mb-4">Histórico de estágios</h2>
-            {history.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Sem registros.</p>
-            ) : (
-              <ol className="space-y-3 text-sm">
-                {history.map(h => (
-                  <li key={h.id} className="flex gap-3 border-l-2 border-primary pl-3">
-                    <div>
-                      <div className="font-medium">
-                        {h.evento === "criado"
-                          ? <>Criado em <span className="text-primary">{STAGE_LABEL[h.stage_novo!]}</span></>
-                          : <>{STAGE_LABEL[h.stage_anterior!]} → <span className="text-primary">{STAGE_LABEL[h.stage_novo!]}</span></>}
-                      </div>
-                      <div className="text-[11px] text-muted-foreground leading-tight">{new Date(h.created_at).toLocaleString("pt-BR")}</div>
-                    </div>
-                  </li>
-                ))}
-              </ol>
-            )}
-          </div>
+          <CedenteHistoryTab cedenteId={cedente.id} />
         </div>
       )}
 
@@ -484,28 +470,46 @@ export default function CedenteDetail() {
         onSent={load}
       />
 
-      <AlertDialog open={!!confirmAdvance} onOpenChange={(o) => !o && setConfirmAdvance(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
+      <Dialog
+        open={!!confirmAdvance}
+        onOpenChange={(o) => { if (!o) { setConfirmAdvance(null); setAdvanceObs(""); } }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
               Avançar para {confirmAdvance ? STAGE_LABEL[confirmAdvance] : ""}?
-            </AlertDialogTitle>
-            <AlertDialogDescription>
+            </DialogTitle>
+            <DialogDescription>
               Esta ação muda o estágio do cedente na esteira. Todos os usuários com acesso verão a nova etapa.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={advancing}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="adv-obs">Observação para o próximo responsável (opcional)</Label>
+            <Textarea
+              id="adv-obs"
+              rows={4}
+              value={advanceObs}
+              onChange={(e) => setAdvanceObs(e.target.value)}
+              placeholder="Ex.: priorizar análise, particularidades do cliente..."
+            />
+            <p className="text-[11px] text-muted-foreground">
+              A observação aparece no histórico do cedente, junto com a mudança de etapa.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setConfirmAdvance(null); setAdvanceObs(""); }} disabled={advancing}>
+              Cancelar
+            </Button>
+            <Button
               disabled={advancing}
-              onClick={(e) => { e.preventDefault(); if (confirmAdvance) advanceStage(confirmAdvance); }}
+              onClick={() => { if (confirmAdvance) advanceStage(confirmAdvance, advanceObs.trim() || undefined); }}
             >
               {advancing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
               Confirmar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
