@@ -295,8 +295,8 @@ export default function CedenteDetail() {
         const TABS: Array<{ v: string; label: string; icon?: any; badge?: number }> = [
           { v: "resumo", label: "Resumo" },
           { v: "representantes", label: "Representantes legais" },
-          { v: "documentos", label: "Documentos", badge: pendentesCount },
           { v: "visita", label: "Relatório comercial" },
+          { v: "documentos", label: "Documentos", badge: pendentesCount },
           { v: "credito", label: "Análise de crédito" },
           { v: "comite", label: "Comitê" },
           { v: "formalizacao", label: "Formalização" },
