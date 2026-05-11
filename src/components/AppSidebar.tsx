@@ -23,6 +23,7 @@ import {
   CalendarBlank,
   Scales,
   NotePencil,
+  FolderOpen,
   type Icon as PhosphorIcon,
 } from "@phosphor-icons/react";
 import { forwardRef } from "react";
@@ -61,6 +62,7 @@ const IconActivity = thin(Pulse);
 const IconCalendar = thin(CalendarBlank);
 const IconVote = thin(Scales);
 const IconSignature = thin(NotePencil);
+const IconFolder = thin(FolderOpen);
 
 
 type Item = {
@@ -97,6 +99,7 @@ const GROUPS: Group[] = [
     items: [
       { title: "CRM", url: "/pipeline", icon: IconKanban },
       { title: "Cedentes", url: "/cedentes", icon: IconBuilding },
+      { title: "Diretório", url: "/diretorio", icon: IconFolder },
       {
         title: "Comitê",
         url: "/comite",
