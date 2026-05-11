@@ -142,6 +142,7 @@ export function ConciliacaoDocumentosSheet({
   );
 
   const [idx, setIdx] = useState(0);
+  const [totalInicial, setTotalInicial] = useState(0);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
 
@@ -152,7 +153,8 @@ export function ConciliacaoDocumentosSheet({
 
   const current = fila[idx] ?? null;
 
-  useEffect(() => { if (open) setIdx(0); }, [open]);
+  useEffect(() => { if (open) { setIdx(0); setTotalInicial(fila.length); } }, [open]);
+  useEffect(() => { if (open) setTotalInicial(fila.length); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [somenteComCategoria]);
 
   useEffect(() => {
     if (!open) return;
@@ -319,9 +321,9 @@ export function ConciliacaoDocumentosSheet({
                 />
                 Apenas com categoria
               </label>
-              {fila.length > 0 && (
+              {totalInicial > 0 && (
                 <span className="text-sm text-muted-foreground whitespace-nowrap">
-                  {Math.min(idx + 1, fila.length)} de {fila.length}
+                  {current ? Math.min(totalInicial - fila.length + 1, totalInicial) : totalInicial} de {totalInicial}
                 </span>
               )}
             </div>
