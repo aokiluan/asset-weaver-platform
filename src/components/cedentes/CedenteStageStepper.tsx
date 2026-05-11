@@ -105,7 +105,7 @@ export function CedenteStageStepper({ stage, isOwner, gateInfo, onAdvance }: Pro
                 </Tooltip>
                 <span
                   className={cn(
-                    "text-[10px] sm:text-xs leading-tight text-center truncate max-w-[80px]",
+                    "text-[10px] sm:text-xs leading-tight text-center whitespace-normal break-words",
                     isCurrent ? "font-semibold text-foreground" : "text-muted-foreground",
                     isFuture && "opacity-60",
                   )}
