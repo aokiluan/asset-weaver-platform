@@ -108,22 +108,44 @@ export default function Formalizacao() {
     const ids = Array.from(idsSet);
 
     if (ids.length > 0) {
-      const { data: props } = await supabase
-        .from("credit_proposals")
-        .select(
-          "cedente_id,codigo,valor_aprovado,prazo_dias,taxa_sugerida,finalidade,garantias,decided_at",
-        )
-        .in("cedente_id", ids)
-        .eq("stage", "aprovado")
-        .order("decided_at", { ascending: false });
+      const [{ data: props }, { data: cat }] = await Promise.all([
+        supabase
+          .from("credit_proposals")
+          .select(
+            "cedente_id,codigo,valor_aprovado,prazo_dias,taxa_sugerida,finalidade,garantias,decided_at",
+          )
+          .in("cedente_id", ids)
+          .eq("stage", "aprovado")
+          .order("decided_at", { ascending: false }),
+        supabase.from("documento_categorias").select("id").eq("nome", "Contrato de cessão assinado").maybeSingle(),
+      ]);
 
       const map: Record<string, PropostaAprovada> = {};
       for (const p of (props as PropostaAprovada[]) ?? []) {
         if (!map[p.cedente_id]) map[p.cedente_id] = p;
       }
       setPropostas(map);
+
+      const catId = (cat as any)?.id ?? null;
+      if (catId && hist.length > 0) {
+        const histIds = hist.map((c) => c.id);
+        const { data: docs } = await supabase
+          .from("documentos")
+          .select("cedente_id,storage_path,nome_arquivo,created_at")
+          .in("cedente_id", histIds)
+          .eq("categoria_id", catId)
+          .order("created_at", { ascending: false });
+        const cmap: Record<string, { storage_path: string; nome_arquivo: string }> = {};
+        for (const d of (docs as any[]) ?? []) {
+          if (!cmap[d.cedente_id]) cmap[d.cedente_id] = { storage_path: d.storage_path, nome_arquivo: d.nome_arquivo };
+        }
+        setContratos(cmap);
+      } else {
+        setContratos({});
+      }
     } else {
       setPropostas({});
+      setContratos({});
     }
     setLoading(false);
   };
