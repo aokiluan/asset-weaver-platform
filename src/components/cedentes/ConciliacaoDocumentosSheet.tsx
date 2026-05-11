@@ -161,6 +161,14 @@ export function ConciliacaoDocumentosSheet({
     if (idx >= fila.length && fila.length > 0) setIdx(fila.length - 1);
   }, [fila.length, idx, open]);
 
+  // Fecha automaticamente quando esvazia a fila após ter sido aberta com itens
+  useEffect(() => {
+    if (open && totalInicial > 0 && fila.length === 0) {
+      toast.success("Tudo conciliado");
+      onOpenChange(false);
+    }
+  }, [open, totalInicial, fila.length, onOpenChange]);
+
   useEffect(() => {
     let cancelled = false;
     setPreviewUrl(null);
