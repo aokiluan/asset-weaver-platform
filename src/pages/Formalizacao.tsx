@@ -91,7 +91,7 @@ export default function Formalizacao() {
   const load = async () => {
     setLoading(true);
     const SELECT =
-      "id,razao_social,nome_fantasia,cnpj,email,telefone,endereco,cidade,estado,cep,setor,faturamento_medio,stage,minuta_assinada,minuta_assinada_em,updated_at";
+      "id,razao_social,nome_fantasia,cnpj,email,telefone,endereco,cidade,estado,cep,setor,faturamento_medio,stage,minuta_assinada,minuta_assinada_em,cadastro_revisado_em,updated_at";
 
     const [{ data: ativos, error: e1 }, { data: assinados, error: e2 }] = await Promise.all([
       supabase.from("cedentes").select(SELECT).eq("stage", "formalizacao").order("updated_at", { ascending: true }),
