@@ -384,7 +384,7 @@ export default function Formalizacao() {
                   <tr className="text-left">
                     <th className="px-2.5 py-1.5 font-medium">Cedente</th>
                     <th className="px-2.5 py-1.5 font-medium">CNPJ</th>
-                    <th className="px-2.5 py-1.5 font-medium">Proposta</th>
+                    
                     <th className="px-2.5 py-1.5 font-medium text-right">Valor aprovado</th>
                     <th className="px-2.5 py-1.5 font-medium">Assinado em</th>
                     <th className="px-2.5 py-1.5 font-medium">Status</th>
@@ -403,7 +403,7 @@ export default function Formalizacao() {
                           </Link>
                         </td>
                         <td className="px-2.5 py-1.5 font-mono text-muted-foreground">{c.cnpj}</td>
-                        <td className="px-2.5 py-1.5 font-mono">{prop?.codigo ?? "—"}</td>
+                        
                         <td className="px-2.5 py-1.5 text-right tabular-nums">{fmtBRL(prop?.valor_aprovado ?? null)}</td>
                         <td className="px-2.5 py-1.5">
                           <span>{fmtDate(c.minuta_assinada_em)}</span>
