@@ -219,63 +219,6 @@ export type Database = {
           },
         ]
       }
-      cedente_revalidacao_ciclos: {
-        Row: {
-          cancelado_em: string | null
-          cancelado_por: string | null
-          cancelamento_motivo: string | null
-          cedente_id: string
-          concluido_em: string | null
-          concluido_por: string | null
-          created_at: string
-          decisao: Database["public"]["Enums"]["revalidacao_decisao"] | null
-          etapa_atual: Database["public"]["Enums"]["cedente_stage"]
-          id: string
-          iniciado_em: string
-          iniciado_por: string
-          numero: number
-          observacoes: string | null
-          status: Database["public"]["Enums"]["revalidacao_status"]
-          updated_at: string
-        }
-        Insert: {
-          cancelado_em?: string | null
-          cancelado_por?: string | null
-          cancelamento_motivo?: string | null
-          cedente_id: string
-          concluido_em?: string | null
-          concluido_por?: string | null
-          created_at?: string
-          decisao?: Database["public"]["Enums"]["revalidacao_decisao"] | null
-          etapa_atual?: Database["public"]["Enums"]["cedente_stage"]
-          id?: string
-          iniciado_em?: string
-          iniciado_por: string
-          numero: number
-          observacoes?: string | null
-          status?: Database["public"]["Enums"]["revalidacao_status"]
-          updated_at?: string
-        }
-        Update: {
-          cancelado_em?: string | null
-          cancelado_por?: string | null
-          cancelamento_motivo?: string | null
-          cedente_id?: string
-          concluido_em?: string | null
-          concluido_por?: string | null
-          created_at?: string
-          decisao?: Database["public"]["Enums"]["revalidacao_decisao"] | null
-          etapa_atual?: Database["public"]["Enums"]["cedente_stage"]
-          id?: string
-          iniciado_em?: string
-          iniciado_por?: string
-          numero?: number
-          observacoes?: string | null
-          status?: Database["public"]["Enums"]["revalidacao_status"]
-          updated_at?: string
-        }
-        Relationships: []
-      }
       cedente_visit_report_versions: {
         Row: {
           assinatura_digital_observacao: string | null
@@ -410,7 +353,6 @@ export type Database = {
           assinatura_digital_tipo: string | null
           avalistas_solidarios: Json
           cedente_id: string
-          ciclo_id: string | null
           contexto: string | null
           created_at: string
           created_by: string
@@ -453,7 +395,6 @@ export type Database = {
           assinatura_digital_tipo?: string | null
           avalistas_solidarios?: Json
           cedente_id: string
-          ciclo_id?: string | null
           contexto?: string | null
           created_at?: string
           created_by: string
@@ -496,7 +437,6 @@ export type Database = {
           assinatura_digital_tipo?: string | null
           avalistas_solidarios?: Json
           cedente_id?: string
-          ciclo_id?: string | null
           contexto?: string | null
           created_at?: string
           created_by?: string
@@ -534,15 +474,7 @@ export type Database = {
           versao_atual?: number
           visitante?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "cedente_visit_reports_ciclo_id_fkey"
-            columns: ["ciclo_id"]
-            isOneToOne: false
-            referencedRelation: "cedente_revalidacao_ciclos"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       cedentes: {
         Row: {
@@ -754,7 +686,6 @@ export type Database = {
       committee_sessions: {
         Row: {
           abertura: string
-          ciclo_id: string | null
           created_at: string
           created_by: string | null
           deadline: string | null
@@ -770,7 +701,6 @@ export type Database = {
         }
         Insert: {
           abertura?: string
-          ciclo_id?: string | null
           created_at?: string
           created_by?: string | null
           deadline?: string | null
@@ -786,7 +716,6 @@ export type Database = {
         }
         Update: {
           abertura?: string
-          ciclo_id?: string | null
           created_at?: string
           created_by?: string | null
           deadline?: string | null
@@ -800,15 +729,7 @@ export type Database = {
           updated_at?: string
           voto_secreto?: boolean
         }
-        Relationships: [
-          {
-            foreignKeyName: "committee_sessions_ciclo_id_fkey"
-            columns: ["ciclo_id"]
-            isOneToOne: false
-            referencedRelation: "cedente_revalidacao_ciclos"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       committee_vote_checklist: {
         Row: {
@@ -1117,7 +1038,6 @@ export type Database = {
           attachments_top: Json
           carteira: Json
           cedente_id: string
-          ciclo_id: string | null
           completude: number
           conclusao: string | null
           created_at: string
@@ -1147,7 +1067,6 @@ export type Database = {
           attachments_top?: Json
           carteira?: Json
           cedente_id: string
-          ciclo_id?: string | null
           completude?: number
           conclusao?: string | null
           created_at?: string
@@ -1177,7 +1096,6 @@ export type Database = {
           attachments_top?: Json
           carteira?: Json
           cedente_id?: string
-          ciclo_id?: string | null
           completude?: number
           conclusao?: string | null
           created_at?: string
@@ -1203,15 +1121,7 @@ export type Database = {
           updated_by?: string | null
           versao_atual?: number
         }
-        Relationships: [
-          {
-            foreignKeyName: "credit_reports_ciclo_id_fkey"
-            columns: ["ciclo_id"]
-            isOneToOne: false
-            referencedRelation: "cedente_revalidacao_ciclos"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       dashboard_widgets: {
         Row: {
@@ -1304,7 +1214,6 @@ export type Database = {
           categoria_id: string | null
           categoria_sugerida_id: string | null
           cedente_id: string
-          ciclo_id: string | null
           classificacao_status: string
           created_at: string
           id: string
@@ -1324,7 +1233,6 @@ export type Database = {
           categoria_id?: string | null
           categoria_sugerida_id?: string | null
           cedente_id: string
-          ciclo_id?: string | null
           classificacao_status?: string
           created_at?: string
           id?: string
@@ -1344,7 +1252,6 @@ export type Database = {
           categoria_id?: string | null
           categoria_sugerida_id?: string | null
           cedente_id?: string
-          ciclo_id?: string | null
           classificacao_status?: string
           created_at?: string
           id?: string
@@ -1380,13 +1287,6 @@ export type Database = {
             columns: ["cedente_id"]
             isOneToOne: false
             referencedRelation: "cedentes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "documentos_ciclo_id_fkey"
-            columns: ["ciclo_id"]
-            isOneToOne: false
-            referencedRelation: "cedente_revalidacao_ciclos"
             referencedColumns: ["id"]
           },
         ]
@@ -1908,23 +1808,11 @@ export type Database = {
         Args: { _cedente_id: string; _user_id: string }
         Returns: boolean
       }
-      cancelar_ciclo_revalidacao: {
-        Args: { _ciclo_id: string; _motivo: string }
-        Returns: undefined
-      }
       committee_close_if_complete: {
         Args: { _force?: boolean; _proposal_id: string }
         Returns: string
       }
       committee_eligible_voter_ids: { Args: never; Returns: string[] }
-      concluir_ciclo_revalidacao: {
-        Args: {
-          _ciclo_id: string
-          _decisao: Database["public"]["Enums"]["revalidacao_decisao"]
-          _observacoes?: string
-        }
-        Returns: string
-      }
       docfn_abrev_razao: { Args: { _razao: string }; Returns: string }
       docfn_slugify: {
         Args: { _input: string; _max?: number }
@@ -1940,10 +1828,6 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
-      }
-      iniciar_ciclo_revalidacao: {
-        Args: { _cedente_id: string }
-        Returns: string
       }
       is_admin_or_gestor_comercial: {
         Args: { _user_id: string }
@@ -2009,8 +1893,6 @@ export type Database = {
         | "reprovado"
         | "cancelado"
       report_upload_status: "pendente" | "processando" | "processado" | "erro"
-      revalidacao_decisao: "mantido" | "alterado" | "encerrado"
-      revalidacao_status: "aberto" | "concluido" | "cancelado"
       vote_decision: "favoravel" | "desfavoravel" | "abstencao"
     }
     CompositeTypes: {
@@ -2184,8 +2066,6 @@ export const Constants = {
         "cancelado",
       ],
       report_upload_status: ["pendente", "processando", "processado", "erro"],
-      revalidacao_decisao: ["mantido", "alterado", "encerrado"],
-      revalidacao_status: ["aberto", "concluido", "cancelado"],
       vote_decision: ["favoravel", "desfavoravel", "abstencao"],
     },
   },
