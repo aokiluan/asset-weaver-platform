@@ -239,14 +239,14 @@ interface ColVis {
 }
 const COL_DEFAULT: ColVis = {
   tipo: true,
-  categoria: true,
+  categoria: false,
   origem: false,
   status: false,
   tamanho: true,
   data: true,
-  por: true,
+  por: false,
 };
-const COL_KEY = "diretorio.colunas.v3";
+const COL_KEY = "diretorio.colunas.v4";
 
 function loadColPrefs(): ColVis {
   try {
