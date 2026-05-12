@@ -65,6 +65,8 @@ const App = () => (
               <Route path="/cedentes/:id/editar" element={<CedenteCadastro />} />
               <Route path="/cedentes/:id" element={<CedenteDetail />} />
               <Route path="/diretorio" element={<Diretorio />} />
+              <Route path="/diretorio/investidores" element={<Investidores />} />
+              <Route path="/diretorio/investidores/:id" element={<InvestidorDetail />} />
               <Route path="/diretorio/:id" element={<DiretorioDetail />} />
               {/* Rotas legadas redirecionam para a tela do cedente */}
               <Route path="/credito" element={<Navigate to="/cedentes" replace />} />
