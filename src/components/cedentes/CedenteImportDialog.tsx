@@ -19,11 +19,10 @@ type Props = {
   onImported?: () => void;
 };
 
-type Step = "upload" | "map" | "preview" | "importing";
+type Step = "upload" | "preview" | "importing";
 
 const STEPS: { id: Step; label: string }[] = [
   { id: "upload", label: "Upload" },
-  { id: "map", label: "Mapeamento" },
   { id: "preview", label: "Validação" },
 ];
 
@@ -62,25 +61,24 @@ export function CedenteImportDialog({ open, onOpenChange, onImported }: Props) {
       if (data.headers.length === 0 || data.rows.length === 0) {
         toast.error("Planilha vazia ou inválida"); return;
       }
+      const autoMap = autoMapColumns(data.headers);
+      const fields = Object.values(autoMap).filter(Boolean) as CedenteFieldKey[];
+      if (!fields.includes("razao_social") || !fields.includes("cnpj")) {
+        toast.error("Colunas obrigatórias ausentes", {
+          description: "A planilha precisa ter colunas 'razao_social' e 'cnpj'. Baixe o modelo padrão.",
+        });
+        return;
+      }
       setFileName(file.name);
       setSheet(data);
-      setMapping(autoMapColumns(data.headers));
-      setStep("map");
+      setMapping(autoMap);
+      const { data: existing } = await supabase.from("cedentes").select("cnpj");
+      const existSet = new Set((existing ?? []).map((r: any) => (r.cnpj ?? "").replace(/\D/g, "")));
+      setRows(validateRows(data, autoMap, existSet));
+      setStep("preview");
     } catch (e: any) {
       toast.error("Erro ao ler arquivo", { description: e?.message });
     }
-  };
-
-  const mappedFields = useMemo(() => Object.values(mapping).filter(Boolean) as CedenteFieldKey[], [mapping]);
-  const requiredOk = mappedFields.includes("razao_social") && mappedFields.includes("cnpj");
-
-  const validateAndPreview = async () => {
-    if (!sheet) return;
-    const { data: existing } = await supabase.from("cedentes").select("cnpj");
-    const set = new Set((existing ?? []).map((r: any) => (r.cnpj ?? "").replace(/\D/g, "")));
-    const validated = validateRows(sheet, mapping, set);
-    setRows(validated);
-    setStep("preview");
   };
 
   const summary = useMemo(() => {
@@ -177,56 +175,7 @@ export function CedenteImportDialog({ open, onOpenChange, onImported }: Props) {
           </div>
         )}
 
-        {step === "map" && sheet && (
-          <div className="space-y-2">
-            <div className="text-[11px] text-muted-foreground">
-              Arquivo: <span className="font-medium text-foreground">{fileName}</span> · {sheet.rows.length} linhas
-            </div>
-            <div className="border rounded-md max-h-[360px] overflow-y-auto">
-              <table className="w-full text-[12px]">
-                <thead className="bg-muted/40 sticky top-0">
-                  <tr>
-                    <th className="text-left px-2 py-1.5 font-medium">Coluna da planilha</th>
-                    <th className="text-left px-2 py-1.5 font-medium">Amostra</th>
-                    <th className="text-left px-2 py-1.5 font-medium">Campo do cedente</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sheet.headers.map((h, i) => (
-                    <tr key={i} className="border-t">
-                      <td className="px-2 py-1 font-medium truncate max-w-[180px]">{h || `Coluna ${i + 1}`}</td>
-                      <td className="px-2 py-1 text-muted-foreground truncate max-w-[200px]">
-                        {sheet.rows[0]?.[i]?.toString().slice(0, 40) ?? "—"}
-                      </td>
-                      <td className="px-2 py-1">
-                        <Select
-                          value={mapping[i] || "__none__"}
-                          onValueChange={(v) => setMapping((m) => ({ ...m, [i]: v === "__none__" ? "" : (v as CedenteFieldKey) }))}
-                        >
-                          <SelectTrigger className="h-7 text-[12px] w-[200px]"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="__none__">— Ignorar —</SelectItem>
-                            {CEDENTE_FIELDS.map((f) => (
-                              <SelectItem key={f.key} value={f.key}>
-                                {f.label}{("required" in f && f.required) ? " *" : ""}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            {!requiredOk && (
-              <div className="flex items-center gap-2 text-[11px] text-destructive">
-                <AlertCircle className="size-3.5" />
-                Mapeie pelo menos <strong>Razão social</strong> e <strong>CNPJ</strong>.
-              </div>
-            )}
-          </div>
-        )}
+        {/* mapeamento removido — auto-map a partir dos headers do modelo */}
 
         {step === "preview" && (
           <div className="space-y-2">
@@ -286,15 +235,9 @@ export function CedenteImportDialog({ open, onOpenChange, onImported }: Props) {
               Cancelar
             </Button>
           )}
-          {step === "map" && (
-            <>
-              <Button variant="outline" className="h-7 text-[12px]" onClick={() => setStep("upload")}>Voltar</Button>
-              <Button className="h-7 text-[12px]" disabled={!requiredOk} onClick={validateAndPreview}>Validar</Button>
-            </>
-          )}
           {step === "preview" && (
             <>
-              <Button variant="outline" className="h-7 text-[12px]" onClick={() => setStep("map")}>Voltar</Button>
+              <Button variant="outline" className="h-7 text-[12px]" onClick={() => setStep("upload")}>Voltar</Button>
               <Button className="h-7 text-[12px]" disabled={summary.valid === 0} onClick={doImport}>
                 Importar {summary.valid} cedente{summary.valid !== 1 ? "s" : ""}
               </Button>
