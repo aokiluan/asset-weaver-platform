@@ -46,12 +46,12 @@ export function CedenteFormDialog({ open, onOpenChange, initial, onSaved }: Prop
   const [saving, setSaving] = useState(false);
   const [owners, setOwners] = useState<Owner[]>([]);
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<CedenteFormValues>({
-    defaultValues: { status: "prospect", razao_social: "", cnpj: "", ...initial },
+    defaultValues: { razao_social: "", cnpj: "", ...initial },
   });
 
   useEffect(() => {
     if (!open) return;
-    reset({ status: "prospect", razao_social: "", cnpj: "", ...initial });
+    reset({ razao_social: "", cnpj: "", ...initial });
     (async () => {
       const [{ data: pr }, { data: auth }] = await Promise.all([
         supabase.from("profiles").select("id,nome").eq("ativo", true).order("nome"),
@@ -64,7 +64,6 @@ export function CedenteFormDialog({ open, onOpenChange, initial, onSaved }: Prop
     })();
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const status = watch("status");
   const ownerId = watch("owner_id");
   const allValues = watch();
 
@@ -90,7 +89,6 @@ export function CedenteFormDialog({ open, onOpenChange, initial, onSaved }: Prop
       cep: values.cep || null,
       setor: values.setor || null,
       faturamento_medio: values.faturamento_medio ? Number(values.faturamento_medio) : null,
-      status: values.status,
       limite_aprovado: values.limite_aprovado ? Number(values.limite_aprovado) : null,
       observacoes: values.observacoes || null,
       owner_id: values.owner_id || null,
