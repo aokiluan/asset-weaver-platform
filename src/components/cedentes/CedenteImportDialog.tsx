@@ -61,25 +61,24 @@ export function CedenteImportDialog({ open, onOpenChange, onImported }: Props) {
       if (data.headers.length === 0 || data.rows.length === 0) {
         toast.error("Planilha vazia ou inválida"); return;
       }
+      const autoMap = autoMapColumns(data.headers);
+      const fields = Object.values(autoMap).filter(Boolean) as CedenteFieldKey[];
+      if (!fields.includes("razao_social") || !fields.includes("cnpj")) {
+        toast.error("Colunas obrigatórias ausentes", {
+          description: "A planilha precisa ter colunas 'razao_social' e 'cnpj'. Baixe o modelo padrão.",
+        });
+        return;
+      }
       setFileName(file.name);
       setSheet(data);
-      setMapping(autoMapColumns(data.headers));
-      setStep("map");
+      setMapping(autoMap);
+      const { data: existing } = await supabase.from("cedentes").select("cnpj");
+      const existSet = new Set((existing ?? []).map((r: any) => (r.cnpj ?? "").replace(/\D/g, "")));
+      setRows(validateRows(data, autoMap, existSet));
+      setStep("preview");
     } catch (e: any) {
       toast.error("Erro ao ler arquivo", { description: e?.message });
     }
-  };
-
-  const mappedFields = useMemo(() => Object.values(mapping).filter(Boolean) as CedenteFieldKey[], [mapping]);
-  const requiredOk = mappedFields.includes("razao_social") && mappedFields.includes("cnpj");
-
-  const validateAndPreview = async () => {
-    if (!sheet) return;
-    const { data: existing } = await supabase.from("cedentes").select("cnpj");
-    const set = new Set((existing ?? []).map((r: any) => (r.cnpj ?? "").replace(/\D/g, "")));
-    const validated = validateRows(sheet, mapping, set);
-    setRows(validated);
-    setStep("preview");
   };
 
   const summary = useMemo(() => {
