@@ -1078,15 +1078,12 @@ export default function DiretorioDetail() {
 /* ============================================================== */
 
 interface TableProps {
-  groups: { key: string; label: string; items: Arquivo[] }[] | null;
   flat: Arquivo[];
   profilesById: Record<string, string>;
   colVis: ColVis;
   sortKey: SortKey;
   sortIcon: (k: SortKey) => React.ReactNode;
   onSort: (k: SortKey) => void;
-  collapsed: Set<string>;
-  toggleCollapse: (k: string) => void;
   onOpen: (a: Arquivo) => void;
   onDownload: (a: Arquivo) => void;
 }
