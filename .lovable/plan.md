@@ -1,38 +1,55 @@
-# Cards KPI da página `/cedentes` — verificação + novo card
+## Importação de cedentes via planilha
 
-## Verificação dos cards atuais (`src/pages/Cedentes.tsx`)
+Adicionar fluxo de importação em massa de cedentes a partir de planilha (.xlsx/.csv), inspirado no Nibo, para acelerar a entrada de grandes volumes.
 
-Os três cards já leem corretamente do estado `items`:
+### Fluxo do usuário (wizard em 4 passos, dentro de um Dialog)
 
-- **Total cadastrado** → `items.length` ✅
-- **Aprovados** → `items.filter(i => i.status === "aprovado").length` ✅ (campo `status` da tabela `cedentes`)
-- **Limite total aprovado** → soma de `limite_aprovado` dos cedentes com `status === "aprovado"` ✅
+1. **Baixar modelo** — botão "Baixar planilha modelo" gera um `.xlsx` com cabeçalhos padronizados e uma linha de exemplo.
+2. **Upload** — drag & drop ou seleção de `.xlsx`/`.csv` (até 5MB). Parse no cliente com `xlsx` (SheetJS).
+3. **Mapeamento de colunas** — auto-detecta colunas pelo cabeçalho; permite ao usuário ajustar manualmente cada coluna da planilha → campo do cedente.
+4. **Validação e preview** — tabela compacta (estilo Nibo) mostrando todas as linhas com status por linha:
+   - ✅ Válida
+   - ⚠️ Aviso (ex.: CNPJ duplicado no banco — será ignorada)
+   - ❌ Erro (CNPJ inválido, razão social vazia)
+   Resumo no topo: `X válidas · Y duplicadas · Z com erro`. Botão "Importar X cedentes" só habilita se houver válidas. Erros podem ser exportados como `.csv` para correção.
+5. **Importação** — insere em lotes de 100 via `supabase.from("cedentes").insert()`, barra de progresso, toast final.
 
-Nenhuma mudança de cálculo necessária — apenas é preciso passar a buscar dois campos extras do banco (`cadastro_revisado_em`, `minuta_assinada_em`) para alimentar o novo card.
+### Campos suportados na planilha
 
-## Novo card: Renovações pendentes
+Obrigatórios: `razao_social`, `cnpj`
+Opcionais: `nome_fantasia`, `email`, `telefone`, `endereco`, `cidade`, `estado`, `setor`, `status`, `limite_aprovado`, `faturamento_medio`, `observacoes`
 
-Conta cedentes cuja renovação cadastral semestral está **vencida** ou **em atenção** (≤30 dias para vencer), usando `computeRenovacao(cadastro_revisado_em, minuta_assinada_em)` de `src/lib/cadastro-renovacao.ts`.
+Validações:
+- CNPJ: limpa máscara, valida 14 dígitos + dígito verificador
+- Email: regex básico
+- `status`: enum válido (default `prospect`)
+- Valores numéricos: aceita "R$ 1.234,56" e "1234.56"
+- Deduplicação: por CNPJ contra base existente + dentro da própria planilha
 
-- Label: **Renovações pendentes**
-- Valor principal: total (vencidas + atenção)
-- Sublinha: detalhamento `X vencidas · Y a vencer` em `text-[10px] text-muted-foreground`
-- Cor sutil no número quando > 0: `text-destructive` se houver vencidas, senão padrão
+### Acesso
 
-## Mudanças no arquivo `src/pages/Cedentes.tsx`
+Botão **"Importar planilha"** ao lado do "+ Novo cadastro" no header de `/cedentes`. Visível apenas para quem tem `canCreate` (admin, comercial, gestor_geral).
 
-1. Acrescentar `cadastro_revisado_em, minuta_assinada_em` ao `select` em `load()`.
-2. Adicionar campos opcionais correspondentes na interface `Cedente`.
-3. Calcular, ao lado de `totalAprovado`:
-   ```ts
-   const renov = items.map(i => computeRenovacao(i.cadastro_revisado_em, i.minuta_assinada_em));
-   const vencidas = renov.filter(r => r.status === "vencida").length;
-   const atencao  = renov.filter(r => r.status === "atencao").length;
-   const pendentes = vencidas + atencao;
-   ```
-4. Trocar grid de KPIs para `md:grid-cols-2 lg:grid-cols-4` e inserir o quarto card.
-5. Manter padrão visual Nibo já em uso (border, p-3, label 11px, valor 18px).
+### Detalhes técnicos
 
-## Fora de escopo
+- **Nova dependência**: `xlsx` (SheetJS) — parse de .xlsx/.csv e geração do template
+- **Novos arquivos**:
+  - `src/components/cedentes/CedenteImportDialog.tsx` — wizard completo
+  - `src/lib/cedentes-import.ts` — helpers (parse, validação CNPJ, geração template, normalização)
+- **Edição**: `src/pages/Cedentes.tsx` — adicionar botão "Importar planilha" e estado para abrir o dialog
+- **Backend**: nenhuma migração necessária; tabela `cedentes` já existe e RLS já cobre INSERT do usuário
+- **Sem edge function**: parse e validação 100% no cliente; insert direto via Supabase client (mais simples, evita upload de arquivo). Para volumes acima de ~5k linhas reavaliamos.
 
-- Padronização do header com `<PageTabs>` (página atualmente usa header próprio) — manter como está para não expandir o pedido.
+### Estilo visual
+
+Segue o padrão Nibo ultracompacto já vigente no projeto:
+- Dialog grande (`max-w-4xl`), passos com stepper horizontal compacto
+- Tabela de preview: linhas `h-7`, fonte `text-[12px]`, ícones `size-3.5`
+- Badges de status por linha em cores semânticas (success/warning/destructive)
+- Botões `h-7`, ações primárias à direita, "Cancelar" ghost à esquerda
+
+### Out of scope
+
+- Importação assíncrona via background job
+- Edição inline de células no preview (apenas remover linhas com erro)
+- Suporte a múltiplas abas da planilha (usaremos só a primeira)
