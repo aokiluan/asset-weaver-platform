@@ -107,7 +107,7 @@ export default function Cedentes() {
     load();
   };
 
-  const totalAprovado = items.filter(i => i.status === "aprovado").reduce((s, i) => s + (i.limite_aprovado ?? 0), 0);
+  const totalAprovado = items.filter(i => i.stage === "ativo").reduce((s, i) => s + (i.limite_aprovado ?? 0), 0);
   const renovInfos = items.map(i => computeRenovacao(i.cadastro_revisado_em, i.minuta_assinada_em));
   const renovVencidas = renovInfos.filter(r => r.status === "vencida").length;
   const renovAtencao = renovInfos.filter(r => r.status === "atencao").length;
