@@ -550,6 +550,18 @@ export default function DiretorioDetail() {
       } catch (e: any) {
         toast.error("Erro ao gerar PDF", { description: e.message });
       }
+    } else if (a.tipo === "parecer" && a.origem === "credito") {
+      try {
+        await generateCreditReportPdf(a.raw, cedente?.razao_social, "download");
+      } catch (e: any) {
+        toast.error("Erro ao gerar PDF", { description: e.message });
+      }
+    } else if (a.tipo === "parecer" && a.origem === "visita") {
+      try {
+        await generateVisitReportPdf(a.raw, cedente!.id, `v${a.raw.versao}`, "download");
+      } catch (e: any) {
+        toast.error("Erro ao gerar PDF", { description: e.message });
+      }
     } else {
       toast.info("Abra no cedente para visualizar/baixar.");
     }
