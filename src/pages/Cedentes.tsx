@@ -144,7 +144,7 @@ export default function Cedentes() {
               <TooltipTrigger asChild>
                 <span tabIndex={0} className="inline-flex">
                   <Button variant="outline" onClick={() => setImportOpen(true)} disabled={authLoading || !canCreate}>
-                    <Upload className="h-4 w-4 mr-2" /> Importar planilha
+                    <Upload className="h-4 w-4 mr-2" /> Importar Cedentes
                   </Button>
                 </span>
               </TooltipTrigger>
