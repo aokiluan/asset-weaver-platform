@@ -29,3 +29,14 @@ export const PRIMARY_ROLES: AppRole[] = [
   "formalizacao",
   "financeiro",
 ];
+
+export const ALL_ROLES_FOR_MATRIX: AppRole[] = [
+  "admin",
+  "gestor_geral",
+  "comercial",
+  "cadastro",
+  "credito",
+  "comite",
+  "formalizacao",
+  "financeiro",
+];
