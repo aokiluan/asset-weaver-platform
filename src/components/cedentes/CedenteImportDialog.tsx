@@ -208,7 +208,7 @@ export function CedenteImportDialog({ open, onOpenChange, onImported }: Props) {
                             <SelectItem value="__none__">— Ignorar —</SelectItem>
                             {CEDENTE_FIELDS.map((f) => (
                               <SelectItem key={f.key} value={f.key}>
-                                {f.label}{f.required ? " *" : ""}
+                                {f.label}{("required" in f && f.required) ? " *" : ""}
                               </SelectItem>
                             ))}
                           </SelectContent>
