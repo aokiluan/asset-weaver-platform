@@ -204,12 +204,10 @@ export default function Cedentes() {
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos os status</SelectItem>
-                <SelectItem value="prospect">Prospect</SelectItem>
-                <SelectItem value="em_analise">Em análise</SelectItem>
-                <SelectItem value="aprovado">Aprovado</SelectItem>
-                <SelectItem value="reprovado">Reprovado</SelectItem>
-                <SelectItem value="inativo">Inativo</SelectItem>
+                <SelectItem value="all">Todas as etapas</SelectItem>
+                {(Object.keys(STAGE_LABEL) as CedenteStage[]).map((s) => (
+                  <SelectItem key={s} value={s}>{STAGE_LABEL[s]}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
