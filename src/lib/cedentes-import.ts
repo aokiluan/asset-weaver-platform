@@ -1,39 +1,27 @@
 import * as XLSX from "xlsx";
 
-export type CedenteStatus = "prospect" | "em_analise" | "aprovado" | "reprovado" | "inativo";
-
 export const CEDENTE_FIELDS = [
   { key: "razao_social", label: "Razão social", required: true },
   { key: "cnpj", label: "CNPJ", required: true },
   { key: "nome_fantasia", label: "Nome fantasia" },
-  { key: "email", label: "E-mail" },
-  { key: "telefone", label: "Telefone" },
-  { key: "endereco", label: "Endereço" },
+  { key: "capital_social", label: "Capital social" },
+  { key: "natureza_juridica", label: "Natureza jurídica" },
+  { key: "data_abertura", label: "Data de abertura" },
+  { key: "situacao_cadastral", label: "Situação cadastral" },
+  { key: "setor", label: "Setor" },
+  { key: "faturamento_medio", label: "Faturamento médio" },
+  { key: "cep", label: "CEP" },
+  { key: "logradouro", label: "Logradouro" },
+  { key: "numero", label: "Número" },
+  { key: "bairro", label: "Bairro" },
   { key: "cidade", label: "Cidade" },
   { key: "estado", label: "Estado (UF)" },
-  { key: "setor", label: "Setor" },
-  { key: "status", label: "Status" },
-  { key: "limite_aprovado", label: "Limite aprovado" },
-  { key: "faturamento_medio", label: "Faturamento médio" },
+  { key: "telefone", label: "Telefone" },
+  { key: "email", label: "E-mail" },
   { key: "observacoes", label: "Observações" },
 ] as const;
 
 export type CedenteFieldKey = typeof CEDENTE_FIELDS[number]["key"];
-
-export const VALID_STATUS: CedenteStatus[] = ["prospect", "em_analise", "aprovado", "reprovado", "inativo"];
-
-const STATUS_ALIASES: Record<string, CedenteStatus> = {
-  "prospect": "prospect",
-  "prospecto": "prospect",
-  "em analise": "em_analise",
-  "em análise": "em_analise",
-  "em_analise": "em_analise",
-  "analise": "em_analise",
-  "análise": "em_analise",
-  "aprovado": "aprovado",
-  "reprovado": "reprovado",
-  "inativo": "inativo",
-};
 
 export function normalizeHeader(h: string): string {
   return h
@@ -49,15 +37,20 @@ const HEADER_TO_FIELD: Record<string, CedenteFieldKey> = {
   razao_social: "razao_social", razao: "razao_social", nome: "razao_social",
   cnpj: "cnpj",
   nome_fantasia: "nome_fantasia", fantasia: "nome_fantasia",
-  email: "email", e_mail: "email",
-  telefone: "telefone", fone: "telefone", celular: "telefone",
-  endereco: "endereco", logradouro: "endereco",
+  capital_social: "capital_social", capital: "capital_social",
+  natureza_juridica: "natureza_juridica", natureza: "natureza_juridica",
+  data_abertura: "data_abertura", data_de_abertura: "data_abertura", abertura: "data_abertura",
+  situacao_cadastral: "situacao_cadastral", situacao: "situacao_cadastral",
+  setor: "setor", segmento: "setor",
+  faturamento_medio: "faturamento_medio", faturamento: "faturamento_medio",
+  cep: "cep",
+  logradouro: "logradouro", endereco: "logradouro", rua: "logradouro",
+  numero: "numero", num: "numero", n: "numero",
+  bairro: "bairro",
   cidade: "cidade", municipio: "cidade",
   estado: "estado", uf: "estado",
-  setor: "setor", segmento: "setor",
-  status: "status", situacao: "status",
-  limite_aprovado: "limite_aprovado", limite: "limite_aprovado",
-  faturamento_medio: "faturamento_medio", faturamento: "faturamento_medio",
+  telefone: "telefone", fone: "telefone", celular: "telefone",
+  email: "email", e_mail: "email",
   observacoes: "observacoes", obs: "observacoes", observacao: "observacoes",
 };
 
@@ -71,6 +64,10 @@ export function autoMapColumns(headers: string[]): Record<number, CedenteFieldKe
 }
 
 export function cleanCNPJ(v: string): string {
+  return (v ?? "").toString().replace(/\D/g, "");
+}
+
+export function cleanCEP(v: any): string {
   return (v ?? "").toString().replace(/\D/g, "");
 }
 
@@ -103,16 +100,34 @@ export function parseNumber(v: any): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-export function parseStatus(v: any): CedenteStatus | null {
-  if (!v) return "prospect";
-  const norm = v.toString().trim().toLowerCase();
-  return STATUS_ALIASES[norm] ?? null;
+// Aceita dd/mm/aaaa, dd-mm-aaaa, aaaa-mm-dd e número serial Excel
+export function parseDate(v: any): string | null {
+  if (v == null || v === "") return null;
+  if (typeof v === "number" && Number.isFinite(v)) {
+    // Excel epoch: 1899-12-30
+    const ms = Math.round((v - 25569) * 86400 * 1000);
+    const d = new Date(ms);
+    if (isNaN(d.getTime())) return null;
+    return d.toISOString().slice(0, 10);
+  }
+  const s = v.toString().trim();
+  let m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+  m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+  if (m) {
+    const dd = m[1].padStart(2, "0");
+    const mm = m[2].padStart(2, "0");
+    let yy = m[3];
+    if (yy.length === 2) yy = (Number(yy) > 50 ? "19" : "20") + yy;
+    return `${yy}-${mm}-${dd}`;
+  }
+  return null;
 }
 
 export type ParsedRow = {
-  rowIndex: number; // origem na planilha (1-indexed, sem header)
+  rowIndex: number;
   raw: Record<string, any>;
-  mapped: Partial<Record<CedenteFieldKey, any>>;
+  mapped: Partial<Record<CedenteFieldKey, any>> & { endereco?: string | null };
   errors: string[];
   warnings: string[];
   status: "valid" | "warning" | "error";
@@ -142,25 +157,30 @@ export function validateRows(
 ): ParsedRow[] {
   const seen = new Set<string>();
   return data.rows.map((row, idx) => {
-    const mapped: Partial<Record<CedenteFieldKey, any>> = {};
+    const mapped: ParsedRow["mapped"] = {};
     const raw: Record<string, any> = {};
     Object.entries(mapping).forEach(([colIdx, field]) => {
       if (!field) return;
       const value = row[Number(colIdx)];
       raw[field] = value;
       if (value === "" || value == null) return;
-      if (field === "limite_aprovado" || field === "faturamento_medio") {
+      if (field === "faturamento_medio" || field === "capital_social") {
         mapped[field] = parseNumber(value);
-      } else if (field === "status") {
-        mapped[field] = parseStatus(value);
       } else if (field === "cnpj") {
         mapped[field] = cleanCNPJ(value);
+      } else if (field === "cep") {
+        mapped[field] = cleanCEP(value);
       } else if (field === "estado") {
         mapped[field] = value.toString().trim().toUpperCase().slice(0, 2);
+      } else if (field === "data_abertura") {
+        mapped[field] = parseDate(value);
       } else {
         mapped[field] = value.toString().trim();
       }
     });
+
+    // Compatibilidade: duplica logradouro em endereco
+    if (mapped.logradouro) mapped.endereco = mapped.logradouro;
 
     const errors: string[] = [];
     const warnings: string[] = [];
@@ -172,7 +192,9 @@ export function validateRows(
     if (mapped.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mapped.email as string)) {
       errors.push("E-mail inválido");
     }
-    if (raw.status && !mapped.status) errors.push("Status inválido");
+    if (raw.data_abertura && !mapped.data_abertura) warnings.push("Data de abertura inválida — ignorada");
+    if (mapped.cep && (mapped.cep as string).length !== 8) warnings.push("CEP inválido — ignorado");
+    if (mapped.estado && (mapped.estado as string).length !== 2) warnings.push("UF inválida");
 
     if (mapped.cnpj && errors.length === 0) {
       const c = mapped.cnpj as string;
@@ -181,7 +203,16 @@ export function validateRows(
       else seen.add(c);
     }
 
-    const status: ParsedRow["status"] = errors.length > 0 ? "error" : warnings.length > 0 ? "warning" : "valid";
+    // Remove campos com valores nulos resultantes de parsing
+    if (mapped.cep && (mapped.cep as string).length !== 8) delete mapped.cep;
+    if (raw.data_abertura && !mapped.data_abertura) delete mapped.data_abertura;
+
+    const isDuplicate = warnings.some((w) => w.includes("será ignorado"));
+    const status: ParsedRow["status"] = errors.length > 0
+      ? "error"
+      : isDuplicate
+      ? "warning"
+      : "valid"; // warnings não-duplicadas ainda são importáveis
     return { rowIndex: idx + 2, raw, mapped, errors, warnings, status };
   });
 }
@@ -192,15 +223,20 @@ export function buildTemplateXlsx(): Blob {
     "ACME Comércio LTDA",
     "12.345.678/0001-90",
     "ACME",
-    "contato@acme.com.br",
-    "(11) 99999-0000",
-    "Rua Exemplo, 123",
+    "100000",
+    "Sociedade Limitada",
+    "2015-03-21",
+    "ATIVA",
+    "Comércio",
+    "50000",
+    "01310-100",
+    "Av. Paulista",
+    "1000",
+    "Bela Vista",
     "São Paulo",
     "SP",
-    "Comércio",
-    "prospect",
-    "100000",
-    "50000",
+    "(11) 99999-0000",
+    "contato@acme.com.br",
     "Cliente indicado por parceiro",
   ];
   const ws = XLSX.utils.aoa_to_sheet([headers, example]);
