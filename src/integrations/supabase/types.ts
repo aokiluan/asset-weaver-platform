@@ -578,7 +578,6 @@ export type Database = {
           setor: string | null
           situacao_cadastral: string | null
           stage: Database["public"]["Enums"]["cedente_stage"]
-          status: Database["public"]["Enums"]["cedente_status"]
           telefone: string | null
           updated_at: string
         }
@@ -615,7 +614,6 @@ export type Database = {
           setor?: string | null
           situacao_cadastral?: string | null
           stage?: Database["public"]["Enums"]["cedente_stage"]
-          status?: Database["public"]["Enums"]["cedente_status"]
           telefone?: string | null
           updated_at?: string
         }
@@ -652,7 +650,6 @@ export type Database = {
           setor?: string | null
           situacao_cadastral?: string | null
           stage?: Database["public"]["Enums"]["cedente_stage"]
-          status?: Database["public"]["Enums"]["cedente_status"]
           telefone?: string | null
           updated_at?: string
         }
@@ -1987,12 +1984,6 @@ export type Database = {
         | "formalizacao"
         | "ativo"
         | "inativo"
-      cedente_status:
-        | "prospect"
-        | "em_analise"
-        | "aprovado"
-        | "reprovado"
-        | "inativo"
       dashboard_widget_tipo: "kpi" | "bar" | "line" | "pie" | "table"
       documento_status: "pendente" | "aprovado" | "reprovado"
       lead_tipo: "cedente" | "investidor"
@@ -2157,13 +2148,6 @@ export const Constants = {
         "comite",
         "formalizacao",
         "ativo",
-        "inativo",
-      ],
-      cedente_status: [
-        "prospect",
-        "em_analise",
-        "aprovado",
-        "reprovado",
         "inativo",
       ],
       dashboard_widget_tipo: ["kpi", "bar", "line", "pie", "table"],

@@ -17,6 +17,7 @@ import { CedenteImportDialog } from "@/components/cedentes/CedenteImportDialog";
 import { useAuth } from "@/hooks/useAuth";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { computeRenovacao } from "@/lib/cadastro-renovacao";
+import { STAGE_LABEL, STAGE_COLORS, type CedenteStage } from "@/lib/cedente-stages";
 
 interface Cedente {
   id: string;
@@ -29,7 +30,7 @@ interface Cedente {
   cidade: string | null;
   estado: string | null;
   setor: string | null;
-  status: "prospect" | "em_analise" | "aprovado" | "reprovado" | "inativo";
+  stage: CedenteStage;
   limite_aprovado: number | null;
   faturamento_medio: number | null;
   observacoes: string | null;
@@ -38,22 +39,6 @@ interface Cedente {
   cadastro_revisado_em: string | null;
   minuta_assinada_em: string | null;
 }
-
-const STATUS_LABEL: Record<Cedente["status"], string> = {
-  prospect: "Prospect",
-  em_analise: "Em análise",
-  aprovado: "Aprovado",
-  reprovado: "Reprovado",
-  inativo: "Inativo",
-};
-
-const STATUS_VARIANT: Record<Cedente["status"], "default" | "secondary" | "destructive" | "outline"> = {
-  prospect: "outline",
-  em_analise: "secondary",
-  aprovado: "default",
-  reprovado: "destructive",
-  inativo: "outline",
-};
 
 const fmtBRL = (v: number | null) =>
   v == null ? "—" : v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -79,9 +64,9 @@ export default function Cedentes() {
   const load = async () => {
     setLoading(true);
     let q = supabase.from("cedentes")
-      .select("id,razao_social,nome_fantasia,cnpj,email,telefone,endereco,cidade,estado,setor,status,limite_aprovado,faturamento_medio,observacoes,owner_id,created_at,cadastro_revisado_em,minuta_assinada_em")
+      .select("id,razao_social,nome_fantasia,cnpj,email,telefone,endereco,cidade,estado,setor,stage,limite_aprovado,faturamento_medio,observacoes,owner_id,created_at,cadastro_revisado_em,minuta_assinada_em")
       .order("razao_social", { ascending: true });
-    if (statusFilter !== "all") q = q.eq("status", statusFilter as Cedente["status"]);
+    if (statusFilter !== "all") q = q.eq("stage", statusFilter as CedenteStage);
     const { data, error } = await q;
     setLoading(false);
     if (error) { toast.error("Erro ao carregar", { description: error.message }); return; }
@@ -122,7 +107,7 @@ export default function Cedentes() {
     load();
   };
 
-  const totalAprovado = items.filter(i => i.status === "aprovado").reduce((s, i) => s + (i.limite_aprovado ?? 0), 0);
+  const totalAprovado = items.filter(i => i.stage === "ativo").reduce((s, i) => s + (i.limite_aprovado ?? 0), 0);
   const renovInfos = items.map(i => computeRenovacao(i.cadastro_revisado_em, i.minuta_assinada_em));
   const renovVencidas = renovInfos.filter(r => r.status === "vencida").length;
   const renovAtencao = renovInfos.filter(r => r.status === "atencao").length;
@@ -181,11 +166,11 @@ export default function Cedentes() {
           <div className="text-[18px] font-semibold tabular-nums leading-tight mt-1">{items.length}</div>
         </div>
         <div className="rounded-lg border bg-card p-3">
-          <div className="text-[11px] text-muted-foreground leading-none">Aprovados</div>
-          <div className="text-[18px] font-semibold tabular-nums leading-tight mt-1">{items.filter(i => i.status === "aprovado").length}</div>
+          <div className="text-[11px] text-muted-foreground leading-none">Ativos</div>
+          <div className="text-[18px] font-semibold tabular-nums leading-tight mt-1">{items.filter(i => i.stage === "ativo").length}</div>
         </div>
         <div className="rounded-lg border bg-card p-3">
-          <div className="text-[11px] text-muted-foreground leading-none">Limite total aprovado</div>
+          <div className="text-[11px] text-muted-foreground leading-none">Limite total (ativos)</div>
           <div className="text-[18px] font-semibold tabular-nums leading-tight mt-1">{fmtBRL(totalAprovado)}</div>
         </div>
         <div className="rounded-lg border bg-card p-3">
@@ -219,12 +204,10 @@ export default function Cedentes() {
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos os status</SelectItem>
-                <SelectItem value="prospect">Prospect</SelectItem>
-                <SelectItem value="em_analise">Em análise</SelectItem>
-                <SelectItem value="aprovado">Aprovado</SelectItem>
-                <SelectItem value="reprovado">Reprovado</SelectItem>
-                <SelectItem value="inativo">Inativo</SelectItem>
+                <SelectItem value="all">Todas as etapas</SelectItem>
+                {(Object.keys(STAGE_LABEL) as CedenteStage[]).map((s) => (
+                  <SelectItem key={s} value={s}>{STAGE_LABEL[s]}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -283,7 +266,7 @@ export default function Cedentes() {
                     <p className="text-sm text-muted-foreground truncate">{selected.nome_fantasia}</p>
                   )}
                   <div className="flex items-center gap-2 mt-2">
-                    <Badge variant={STATUS_VARIANT[selected.status]}>{STATUS_LABEL[selected.status]}</Badge>
+                    <Badge variant="outline" style={{ borderColor: STAGE_COLORS[selected.stage], color: STAGE_COLORS[selected.stage] }}>{STAGE_LABEL[selected.stage]}</Badge>
                     <span className="text-xs text-muted-foreground font-mono">{fmtCNPJ(selected.cnpj)}</span>
                   </div>
                 </div>

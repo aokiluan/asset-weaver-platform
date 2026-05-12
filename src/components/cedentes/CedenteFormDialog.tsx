@@ -13,8 +13,6 @@ import { Loader2 } from "lucide-react";
 import { useFormDraft } from "@/hooks/useFormDraft";
 import { DraftIndicator } from "@/components/ui/draft-indicator";
 
-type CedenteStatus = "prospect" | "em_analise" | "aprovado" | "reprovado" | "inativo";
-
 export interface CedenteFormValues {
   id?: string;
   razao_social: string;
@@ -28,7 +26,6 @@ export interface CedenteFormValues {
   cep?: string | null;
   setor?: string | null;
   faturamento_medio?: number | null;
-  status: CedenteStatus;
   limite_aprovado?: number | null;
   observacoes?: string | null;
   owner_id?: string | null;
@@ -49,12 +46,12 @@ export function CedenteFormDialog({ open, onOpenChange, initial, onSaved }: Prop
   const [saving, setSaving] = useState(false);
   const [owners, setOwners] = useState<Owner[]>([]);
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<CedenteFormValues>({
-    defaultValues: { status: "prospect", razao_social: "", cnpj: "", ...initial },
+    defaultValues: { razao_social: "", cnpj: "", ...initial },
   });
 
   useEffect(() => {
     if (!open) return;
-    reset({ status: "prospect", razao_social: "", cnpj: "", ...initial });
+    reset({ razao_social: "", cnpj: "", ...initial });
     (async () => {
       const [{ data: pr }, { data: auth }] = await Promise.all([
         supabase.from("profiles").select("id,nome").eq("ativo", true).order("nome"),
@@ -67,7 +64,6 @@ export function CedenteFormDialog({ open, onOpenChange, initial, onSaved }: Prop
     })();
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const status = watch("status");
   const ownerId = watch("owner_id");
   const allValues = watch();
 
@@ -93,7 +89,6 @@ export function CedenteFormDialog({ open, onOpenChange, initial, onSaved }: Prop
       cep: values.cep || null,
       setor: values.setor || null,
       faturamento_medio: values.faturamento_medio ? Number(values.faturamento_medio) : null,
-      status: values.status,
       limite_aprovado: values.limite_aprovado ? Number(values.limite_aprovado) : null,
       observacoes: values.observacoes || null,
       owner_id: values.owner_id || null,
@@ -190,19 +185,6 @@ export function CedenteFormDialog({ open, onOpenChange, initial, onSaved }: Prop
               <Input id="cep" {...register("cep")} />
             </div>
 
-            <div className="space-y-0.5">
-              <Label>Status</Label>
-              <Select value={status} onValueChange={(v) => setValue("status", v as CedenteStatus)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="prospect">Prospect</SelectItem>
-                  <SelectItem value="em_analise">Em análise</SelectItem>
-                  <SelectItem value="aprovado">Aprovado</SelectItem>
-                  <SelectItem value="reprovado">Reprovado</SelectItem>
-                  <SelectItem value="inativo">Inativo</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
 
             <div className="space-y-0.5">
               <Label htmlFor="limite_aprovado">Limite aprovado (R$)</Label>
@@ -235,7 +217,7 @@ export function CedenteFormDialog({ open, onOpenChange, initial, onSaved }: Prop
             <DraftIndicator
               lastSavedAt={lastSavedAt}
               restored={restored}
-              onDiscard={() => discardDraft({ status: "prospect", razao_social: "", cnpj: "", ...initial })}
+              onDiscard={() => discardDraft({ razao_social: "", cnpj: "", ...initial })}
             />
             <div className="flex gap-2">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>

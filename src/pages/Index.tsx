@@ -56,7 +56,7 @@ export default function Index() {
   const { data: cedentes } = useQuery({
     queryKey: ["dash-cedentes"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("cedentes").select("id, status, limite_aprovado, razao_social");
+      const { data, error } = await supabase.from("cedentes").select("id, stage, limite_aprovado, razao_social");
       if (error) throw error;
       return data || [];
     },
