@@ -1741,6 +1741,11 @@ export type Database = {
         Returns: string
       }
       committee_eligible_voter_ids: { Args: never; Returns: string[] }
+      docfn_abrev_razao: { Args: { _razao: string }; Returns: string }
+      docfn_slugify: {
+        Args: { _input: string; _max?: number }
+        Returns: string
+      }
       ensure_committee_session_for_proposal: {
         Args: { _proposal_id: string }
         Returns: string
@@ -1773,6 +1778,7 @@ export type Database = {
         }
         Returns: string
       }
+      unaccent: { Args: { "": string }; Returns: string }
     }
     Enums: {
       app_role:
