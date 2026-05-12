@@ -1291,6 +1291,78 @@ export type Database = {
           },
         ]
       }
+      investidores: {
+        Row: {
+          bairro: string | null
+          cep: string | null
+          cidade: string | null
+          cnpj: string
+          created_at: string
+          created_by: string | null
+          email: string | null
+          endereco: string | null
+          estado: string | null
+          id: string
+          nome_fantasia: string | null
+          numero: string | null
+          observacoes: string | null
+          owner_id: string | null
+          perfil: string | null
+          razao_social: string
+          status: string
+          telefone: string | null
+          tipo_pessoa: string
+          updated_at: string
+          valor_investido: number | null
+        }
+        Insert: {
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          cnpj: string
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          endereco?: string | null
+          estado?: string | null
+          id?: string
+          nome_fantasia?: string | null
+          numero?: string | null
+          observacoes?: string | null
+          owner_id?: string | null
+          perfil?: string | null
+          razao_social: string
+          status?: string
+          telefone?: string | null
+          tipo_pessoa?: string
+          updated_at?: string
+          valor_investido?: number | null
+        }
+        Update: {
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          cnpj?: string
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          endereco?: string | null
+          estado?: string | null
+          id?: string
+          nome_fantasia?: string | null
+          numero?: string | null
+          observacoes?: string | null
+          owner_id?: string | null
+          perfil?: string | null
+          razao_social?: string
+          status?: string
+          telefone?: string | null
+          tipo_pessoa?: string
+          updated_at?: string
+          valor_investido?: number | null
+        }
+        Relationships: []
+      }
       lead_interactions: {
         Row: {
           created_at: string

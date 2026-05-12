@@ -99,7 +99,6 @@ const GROUPS: Group[] = [
     items: [
       { title: "CRM", url: "/pipeline", icon: IconKanban },
       { title: "Cedentes", url: "/cedentes", icon: IconBuilding },
-      { title: "Diretório", url: "/diretorio", icon: IconFolder },
       {
         title: "Comitê",
         url: "/comite",
@@ -112,6 +111,15 @@ const GROUPS: Group[] = [
         icon: IconSignature,
         roles: ["admin", "formalizacao", "gestor_geral"] as const,
       },
+    ],
+  },
+  {
+    key: "diretorio",
+    label: "Diretório",
+    icon: IconFolder,
+    items: [
+      { title: "Pasta de Cedentes", url: "/diretorio", icon: IconBuilding },
+      { title: "Pasta de Investidores", url: "/diretorio/investidores", icon: IconWallet },
     ],
   },
   {

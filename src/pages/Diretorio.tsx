@@ -126,7 +126,7 @@ export default function Diretorio() {
   return (
     <>
       <PageTabs
-        title="Diretório"
+        title="Pasta de Cedentes"
         description="Pasta consolidada por cedente: documentos, atas, pareceres e renovações cadastrais."
         tabs={[]}
       />
