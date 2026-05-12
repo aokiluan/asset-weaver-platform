@@ -374,7 +374,7 @@ export default function CedenteDetail() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-x-3 gap-y-1 text-[12px]">
                 <div><div className="text-[10px] text-muted-foreground leading-none mb-0.5">Setor</div><div className="leading-tight">{cedente.setor ?? "—"}</div></div>
                 <div><div className="text-[10px] text-muted-foreground leading-none mb-0.5">Faturamento médio</div><div className="leading-tight">{fmtBRL(cedente.faturamento_medio)}</div></div>
-                <div><div className="text-[10px] text-muted-foreground leading-none mb-0.5">Status</div><div className="capitalize leading-tight">{cedente.status.replace("_", " ")}</div></div>
+                <div><div className="text-[10px] text-muted-foreground leading-none mb-0.5">Etapa</div><div className="leading-tight">{cedente.stage}</div></div>
                 <div><div className="text-[10px] text-muted-foreground leading-none mb-0.5">Limite aprovado</div><div className="font-semibold leading-tight">{fmtBRL(cedente.limite_aprovado)}</div></div>
                 <div className="md:col-span-2"><div className="text-[10px] text-muted-foreground leading-none mb-0.5">Responsável comercial</div><div className="leading-tight">{ownerName ?? "—"}</div></div>
               </div>
