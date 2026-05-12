@@ -34,6 +34,8 @@ interface Cedente {
   observacoes: string | null;
   owner_id: string | null;
   created_at: string;
+  cadastro_revisado_em: string | null;
+  minuta_assinada_em: string | null;
 }
 
 const STATUS_LABEL: Record<Cedente["status"], string> = {
