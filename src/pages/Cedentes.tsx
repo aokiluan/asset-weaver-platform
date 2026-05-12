@@ -121,6 +121,10 @@ export default function Cedentes() {
   };
 
   const totalAprovado = items.filter(i => i.status === "aprovado").reduce((s, i) => s + (i.limite_aprovado ?? 0), 0);
+  const renovInfos = items.map(i => computeRenovacao(i.cadastro_revisado_em, i.minuta_assinada_em));
+  const renovVencidas = renovInfos.filter(r => r.status === "vencida").length;
+  const renovAtencao = renovInfos.filter(r => r.status === "atencao").length;
+  const renovPendentes = renovVencidas + renovAtencao;
 
   return (
     <div className="space-y-3">
