@@ -387,6 +387,13 @@ export default function DiretorioDetail() {
     }
 
     setLoading(false);
+
+    try {
+      const ciclo = await fetchCicloAberto(id);
+      setCicloAberto(ciclo);
+    } catch {
+      setCicloAberto(null);
+    }
   };
 
   useEffect(() => {
