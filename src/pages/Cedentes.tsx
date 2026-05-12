@@ -15,6 +15,7 @@ import {
 import { CedenteNovoSheet } from "@/components/cedentes/CedenteNovoSheet";
 import { useAuth } from "@/hooks/useAuth";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { computeRenovacao } from "@/lib/cadastro-renovacao";
 
 interface Cedente {
   id: string;
@@ -33,6 +34,8 @@ interface Cedente {
   observacoes: string | null;
   owner_id: string | null;
   created_at: string;
+  cadastro_revisado_em: string | null;
+  minuta_assinada_em: string | null;
 }
 
 const STATUS_LABEL: Record<Cedente["status"], string> = {
@@ -74,7 +77,7 @@ export default function Cedentes() {
   const load = async () => {
     setLoading(true);
     let q = supabase.from("cedentes")
-      .select("id,razao_social,nome_fantasia,cnpj,email,telefone,endereco,cidade,estado,setor,status,limite_aprovado,faturamento_medio,observacoes,owner_id,created_at")
+      .select("id,razao_social,nome_fantasia,cnpj,email,telefone,endereco,cidade,estado,setor,status,limite_aprovado,faturamento_medio,observacoes,owner_id,created_at,cadastro_revisado_em,minuta_assinada_em")
       .order("razao_social", { ascending: true });
     if (statusFilter !== "all") q = q.eq("status", statusFilter as Cedente["status"]);
     const { data, error } = await q;
@@ -118,6 +121,10 @@ export default function Cedentes() {
   };
 
   const totalAprovado = items.filter(i => i.status === "aprovado").reduce((s, i) => s + (i.limite_aprovado ?? 0), 0);
+  const renovInfos = items.map(i => computeRenovacao(i.cadastro_revisado_em, i.minuta_assinada_em));
+  const renovVencidas = renovInfos.filter(r => r.status === "vencida").length;
+  const renovAtencao = renovInfos.filter(r => r.status === "atencao").length;
+  const renovPendentes = renovVencidas + renovAtencao;
 
   return (
     <div className="space-y-3">
@@ -148,7 +155,7 @@ export default function Cedentes() {
       </div>
 
       {/* KPIs */}
-      <div className="grid gap-3 md:grid-cols-3">
+      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-lg border bg-card p-3">
           <div className="text-[11px] text-muted-foreground leading-none">Total cadastrado</div>
           <div className="text-[18px] font-semibold tabular-nums leading-tight mt-1">{items.length}</div>
@@ -160,6 +167,18 @@ export default function Cedentes() {
         <div className="rounded-lg border bg-card p-3">
           <div className="text-[11px] text-muted-foreground leading-none">Limite total aprovado</div>
           <div className="text-[18px] font-semibold tabular-nums leading-tight mt-1">{fmtBRL(totalAprovado)}</div>
+        </div>
+        <div className="rounded-lg border bg-card p-3">
+          <div className="text-[11px] text-muted-foreground leading-none">Renovações pendentes</div>
+          <div className={cn(
+            "text-[18px] font-semibold tabular-nums leading-tight mt-1",
+            renovVencidas > 0 && "text-destructive",
+          )}>
+            {renovPendentes}
+          </div>
+          <div className="text-[10px] text-muted-foreground leading-none mt-1 tabular-nums">
+            {renovVencidas} vencida{renovVencidas === 1 ? "" : "s"} · {renovAtencao} a vencer
+          </div>
         </div>
       </div>
 
