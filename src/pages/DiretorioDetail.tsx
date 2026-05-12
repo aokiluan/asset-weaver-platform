@@ -16,15 +16,40 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuCheckboxItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Label } from "@/components/ui/label";
 import {
   ArrowLeft,
+  ArrowUpDown,
+  ChevronDown,
+  ChevronUp,
+  Columns3,
   Download,
   FileText,
+  FileImage,
+  Filter,
   FolderOpen,
+  Folder,
+  LayoutGrid,
+  LayoutList,
   Loader2,
   Paperclip,
   RotateCcw,
+  Search,
   Upload,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -34,6 +59,7 @@ import {
   type RenovacaoInfo,
 } from "@/lib/cadastro-renovacao";
 import { downloadAtaById } from "@/lib/comite-ata-pdf";
+import { buildDocumentoFileName, getExt } from "@/lib/documento-filename";
 
 interface Cedente {
   id: string;
@@ -57,6 +83,7 @@ interface Documento {
   cedente_id: string;
   categoria_id: string | null;
   nome_arquivo: string;
+  nome_arquivo_original: string | null;
   storage_path: string;
   mime_type: string | null;
   tamanho_bytes: number | null;
@@ -132,6 +159,46 @@ const renovBadgeClass = (info: RenovacaoInfo) => {
   }
 };
 
+type SortKey = "nome" | "categoria" | "origem" | "status" | "tamanho" | "data" | "por";
+type SortDir = "asc" | "desc";
+type ViewMode = "list" | "grid";
+
+interface ColVis {
+  categoria: boolean;
+  origem: boolean;
+  status: boolean;
+  tamanho: boolean;
+  data: boolean;
+  por: boolean;
+}
+const COL_DEFAULT: ColVis = {
+  categoria: true,
+  origem: true,
+  status: true,
+  tamanho: true,
+  data: true,
+  por: true,
+};
+const COL_KEY = "diretorio.colunas.v1";
+
+function loadColPrefs(): ColVis {
+  try {
+    const raw = localStorage.getItem(COL_KEY);
+    if (!raw) return COL_DEFAULT;
+    return { ...COL_DEFAULT, ...JSON.parse(raw) };
+  } catch {
+    return COL_DEFAULT;
+  }
+}
+
+function fileIcon(mime: string | null, name: string) {
+  const ext = getExt(name);
+  if ((mime ?? "").startsWith("image/") || ["png", "jpg", "jpeg", "webp", "gif"].includes(ext)) {
+    return FileImage;
+  }
+  return FileText;
+}
+
 export default function DiretorioDetail() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
@@ -145,10 +212,34 @@ export default function DiretorioDetail() {
   const [profilesById, setProfilesById] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [uploadInitialFiles, setUploadInitialFiles] = useState<File[] | null>(null);
+
+  // ===== Estados da aba Documentos =====
+  const [search, setSearch] = useState("");
+  const [sortKey, setSortKey] = useState<SortKey>("data");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [grouped, setGrouped] = useState(true);
+  const [colVis, setColVis] = useState<ColVis>(loadColPrefs);
+  const [filterCats, setFilterCats] = useState<Set<string>>(new Set());
+  const [filterOrigem, setFilterOrigem] = useState<Set<"cadastro" | "livre">>(new Set());
+  const [filterStatus, setFilterStatus] = useState<Set<string>>(new Set());
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const [previewDoc, setPreviewDoc] = useState<Documento | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [dragActive, setDragActive] = useState(false);
 
   useEffect(() => {
     document.title = "Dossiê | Diretório";
   }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(COL_KEY, JSON.stringify(colVis));
+    } catch {
+      /* ignore */
+    }
+  }, [colVis]);
 
   const reload = async () => {
     if (!id) return;
@@ -168,7 +259,9 @@ export default function DiretorioDetail() {
           .order("ordem"),
         supabase
           .from("documentos")
-          .select("id,cedente_id,categoria_id,nome_arquivo,storage_path,mime_type,tamanho_bytes,status,created_at,uploaded_by")
+          .select(
+            "id,cedente_id,categoria_id,nome_arquivo,nome_arquivo_original,storage_path,mime_type,tamanho_bytes,status,created_at,uploaded_by",
+          )
           .eq("cedente_id", id)
           .order("created_at", { ascending: false }),
         supabase
@@ -202,17 +295,13 @@ export default function DiretorioDetail() {
     setCreditVersions((crv as VersionRow[]) ?? []);
     setVisitVersions((vrv as VersionRow[]) ?? []);
 
-    // Carrega nomes dos usuários referenciados
     const userIds = new Set<string>();
     (hist ?? []).forEach((h: any) => h.user_id && userIds.add(h.user_id));
     (docs ?? []).forEach((d: any) => d.uploaded_by && userIds.add(d.uploaded_by));
     (crv ?? []).forEach((v: any) => v.created_by && userIds.add(v.created_by));
     (vrv ?? []).forEach((v: any) => v.created_by && userIds.add(v.created_by));
     if (userIds.size > 0) {
-      const { data: profs } = await supabase
-        .from("profiles")
-        .select("id,nome")
-        .in("id", Array.from(userIds));
+      const { data: profs } = await supabase.from("profiles").select("id,nome").in("id", Array.from(userIds));
       const map: Record<string, string> = {};
       (profs ?? []).forEach((p: any) => (map[p.id] = p.nome));
       setProfilesById(map);
@@ -227,32 +316,123 @@ export default function DiretorioDetail() {
   }, [id]);
 
   const renovInfo = useMemo(
-    () =>
-      cedente
-        ? computeRenovacao(cedente.cadastro_revisado_em, cedente.minuta_assinada_em)
-        : null,
+    () => (cedente ? computeRenovacao(cedente.cadastro_revisado_em, cedente.minuta_assinada_em) : null),
     [cedente],
   );
 
-  const catLivreId = useMemo(
-    () => categorias.find((c) => c.requer_conciliacao === false)?.id ?? null,
-    [categorias],
-  );
+  const catLivre = useMemo(() => categorias.find((c) => c.requer_conciliacao === false) ?? null, [categorias]);
   const catsById = useMemo(() => {
     const m: Record<string, Categoria> = {};
     categorias.forEach((c) => (m[c.id] = c));
     return m;
   }, [categorias]);
 
+  // ===== Filtragem + ordenação =====
+  const filteredSortedDocs = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    let list = documentos.filter((d) => {
+      if (q && !d.nome_arquivo.toLowerCase().includes(q) && !(d.nome_arquivo_original ?? "").toLowerCase().includes(q))
+        return false;
+      if (filterCats.size > 0 && (!d.categoria_id || !filterCats.has(d.categoria_id))) return false;
+      if (filterOrigem.size > 0) {
+        const cat = d.categoria_id ? catsById[d.categoria_id] : null;
+        const origem = cat?.requer_conciliacao === false ? "livre" : "cadastro";
+        if (!filterOrigem.has(origem)) return false;
+      }
+      if (filterStatus.size > 0 && !filterStatus.has(d.status)) return false;
+      return true;
+    });
+
+    const dir = sortDir === "asc" ? 1 : -1;
+    const cmp = (a: Documento, b: Documento) => {
+      switch (sortKey) {
+        case "nome":
+          return a.nome_arquivo.localeCompare(b.nome_arquivo) * dir;
+        case "categoria": {
+          const ca = a.categoria_id ? catsById[a.categoria_id]?.nome ?? "" : "";
+          const cb = b.categoria_id ? catsById[b.categoria_id]?.nome ?? "" : "";
+          return ca.localeCompare(cb) * dir;
+        }
+        case "origem": {
+          const oa = a.categoria_id && catsById[a.categoria_id]?.requer_conciliacao === false ? "livre" : "cadastro";
+          const ob = b.categoria_id && catsById[b.categoria_id]?.requer_conciliacao === false ? "livre" : "cadastro";
+          return oa.localeCompare(ob) * dir;
+        }
+        case "status":
+          return a.status.localeCompare(b.status) * dir;
+        case "tamanho":
+          return ((a.tamanho_bytes ?? 0) - (b.tamanho_bytes ?? 0)) * dir;
+        case "por": {
+          const pa = profilesById[a.uploaded_by] ?? "";
+          const pb = profilesById[b.uploaded_by] ?? "";
+          return pa.localeCompare(pb) * dir;
+        }
+        case "data":
+        default:
+          return (new Date(a.created_at).getTime() - new Date(b.created_at).getTime()) * dir;
+      }
+    };
+    return list.sort(cmp);
+  }, [documentos, search, filterCats, filterOrigem, filterStatus, sortKey, sortDir, catsById, profilesById]);
+
+  const activeFilterCount = filterCats.size + filterOrigem.size + filterStatus.size;
+
+  const groupedDocs = useMemo(() => {
+    if (!grouped) return null;
+    const map = new Map<string, { label: string; docs: Documento[] }>();
+    for (const d of filteredSortedDocs) {
+      const key = d.categoria_id ?? "__sem__";
+      const label = d.categoria_id ? catsById[d.categoria_id]?.nome ?? "Sem categoria" : "Sem categoria";
+      if (!map.has(key)) map.set(key, { label, docs: [] });
+      map.get(key)!.docs.push(d);
+    }
+    return Array.from(map.entries()).map(([key, v]) => ({ key, ...v }));
+  }, [filteredSortedDocs, grouped, catsById]);
+
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir(sortDir === "asc" ? "desc" : "asc");
+    } else {
+      setSortKey(key);
+      setSortDir(key === "data" || key === "tamanho" ? "desc" : "asc");
+    }
+  };
+
   const handleDownload = async (storagePath: string) => {
-    const { data, error } = await supabase.storage
-      .from("cedente-docs")
-      .createSignedUrl(storagePath, 60);
+    const { data, error } = await supabase.storage.from("cedente-docs").createSignedUrl(storagePath, 60);
     if (error || !data) {
       toast.error("Erro ao gerar link", { description: error?.message });
       return;
     }
     window.open(data.signedUrl, "_blank");
+  };
+
+  const openPreview = async (d: Documento) => {
+    setPreviewDoc(d);
+    setPreviewUrl(null);
+    const { data, error } = await supabase.storage.from("cedente-docs").createSignedUrl(d.storage_path, 300);
+    if (error || !data) {
+      toast.error("Erro ao gerar preview", { description: error?.message });
+      return;
+    }
+    setPreviewUrl(data.signedUrl);
+  };
+
+  // Drag & drop global na aba Documentos
+  const handleDocsDragOver = (e: React.DragEvent) => {
+    if (e.dataTransfer?.types?.includes("Files")) {
+      e.preventDefault();
+      setDragActive(true);
+    }
+  };
+  const handleDocsDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragActive(false);
+    const files = Array.from(e.dataTransfer?.files ?? []);
+    if (files.length > 0) {
+      setUploadInitialFiles(files);
+      setUploadOpen(true);
+    }
   };
 
   if (loading && !cedente) {
@@ -264,15 +444,20 @@ export default function DiretorioDetail() {
   }
 
   if (!cedente) {
-    return (
-      <div className="text-center py-20 text-muted-foreground">
-        Cedente não encontrado.
-      </div>
-    );
+    return <div className="text-center py-20 text-muted-foreground">Cedente não encontrado.</div>;
   }
 
+  const sortIcon = (key: SortKey) =>
+    sortKey === key ? (
+      sortDir === "asc" ? (
+        <ChevronUp className="h-3 w-3 inline ml-0.5" />
+      ) : (
+        <ChevronDown className="h-3 w-3 inline ml-0.5" />
+      )
+    ) : null;
+
   return (
-    <>
+    <TooltipProvider>
       <PageTabs
         title="Dossiê"
         description={cedente.razao_social}
@@ -292,9 +477,7 @@ export default function DiretorioDetail() {
           <FolderOpen className="h-4 w-4 text-muted-foreground" />
           <div className="leading-tight">
             <div className="text-[13px] font-medium text-foreground">{cedente.razao_social}</div>
-            <div className="text-[11px] text-muted-foreground font-mono">
-              {fmtCNPJ(cedente.cnpj)}
-            </div>
+            <div className="text-[11px] text-muted-foreground font-mono">{fmtCNPJ(cedente.cnpj)}</div>
           </div>
           <Badge variant="outline" className="text-[10px] capitalize">
             {cedente.stage}
@@ -330,105 +513,273 @@ export default function DiretorioDetail() {
 
           {/* === DOCUMENTOS === */}
           <TabsContent value="documentos" className="space-y-3">
-            <div className="flex justify-end">
+            {/* Toolbar */}
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative flex-1 min-w-[200px] max-w-sm">
+                <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Buscar arquivo…"
+                  className="pl-8 h-7 text-[12px]"
+                />
+              </div>
+
+              {/* Sort */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-7 text-[11px]">
+                    <ArrowUpDown className="h-3 w-3 mr-1" /> Ordenar
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="text-[12px]">
+                  <DropdownMenuLabel>Ordenar por</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => { setSortKey("data"); setSortDir("desc"); }}>
+                    Data (mais recente)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => { setSortKey("data"); setSortDir("asc"); }}>
+                    Data (mais antigo)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => { setSortKey("nome"); setSortDir("asc"); }}>
+                    Nome (A→Z)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => { setSortKey("nome"); setSortDir("desc"); }}>
+                    Nome (Z→A)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => { setSortKey("tamanho"); setSortDir("desc"); }}>
+                    Tamanho (maior)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => { setSortKey("categoria"); setSortDir("asc"); }}>
+                    Categoria (A→Z)
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
               <Button
+                variant={grouped ? "secondary" : "outline"}
                 size="sm"
-                onClick={() => setUploadOpen(true)}
-                disabled={!catLivreId}
+                className="h-7 text-[11px]"
+                onClick={() => setGrouped((v) => !v)}
               >
-                <Paperclip className="h-3.5 w-3.5 mr-1" /> Adicionar anexo livre
+                <Folder className="h-3 w-3 mr-1" /> Agrupar
               </Button>
+
+              <div className="ml-auto flex items-center gap-2">
+                {/* Filter */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-7 text-[11px] relative">
+                      <Filter className="h-3 w-3 mr-1" /> Filtrar
+                      {activeFilterCount > 0 && (
+                        <Badge className="ml-1.5 h-4 px-1 text-[9px] bg-primary text-primary-foreground">
+                          {activeFilterCount}
+                        </Badge>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent align="end" className="w-72 text-[12px] space-y-3">
+                    <div>
+                      <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Categoria</Label>
+                      <div className="mt-1 max-h-40 overflow-y-auto space-y-1 pr-1">
+                        {categorias.map((c) => {
+                          const checked = filterCats.has(c.id);
+                          return (
+                            <label key={c.id} className="flex items-center gap-2 cursor-pointer">
+                              <Checkbox
+                                checked={checked}
+                                onCheckedChange={(v) => {
+                                  setFilterCats((s) => {
+                                    const ns = new Set(s);
+                                    if (v) ns.add(c.id); else ns.delete(c.id);
+                                    return ns;
+                                  });
+                                }}
+                              />
+                              <span className="truncate">{c.nome}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Origem</Label>
+                      <div className="mt-1 flex gap-3">
+                        {(["cadastro", "livre"] as const).map((o) => (
+                          <label key={o} className="flex items-center gap-1.5 cursor-pointer capitalize">
+                            <Checkbox
+                              checked={filterOrigem.has(o)}
+                              onCheckedChange={(v) => {
+                                setFilterOrigem((s) => {
+                                  const ns = new Set(s);
+                                  if (v) ns.add(o); else ns.delete(o);
+                                  return ns;
+                                });
+                              }}
+                            />
+                            {o === "livre" ? "Anexo livre" : "Cadastro"}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Status</Label>
+                      <div className="mt-1 flex gap-3">
+                        {(["aprovado", "pendente", "reprovado"] as const).map((s) => (
+                          <label key={s} className="flex items-center gap-1.5 cursor-pointer capitalize">
+                            <Checkbox
+                              checked={filterStatus.has(s)}
+                              onCheckedChange={(v) => {
+                                setFilterStatus((cur) => {
+                                  const ns = new Set(cur);
+                                  if (v) ns.add(s); else ns.delete(s);
+                                  return ns;
+                                });
+                              }}
+                            />
+                            {s}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                    {activeFilterCount > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 text-[11px] w-full"
+                        onClick={() => {
+                          setFilterCats(new Set());
+                          setFilterOrigem(new Set());
+                          setFilterStatus(new Set());
+                        }}
+                      >
+                        <X className="h-3 w-3 mr-1" /> Limpar filtros
+                      </Button>
+                    )}
+                  </PopoverContent>
+                </Popover>
+
+                {/* Colunas */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-7 text-[11px]">
+                      <Columns3 className="h-3 w-3 mr-1" /> Colunas
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="text-[12px]">
+                    <DropdownMenuLabel>Colunas visíveis</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {(Object.keys(COL_DEFAULT) as (keyof ColVis)[]).map((k) => (
+                      <DropdownMenuCheckboxItem
+                        key={k}
+                        checked={colVis[k]}
+                        onCheckedChange={(v) => setColVis((c) => ({ ...c, [k]: !!v }))}
+                        className="capitalize"
+                      >
+                        {k}
+                      </DropdownMenuCheckboxItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                {/* View toggle */}
+                <div className="flex border rounded-md overflow-hidden">
+                  <Button
+                    variant={viewMode === "list" ? "secondary" : "ghost"}
+                    size="sm"
+                    className="h-7 px-2 rounded-none"
+                    onClick={() => setViewMode("list")}
+                  >
+                    <LayoutList className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    variant={viewMode === "grid" ? "secondary" : "ghost"}
+                    size="sm"
+                    className="h-7 px-2 rounded-none"
+                    onClick={() => setViewMode("grid")}
+                  >
+                    <LayoutGrid className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+
+                <Button
+                  size="sm"
+                  className="h-7 text-[11px]"
+                  onClick={() => {
+                    setUploadInitialFiles(null);
+                    setUploadOpen(true);
+                  }}
+                  disabled={!catLivre}
+                >
+                  <Paperclip className="h-3 w-3 mr-1" /> Adicionar anexo livre
+                </Button>
+              </div>
             </div>
 
-            {documentos.length === 0 ? (
-              <div className="rounded-md border bg-card p-6 text-center text-[12px] text-muted-foreground">
-                Sem documentos anexados.
-              </div>
-            ) : (
-              <div className="rounded-md border bg-card overflow-hidden">
-                <table className="w-full text-[12px]">
-                  <thead className="bg-muted/40 text-[10px] uppercase tracking-wide text-muted-foreground">
-                    <tr>
-                      <th className="text-left px-3 py-2 font-medium">Arquivo</th>
-                      <th className="text-left px-3 py-2 font-medium">Categoria</th>
-                      <th className="text-left px-3 py-2 font-medium">Origem</th>
-                      <th className="text-left px-3 py-2 font-medium">Status</th>
-                      <th className="text-left px-3 py-2 font-medium">Tamanho</th>
-                      <th className="text-left px-3 py-2 font-medium">Data</th>
-                      <th className="text-left px-3 py-2 font-medium">Por</th>
-                      <th className="px-3 py-2"></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {documentos.map((d) => {
-                      const cat = d.categoria_id ? catsById[d.categoria_id] : null;
-                      const isLivre = cat?.requer_conciliacao === false;
-                      return (
-                        <tr key={d.id} className="border-t hover:bg-muted/30 leading-tight">
-                          <td className="px-3 py-1.5">
-                            <div className="flex items-center gap-1.5">
-                              <FileText className="h-3 w-3 text-muted-foreground" />
-                              <span className="truncate max-w-[280px]">{d.nome_arquivo}</span>
-                            </div>
-                          </td>
-                          <td className="px-3 py-1.5 text-muted-foreground">
-                            {cat?.nome ?? "Sem categoria"}
-                          </td>
-                          <td className="px-3 py-1.5">
-                            <Badge
-                              variant="outline"
-                              className={cn(
-                                "text-[10px]",
-                                isLivre
-                                  ? "border-blue-500/30 text-blue-700 dark:text-blue-400 bg-blue-500/10"
-                                  : "",
-                              )}
-                            >
-                              {isLivre ? "Anexo livre" : "Cadastro"}
-                            </Badge>
-                          </td>
-                          <td className="px-3 py-1.5">
-                            <Badge
-                              variant="outline"
-                              className={cn(
-                                "text-[10px]",
-                                d.status === "aprovado" &&
-                                  "border-emerald-500/30 text-emerald-700 dark:text-emerald-400 bg-emerald-500/10",
-                                d.status === "reprovado" &&
-                                  "border-destructive/30 text-destructive bg-destructive/10",
-                                d.status === "pendente" &&
-                                  "border-amber-500/30 text-amber-700 dark:text-amber-400 bg-amber-500/10",
-                              )}
-                            >
-                              {d.status}
-                            </Badge>
-                          </td>
-                          <td className="px-3 py-1.5 text-muted-foreground tabular-nums">
-                            {fmtBytes(d.tamanho_bytes)}
-                          </td>
-                          <td className="px-3 py-1.5 text-muted-foreground">
-                            {fmtDate(d.created_at)}
-                          </td>
-                          <td className="px-3 py-1.5 text-muted-foreground">
-                            {profilesById[d.uploaded_by] ?? "—"}
-                          </td>
-                          <td className="px-3 py-1.5 text-right">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 w-6 p-0"
-                              onClick={() => handleDownload(d.storage_path)}
-                            >
-                              <Download className="h-3 w-3" />
-                            </Button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
+            {/* Drop zone wrapper */}
+            <div
+              onDragOver={handleDocsDragOver}
+              onDragLeave={() => setDragActive(false)}
+              onDrop={handleDocsDrop}
+              className={cn(
+                "relative rounded-md transition-colors",
+                dragActive && "ring-2 ring-primary ring-offset-2 bg-primary/5",
+              )}
+            >
+              {dragActive && (
+                <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none rounded-md border-2 border-dashed border-primary bg-primary/10">
+                  <div className="text-[13px] font-medium text-primary flex items-center gap-2">
+                    <Upload className="h-4 w-4" /> Solte para adicionar ao dossiê
+                  </div>
+                </div>
+              )}
+
+              {filteredSortedDocs.length === 0 ? (
+                <div className="rounded-md border bg-card p-6 text-center text-[12px] text-muted-foreground">
+                  {documentos.length === 0
+                    ? "Sem documentos anexados. Arraste arquivos aqui."
+                    : "Nenhum documento corresponde aos filtros."}
+                </div>
+              ) : viewMode === "grid" ? (
+                <DocumentosGrid
+                  groups={groupedDocs}
+                  flatDocs={filteredSortedDocs}
+                  catsById={catsById}
+                  profilesById={profilesById}
+                  collapsed={collapsed}
+                  toggleCollapse={(k) =>
+                    setCollapsed((s) => {
+                      const ns = new Set(s);
+                      if (ns.has(k)) ns.delete(k); else ns.add(k);
+                      return ns;
+                    })
+                  }
+                  onOpen={openPreview}
+                  onDownload={handleDownload}
+                />
+              ) : (
+                <DocumentosTable
+                  groups={groupedDocs}
+                  flatDocs={filteredSortedDocs}
+                  catsById={catsById}
+                  profilesById={profilesById}
+                  colVis={colVis}
+                  sortKey={sortKey}
+                  sortIcon={sortIcon}
+                  onSort={handleSort}
+                  collapsed={collapsed}
+                  toggleCollapse={(k) =>
+                    setCollapsed((s) => {
+                      const ns = new Set(s);
+                      if (ns.has(k)) ns.delete(k); else ns.add(k);
+                      return ns;
+                    })
+                  }
+                  onOpen={openPreview}
+                  onDownload={handleDownload}
+                />
+              )}
+            </div>
           </TabsContent>
 
           {/* === RENOVAÇÕES === */}
@@ -457,12 +808,8 @@ export default function DiretorioDetail() {
                 {historico.map((h) => (
                   <div key={h.id} className="p-2.5 leading-tight">
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="text-[10px]">
-                        Revisão cadastral
-                      </Badge>
-                      <span className="text-[11px] text-muted-foreground">
-                        {fmtDateTime(h.created_at)}
-                      </span>
+                      <Badge variant="outline" className="text-[10px]">Revisão cadastral</Badge>
+                      <span className="text-[11px] text-muted-foreground">{fmtDateTime(h.created_at)}</span>
                       <span className="text-[11px] text-muted-foreground ml-auto">
                         {h.user_id ? profilesById[h.user_id] ?? "—" : "Sistema"}
                       </span>
@@ -502,9 +849,7 @@ export default function DiretorioDetail() {
                       return (
                         <tr key={a.id} className="border-t hover:bg-muted/30 leading-tight">
                           <td className="px-3 py-1.5 font-mono">#{a.numero_comite}</td>
-                          <td className="px-3 py-1.5 text-muted-foreground">
-                            {fmtDate(a.realizado_em)}
-                          </td>
+                          <td className="px-3 py-1.5 text-muted-foreground">{fmtDate(a.realizado_em)}</td>
                           <td className="px-3 py-1.5">
                             <Badge
                               variant="outline"
@@ -519,17 +864,17 @@ export default function DiretorioDetail() {
                             </Badge>
                           </td>
                           <td className="px-3 py-1.5 text-right tabular-nums">{fmtBRL(valor)}</td>
-                          <td className="px-3 py-1.5 text-muted-foreground">
-                            {a.alcada_nome ?? "—"}
-                          </td>
+                          <td className="px-3 py-1.5 text-muted-foreground">{a.alcada_nome ?? "—"}</td>
                           <td className="px-3 py-1.5 text-right">
                             <Button
                               variant="ghost"
                               size="sm"
                               className="h-6 text-[11px]"
-                              onClick={() => downloadAtaById(a.id).catch((e) =>
-                                toast.error("Erro ao gerar PDF", { description: e.message }),
-                              )}
+                              onClick={() =>
+                                downloadAtaById(a.id).catch((e) =>
+                                  toast.error("Erro ao gerar PDF", { description: e.message }),
+                                )
+                              }
                             >
                               <Download className="h-3 w-3 mr-1" /> PDF
                             </Button>
@@ -562,12 +907,7 @@ export default function DiretorioDetail() {
                       <span className="text-[11px] text-muted-foreground">
                         {profilesById[v.created_by] ?? "—"}
                       </span>
-                      <Button
-                        asChild
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 text-[11px] ml-auto"
-                      >
+                      <Button asChild variant="ghost" size="sm" className="h-6 text-[11px] ml-auto">
                         <Link to={`/cedentes/${cedente.id}`}>Abrir</Link>
                       </Button>
                     </div>
@@ -593,12 +933,7 @@ export default function DiretorioDetail() {
                       <span className="text-[11px] text-muted-foreground">
                         {profilesById[v.created_by] ?? "—"}
                       </span>
-                      <Button
-                        asChild
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 text-[11px] ml-auto"
-                      >
+                      <Button asChild variant="ghost" size="sm" className="h-6 text-[11px] ml-auto">
                         <Link to={`/cedentes/${cedente.id}`}>Abrir</Link>
                       </Button>
                     </div>
@@ -610,81 +945,473 @@ export default function DiretorioDetail() {
         </Tabs>
       </div>
 
+      {/* Preview Sheet */}
+      <Sheet open={!!previewDoc} onOpenChange={(v) => { if (!v) { setPreviewDoc(null); setPreviewUrl(null); } }}>
+        <SheetContent side="right" className="w-full sm:max-w-2xl flex flex-col">
+          <SheetHeader>
+            <SheetTitle className="text-[14px] truncate">{previewDoc?.nome_arquivo}</SheetTitle>
+            <SheetDescription className="text-[11px]">
+              {previewDoc?.nome_arquivo_original && previewDoc.nome_arquivo_original !== previewDoc.nome_arquivo && (
+                <>Original: {previewDoc.nome_arquivo_original} · </>
+              )}
+              {fmtBytes(previewDoc?.tamanho_bytes ?? null)} · {fmtDateTime(previewDoc?.created_at ?? null)}
+            </SheetDescription>
+          </SheetHeader>
+          <div className="flex-1 mt-3 min-h-0">
+            {!previewUrl ? (
+              <div className="flex items-center justify-center h-full text-muted-foreground text-[12px]">
+                <Loader2 className="h-4 w-4 animate-spin mr-2" /> Carregando…
+              </div>
+            ) : (previewDoc?.mime_type ?? "").startsWith("image/") ? (
+              <img src={previewUrl} alt={previewDoc?.nome_arquivo} className="max-w-full max-h-full object-contain mx-auto" />
+            ) : (previewDoc?.mime_type === "application/pdf" || getExt(previewDoc?.nome_arquivo ?? "") === "pdf") ? (
+              <iframe src={previewUrl} className="w-full h-full border rounded-md" title="preview" />
+            ) : (
+              <div className="text-center py-10 space-y-3">
+                <FileText className="h-10 w-10 mx-auto text-muted-foreground" />
+                <p className="text-[12px] text-muted-foreground">Preview não disponível para este tipo de arquivo.</p>
+                <Button size="sm" onClick={() => previewDoc && handleDownload(previewDoc.storage_path)}>
+                  <Download className="h-3.5 w-3.5 mr-1" /> Baixar
+                </Button>
+              </div>
+            )}
+          </div>
+          {previewDoc && previewUrl && (
+            <div className="mt-3 flex justify-end">
+              <Button size="sm" variant="outline" onClick={() => handleDownload(previewDoc.storage_path)}>
+                <Download className="h-3.5 w-3.5 mr-1" /> Baixar
+              </Button>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
+
       <UploadAnexoLivreDialog
         open={uploadOpen}
-        onOpenChange={setUploadOpen}
-        cedenteId={cedente.id}
-        catLivreId={catLivreId}
+        onOpenChange={(v) => {
+          setUploadOpen(v);
+          if (!v) setUploadInitialFiles(null);
+        }}
+        cedente={cedente}
+        catLivre={catLivre}
         userId={user?.id ?? null}
         onUploaded={reload}
+        initialFiles={uploadInitialFiles}
       />
+    </TooltipProvider>
+  );
+}
+
+/* ============================================================== */
+/*  Tabela de documentos                                          */
+/* ============================================================== */
+
+interface TableProps {
+  groups: { key: string; label: string; docs: Documento[] }[] | null;
+  flatDocs: Documento[];
+  catsById: Record<string, Categoria>;
+  profilesById: Record<string, string>;
+  colVis: ColVis;
+  sortKey: SortKey;
+  sortIcon: (k: SortKey) => React.ReactNode;
+  onSort: (k: SortKey) => void;
+  collapsed: Set<string>;
+  toggleCollapse: (k: string) => void;
+  onOpen: (d: Documento) => void;
+  onDownload: (path: string) => void;
+}
+
+function DocumentosTable(p: TableProps) {
+  const renderRow = (d: Documento) => {
+    const cat = d.categoria_id ? p.catsById[d.categoria_id] : null;
+    const isLivre = cat?.requer_conciliacao === false;
+    const Icon = fileIcon(d.mime_type, d.nome_arquivo);
+    return (
+      <tr
+        key={d.id}
+        className="border-t hover:bg-muted/30 leading-tight cursor-pointer"
+        onClick={() => p.onOpen(d)}
+      >
+        <td className="px-3 py-1.5">
+          <div className="flex items-center gap-1.5">
+            <Icon className="h-3 w-3 text-muted-foreground shrink-0" />
+            {d.nome_arquivo_original && d.nome_arquivo_original !== d.nome_arquivo ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="truncate max-w-[280px]">{d.nome_arquivo}</span>
+                </TooltipTrigger>
+                <TooltipContent className="text-[11px]">Original: {d.nome_arquivo_original}</TooltipContent>
+              </Tooltip>
+            ) : (
+              <span className="truncate max-w-[280px]">{d.nome_arquivo}</span>
+            )}
+          </div>
+        </td>
+        {p.colVis.categoria && (
+          <td className="px-3 py-1.5 text-muted-foreground">{cat?.nome ?? "Sem categoria"}</td>
+        )}
+        {p.colVis.origem && (
+          <td className="px-3 py-1.5">
+            <Badge
+              variant="outline"
+              className={cn(
+                "text-[10px]",
+                isLivre ? "border-blue-500/30 text-blue-700 dark:text-blue-400 bg-blue-500/10" : "",
+              )}
+            >
+              {isLivre ? "Anexo livre" : "Cadastro"}
+            </Badge>
+          </td>
+        )}
+        {p.colVis.status && (
+          <td className="px-3 py-1.5">
+            <Badge
+              variant="outline"
+              className={cn(
+                "text-[10px]",
+                d.status === "aprovado" &&
+                  "border-emerald-500/30 text-emerald-700 dark:text-emerald-400 bg-emerald-500/10",
+                d.status === "reprovado" && "border-destructive/30 text-destructive bg-destructive/10",
+                d.status === "pendente" &&
+                  "border-amber-500/30 text-amber-700 dark:text-amber-400 bg-amber-500/10",
+              )}
+            >
+              {d.status}
+            </Badge>
+          </td>
+        )}
+        {p.colVis.tamanho && (
+          <td className="px-3 py-1.5 text-muted-foreground tabular-nums">{fmtBytes(d.tamanho_bytes)}</td>
+        )}
+        {p.colVis.data && (
+          <td className="px-3 py-1.5 text-muted-foreground">{fmtDate(d.created_at)}</td>
+        )}
+        {p.colVis.por && (
+          <td className="px-3 py-1.5 text-muted-foreground">{p.profilesById[d.uploaded_by] ?? "—"}</td>
+        )}
+        <td className="px-3 py-1.5 text-right" onClick={(e) => e.stopPropagation()}>
+          <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => p.onDownload(d.storage_path)}>
+            <Download className="h-3 w-3" />
+          </Button>
+        </td>
+      </tr>
+    );
+  };
+
+  const colSpan =
+    1 +
+    Number(p.colVis.categoria) +
+    Number(p.colVis.origem) +
+    Number(p.colVis.status) +
+    Number(p.colVis.tamanho) +
+    Number(p.colVis.data) +
+    Number(p.colVis.por) +
+    1;
+
+  return (
+    <div className="rounded-md border bg-card overflow-hidden">
+      <table className="w-full text-[12px]">
+        <thead className="bg-muted/40 text-[10px] uppercase tracking-wide text-muted-foreground">
+          <tr>
+            <th
+              className="text-left px-3 py-2 font-medium cursor-pointer select-none"
+              onClick={() => p.onSort("nome")}
+            >
+              Arquivo {p.sortIcon("nome")}
+            </th>
+            {p.colVis.categoria && (
+              <th
+                className="text-left px-3 py-2 font-medium cursor-pointer select-none"
+                onClick={() => p.onSort("categoria")}
+              >
+                Categoria {p.sortIcon("categoria")}
+              </th>
+            )}
+            {p.colVis.origem && (
+              <th
+                className="text-left px-3 py-2 font-medium cursor-pointer select-none"
+                onClick={() => p.onSort("origem")}
+              >
+                Origem {p.sortIcon("origem")}
+              </th>
+            )}
+            {p.colVis.status && (
+              <th
+                className="text-left px-3 py-2 font-medium cursor-pointer select-none"
+                onClick={() => p.onSort("status")}
+              >
+                Status {p.sortIcon("status")}
+              </th>
+            )}
+            {p.colVis.tamanho && (
+              <th
+                className="text-left px-3 py-2 font-medium cursor-pointer select-none"
+                onClick={() => p.onSort("tamanho")}
+              >
+                Tamanho {p.sortIcon("tamanho")}
+              </th>
+            )}
+            {p.colVis.data && (
+              <th
+                className="text-left px-3 py-2 font-medium cursor-pointer select-none"
+                onClick={() => p.onSort("data")}
+              >
+                Data {p.sortIcon("data")}
+              </th>
+            )}
+            {p.colVis.por && (
+              <th
+                className="text-left px-3 py-2 font-medium cursor-pointer select-none"
+                onClick={() => p.onSort("por")}
+              >
+                Por {p.sortIcon("por")}
+              </th>
+            )}
+            <th className="px-3 py-2"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {p.groups
+            ? p.groups.map((g) => (
+                <FragmentGroup
+                  key={g.key}
+                  g={g}
+                  collapsed={p.collapsed.has(g.key)}
+                  toggle={() => p.toggleCollapse(g.key)}
+                  colSpan={colSpan}
+                  renderRow={renderRow}
+                />
+              ))
+            : p.flatDocs.map(renderRow)}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function FragmentGroup({
+  g,
+  collapsed,
+  toggle,
+  colSpan,
+  renderRow,
+}: {
+  g: { key: string; label: string; docs: Documento[] };
+  collapsed: boolean;
+  toggle: () => void;
+  colSpan: number;
+  renderRow: (d: Documento) => React.ReactNode;
+}) {
+  return (
+    <>
+      <tr className="bg-muted/20 cursor-pointer hover:bg-muted/40" onClick={toggle}>
+        <td colSpan={colSpan} className="px-3 py-1.5 text-[11px] font-medium text-muted-foreground">
+          <div className="flex items-center gap-1.5">
+            {collapsed ? <ChevronDown className="h-3 w-3 -rotate-90" /> : <ChevronDown className="h-3 w-3" />}
+            <Folder className="h-3 w-3" />
+            {g.label}
+            <span className="text-muted-foreground/70">({g.docs.length})</span>
+          </div>
+        </td>
+      </tr>
+      {!collapsed && g.docs.map(renderRow)}
     </>
   );
 }
 
 /* ============================================================== */
-/*  Dialog: upload de anexo livre (categoria sem conciliação)     */
+/*  Grid de documentos                                            */
+/* ============================================================== */
+
+function DocumentosGrid({
+  groups,
+  flatDocs,
+  catsById,
+  profilesById,
+  collapsed,
+  toggleCollapse,
+  onOpen,
+  onDownload,
+}: {
+  groups: { key: string; label: string; docs: Documento[] }[] | null;
+  flatDocs: Documento[];
+  catsById: Record<string, Categoria>;
+  profilesById: Record<string, string>;
+  collapsed: Set<string>;
+  toggleCollapse: (k: string) => void;
+  onOpen: (d: Documento) => void;
+  onDownload: (path: string) => void;
+}) {
+  const renderCard = (d: Documento) => {
+    const cat = d.categoria_id ? catsById[d.categoria_id] : null;
+    const Icon = fileIcon(d.mime_type, d.nome_arquivo);
+    return (
+      <div
+        key={d.id}
+        className="group rounded-md border bg-card hover:border-primary/40 hover:shadow-sm transition cursor-pointer p-2.5 flex flex-col gap-1.5"
+        onClick={() => onOpen(d)}
+      >
+        <div className="flex items-start justify-between">
+          <Icon className="h-7 w-7 text-muted-foreground" />
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDownload(d.storage_path);
+            }}
+          >
+            <Download className="h-3 w-3" />
+          </Button>
+        </div>
+        <div className="text-[11px] leading-tight line-clamp-2 break-all">{d.nome_arquivo}</div>
+        <div className="flex items-center gap-1 mt-auto">
+          {cat && (
+            <Badge variant="outline" className="text-[9px] truncate max-w-full">
+              {cat.nome}
+            </Badge>
+          )}
+        </div>
+        <div className="flex justify-between text-[9px] text-muted-foreground">
+          <span>{fmtDate(d.created_at)}</span>
+          <span>{fmtBytes(d.tamanho_bytes)}</span>
+        </div>
+      </div>
+    );
+  };
+
+  if (groups) {
+    return (
+      <div className="space-y-3">
+        {groups.map((g) => {
+          const isCollapsed = collapsed.has(g.key);
+          return (
+            <div key={g.key} className="rounded-md border bg-card">
+              <button
+                onClick={() => toggleCollapse(g.key)}
+                className="w-full flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium text-muted-foreground hover:bg-muted/40"
+              >
+                {isCollapsed ? (
+                  <ChevronDown className="h-3 w-3 -rotate-90" />
+                ) : (
+                  <ChevronDown className="h-3 w-3" />
+                )}
+                <Folder className="h-3 w-3" />
+                {g.label}
+                <span className="text-muted-foreground/70">({g.docs.length})</span>
+              </button>
+              {!isCollapsed && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 p-2.5 pt-0">
+                  {g.docs.map(renderCard)}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
+      {flatDocs.map(renderCard)}
+    </div>
+  );
+}
+
+/* ============================================================== */
+/*  Dialog: upload de anexo livre                                 */
 /* ============================================================== */
 
 function UploadAnexoLivreDialog({
   open,
   onOpenChange,
-  cedenteId,
-  catLivreId,
+  cedente,
+  catLivre,
   userId,
   onUploaded,
+  initialFiles,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  cedenteId: string;
-  catLivreId: string | null;
+  cedente: Cedente;
+  catLivre: Categoria | null;
   userId: string | null;
   onUploaded: () => void;
+  initialFiles: File[] | null;
 }) {
   const fileRef = useRef<HTMLInputElement | null>(null);
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [obs, setObs] = useState("");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (!open) {
-      setFile(null);
+    if (open && initialFiles && initialFiles.length > 0) {
+      setFiles(initialFiles);
+    } else if (!open) {
+      setFiles([]);
       setObs("");
     }
-  }, [open]);
+  }, [open, initialFiles]);
 
   const handleUpload = async () => {
-    if (!file || !catLivreId || !userId) return;
+    if (files.length === 0 || !catLivre || !userId) return;
     setBusy(true);
     try {
-      const safe = file.name.replace(/[^\w.\-]+/g, "_");
-      const path = `${cedenteId}/${Date.now()}-${Math.random().toString(36).slice(2, 6)}-${safe}`;
+      // Conta documentos existentes nesta categoria para esse cedente para versão inicial
+      const { count: baseCount } = await supabase
+        .from("documentos")
+        .select("id", { count: "exact", head: true })
+        .eq("cedente_id", cedente.id)
+        .eq("categoria_id", catLivre.id);
+      let next = (baseCount ?? 0) + 1;
 
-      const { error: upErr } = await supabase.storage
-        .from("cedente-docs")
-        .upload(path, file, { contentType: file.type, upsert: false });
-      if (upErr) throw upErr;
+      let okCount = 0;
+      for (const file of files) {
+        const safe = file.name.replace(/[^\w.\-]+/g, "_");
+        const path = `${cedente.id}/${Date.now()}-${Math.random().toString(36).slice(2, 6)}-${safe}`;
 
-      const { error: insErr } = await supabase.from("documentos").insert({
-        cedente_id: cedenteId,
-        categoria_id: catLivreId,
-        nome_arquivo: file.name,
-        nome_arquivo_original: file.name,
-        storage_path: path,
-        tamanho_bytes: file.size,
-        mime_type: file.type || null,
-        uploaded_by: userId,
-        status: "aprovado",
-        classificacao_status: "sugerido",
-        observacoes: obs.trim() || null,
-        reviewed_by: userId,
-        reviewed_at: new Date().toISOString(),
-      });
-      if (insErr) {
-        await supabase.storage.from("cedente-docs").remove([path]);
-        throw insErr;
+        const { error: upErr } = await supabase.storage
+          .from("cedente-docs")
+          .upload(path, file, { contentType: file.type, upsert: false });
+        if (upErr) {
+          toast.error(`Erro em ${file.name}`, { description: upErr.message });
+          continue;
+        }
+
+        const novoNome = buildDocumentoFileName({
+          originalName: file.name,
+          categoria: catLivre.nome,
+          cedente: cedente.razao_social,
+          versao: next,
+        });
+
+        const { error: insErr } = await supabase.from("documentos").insert({
+          cedente_id: cedente.id,
+          categoria_id: catLivre.id,
+          nome_arquivo: novoNome,
+          nome_arquivo_original: file.name,
+          storage_path: path,
+          tamanho_bytes: file.size,
+          mime_type: file.type || null,
+          uploaded_by: userId,
+          status: "aprovado",
+          classificacao_status: "sugerido",
+          observacoes: obs.trim() || null,
+          reviewed_by: userId,
+          reviewed_at: new Date().toISOString(),
+        });
+        if (insErr) {
+          await supabase.storage.from("cedente-docs").remove([path]);
+          toast.error(`Erro em ${file.name}`, { description: insErr.message });
+          continue;
+        }
+        next++;
+        okCount++;
       }
-      toast.success("Anexo adicionado ao dossiê");
+
+      if (okCount > 0) toast.success(`${okCount} anexo(s) adicionado(s) ao dossiê`);
       onOpenChange(false);
       onUploaded();
     } catch (err: any) {
@@ -700,24 +1427,28 @@ function UploadAnexoLivreDialog({
         <DialogHeader>
           <DialogTitle className="text-[14px]">Adicionar anexo livre</DialogTitle>
           <DialogDescription className="text-[12px]">
-            Arquivos enviados aqui ficam no dossiê do cedente e <b>não entram</b> na fila de
-            conciliação do Cadastro.
+            Arquivos enviados aqui ficam no dossiê e <b>não entram</b> na fila de conciliação do Cadastro.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-2.5">
           <div>
-            <label className="text-[11px] text-muted-foreground">Arquivo</label>
+            <label className="text-[11px] text-muted-foreground">Arquivo(s)</label>
             <Input
               ref={fileRef}
               type="file"
-              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+              multiple
+              onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
               className="h-7 text-[12px]"
             />
-            {file && (
-              <p className="text-[10px] text-muted-foreground mt-1">
-                {file.name} · {(file.size / 1024).toFixed(1)} KB
-              </p>
+            {files.length > 0 && (
+              <ul className="text-[10px] text-muted-foreground mt-1 space-y-0.5">
+                {files.map((f, i) => (
+                  <li key={i}>
+                    {f.name} · {(f.size / 1024).toFixed(1)} KB
+                  </li>
+                ))}
+              </ul>
             )}
           </div>
           <div>
@@ -736,7 +1467,7 @@ function UploadAnexoLivreDialog({
           <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button size="sm" onClick={handleUpload} disabled={!file || busy || !catLivreId}>
+          <Button size="sm" onClick={handleUpload} disabled={files.length === 0 || busy || !catLivre}>
             {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Upload className="h-3.5 w-3.5 mr-1" />}
             Enviar
           </Button>

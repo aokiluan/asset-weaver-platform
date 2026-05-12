@@ -1,138 +1,116 @@
+## Melhorias no Diretório (Dossiê) — UX tipo "pasta de arquivos"
 
-# Plano: Seção "Diretório" (dossiê por cedente)
+Quatro frentes na tela `/diretorio/:id` (aba **Documentos**) + uma normalização global de nomenclatura de arquivos.
 
-## Objetivo
+---
 
-Criar uma seção `/diretorio` no sidebar que funciona como "pasta no computador" de cada cedente, consolidando, ao longo do tempo, **toda a documentação histórica** (cadastro, renovações, atas, pareceres, anexos livres) — sem interferir na fila operacional do perfil Cadastro.
+### 1. Ordenação por coluna (à esquerda de "Arquivo")
 
-## Resolvendo o conflito de uploads (decisão)
+- Cada `<th>` da tabela vira clicável (Arquivo, Categoria, Origem, Status, Tamanho, Data, Por).
+- Ao clicar: alterna `asc` / `desc` e mostra ícone `ChevronUp` / `ChevronDown` ao lado do label.
+- Ao lado de **Arquivo** especificamente, um botão extra com ícone `ArrowUpDown` que abre menu rápido com presets:
+  - Nome (A→Z / Z→A)
+  - Data (mais recente / mais antigo) — **default**
+  - Tamanho (maior / menor)
+  - Categoria (A→Z)
+- Estado guardado em `useState` local (sem persistir).
 
-Hoje todo upload em `documentos` cai na fila de conciliação do Cadastro (porque tem `status='pendente'` + `categoria_id` obrigatória). Se o comercial/formalização anexar algo "extra" (foto, e-mail, ata externa), polui a fila.
+### 2. Filtros + colunas visíveis (canto direito)
 
-**Solução:** criar uma categoria especial **"Outros / Anexos gerais"** com flags:
-- `obrigatorio = false`
-- novo campo `requer_conciliacao = false` em `documento_categorias`
+Dois botões à direita do "Adicionar anexo livre":
 
-Documentos nessa categoria:
-- Entram normalmente em `documentos` (mesma tabela, mesma storage, mesmas RLS)
-- São **filtrados fora** do Kanban de conciliação do Cadastro
-- Já nascem com `status = 'aprovado'` (não precisam de revisão)
-- Aparecem normalmente no Diretório, marcados visualmente como "Anexo livre"
+- **Filtrar** (`Filter` icon) → `Popover` com:
+  - Categoria (multi-select usando `Command`)
+  - Origem (Cadastro / Anexo livre)
+  - Status (aprovado / pendente / reprovado)
+  - Período (data de upload — `from / to`)
+  - Botão "Limpar filtros"
+  - Badge no botão indicando nº de filtros ativos
+- **Colunas** (`Columns3` icon) → `DropdownMenu` com checkboxes para mostrar/ocultar cada coluna. Default: todas visíveis exceto "Por" em viewports estreitos. Preferência salva em `localStorage` (`diretorio.colunas`).
 
-Vantagem: zero migração de dados, zero duplicação de lógica. Só um filtro a mais no kanban e uma flag na categoria.
+### 3. Renomeação global de arquivos (padrão `aaaa.mm.dd_categoria_cedenteAbreviado_versao01`)
 
-## Estrutura da seção Diretório
+**Padrão final**: `2026.05.12_contrato-social_abc-manut_v01.pdf`
 
-### Sidebar
-Novo item no grupo "Operação", abaixo de "Cedentes":
-- Label: **Diretório**
-- Ícone: `FolderOpen` (Phosphor, weight thin)
-- Roles: mesmas de `/cedentes` (visibilidade controlada via `can_view_cedente`)
+Regras de slug:
+- `categoria`: slug do `documento_categorias.nome` (lowercase, sem acentos, espaços→`-`, máx 30 chars).
+- `cedenteAbreviado`: primeiras 2 palavras significativas do `razao_social` (ignora LTDA/SA/ME/EIRELI), slugificadas, máx 18 chars.
+- `versao`: `v` + `NN` zero-padded. Calculada por `(cedente_id, categoria_id)` — próximo número = `count + 1` no momento do upload. Para anexos livres, conta dentro de "outros".
+- Extensão original preservada.
 
-### Tela `/diretorio` (lista de cedentes)
-Tabela enxuta no padrão Nibo ultracompacto, com:
-- Razão social / CNPJ / Stage atual
-- Nº de documentos
-- Última renovação cadastral (badge 🟢🟡🔴 reusando `computeRenovacao`)
-- Última ata
-- Botão "Abrir dossiê" → navega para `/diretorio/:cedenteId`
+**Onde aplicar (uploads novos)** — gerar nome com helper único `buildDocumentoFileName()` em `src/lib/documento-filename.ts`:
+- `src/components/cedentes/DocumentosUploadKanban.tsx` (uploads do Cadastro)
+- `src/pages/DiretorioDetail.tsx` (anexo livre)
+- `src/components/credito/DocumentSnipDialog.tsx` (recortes)
 
-Filtros: busca por razão/CNPJ, filtro por stage, filtro por status de renovação.
+O `nome_arquivo` salvo no banco passa a ser o nome padronizado (`storage_path` continua incluindo timestamp/uuid para evitar colisão).
 
-### Tela `/diretorio/:cedenteId` (dossiê)
-Layout com `<PageTabs>` no topo (4 abas):
+**Renomeação retroativa** (arquivos já existentes):
+- Migration adicional: backfill SQL atualiza apenas `documentos.nome_arquivo` (não mexe em `storage_path` para não quebrar links). Calcula o novo nome via função SQL usando `cedentes.razao_social` + `documento_categorias.nome` + ROW_NUMBER por (cedente, categoria) ordenado por `created_at`.
+- Mantém uma coluna nova `nome_arquivo_original` (texto, nullable) preservando o nome antigo, exibida como tooltip ao passar o mouse.
 
-```text
-+------------------------------------------------------------+
-| [Cedente XYZ - CNPJ ...] [stage] [renovação 🟡 vence em 12d]|
-+------------------------------------------------------------+
-| Documentos | Renovações | Atas de comitê | Pareceres       |
-+------------------------------------------------------------+
-```
+### 4. UX de "pasta de arquivos do computador"
 
-**Aba 1 — Documentos (default)**
-- Lista única consolidando TODOS os uploads de `documentos` daquele cedente
-- Agrupada por categoria, ordenada por data desc
-- Colunas: nome, categoria (badge), origem (Cadastro / Anexo livre), status (aprovado/pendente/recusado), data, quem subiu, ações (download/visualizar)
-- Botão "Adicionar anexo livre" no topo → upload direto na categoria "Outros / Anexos gerais", sem entrar na fila
+Mudanças na aba **Documentos** para se aproximar do Finder/Explorer:
 
-**Aba 2 — Renovações cadastrais**
-- Timeline lendo `cedente_history` onde `evento = 'cadastro_revisado'`
-- Mostra data, responsável, observação
-- Linha do estado atual no topo (badge 🟢🟡🔴)
+**a) Toggle de visualização** (canto superior direito da aba): `LayoutList` (lista — atual) | `LayoutGrid` (ícones grandes).
+- **Grid**: cards com ícone grande do tipo de arquivo (PDF/IMG/DOC), nome em 2 linhas, badge categoria, data pequena.
+- **Lista**: tabela atual já existente.
 
-**Aba 3 — Atas de comitê**
-- Lista de `committee_minutes` daquele cedente
-- Colunas: nº comitê, data, decisão (aprovado/reprovado), valor, alçada
-- Ação: baixar PDF (já existe `comite-ata-pdf.ts`)
+**b) Agrupamento por categoria (toggle "Agrupar por")** com seções colapsáveis:
+- Cabeçalho da seção mostra nome da categoria, contagem e ícone `Folder`.
+- Default: agrupado. Toggle "Sem grupos" mostra tudo achatado.
 
-**Aba 4 — Pareceres e relatórios**
-- Duas sub-listas:
-  - **Relatórios de crédito**: versões de `credit_report_versions` (data, versão, recomendação, autor)
-  - **Pareceres comerciais (visita)**: versões de `cedente_visit_report_versions`
-- Ação: baixar PDF (reusar `credit-report-pdf.ts` e `visit-report-pdf.ts`)
+**c) Ações por arquivo** (substitui o botão único de download):
+- Linha inteira clicável → preview rápido em `Sheet` lateral (PDF inline via signed URL, imagem inline, outros mostram metadata + botão baixar).
+- Menu de contexto (`DropdownMenu` com botão `MoreVertical`): Abrir, Baixar, Copiar nome, Copiar link, Mover para categoria…, Renomear, Excluir (apenas anexos livres do próprio usuário).
+- Suporte a `Cmd/Ctrl+clique` para multi-seleção; barra inferior aparece com ações em lote (baixar como ZIP, mover, excluir).
 
-## Detalhes técnicos
+**d) Drag & drop direto na área da tabela**:
+- Soltar arquivos em qualquer ponto da aba abre o diálogo "Adicionar anexo livre" pré-preenchido com o(s) arquivo(s).
+- Indicador visual de overlay tracejado durante o drag.
 
-### Migração (DB)
+**e) Breadcrumb tipo path** no topo da aba: `Diretório / ABC Manutenção / Documentos` (cada nível navegável).
 
-```sql
--- 1. Nova flag na tabela de categorias
-ALTER TABLE public.documento_categorias
-  ADD COLUMN requer_conciliacao boolean NOT NULL DEFAULT true;
+**f) Atalhos de teclado** (quando a aba está focada):
+- `/` foca busca
+- `Esc` limpa seleção
+- `Cmd/Ctrl+A` seleciona todos visíveis
+- `Enter` abre o item focado
 
--- 2. Cria categoria "Outros / Anexos gerais"
-INSERT INTO public.documento_categorias (nome, descricao, obrigatorio, requer_conciliacao, ordem)
-VALUES ('Outros / Anexos gerais',
-        'Documentos complementares ao dossiê do cedente (não entram na fila de conciliação)',
-        false, false, 999);
-```
+**g) Busca rápida no topo da aba** (`Input` com ícone `Search`) — filtra por nome do arquivo em tempo real (combina com filtros do item 2).
 
-Sem mudança em `documentos`, sem nova tabela, sem mexer em RLS.
+---
 
-### Filtro no Kanban de conciliação (Cadastro)
-Em `DocumentosUploadKanban.tsx` / `ConciliacaoDocumentosSheet.tsx`:
-```ts
-.eq('categoria.requer_conciliacao', true) // ou filtrar client-side
-```
+### Detalhes técnicos
 
-### Upload "anexo livre" no Diretório
-Reutiliza o storage `cedente-docs` e a tabela `documentos`, forçando:
-- `categoria_id` = id da categoria "Outros / Anexos gerais"
-- `status = 'aprovado'`
-- `classificacao_status = 'manual'`
+**Arquivos novos**:
+- `src/lib/documento-filename.ts` — `slugify()`, `abreviarRazaoSocial()`, `buildDocumentoFileName({ cedente, categoria, versao, ext })`.
+- `src/components/diretorio/DocumentosToolbar.tsx` — busca + filtros + colunas + view toggle + agrupar.
+- `src/components/diretorio/DocumentosTable.tsx` — tabela com sort headers + multi-seleção.
+- `src/components/diretorio/DocumentosGrid.tsx` — vista em grid.
+- `src/components/diretorio/DocumentoPreviewSheet.tsx` — preview lateral.
+- `src/components/diretorio/DocumentoRowMenu.tsx` — menu de contexto.
 
-### Rotas (App.tsx)
-```tsx
-<Route path="/diretorio" element={<Diretorio />} />
-<Route path="/diretorio/:id" element={<DiretorioDetail />} />
-```
-RoleGuard com mesmas roles de `/cedentes`.
+**Arquivos editados**:
+- `src/pages/DiretorioDetail.tsx` — usa novos componentes, mantém data fetching.
+- `src/components/cedentes/DocumentosUploadKanban.tsx` e `src/components/credito/DocumentSnipDialog.tsx` — usam `buildDocumentoFileName()` ao salvar.
 
-### Arquivos a criar/editar
-**Novos:**
-- `src/pages/Diretorio.tsx` (lista)
-- `src/pages/DiretorioDetail.tsx` (dossiê com PageTabs)
-- `src/components/diretorio/DiretorioDocumentosTab.tsx`
-- `src/components/diretorio/DiretorioRenovacoesTab.tsx`
-- `src/components/diretorio/DiretorioAtasTab.tsx`
-- `src/components/diretorio/DiretorioParecaresTab.tsx`
-- `src/components/diretorio/UploadAnexoLivreDialog.tsx`
-- `supabase/migrations/<timestamp>_diretorio.sql`
+**Migrations**:
+1. `ALTER TABLE documentos ADD COLUMN nome_arquivo_original text` (nullable).
+2. Backfill: copia `nome_arquivo` → `nome_arquivo_original` e gera novo `nome_arquivo` padronizado.
 
-**Editar:**
-- `src/App.tsx` (rotas)
-- `src/components/AppSidebar.tsx` (item "Diretório" no grupo Operação)
-- `src/components/cedentes/DocumentosUploadKanban.tsx` (filtrar `requer_conciliacao = true`)
-- `src/components/cedentes/ConciliacaoDocumentosSheet.tsx` (mesmo filtro)
+**Storage**: `storage_path` permanece com timestamp/uuid (não renomeamos os blobs no bucket — só o display name no banco). Isso evita signed URLs quebrados e mantém RLS.
 
-## Fora de escopo desta v1
-- Notificações (já decidido)
-- Versionamento de documentos individuais (manter histórico simples por upload)
-- Comparação visual entre versões de cadastro/renovação
-- Busca full-text no conteúdo dos PDFs
-- Compartilhamento externo do dossiê (link público)
+**Segurança**: nenhum impacto — todas as operações continuam respeitando as policies atuais de `documentos` e `cedente-docs`.
 
-## Próximos passos sugeridos (futuro)
-- "Snapshot do dossiê" (PDF consolidado para auditoria/regulador)
-- Marcação de documentos como "vigente" vs "histórico" automaticamente por categoria
+**Padrão visual**: tudo segue o tier ultracompacto Nibo (h-7, text-[12px], `space-y-3`).
+
+---
+
+### Fora de escopo (v1)
+
+- Renomeação retroativa dos blobs no bucket de storage (mantemos paths originais).
+- Versionamento real de documentos (substituir/comparar versões) — só o sufixo `vNN` no nome.
+- Compartilhamento externo / links públicos.
+- Download em ZIP no servidor (a v1 baixa um a um; ZIP fica para depois).
