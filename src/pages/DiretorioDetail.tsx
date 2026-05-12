@@ -1253,7 +1253,7 @@ function ArquivosTable(p: TableProps) {
                 Por {p.sortIcon("por")}
               </th>
             )}
-            <th className="px-3 py-2"></th>
+            <th className="px-3 py-2 text-right font-medium">Ações</th>
           </tr>
         </thead>
         <tbody>
