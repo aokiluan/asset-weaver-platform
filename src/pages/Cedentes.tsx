@@ -77,7 +77,7 @@ export default function Cedentes() {
   const load = async () => {
     setLoading(true);
     let q = supabase.from("cedentes")
-      .select("id,razao_social,nome_fantasia,cnpj,email,telefone,endereco,cidade,estado,setor,status,limite_aprovado,faturamento_medio,observacoes,owner_id,created_at")
+      .select("id,razao_social,nome_fantasia,cnpj,email,telefone,endereco,cidade,estado,setor,status,limite_aprovado,faturamento_medio,observacoes,owner_id,created_at,cadastro_revisado_em,minuta_assinada_em")
       .order("razao_social", { ascending: true });
     if (statusFilter !== "all") q = q.eq("status", statusFilter as Cedente["status"]);
     const { data, error } = await q;
