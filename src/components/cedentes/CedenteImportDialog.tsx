@@ -235,15 +235,9 @@ export function CedenteImportDialog({ open, onOpenChange, onImported }: Props) {
               Cancelar
             </Button>
           )}
-          {step === "map" && (
-            <>
-              <Button variant="outline" className="h-7 text-[12px]" onClick={() => setStep("upload")}>Voltar</Button>
-              <Button className="h-7 text-[12px]" disabled={!requiredOk} onClick={validateAndPreview}>Validar</Button>
-            </>
-          )}
           {step === "preview" && (
             <>
-              <Button variant="outline" className="h-7 text-[12px]" onClick={() => setStep("map")}>Voltar</Button>
+              <Button variant="outline" className="h-7 text-[12px]" onClick={() => setStep("upload")}>Voltar</Button>
               <Button className="h-7 text-[12px]" disabled={summary.valid === 0} onClick={doImport}>
                 Importar {summary.valid} cedente{summary.valid !== 1 ? "s" : ""}
               </Button>
