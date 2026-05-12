@@ -1,33 +1,38 @@
-# Pipeline kanban — refator visual ultracompacto (Nibo)
+# Cards KPI da página `/cedentes` — verificação + novo card
 
-Aplicar o padrão Nibo da memória core ao kanban em `src/pages/Pipeline.tsx`. Sem alterações de lógica, dados ou drag-and-drop.
+## Verificação dos cards atuais (`src/pages/Cedentes.tsx`)
 
-## 1. Header da página
-- Substituir o `<header>` manual por `<PageTabs title="Pipeline" description="..." tabs={[]} actions={...}/>` (mesmo padrão das demais páginas).
-- Botão "Novo cadastro": `h-7 text-[12px]`, ícone `size-3.5`.
+Os três cards já leem corretamente do estado `items`:
 
-## 2. Colunas (`StageColumn`)
-- Largura `w-64` (atual `w-72`) → mais colunas visíveis.
-- Container: `rounded-md` (em vez de `lg`), `bg-muted/30`, `border`.
-- Header da coluna: `px-2.5 py-1.5`, título `text-[12px] font-medium`, contador `text-[10px] text-muted-foreground tabular-nums`. Bolinha de cor `h-1.5 w-1.5`.
-- Lista: `p-1.5 space-y-1.5`, altura `min-h-[160px] max-h-[calc(100vh-220px)]`.
-- Footer "Faturamento": `px-2.5 py-1 text-[10px] leading-none`.
-- Estado "Vazio": `text-[10px] text-muted-foreground/60 text-center py-3`.
+- **Total cadastrado** → `items.length` ✅
+- **Aprovados** → `items.filter(i => i.status === "aprovado").length` ✅ (campo `status` da tabela `cedentes`)
+- **Limite total aprovado** → soma de `limite_aprovado` dos cedentes com `status === "aprovado"` ✅
 
-## 3. Card do cedente (`CedenteCardItem`)
-- `p-2` (era `p-3`), `rounded`, `border`, `bg-card`, sombra sutil (sem `shadow-card`).
-- Razão social: `text-[12px] leading-tight line-clamp-2` (sem font-medium pesado, manter `font-medium`).
-- Remover badge "cedente" (ruído visual desnecessário no kanban).
-- Nome fantasia: `text-[10px] text-muted-foreground truncate mt-0.5`.
-- CNPJ: `text-[10px] text-muted-foreground tabular-nums mt-0.5` — formatado `00.000.000/0000-00`.
-- Linha rodapé (setor + faturamento): `mt-1.5`, setor `text-[10px]`, valor `text-[11px] font-medium text-primary tabular-nums`.
+Nenhuma mudança de cálculo necessária — apenas é preciso passar a buscar dois campos extras do banco (`cadastro_revisado_em`, `minuta_assinada_em`) para alimentar o novo card.
 
-## 4. Drag overlay
-- Mesmo card compacto, largura `w-64`, sombra elegante mantida.
+## Novo card: Renovações pendentes
 
-## 5. Container externo
-- `space-y-3` mantido.
-- `gap-3` entre colunas (era `gap-4`), `pb-3`.
+Conta cedentes cuja renovação cadastral semestral está **vencida** ou **em atenção** (≤30 dias para vencer), usando `computeRenovacao(cadastro_revisado_em, minuta_assinada_em)` de `src/lib/cadastro-renovacao.ts`.
 
-## Resultado esperado
-Mais colunas visíveis na mesma largura, cards 30–40% mais densos, tipografia consistente com Cedentes/Diretório, sem alterar comportamento de DnD ou queries.
+- Label: **Renovações pendentes**
+- Valor principal: total (vencidas + atenção)
+- Sublinha: detalhamento `X vencidas · Y a vencer` em `text-[10px] text-muted-foreground`
+- Cor sutil no número quando > 0: `text-destructive` se houver vencidas, senão padrão
+
+## Mudanças no arquivo `src/pages/Cedentes.tsx`
+
+1. Acrescentar `cadastro_revisado_em, minuta_assinada_em` ao `select` em `load()`.
+2. Adicionar campos opcionais correspondentes na interface `Cedente`.
+3. Calcular, ao lado de `totalAprovado`:
+   ```ts
+   const renov = items.map(i => computeRenovacao(i.cadastro_revisado_em, i.minuta_assinada_em));
+   const vencidas = renov.filter(r => r.status === "vencida").length;
+   const atencao  = renov.filter(r => r.status === "atencao").length;
+   const pendentes = vencidas + atencao;
+   ```
+4. Trocar grid de KPIs para `md:grid-cols-2 lg:grid-cols-4` e inserir o quarto card.
+5. Manter padrão visual Nibo já em uso (border, p-3, label 11px, valor 18px).
+
+## Fora de escopo
+
+- Padronização do header com `<PageTabs>` (página atualmente usa header próprio) — manter como está para não expandir o pedido.

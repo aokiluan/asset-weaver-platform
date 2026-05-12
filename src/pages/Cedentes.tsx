@@ -15,6 +15,7 @@ import {
 import { CedenteNovoSheet } from "@/components/cedentes/CedenteNovoSheet";
 import { useAuth } from "@/hooks/useAuth";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { computeRenovacao } from "@/lib/cadastro-renovacao";
 
 interface Cedente {
   id: string;
