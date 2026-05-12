@@ -1257,35 +1257,7 @@ function ArquivosTable(p: TableProps) {
   );
 }
 
-function FragmentGroup({
-  g,
-  collapsed,
-  toggle,
-  colSpan,
-  renderRow,
-}: {
-  g: { key: string; label: string; items: Arquivo[] };
-  collapsed: boolean;
-  toggle: () => void;
-  colSpan: number;
-  renderRow: (a: Arquivo) => React.ReactNode;
-}) {
-  return (
-    <>
-      <tr className="bg-muted/20 cursor-pointer hover:bg-muted/40" onClick={toggle}>
-        <td colSpan={colSpan} className="px-3 py-1.5 text-[11px] font-medium text-muted-foreground">
-          <div className="flex items-center gap-1.5">
-            {collapsed ? <ChevronDown className="h-3 w-3 -rotate-90" /> : <ChevronDown className="h-3 w-3" />}
-            <Folder className="h-3 w-3" />
-            {g.label}
-            <span className="text-muted-foreground/70">({g.items.length})</span>
-          </div>
-        </td>
-      </tr>
-      {!collapsed && g.items.map(renderRow)}
-    </>
-  );
-}
+
 
 /* ============================================================== */
 /*  Grid unificado                                                */
