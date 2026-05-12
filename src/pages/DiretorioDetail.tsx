@@ -1292,19 +1292,13 @@ function FragmentGroup({
 /* ============================================================== */
 
 function ArquivosGrid({
-  groups,
   flat,
   profilesById: _profilesById,
-  collapsed,
-  toggleCollapse,
   onOpen,
   onDownload,
 }: {
-  groups: { key: string; label: string; items: Arquivo[] }[] | null;
   flat: Arquivo[];
   profilesById: Record<string, string>;
-  collapsed: Set<string>;
-  toggleCollapse: (k: string) => void;
   onOpen: (a: Arquivo) => void;
   onDownload: (a: Arquivo) => void;
 }) {
@@ -1351,38 +1345,6 @@ function ArquivosGrid({
       </div>
     );
   };
-
-  if (groups) {
-    return (
-      <div className="space-y-3">
-        {groups.map((g) => {
-          const isCollapsed = collapsed.has(g.key);
-          return (
-            <div key={g.key} className="rounded-md border bg-card">
-              <button
-                onClick={() => toggleCollapse(g.key)}
-                className="w-full flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium text-muted-foreground hover:bg-muted/40"
-              >
-                {isCollapsed ? (
-                  <ChevronDown className="h-3 w-3 -rotate-90" />
-                ) : (
-                  <ChevronDown className="h-3 w-3" />
-                )}
-                <Folder className="h-3 w-3" />
-                {g.label}
-                <span className="text-muted-foreground/70">({g.items.length})</span>
-              </button>
-              {!isCollapsed && (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 p-2.5 pt-0">
-                  {g.items.map(renderCard)}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    );
-  }
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
