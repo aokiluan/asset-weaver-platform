@@ -695,12 +695,58 @@ export default function DiretorioDetail() {
               {renovacaoLabel(renovInfo)}
             </Badge>
           )}
-          <div className="ml-auto">
+          {cicloAberto && (
+            <Badge className="text-[10px] bg-amber-500/15 text-amber-700 border border-amber-500/30 hover:bg-amber-500/20">
+              <RotateCcw className="h-2.5 w-2.5 mr-1" />
+              Revalidação · Ciclo #{cicloAberto.numero}
+            </Badge>
+          )}
+          <div className="ml-auto flex items-center gap-1.5">
+            {podeRevalidar && cedente.stage === "ativo" && !cicloAberto && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIniciarRevOpen(true)}
+              >
+                <RotateCcw className="h-3.5 w-3.5 mr-1" /> Iniciar revalidação
+              </Button>
+            )}
+            {podeRevalidar && cicloAberto && (
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => setConcluirRevOpen(true)}
+              >
+                Concluir ciclo
+              </Button>
+            )}
             <Button asChild variant="outline" size="sm">
               <Link to={`/cedentes/${cedente.id}`}>Ver cedente</Link>
             </Button>
           </div>
         </div>
+
+        {cedente && (
+          <>
+            <IniciarRevalidacaoDialog
+              cedenteId={cedente.id}
+              cedenteNome={cedente.razao_social}
+              open={iniciarRevOpen}
+              onOpenChange={setIniciarRevOpen}
+              onSuccess={reload}
+            />
+            {cicloAberto && (
+              <ConcluirRevalidacaoDialog
+                cicloId={cicloAberto.id}
+                numero={cicloAberto.numero}
+                cedenteNome={cedente.razao_social}
+                open={concluirRevOpen}
+                onOpenChange={setConcluirRevOpen}
+                onSuccess={reload}
+              />
+            )}
+          </>
+        )}
 
         {/* Chips por tipo (clicáveis = filtro) */}
         <div className="flex flex-wrap items-center gap-1.5">
