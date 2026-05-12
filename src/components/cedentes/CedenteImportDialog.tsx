@@ -175,56 +175,7 @@ export function CedenteImportDialog({ open, onOpenChange, onImported }: Props) {
           </div>
         )}
 
-        {step === "map" && sheet && (
-          <div className="space-y-2">
-            <div className="text-[11px] text-muted-foreground">
-              Arquivo: <span className="font-medium text-foreground">{fileName}</span> · {sheet.rows.length} linhas
-            </div>
-            <div className="border rounded-md max-h-[360px] overflow-y-auto">
-              <table className="w-full text-[12px]">
-                <thead className="bg-muted/40 sticky top-0">
-                  <tr>
-                    <th className="text-left px-2 py-1.5 font-medium">Coluna da planilha</th>
-                    <th className="text-left px-2 py-1.5 font-medium">Amostra</th>
-                    <th className="text-left px-2 py-1.5 font-medium">Campo do cedente</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sheet.headers.map((h, i) => (
-                    <tr key={i} className="border-t">
-                      <td className="px-2 py-1 font-medium truncate max-w-[180px]">{h || `Coluna ${i + 1}`}</td>
-                      <td className="px-2 py-1 text-muted-foreground truncate max-w-[200px]">
-                        {sheet.rows[0]?.[i]?.toString().slice(0, 40) ?? "—"}
-                      </td>
-                      <td className="px-2 py-1">
-                        <Select
-                          value={mapping[i] || "__none__"}
-                          onValueChange={(v) => setMapping((m) => ({ ...m, [i]: v === "__none__" ? "" : (v as CedenteFieldKey) }))}
-                        >
-                          <SelectTrigger className="h-7 text-[12px] w-[200px]"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="__none__">— Ignorar —</SelectItem>
-                            {CEDENTE_FIELDS.map((f) => (
-                              <SelectItem key={f.key} value={f.key}>
-                                {f.label}{("required" in f && f.required) ? " *" : ""}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            {!requiredOk && (
-              <div className="flex items-center gap-2 text-[11px] text-destructive">
-                <AlertCircle className="size-3.5" />
-                Mapeie pelo menos <strong>Razão social</strong> e <strong>CNPJ</strong>.
-              </div>
-            )}
-          </div>
-        )}
+        {/* mapeamento removido — auto-map a partir dos headers do modelo */}
 
         {step === "preview" && (
           <div className="space-y-2">
