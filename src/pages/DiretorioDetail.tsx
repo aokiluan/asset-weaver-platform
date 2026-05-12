@@ -1159,11 +1159,26 @@ function ArquivosTable(p: TableProps) {
           </td>
         )}
         <td className="px-3 py-1.5 text-right" onClick={(e) => e.stopPropagation()}>
-          {(a.tipo === "documento" || a.tipo === "ata") && (
-            <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => p.onDownload(a)}>
-              <Download className="h-3 w-3" />
-            </Button>
-          )}
+          <div className="flex items-center justify-end gap-0.5">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => p.onOpen(a)}>
+                  <Eye className="h-3 w-3" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="text-[11px]">Visualização rápida</TooltipContent>
+            </Tooltip>
+            {(a.tipo === "documento" || a.tipo === "ata") && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => p.onDownload(a)}>
+                    <Download className="h-3 w-3" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="text-[11px]">Baixar</TooltipContent>
+              </Tooltip>
+            )}
+          </div>
         </td>
       </tr>
     );
