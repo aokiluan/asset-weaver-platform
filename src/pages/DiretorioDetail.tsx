@@ -36,6 +36,7 @@ import {
   ChevronUp,
   Columns3,
   Download,
+  Eye,
   FileText,
   FileImage,
   FileCheck2,
