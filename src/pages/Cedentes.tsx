@@ -166,11 +166,11 @@ export default function Cedentes() {
           <div className="text-[18px] font-semibold tabular-nums leading-tight mt-1">{items.length}</div>
         </div>
         <div className="rounded-lg border bg-card p-3">
-          <div className="text-[11px] text-muted-foreground leading-none">Aprovados</div>
-          <div className="text-[18px] font-semibold tabular-nums leading-tight mt-1">{items.filter(i => i.status === "aprovado").length}</div>
+          <div className="text-[11px] text-muted-foreground leading-none">Ativos</div>
+          <div className="text-[18px] font-semibold tabular-nums leading-tight mt-1">{items.filter(i => i.stage === "ativo").length}</div>
         </div>
         <div className="rounded-lg border bg-card p-3">
-          <div className="text-[11px] text-muted-foreground leading-none">Limite total aprovado</div>
+          <div className="text-[11px] text-muted-foreground leading-none">Limite total (ativos)</div>
           <div className="text-[18px] font-semibold tabular-nums leading-tight mt-1">{fmtBRL(totalAprovado)}</div>
         </div>
         <div className="rounded-lg border bg-card p-3">
