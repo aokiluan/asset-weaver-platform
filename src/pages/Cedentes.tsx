@@ -266,7 +266,7 @@ export default function Cedentes() {
                     <p className="text-sm text-muted-foreground truncate">{selected.nome_fantasia}</p>
                   )}
                   <div className="flex items-center gap-2 mt-2">
-                    <Badge variant={STATUS_VARIANT[selected.status]}>{STATUS_LABEL[selected.status]}</Badge>
+                    <Badge variant="outline" style={{ borderColor: STAGE_COLORS[selected.stage], color: STAGE_COLORS[selected.stage] }}>{STAGE_LABEL[selected.stage]}</Badge>
                     <span className="text-xs text-muted-foreground font-mono">{fmtCNPJ(selected.cnpj)}</span>
                   </div>
                 </div>
