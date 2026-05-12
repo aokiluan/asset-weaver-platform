@@ -17,6 +17,7 @@ import { CedenteImportDialog } from "@/components/cedentes/CedenteImportDialog";
 import { useAuth } from "@/hooks/useAuth";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { computeRenovacao } from "@/lib/cadastro-renovacao";
+import { STAGE_LABEL, STAGE_COLORS, type CedenteStage } from "@/lib/cedente-stages";
 
 interface Cedente {
   id: string;
@@ -29,7 +30,7 @@ interface Cedente {
   cidade: string | null;
   estado: string | null;
   setor: string | null;
-  status: "prospect" | "em_analise" | "aprovado" | "reprovado" | "inativo";
+  stage: CedenteStage;
   limite_aprovado: number | null;
   faturamento_medio: number | null;
   observacoes: string | null;
@@ -38,22 +39,6 @@ interface Cedente {
   cadastro_revisado_em: string | null;
   minuta_assinada_em: string | null;
 }
-
-const STATUS_LABEL: Record<Cedente["status"], string> = {
-  prospect: "Prospect",
-  em_analise: "Em análise",
-  aprovado: "Aprovado",
-  reprovado: "Reprovado",
-  inativo: "Inativo",
-};
-
-const STATUS_VARIANT: Record<Cedente["status"], "default" | "secondary" | "destructive" | "outline"> = {
-  prospect: "outline",
-  em_analise: "secondary",
-  aprovado: "default",
-  reprovado: "destructive",
-  inativo: "outline",
-};
 
 const fmtBRL = (v: number | null) =>
   v == null ? "—" : v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
