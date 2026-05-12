@@ -13,8 +13,6 @@ import { Loader2 } from "lucide-react";
 import { useFormDraft } from "@/hooks/useFormDraft";
 import { DraftIndicator } from "@/components/ui/draft-indicator";
 
-type CedenteStatus = "prospect" | "em_analise" | "aprovado" | "reprovado" | "inativo";
-
 export interface CedenteFormValues {
   id?: string;
   razao_social: string;
@@ -28,7 +26,6 @@ export interface CedenteFormValues {
   cep?: string | null;
   setor?: string | null;
   faturamento_medio?: number | null;
-  status: CedenteStatus;
   limite_aprovado?: number | null;
   observacoes?: string | null;
   owner_id?: string | null;
