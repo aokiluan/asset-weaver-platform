@@ -217,7 +217,7 @@ export function CedenteFormDialog({ open, onOpenChange, initial, onSaved }: Prop
             <DraftIndicator
               lastSavedAt={lastSavedAt}
               restored={restored}
-              onDiscard={() => discardDraft({ status: "prospect", razao_social: "", cnpj: "", ...initial })}
+              onDiscard={() => discardDraft({ razao_social: "", cnpj: "", ...initial })}
             />
             <div className="flex gap-2">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
