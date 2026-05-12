@@ -287,13 +287,11 @@ export default function DiretorioDetail() {
   const [sortKey, setSortKey] = useState<SortKey>("data");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [viewMode, setViewMode] = useState<ViewMode>("list");
-  const [groupBy, setGroupBy] = useState<GroupBy>("tipo");
   const [colVis, setColVis] = useState<ColVis>(loadColPrefs);
   const [filterTipos, setFilterTipos] = useState<Set<TipoArquivo>>(new Set());
   const [filterCats, setFilterCats] = useState<Set<string>>(new Set());
   const [filterOrigem, setFilterOrigem] = useState<Set<string>>(new Set());
   const [filterStatus, setFilterStatus] = useState<Set<string>>(new Set());
-  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [previewArq, setPreviewArq] = useState<Arquivo | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
