@@ -321,7 +321,7 @@ export function generateAtaPdf(d: AtaData): jsPDF {
 }
 
 /** Carrega ata por id e gera + baixa o PDF. */
-export async function downloadAtaById(minuteId: string) {
+async function loadAtaDataById(minuteId: string): Promise<AtaData> {
   const { data: minute, error } = await supabase
     .from("committee_minutes")
     .select("*, cedentes!inner(razao_social, cnpj), credit_proposals(codigo)")
@@ -329,7 +329,7 @@ export async function downloadAtaById(minuteId: string) {
     .maybeSingle();
   if (error || !minute) throw new Error(error?.message ?? "Ata não encontrada");
 
-  const data: AtaData = {
+  return {
     numero_comite: minute.numero_comite,
     realizado_em: minute.realizado_em,
     cedente_nome: (minute as any).cedentes?.razao_social ?? "Cedente",
@@ -346,14 +346,31 @@ export async function downloadAtaById(minuteId: string) {
     votos_minimos_alcada: minute.votos_minimos_alcada,
     condicoes: minute.condicoes,
   };
+}
 
+async function buildAtaDoc(data: AtaData) {
   const doc = generateAtaPdf(data);
   await applyS3HeaderLogo(doc, { variant: "white", headerWidthMm: 28, headerTopMm: 5, headerRightMm: 15 });
   await applyS3Watermark(doc, { unit: "mm" });
+  return doc;
+}
+
+export async function downloadAtaById(minuteId: string) {
+  const data = await loadAtaDataById(minuteId);
+  const doc = await buildAtaDoc(data);
   doc.save(buildAtaFilename({
     numero: data.numero_comite,
     cedenteNome: data.cedente_nome,
     data: data.realizado_em,
   }));
 }
+
+export async function generateAtaPdfBlobById(minuteId: string): Promise<{ blob: Blob; url: string }> {
+  const data = await loadAtaDataById(minuteId);
+  const doc = await buildAtaDoc(data);
+  const blob = doc.output("blob");
+  const url = URL.createObjectURL(blob);
+  return { blob, url };
+}
+
 
