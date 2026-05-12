@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { ConciliacaoDocumentosSheet } from "./ConciliacaoDocumentosSheet";
+import { buildDocumentoFileName } from "@/lib/documento-filename";
 
 export interface Categoria {
   id: string;
