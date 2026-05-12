@@ -1168,16 +1168,7 @@ function ArquivosTable(p: TableProps) {
     );
   };
 
-  const colSpan =
-    1 +
-    Number(p.colVis.tipo) +
-    Number(p.colVis.categoria) +
-    Number(p.colVis.origem) +
-    Number(p.colVis.status) +
-    Number(p.colVis.tamanho) +
-    Number(p.colVis.data) +
-    Number(p.colVis.por) +
-    1;
+
 
   return (
     <div className="rounded-md border bg-card overflow-hidden">
