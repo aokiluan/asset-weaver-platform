@@ -22,6 +22,7 @@ import AdminEquipes from "./pages/admin/AdminEquipes.tsx";
 import AdminAlcadas from "./pages/admin/AdminAlcadas.tsx";
 import AdminPipeline from "./pages/admin/AdminPipeline.tsx";
 import AdminCategorias from "./pages/admin/AdminCategorias.tsx";
+import AdminPermissoes from "./pages/admin/AdminPermissoes.tsx";
 import AdminDatasets from "./pages/admin/AdminDatasets.tsx";
 import AdminRelatorios from "./pages/admin/AdminRelatorios.tsx";
 import AdminDashboardWidgets from "./pages/admin/AdminDashboardWidgets.tsx";
@@ -120,6 +121,7 @@ const App = () => (
                 <Route path="alcadas" element={<AdminAlcadas />} />
                 <Route path="pipeline" element={<AdminPipeline />} />
                 <Route path="categorias" element={<AdminCategorias />} />
+                <Route path="permissoes" element={<AdminPermissoes />} />
               </Route>
 
               {/* BI / Relatórios */}
