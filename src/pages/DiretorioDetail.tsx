@@ -41,7 +41,7 @@ import {
   FileCheck2,
   Filter,
   FolderOpen,
-  Folder,
+  
   Gavel,
   LayoutGrid,
   LayoutList,
@@ -226,7 +226,7 @@ function abrevCedente(razao: string) {
 type SortKey = "nome" | "tipo" | "categoria" | "origem" | "status" | "tamanho" | "data" | "por";
 type SortDir = "asc" | "desc";
 type ViewMode = "list" | "grid";
-type GroupBy = "nenhum" | "tipo" | "categoria";
+
 
 interface ColVis {
   tipo: boolean;
@@ -287,13 +287,11 @@ export default function DiretorioDetail() {
   const [sortKey, setSortKey] = useState<SortKey>("data");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [viewMode, setViewMode] = useState<ViewMode>("list");
-  const [groupBy, setGroupBy] = useState<GroupBy>("tipo");
   const [colVis, setColVis] = useState<ColVis>(loadColPrefs);
   const [filterTipos, setFilterTipos] = useState<Set<TipoArquivo>>(new Set());
   const [filterCats, setFilterCats] = useState<Set<string>>(new Set());
   const [filterOrigem, setFilterOrigem] = useState<Set<string>>(new Set());
   const [filterStatus, setFilterStatus] = useState<Set<string>>(new Set());
-  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [previewArq, setPreviewArq] = useState<Arquivo | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
@@ -526,25 +524,6 @@ export default function DiretorioDetail() {
 
   const activeFilterCount = filterTipos.size + filterCats.size + filterOrigem.size + filterStatus.size;
 
-  const groups = useMemo(() => {
-    if (groupBy === "nenhum") return null;
-    const map = new Map<string, { label: string; items: Arquivo[] }>();
-    for (const a of filteredSorted) {
-      let key: string;
-      let label: string;
-      if (groupBy === "tipo") {
-        key = a.tipo;
-        label = TIPO_LABEL[a.tipo];
-      } else {
-        key = a.categoriaId ?? `__semcat_${a.tipo}`;
-        label = a.categoria ?? "Sem categoria";
-      }
-      if (!map.has(key)) map.set(key, { label, items: [] });
-      map.get(key)!.items.push(a);
-    }
-    return Array.from(map.entries()).map(([key, v]) => ({ key, ...v }));
-  }, [filteredSorted, groupBy]);
-
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
       setSortDir(sortDir === "asc" ? "desc" : "asc");
@@ -752,24 +731,7 @@ export default function DiretorioDetail() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Group by */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant={groupBy !== "nenhum" ? "secondary" : "outline"}
-                size="sm"
-                className="h-7 text-[11px]"
-              >
-                <Folder className="h-3 w-3 mr-1" />
-                Agrupar: {groupBy === "nenhum" ? "nenhum" : groupBy}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="text-[12px]">
-              <DropdownMenuItem onClick={() => setGroupBy("nenhum")}>Sem grupos</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setGroupBy("tipo")}>Por tipo</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setGroupBy("categoria")}>Por categoria</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+
 
           <div className="ml-auto flex items-center gap-2">
             {/* Filter */}
@@ -969,37 +931,19 @@ export default function DiretorioDetail() {
             </div>
           ) : viewMode === "grid" ? (
             <ArquivosGrid
-              groups={groups}
               flat={filteredSorted}
               profilesById={profilesById}
-              collapsed={collapsed}
-              toggleCollapse={(k) =>
-                setCollapsed((s) => {
-                  const ns = new Set(s);
-                  if (ns.has(k)) ns.delete(k); else ns.add(k);
-                  return ns;
-                })
-              }
               onOpen={openPreview}
               onDownload={handleDownload}
             />
           ) : (
             <ArquivosTable
-              groups={groups}
               flat={filteredSorted}
               profilesById={profilesById}
               colVis={colVis}
               sortKey={sortKey}
               sortIcon={sortIcon}
               onSort={handleSort}
-              collapsed={collapsed}
-              toggleCollapse={(k) =>
-                setCollapsed((s) => {
-                  const ns = new Set(s);
-                  if (ns.has(k)) ns.delete(k); else ns.add(k);
-                  return ns;
-                })
-              }
               onOpen={openPreview}
               onDownload={handleDownload}
             />
@@ -1134,15 +1078,12 @@ export default function DiretorioDetail() {
 /* ============================================================== */
 
 interface TableProps {
-  groups: { key: string; label: string; items: Arquivo[] }[] | null;
   flat: Arquivo[];
   profilesById: Record<string, string>;
   colVis: ColVis;
   sortKey: SortKey;
   sortIcon: (k: SortKey) => React.ReactNode;
   onSort: (k: SortKey) => void;
-  collapsed: Set<string>;
-  toggleCollapse: (k: string) => void;
   onOpen: (a: Arquivo) => void;
   onDownload: (a: Arquivo) => void;
 }
@@ -1227,16 +1168,7 @@ function ArquivosTable(p: TableProps) {
     );
   };
 
-  const colSpan =
-    1 +
-    Number(p.colVis.tipo) +
-    Number(p.colVis.categoria) +
-    Number(p.colVis.origem) +
-    Number(p.colVis.status) +
-    Number(p.colVis.tamanho) +
-    Number(p.colVis.data) +
-    Number(p.colVis.por) +
-    1;
+
 
   return (
     <div className="rounded-md border bg-card overflow-hidden">
@@ -1309,72 +1241,27 @@ function ArquivosTable(p: TableProps) {
           </tr>
         </thead>
         <tbody>
-          {p.groups
-            ? p.groups.map((g) => (
-                <FragmentGroup
-                  key={g.key}
-                  g={g}
-                  collapsed={p.collapsed.has(g.key)}
-                  toggle={() => p.toggleCollapse(g.key)}
-                  colSpan={colSpan}
-                  renderRow={renderRow}
-                />
-              ))
-            : p.flat.map(renderRow)}
+          {p.flat.map(renderRow)}
         </tbody>
       </table>
     </div>
   );
 }
 
-function FragmentGroup({
-  g,
-  collapsed,
-  toggle,
-  colSpan,
-  renderRow,
-}: {
-  g: { key: string; label: string; items: Arquivo[] };
-  collapsed: boolean;
-  toggle: () => void;
-  colSpan: number;
-  renderRow: (a: Arquivo) => React.ReactNode;
-}) {
-  return (
-    <>
-      <tr className="bg-muted/20 cursor-pointer hover:bg-muted/40" onClick={toggle}>
-        <td colSpan={colSpan} className="px-3 py-1.5 text-[11px] font-medium text-muted-foreground">
-          <div className="flex items-center gap-1.5">
-            {collapsed ? <ChevronDown className="h-3 w-3 -rotate-90" /> : <ChevronDown className="h-3 w-3" />}
-            <Folder className="h-3 w-3" />
-            {g.label}
-            <span className="text-muted-foreground/70">({g.items.length})</span>
-          </div>
-        </td>
-      </tr>
-      {!collapsed && g.items.map(renderRow)}
-    </>
-  );
-}
+
 
 /* ============================================================== */
 /*  Grid unificado                                                */
 /* ============================================================== */
 
 function ArquivosGrid({
-  groups,
   flat,
   profilesById: _profilesById,
-  collapsed,
-  toggleCollapse,
   onOpen,
   onDownload,
 }: {
-  groups: { key: string; label: string; items: Arquivo[] }[] | null;
   flat: Arquivo[];
   profilesById: Record<string, string>;
-  collapsed: Set<string>;
-  toggleCollapse: (k: string) => void;
   onOpen: (a: Arquivo) => void;
   onDownload: (a: Arquivo) => void;
 }) {
@@ -1421,38 +1308,6 @@ function ArquivosGrid({
       </div>
     );
   };
-
-  if (groups) {
-    return (
-      <div className="space-y-3">
-        {groups.map((g) => {
-          const isCollapsed = collapsed.has(g.key);
-          return (
-            <div key={g.key} className="rounded-md border bg-card">
-              <button
-                onClick={() => toggleCollapse(g.key)}
-                className="w-full flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium text-muted-foreground hover:bg-muted/40"
-              >
-                {isCollapsed ? (
-                  <ChevronDown className="h-3 w-3 -rotate-90" />
-                ) : (
-                  <ChevronDown className="h-3 w-3" />
-                )}
-                <Folder className="h-3 w-3" />
-                {g.label}
-                <span className="text-muted-foreground/70">({g.items.length})</span>
-              </button>
-              {!isCollapsed && (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 p-2.5 pt-0">
-                  {g.items.map(renderCard)}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    );
-  }
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
