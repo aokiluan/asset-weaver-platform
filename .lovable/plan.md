@@ -1,67 +1,33 @@
-# Reorganização do Diretório no sidebar + Pasta de Investidores
+# Pipeline kanban — refator visual ultracompacto (Nibo)
 
-## 1. Sidebar — `src/components/AppSidebar.tsx`
+Aplicar o padrão Nibo da memória core ao kanban em `src/pages/Pipeline.tsx`. Sem alterações de lógica, dados ou drag-and-drop.
 
-- Remover o item **"Diretório"** do grupo **"Operação"**.
-- Criar nova seção **"Diretório"** (label uppercase via CSS, igual às demais), ícone `FolderOpen`, posicionada logo após **"Operação"**.
-- Itens da nova seção:
-  - **Pasta de Cedentes** → `/diretorio` (ícone `Buildings`)
-  - **Pasta de Investidores** → `/diretorio/investidores` (ícone `Wallet` ou `Users`)
+## 1. Header da página
+- Substituir o `<header>` manual por `<PageTabs title="Pipeline" description="..." tabs={[]} actions={...}/>` (mesmo padrão das demais páginas).
+- Botão "Novo cadastro": `h-7 text-[12px]`, ícone `size-3.5`.
 
-## 2. Backend — nova tabela `investidores`
+## 2. Colunas (`StageColumn`)
+- Largura `w-64` (atual `w-72`) → mais colunas visíveis.
+- Container: `rounded-md` (em vez de `lg`), `bg-muted/30`, `border`.
+- Header da coluna: `px-2.5 py-1.5`, título `text-[12px] font-medium`, contador `text-[10px] text-muted-foreground tabular-nums`. Bolinha de cor `h-1.5 w-1.5`.
+- Lista: `p-1.5 space-y-1.5`, altura `min-h-[160px] max-h-[calc(100vh-220px)]`.
+- Footer "Faturamento": `px-2.5 py-1 text-[10px] leading-none`.
+- Estado "Vazio": `text-[10px] text-muted-foreground/60 text-center py-3`.
 
-Criar via migração com campos análogos a `cedentes` (escopo enxuto):
+## 3. Card do cedente (`CedenteCardItem`)
+- `p-2` (era `p-3`), `rounded`, `border`, `bg-card`, sombra sutil (sem `shadow-card`).
+- Razão social: `text-[12px] leading-tight line-clamp-2` (sem font-medium pesado, manter `font-medium`).
+- Remover badge "cedente" (ruído visual desnecessário no kanban).
+- Nome fantasia: `text-[10px] text-muted-foreground truncate mt-0.5`.
+- CNPJ: `text-[10px] text-muted-foreground tabular-nums mt-0.5` — formatado `00.000.000/0000-00`.
+- Linha rodapé (setor + faturamento): `mt-1.5`, setor `text-[10px]`, valor `text-[11px] font-medium text-primary tabular-nums`.
 
-- `razao_social` (text, obrigatório)
-- `nome_fantasia` (text)
-- `cnpj` (text, obrigatório, único)
-- `tipo_pessoa` (`pf` | `pj`)
-- `email`, `telefone`
-- `endereco`, `numero`, `bairro`, `cidade`, `estado`, `cep`
-- `valor_investido` (numeric)
-- `perfil` (text — ex: conservador / moderado / arrojado)
-- `observacoes` (text)
-- `status` (text, default `ativo`)
-- `owner_id`, `created_by`, `created_at`, `updated_at`
+## 4. Drag overlay
+- Mesmo card compacto, largura `w-64`, sombra elegante mantida.
 
-RLS:
-- SELECT: admin, gestor_geral, financeiro, comercial e owner.
-- INSERT/UPDATE: admin, gestor_geral, financeiro.
-- DELETE: admin, gestor_geral.
+## 5. Container externo
+- `space-y-3` mantido.
+- `gap-3` entre colunas (era `gap-4`), `pb-3`.
 
-Trigger de `updated_at` reaproveitando `public.update_updated_at_column()`.
-
-## 3. Frontend — páginas novas
-
-### `src/pages/Investidores.tsx` (rota `/diretorio/investidores`)
-Lista funcional espelhando `Diretorio.tsx`:
-- `<PageTabs>` com título "Pasta de Investidores".
-- Busca por razão social / CNPJ.
-- Tabela ultracompacta (Nibo): Investidor, CNPJ, Tipo, Valor investido, Status, Ações (Abrir).
-- Loading state, contagem de registros, link para detalhe.
-
-### `src/pages/InvestidorDetail.tsx` (rota `/diretorio/investidores/:id`)
-Detalhe simples no padrão view denso (p-2.5, label 10px, valor 12px), com dados cadastrais. Sem documentos/atas nesta primeira versão (escopo será expandido depois conforme necessidade).
-
-### Atualizar `src/pages/Diretorio.tsx`
-- Renomear título do `<PageTabs>` para **"Pasta de Cedentes"** (mantendo rota `/diretorio`).
-
-## 4. Roteamento — `src/App.tsx`
-
-Adicionar:
-- `/diretorio/investidores` → `Investidores`
-- `/diretorio/investidores/:id` → `InvestidorDetail`
-
-## Resumo da estrutura final do sidebar
-
-```
-OPERAÇÃO
-  - CRM
-  - Cedentes
-  - Comitê
-  - Formalização
-
-DIRETÓRIO        ← nova seção
-  - Pasta de Cedentes
-  - Pasta de Investidores
-```
+## Resultado esperado
+Mais colunas visíveis na mesma largura, cards 30–40% mais densos, tipografia consistente com Cedentes/Diretório, sem alterar comportamento de DnD ou queries.
