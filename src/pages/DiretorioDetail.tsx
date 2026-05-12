@@ -524,25 +524,6 @@ export default function DiretorioDetail() {
 
   const activeFilterCount = filterTipos.size + filterCats.size + filterOrigem.size + filterStatus.size;
 
-  const groups = useMemo(() => {
-    if (groupBy === "nenhum") return null;
-    const map = new Map<string, { label: string; items: Arquivo[] }>();
-    for (const a of filteredSorted) {
-      let key: string;
-      let label: string;
-      if (groupBy === "tipo") {
-        key = a.tipo;
-        label = TIPO_LABEL[a.tipo];
-      } else {
-        key = a.categoriaId ?? `__semcat_${a.tipo}`;
-        label = a.categoria ?? "Sem categoria";
-      }
-      if (!map.has(key)) map.set(key, { label, items: [] });
-      map.get(key)!.items.push(a);
-    }
-    return Array.from(map.entries()).map(([key, v]) => ({ key, ...v }));
-  }, [filteredSorted, groupBy]);
-
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
       setSortDir(sortDir === "asc" ? "desc" : "asc");
