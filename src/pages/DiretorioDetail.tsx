@@ -731,24 +731,7 @@ export default function DiretorioDetail() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Group by */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant={groupBy !== "nenhum" ? "secondary" : "outline"}
-                size="sm"
-                className="h-7 text-[11px]"
-              >
-                <Folder className="h-3 w-3 mr-1" />
-                Agrupar: {groupBy === "nenhum" ? "nenhum" : groupBy}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="text-[12px]">
-              <DropdownMenuItem onClick={() => setGroupBy("nenhum")}>Sem grupos</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setGroupBy("tipo")}>Por tipo</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setGroupBy("categoria")}>Por categoria</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+
 
           <div className="ml-auto flex items-center gap-2">
             {/* Filter */}
