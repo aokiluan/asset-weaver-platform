@@ -19,11 +19,10 @@ type Props = {
   onImported?: () => void;
 };
 
-type Step = "upload" | "map" | "preview" | "importing";
+type Step = "upload" | "preview" | "importing";
 
 const STEPS: { id: Step; label: string }[] = [
   { id: "upload", label: "Upload" },
-  { id: "map", label: "Mapeamento" },
   { id: "preview", label: "Validação" },
 ];
 
