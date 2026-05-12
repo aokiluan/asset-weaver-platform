@@ -299,6 +299,11 @@ export default function DiretorioDetail() {
   const [previewArq, setPreviewArq] = useState<Arquivo | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [cicloAberto, setCicloAberto] = useState<RevalidacaoCiclo | null>(null);
+  const [iniciarRevOpen, setIniciarRevOpen] = useState(false);
+  const [concluirRevOpen, setConcluirRevOpen] = useState(false);
+  const { hasRole } = useAuth();
+  const podeRevalidar = hasRole("admin") || hasRole("cadastro") || hasRole("gestor_geral");
 
   useEffect(() => {
     document.title = "Dossiê | Diretório";
