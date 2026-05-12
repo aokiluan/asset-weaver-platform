@@ -257,20 +257,6 @@ export function DocumentosUploadKanban({
     if (dt?.files?.length) uploadFiles(Array.from(dt.files));
   };
 
-  const slugifyCategoria = (nome: string) =>
-    nome
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/-+/g, "-")
-      .replace(/^-|-$/g, "");
-
-  const getExt = (name: string) => {
-    const m = name.match(/\.([^.]+)$/);
-    return m ? m[1].toLowerCase() : "";
-  };
-
   const renameInStorage = async (
     oldPath: string,
     newName: string,
@@ -312,14 +298,6 @@ export function DocumentosUploadKanban({
       }
     } else {
       const cat = categorias.find((c) => c.id === categoriaId);
-      const slug = cat ? slugifyCategoria(cat.nome) : "categoria";
-      const slugCedente = slugifyCategoria(cedenteRazaoSocial || "cedente");
-      const today = new Date();
-      const yyyy = today.getFullYear();
-      const mm = String(today.getMonth() + 1).padStart(2, "0");
-      const dd = String(today.getDate()).padStart(2, "0");
-      const dateStr = `${yyyy}.${mm}.${dd}`;
-
       // Conta documentos já existentes nessa categoria neste cedente
       const { count: baseCount } = await supabase
         .from("documentos")
@@ -329,9 +307,12 @@ export function DocumentosUploadKanban({
       let next = (baseCount ?? 0) + 1;
 
       for (const doc of docsAlvo) {
-        const ext = getExt(doc.nome_arquivo);
-        const seq = String(next).padStart(2, "0");
-        const novoNome = `${dateStr}_${slugCedente}_${slug}_${seq}${ext ? "." + ext : ""}`;
+        const novoNome = buildDocumentoFileName({
+          originalName: doc.nome_arquivo_original ?? doc.nome_arquivo,
+          categoria: cat?.nome ?? "outros",
+          cedente: cedenteRazaoSocial,
+          versao: next,
+        });
         const newPath = await renameInStorage(doc.storage_path, novoNome);
         const { error } = await supabase
           .from("documentos")
