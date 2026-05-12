@@ -1250,18 +1250,7 @@ function ArquivosTable(p: TableProps) {
           </tr>
         </thead>
         <tbody>
-          {p.groups
-            ? p.groups.map((g) => (
-                <FragmentGroup
-                  key={g.key}
-                  g={g}
-                  collapsed={p.collapsed.has(g.key)}
-                  toggle={() => p.toggleCollapse(g.key)}
-                  colSpan={colSpan}
-                  renderRow={renderRow}
-                />
-              ))
-            : p.flat.map(renderRow)}
+          {p.flat.map(renderRow)}
         </tbody>
       </table>
     </div>
