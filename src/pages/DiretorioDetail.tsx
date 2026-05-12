@@ -61,6 +61,9 @@ import {
   renovacaoLabel,
   type RenovacaoInfo,
 } from "@/lib/cadastro-renovacao";
+import { fetchCicloAberto, type RevalidacaoCiclo } from "@/lib/revalidacao-ciclos";
+import IniciarRevalidacaoDialog from "@/components/cedentes/IniciarRevalidacaoDialog";
+import ConcluirRevalidacaoDialog from "@/components/cedentes/ConcluirRevalidacaoDialog";
 import { downloadAtaById, generateAtaPdfBlobById } from "@/lib/comite-ata-pdf";
 import { generateCreditReportPdf } from "@/lib/credit-report-pdf";
 import { generateVisitReportPdf } from "@/lib/visit-report-pdf";
