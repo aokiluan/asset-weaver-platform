@@ -931,37 +931,19 @@ export default function DiretorioDetail() {
             </div>
           ) : viewMode === "grid" ? (
             <ArquivosGrid
-              groups={groups}
               flat={filteredSorted}
               profilesById={profilesById}
-              collapsed={collapsed}
-              toggleCollapse={(k) =>
-                setCollapsed((s) => {
-                  const ns = new Set(s);
-                  if (ns.has(k)) ns.delete(k); else ns.add(k);
-                  return ns;
-                })
-              }
               onOpen={openPreview}
               onDownload={handleDownload}
             />
           ) : (
             <ArquivosTable
-              groups={groups}
               flat={filteredSorted}
               profilesById={profilesById}
               colVis={colVis}
               sortKey={sortKey}
               sortIcon={sortIcon}
               onSort={handleSort}
-              collapsed={collapsed}
-              toggleCollapse={(k) =>
-                setCollapsed((s) => {
-                  const ns = new Set(s);
-                  if (ns.has(k)) ns.delete(k); else ns.add(k);
-                  return ns;
-                })
-              }
               onOpen={openPreview}
               onDownload={handleDownload}
             />
