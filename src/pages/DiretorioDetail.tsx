@@ -16,6 +16,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { PdfPreview } from "@/components/ui/pdf-preview";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   DropdownMenu,
@@ -1038,7 +1039,7 @@ export default function DiretorioDetail() {
             ) : (previewArq?.mimeType ?? "").startsWith("image/") ? (
               <img src={previewUrl} alt={previewArq?.nome} className="max-w-full max-h-full object-contain mx-auto" />
             ) : (
-              <iframe src={previewUrl} className="w-full h-full border rounded-md" title="preview" />
+              <PdfPreview src={previewUrl} className="h-full" />
             )}
           </div>
           {previewArq && previewArq.tipo !== "renovacao" && (
