@@ -60,7 +60,9 @@ import {
   renovacaoLabel,
   type RenovacaoInfo,
 } from "@/lib/cadastro-renovacao";
-import { downloadAtaById } from "@/lib/comite-ata-pdf";
+import { downloadAtaById, generateAtaPdfBlobById } from "@/lib/comite-ata-pdf";
+import { generateCreditReportPdf } from "@/lib/credit-report-pdf";
+import { generateVisitReportPdf } from "@/lib/visit-report-pdf";
 import { buildDocumentoFileName, getExt } from "@/lib/documento-filename";
 
 interface Cedente {
