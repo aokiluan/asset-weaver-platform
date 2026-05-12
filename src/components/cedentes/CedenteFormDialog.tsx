@@ -185,19 +185,6 @@ export function CedenteFormDialog({ open, onOpenChange, initial, onSaved }: Prop
               <Input id="cep" {...register("cep")} />
             </div>
 
-            <div className="space-y-0.5">
-              <Label>Status</Label>
-              <Select value={status} onValueChange={(v) => setValue("status", v as CedenteStatus)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="prospect">Prospect</SelectItem>
-                  <SelectItem value="em_analise">Em análise</SelectItem>
-                  <SelectItem value="aprovado">Aprovado</SelectItem>
-                  <SelectItem value="reprovado">Reprovado</SelectItem>
-                  <SelectItem value="inativo">Inativo</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
 
             <div className="space-y-0.5">
               <Label htmlFor="limite_aprovado">Limite aprovado (R$)</Label>
