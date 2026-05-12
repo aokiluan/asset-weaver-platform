@@ -155,7 +155,7 @@ export default function Cedentes() {
       </div>
 
       {/* KPIs */}
-      <div className="grid gap-3 md:grid-cols-3">
+      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-lg border bg-card p-3">
           <div className="text-[11px] text-muted-foreground leading-none">Total cadastrado</div>
           <div className="text-[18px] font-semibold tabular-nums leading-tight mt-1">{items.length}</div>
@@ -167,6 +167,18 @@ export default function Cedentes() {
         <div className="rounded-lg border bg-card p-3">
           <div className="text-[11px] text-muted-foreground leading-none">Limite total aprovado</div>
           <div className="text-[18px] font-semibold tabular-nums leading-tight mt-1">{fmtBRL(totalAprovado)}</div>
+        </div>
+        <div className="rounded-lg border bg-card p-3">
+          <div className="text-[11px] text-muted-foreground leading-none">Renovações pendentes</div>
+          <div className={cn(
+            "text-[18px] font-semibold tabular-nums leading-tight mt-1",
+            renovVencidas > 0 && "text-destructive",
+          )}>
+            {renovPendentes}
+          </div>
+          <div className="text-[10px] text-muted-foreground leading-none mt-1 tabular-nums">
+            {renovVencidas} vencida{renovVencidas === 1 ? "" : "s"} · {renovAtencao} a vencer
+          </div>
         </div>
       </div>
 
