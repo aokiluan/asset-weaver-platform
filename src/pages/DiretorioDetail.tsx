@@ -1157,16 +1157,20 @@ function ArquivosTable(p: TableProps) {
           </td>
         )}
         <td className="px-3 py-1.5 text-right" onClick={(e) => e.stopPropagation()}>
-          <div className="flex items-center justify-end gap-0.5">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => p.onOpen(a)}>
-                  <Eye className="h-3 w-3" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent className="text-[11px]">Visualização rápida</TooltipContent>
-            </Tooltip>
-            {(a.tipo === "documento" || a.tipo === "ata") && (
+          <div className="flex items-center justify-end gap-1">
+            {a.tipo !== "renovacao" ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => p.onOpen(a)}>
+                    <Eye className="h-3 w-3" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="text-[11px]">Visualização rápida</TooltipContent>
+              </Tooltip>
+            ) : (
+              <span className="inline-block h-6 w-6" aria-hidden />
+            )}
+            {a.tipo === "documento" || a.tipo === "ata" || a.tipo === "parecer" ? (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => p.onDownload(a)}>
@@ -1175,6 +1179,8 @@ function ArquivosTable(p: TableProps) {
                 </TooltipTrigger>
                 <TooltipContent className="text-[11px]">Baixar</TooltipContent>
               </Tooltip>
+            ) : (
+              <span className="inline-block h-6 w-6" aria-hidden />
             )}
           </div>
         </td>
