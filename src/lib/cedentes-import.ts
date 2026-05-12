@@ -212,9 +212,7 @@ export function validateRows(
       ? "error"
       : isDuplicate
       ? "warning"
-      : warnings.length > 0
-      ? "warning"
-      : "valid";
+      : "valid"; // warnings não-duplicadas ainda são importáveis
     return { rowIndex: idx + 2, raw, mapped, errors, warnings, status };
   });
 }
