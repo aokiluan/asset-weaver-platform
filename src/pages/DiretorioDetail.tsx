@@ -60,7 +60,9 @@ import {
   renovacaoLabel,
   type RenovacaoInfo,
 } from "@/lib/cadastro-renovacao";
-import { downloadAtaById } from "@/lib/comite-ata-pdf";
+import { downloadAtaById, generateAtaPdfBlobById } from "@/lib/comite-ata-pdf";
+import { generateCreditReportPdf } from "@/lib/credit-report-pdf";
+import { generateVisitReportPdf } from "@/lib/visit-report-pdf";
 import { buildDocumentoFileName, getExt } from "@/lib/documento-filename";
 
 interface Cedente {
@@ -548,23 +550,55 @@ export default function DiretorioDetail() {
       } catch (e: any) {
         toast.error("Erro ao gerar PDF", { description: e.message });
       }
+    } else if (a.tipo === "parecer" && a.origem === "credito") {
+      try {
+        await generateCreditReportPdf(a.raw, cedente?.razao_social, "download");
+      } catch (e: any) {
+        toast.error("Erro ao gerar PDF", { description: e.message });
+      }
+    } else if (a.tipo === "parecer" && a.origem === "visita") {
+      try {
+        await generateVisitReportPdf(a.raw, cedente!.id, `v${a.raw.versao}`, "download");
+      } catch (e: any) {
+        toast.error("Erro ao gerar PDF", { description: e.message });
+      }
     } else {
       toast.info("Abra no cedente para visualizar/baixar.");
     }
   };
 
-  const openPreview = async (a: Arquivo) => {
-    setPreviewArq(a);
-    setPreviewUrl(null);
-    if (a.tipo === "documento" && a.storagePath) {
-      const { data, error } = await supabase.storage.from("cedente-docs").createSignedUrl(a.storagePath, 300);
-      if (error || !data) {
-        toast.error("Erro ao gerar preview", { description: error?.message });
-        return;
-      }
-      setPreviewUrl(data.signedUrl);
+  const revokePreviewUrl = (url: string | null) => {
+    if (url && url.startsWith("blob:")) {
+      try { URL.revokeObjectURL(url); } catch { /* ignore */ }
     }
   };
+
+  const openPreview = async (a: Arquivo) => {
+    setPreviewArq(a);
+    setPreviewUrl((prev) => { revokePreviewUrl(prev); return null; });
+    try {
+      if (a.tipo === "documento" && a.storagePath) {
+        const { data, error } = await supabase.storage.from("cedente-docs").createSignedUrl(a.storagePath, 300);
+        if (error || !data) {
+          toast.error("Erro ao gerar preview", { description: error?.message });
+          return;
+        }
+        setPreviewUrl(data.signedUrl);
+      } else if (a.tipo === "ata") {
+        const { url } = await generateAtaPdfBlobById(a.raw.id);
+        setPreviewUrl(url);
+      } else if (a.tipo === "parecer" && a.origem === "credito") {
+        const res = await generateCreditReportPdf(a.raw, cedente?.razao_social, "blob");
+        if (res) setPreviewUrl(res.url);
+      } else if (a.tipo === "parecer" && a.origem === "visita") {
+        const res = await generateVisitReportPdf(a.raw, cedente!.id, `v${a.raw.versao}`, "blob");
+        if (res) setPreviewUrl(res.url);
+      }
+    } catch (e: any) {
+      toast.error("Erro ao gerar preview", { description: e?.message });
+    }
+  };
+
 
   // Drag & drop
   const handleDocsDragOver = (e: React.DragEvent) => {
@@ -953,8 +987,16 @@ export default function DiretorioDetail() {
       </div>
 
       {/* Preview Sheet */}
-      <Sheet open={!!previewArq} onOpenChange={(v) => { if (!v) { setPreviewArq(null); setPreviewUrl(null); } }}>
-        <SheetContent side="right" className="w-full sm:max-w-2xl flex flex-col">
+      <Sheet
+        open={!!previewArq}
+        onOpenChange={(v) => {
+          if (!v) {
+            setPreviewArq(null);
+            setPreviewUrl((prev) => { revokePreviewUrl(prev); return null; });
+          }
+        }}
+      >
+        <SheetContent side="right" className="w-full sm:max-w-4xl flex flex-col">
           <SheetHeader>
             <SheetTitle className="text-[14px] truncate">{previewArq?.nome}</SheetTitle>
             <SheetDescription className="text-[11px]">
@@ -973,25 +1015,7 @@ export default function DiretorioDetail() {
             </SheetDescription>
           </SheetHeader>
           <div className="flex-1 mt-3 min-h-0 overflow-auto">
-            {previewArq?.tipo === "documento" ? (
-              !previewUrl ? (
-                <div className="flex items-center justify-center h-full text-muted-foreground text-[12px]">
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" /> Carregando…
-                </div>
-              ) : (previewArq?.mimeType ?? "").startsWith("image/") ? (
-                <img src={previewUrl} alt={previewArq?.nome} className="max-w-full max-h-full object-contain mx-auto" />
-              ) : (previewArq?.mimeType === "application/pdf" || getExt(previewArq?.nome ?? "") === "pdf") ? (
-                <iframe src={previewUrl} className="w-full h-full border rounded-md" title="preview" />
-              ) : (
-                <div className="text-center py-10 space-y-3">
-                  <FileText className="h-10 w-10 mx-auto text-muted-foreground" />
-                  <p className="text-[12px] text-muted-foreground">Preview não disponível para este tipo de arquivo.</p>
-                  <Button size="sm" onClick={() => previewArq && handleDownload(previewArq)}>
-                    <Download className="h-3.5 w-3.5 mr-1" /> Baixar
-                  </Button>
-                </div>
-              )
-            ) : previewArq?.tipo === "renovacao" ? (
+            {previewArq?.tipo === "renovacao" ? (
               <div className="space-y-2 text-[12px]">
                 <div className="rounded-md border bg-card p-2.5 leading-tight space-y-1">
                   <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Revisão cadastral</div>
@@ -1007,50 +1031,24 @@ export default function DiretorioDetail() {
                   <Link to={`/cedentes/${cedente.id}`}>Ver no histórico do cedente</Link>
                 </Button>
               </div>
-            ) : previewArq?.tipo === "ata" ? (
-              <div className="space-y-2 text-[12px]">
-                <div className="rounded-md border bg-card p-2.5 leading-tight space-y-1">
-                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                    Ata #{previewArq.raw.numero_comite}
-                  </div>
-                  <div>{fmtDate(previewArq.raw.realizado_em)}</div>
-                  <div>
-                    Decisão:{" "}
-                    <Badge variant="outline" className="text-[10px] capitalize">
-                      {previewArq.raw.decisao}
-                    </Badge>
-                  </div>
-                  {previewArq.raw.alcada_nome && (
-                    <div className="text-muted-foreground">Alçada: {previewArq.raw.alcada_nome}</div>
-                  )}
-                  {previewArq.raw.pleito?.valor_solicitado != null && (
-                    <div className="text-muted-foreground">Valor: {fmtBRL(previewArq.raw.pleito.valor_solicitado)}</div>
-                  )}
-                </div>
-                <Button size="sm" onClick={() => previewArq && handleDownload(previewArq)}>
-                  <Download className="h-3.5 w-3.5 mr-1" /> Baixar PDF
-                </Button>
+            ) : !previewUrl ? (
+              <div className="flex items-center justify-center h-full text-muted-foreground text-[12px]">
+                <Loader2 className="h-4 w-4 animate-spin mr-2" /> Carregando…
               </div>
-            ) : previewArq?.tipo === "parecer" ? (
-              <div className="space-y-2 text-[12px]">
-                <div className="rounded-md border bg-card p-2.5 leading-tight space-y-1">
-                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                    {previewArq.origem === "credito" ? "Parecer de crédito" : "Parecer comercial (visita)"} v{previewArq.raw.versao}
-                  </div>
-                  <div>{fmtDateTime(previewArq.data)}</div>
-                  <div className="text-muted-foreground">
-                    Por: {previewArq.autorId ? profilesById[previewArq.autorId] ?? "—" : "—"}
-                  </div>
-                </div>
-                <Button asChild variant="outline" size="sm">
-                  <Link to={`/cedentes/${cedente.id}`}>Abrir no cedente</Link>
-                </Button>
-              </div>
-            ) : null}
+            ) : (previewArq?.mimeType ?? "").startsWith("image/") ? (
+              <img src={previewUrl} alt={previewArq?.nome} className="max-w-full max-h-full object-contain mx-auto" />
+            ) : (
+              <iframe src={previewUrl} className="w-full h-full border rounded-md" title="preview" />
+            )}
           </div>
-          {previewArq?.tipo === "documento" && previewUrl && (
-            <div className="mt-3 flex justify-end">
-              <Button size="sm" variant="outline" onClick={() => previewArq && handleDownload(previewArq)}>
+          {previewArq && previewArq.tipo !== "renovacao" && (
+            <div className="mt-3 flex justify-end gap-2">
+              {previewUrl && (
+                <Button size="sm" variant="ghost" onClick={() => window.open(previewUrl, "_blank")}>
+                  Abrir em nova aba
+                </Button>
+              )}
+              <Button size="sm" variant="outline" onClick={() => handleDownload(previewArq)}>
                 <Download className="h-3.5 w-3.5 mr-1" /> Baixar
               </Button>
             </div>
@@ -1159,16 +1157,20 @@ function ArquivosTable(p: TableProps) {
           </td>
         )}
         <td className="px-3 py-1.5 text-right" onClick={(e) => e.stopPropagation()}>
-          <div className="flex items-center justify-end gap-0.5">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => p.onOpen(a)}>
-                  <Eye className="h-3 w-3" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent className="text-[11px]">Visualização rápida</TooltipContent>
-            </Tooltip>
-            {(a.tipo === "documento" || a.tipo === "ata") && (
+          <div className="flex items-center justify-end gap-1">
+            {a.tipo !== "renovacao" ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => p.onOpen(a)}>
+                    <Eye className="h-3 w-3" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="text-[11px]">Visualização rápida</TooltipContent>
+              </Tooltip>
+            ) : (
+              <span className="inline-block h-6 w-6" aria-hidden />
+            )}
+            {a.tipo === "documento" || a.tipo === "ata" || a.tipo === "parecer" ? (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => p.onDownload(a)}>
@@ -1177,6 +1179,8 @@ function ArquivosTable(p: TableProps) {
                 </TooltipTrigger>
                 <TooltipContent className="text-[11px]">Baixar</TooltipContent>
               </Tooltip>
+            ) : (
+              <span className="inline-block h-6 w-6" aria-hidden />
             )}
           </div>
         </td>
