@@ -975,8 +975,16 @@ export default function DiretorioDetail() {
       </div>
 
       {/* Preview Sheet */}
-      <Sheet open={!!previewArq} onOpenChange={(v) => { if (!v) { setPreviewArq(null); setPreviewUrl(null); } }}>
-        <SheetContent side="right" className="w-full sm:max-w-2xl flex flex-col">
+      <Sheet
+        open={!!previewArq}
+        onOpenChange={(v) => {
+          if (!v) {
+            setPreviewArq(null);
+            setPreviewUrl((prev) => { revokePreviewUrl(prev); return null; });
+          }
+        }}
+      >
+        <SheetContent side="right" className="w-full sm:max-w-4xl flex flex-col">
           <SheetHeader>
             <SheetTitle className="text-[14px] truncate">{previewArq?.nome}</SheetTitle>
             <SheetDescription className="text-[11px]">
@@ -995,25 +1003,7 @@ export default function DiretorioDetail() {
             </SheetDescription>
           </SheetHeader>
           <div className="flex-1 mt-3 min-h-0 overflow-auto">
-            {previewArq?.tipo === "documento" ? (
-              !previewUrl ? (
-                <div className="flex items-center justify-center h-full text-muted-foreground text-[12px]">
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" /> Carregando…
-                </div>
-              ) : (previewArq?.mimeType ?? "").startsWith("image/") ? (
-                <img src={previewUrl} alt={previewArq?.nome} className="max-w-full max-h-full object-contain mx-auto" />
-              ) : (previewArq?.mimeType === "application/pdf" || getExt(previewArq?.nome ?? "") === "pdf") ? (
-                <iframe src={previewUrl} className="w-full h-full border rounded-md" title="preview" />
-              ) : (
-                <div className="text-center py-10 space-y-3">
-                  <FileText className="h-10 w-10 mx-auto text-muted-foreground" />
-                  <p className="text-[12px] text-muted-foreground">Preview não disponível para este tipo de arquivo.</p>
-                  <Button size="sm" onClick={() => previewArq && handleDownload(previewArq)}>
-                    <Download className="h-3.5 w-3.5 mr-1" /> Baixar
-                  </Button>
-                </div>
-              )
-            ) : previewArq?.tipo === "renovacao" ? (
+            {previewArq?.tipo === "renovacao" ? (
               <div className="space-y-2 text-[12px]">
                 <div className="rounded-md border bg-card p-2.5 leading-tight space-y-1">
                   <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Revisão cadastral</div>
@@ -1029,50 +1019,24 @@ export default function DiretorioDetail() {
                   <Link to={`/cedentes/${cedente.id}`}>Ver no histórico do cedente</Link>
                 </Button>
               </div>
-            ) : previewArq?.tipo === "ata" ? (
-              <div className="space-y-2 text-[12px]">
-                <div className="rounded-md border bg-card p-2.5 leading-tight space-y-1">
-                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                    Ata #{previewArq.raw.numero_comite}
-                  </div>
-                  <div>{fmtDate(previewArq.raw.realizado_em)}</div>
-                  <div>
-                    Decisão:{" "}
-                    <Badge variant="outline" className="text-[10px] capitalize">
-                      {previewArq.raw.decisao}
-                    </Badge>
-                  </div>
-                  {previewArq.raw.alcada_nome && (
-                    <div className="text-muted-foreground">Alçada: {previewArq.raw.alcada_nome}</div>
-                  )}
-                  {previewArq.raw.pleito?.valor_solicitado != null && (
-                    <div className="text-muted-foreground">Valor: {fmtBRL(previewArq.raw.pleito.valor_solicitado)}</div>
-                  )}
-                </div>
-                <Button size="sm" onClick={() => previewArq && handleDownload(previewArq)}>
-                  <Download className="h-3.5 w-3.5 mr-1" /> Baixar PDF
-                </Button>
+            ) : !previewUrl ? (
+              <div className="flex items-center justify-center h-full text-muted-foreground text-[12px]">
+                <Loader2 className="h-4 w-4 animate-spin mr-2" /> Carregando…
               </div>
-            ) : previewArq?.tipo === "parecer" ? (
-              <div className="space-y-2 text-[12px]">
-                <div className="rounded-md border bg-card p-2.5 leading-tight space-y-1">
-                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                    {previewArq.origem === "credito" ? "Parecer de crédito" : "Parecer comercial (visita)"} v{previewArq.raw.versao}
-                  </div>
-                  <div>{fmtDateTime(previewArq.data)}</div>
-                  <div className="text-muted-foreground">
-                    Por: {previewArq.autorId ? profilesById[previewArq.autorId] ?? "—" : "—"}
-                  </div>
-                </div>
-                <Button asChild variant="outline" size="sm">
-                  <Link to={`/cedentes/${cedente.id}`}>Abrir no cedente</Link>
-                </Button>
-              </div>
-            ) : null}
+            ) : (previewArq?.mimeType ?? "").startsWith("image/") ? (
+              <img src={previewUrl} alt={previewArq?.nome} className="max-w-full max-h-full object-contain mx-auto" />
+            ) : (
+              <iframe src={previewUrl} className="w-full h-full border rounded-md" title="preview" />
+            )}
           </div>
-          {previewArq?.tipo === "documento" && previewUrl && (
-            <div className="mt-3 flex justify-end">
-              <Button size="sm" variant="outline" onClick={() => previewArq && handleDownload(previewArq)}>
+          {previewArq && previewArq.tipo !== "renovacao" && (
+            <div className="mt-3 flex justify-end gap-2">
+              {previewUrl && (
+                <Button size="sm" variant="ghost" onClick={() => window.open(previewUrl, "_blank")}>
+                  Abrir em nova aba
+                </Button>
+              )}
+              <Button size="sm" variant="outline" onClick={() => handleDownload(previewArq)}>
                 <Download className="h-3.5 w-3.5 mr-1" /> Baixar
               </Button>
             </div>
