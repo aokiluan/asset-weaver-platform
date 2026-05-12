@@ -383,6 +383,12 @@ export default function Cedentes() {
           setSelectedId(id);
         }}
       />
+
+      <CedenteImportDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        onImported={() => load()}
+      />
     </div>
   );
 }
