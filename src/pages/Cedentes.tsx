@@ -138,22 +138,27 @@ export default function Cedentes() {
             Cadastro de cedentes, status de análise e limites aprovados.
           </p>
         </div>
-        <TooltipProvider delayDuration={200}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span tabIndex={0} className="inline-flex">
-                <Button onClick={() => setNovoOpen(true)} disabled={authLoading || !canCreate}>
-                  <Plus className="h-4 w-4 mr-2" /> Novo cadastro
-                </Button>
-              </span>
-            </TooltipTrigger>
-            {!canCreate && !authLoading && (
-              <TooltipContent side="bottom" className="max-w-xs text-xs">
-                Seu usuário não tem permissão
-              </TooltipContent>
-            )}
-          </Tooltip>
-        </TooltipProvider>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => setImportOpen(true)} disabled={authLoading || !canCreate}>
+            <Upload className="h-4 w-4 mr-2" /> Importar planilha
+          </Button>
+          <TooltipProvider delayDuration={200}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span tabIndex={0} className="inline-flex">
+                  <Button onClick={() => setNovoOpen(true)} disabled={authLoading || !canCreate}>
+                    <Plus className="h-4 w-4 mr-2" /> Novo cadastro
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              {!canCreate && !authLoading && (
+                <TooltipContent side="bottom" className="max-w-xs text-xs">
+                  Seu usuário não tem permissão
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
+        </div>
       </div>
 
       {/* KPIs */}
