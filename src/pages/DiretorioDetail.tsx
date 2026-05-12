@@ -3,7 +3,6 @@ import { Link, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { PageTabs } from "@/components/PageTabs";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,9 +38,11 @@ import {
   Download,
   FileText,
   FileImage,
+  FileCheck2,
   Filter,
   FolderOpen,
   Folder,
+  Gavel,
   LayoutGrid,
   LayoutList,
   Loader2,
@@ -116,6 +117,47 @@ interface VersionRow {
   created_by: string;
 }
 
+type TipoArquivo = "documento" | "renovacao" | "ata" | "parecer";
+
+interface Arquivo {
+  id: string;
+  tipo: TipoArquivo;
+  nome: string;
+  nomeOriginal?: string | null;
+  categoria?: string | null;
+  categoriaId?: string | null;
+  data: string;
+  autorId?: string | null;
+  tamanhoBytes?: number | null;
+  storagePath?: string | null;
+  mimeType?: string | null;
+  origem: "cadastro" | "anexo-livre" | "comite" | "credito" | "visita";
+  status?: "aprovado" | "pendente" | "reprovado";
+  // referência ao registro original
+  raw: any;
+}
+
+const TIPO_LABEL: Record<TipoArquivo, string> = {
+  documento: "Documento",
+  renovacao: "Renovação",
+  ata: "Ata",
+  parecer: "Parecer",
+};
+
+const TIPO_BADGE: Record<TipoArquivo, string> = {
+  documento: "border-blue-500/30 text-blue-700 dark:text-blue-400 bg-blue-500/10",
+  renovacao: "border-amber-500/30 text-amber-700 dark:text-amber-400 bg-amber-500/10",
+  ata: "border-purple-500/30 text-purple-700 dark:text-purple-400 bg-purple-500/10",
+  parecer: "border-emerald-500/30 text-emerald-700 dark:text-emerald-400 bg-emerald-500/10",
+};
+
+const TIPO_ICON: Record<TipoArquivo, typeof FileText> = {
+  documento: FileText,
+  renovacao: RotateCcw,
+  ata: Gavel,
+  parecer: FileCheck2,
+};
+
 const fmtCNPJ = (s: string) => {
   const d = (s ?? "").replace(/\D/g, "");
   if (d.length !== 14) return s;
@@ -136,7 +178,7 @@ const fmtDateTime = (s: string | null) =>
       })
     : "—";
 
-const fmtBytes = (b: number | null) => {
+const fmtBytes = (b: number | null | undefined) => {
   if (!b) return "—";
   if (b < 1024) return `${b} B`;
   if (b < 1024 * 1024) return `${(b / 1024).toFixed(1)} KB`;
@@ -159,11 +201,35 @@ const renovBadgeClass = (info: RenovacaoInfo) => {
   }
 };
 
-type SortKey = "nome" | "categoria" | "origem" | "status" | "tamanho" | "data" | "por";
+function dateToSlug(iso: string) {
+  const d = new Date(iso);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}.${m}.${day}`;
+}
+
+function slugify(s: string, max = 22) {
+  return s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, max);
+}
+
+function abrevCedente(razao: string) {
+  return slugify(razao.split(/\s+/).slice(0, 2).join(" "), 18);
+}
+
+type SortKey = "nome" | "tipo" | "categoria" | "origem" | "status" | "tamanho" | "data" | "por";
 type SortDir = "asc" | "desc";
 type ViewMode = "list" | "grid";
+type GroupBy = "nenhum" | "tipo" | "categoria";
 
 interface ColVis {
+  tipo: boolean;
   categoria: boolean;
   origem: boolean;
   status: boolean;
@@ -172,6 +238,7 @@ interface ColVis {
   por: boolean;
 }
 const COL_DEFAULT: ColVis = {
+  tipo: true,
   categoria: true,
   origem: true,
   status: true,
@@ -179,7 +246,7 @@ const COL_DEFAULT: ColVis = {
   data: true,
   por: true,
 };
-const COL_KEY = "diretorio.colunas.v1";
+const COL_KEY = "diretorio.colunas.v2";
 
 function loadColPrefs(): ColVis {
   try {
@@ -191,9 +258,10 @@ function loadColPrefs(): ColVis {
   }
 }
 
-function fileIcon(mime: string | null, name: string) {
-  const ext = getExt(name);
-  if ((mime ?? "").startsWith("image/") || ["png", "jpg", "jpeg", "webp", "gif"].includes(ext)) {
+function fileIcon(a: Arquivo) {
+  if (a.tipo !== "documento") return TIPO_ICON[a.tipo];
+  const ext = getExt(a.nome);
+  if ((a.mimeType ?? "").startsWith("image/") || ["png", "jpg", "jpeg", "webp", "gif"].includes(ext)) {
     return FileImage;
   }
   return FileText;
@@ -214,18 +282,19 @@ export default function DiretorioDetail() {
   const [uploadOpen, setUploadOpen] = useState(false);
   const [uploadInitialFiles, setUploadInitialFiles] = useState<File[] | null>(null);
 
-  // ===== Estados da aba Documentos =====
+  // ===== Filtros / UI =====
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("data");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [viewMode, setViewMode] = useState<ViewMode>("list");
-  const [grouped, setGrouped] = useState(true);
+  const [groupBy, setGroupBy] = useState<GroupBy>("tipo");
   const [colVis, setColVis] = useState<ColVis>(loadColPrefs);
+  const [filterTipos, setFilterTipos] = useState<Set<TipoArquivo>>(new Set());
   const [filterCats, setFilterCats] = useState<Set<string>>(new Set());
-  const [filterOrigem, setFilterOrigem] = useState<Set<"cadastro" | "livre">>(new Set());
+  const [filterOrigem, setFilterOrigem] = useState<Set<string>>(new Set());
   const [filterStatus, setFilterStatus] = useState<Set<string>>(new Set());
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
-  const [previewDoc, setPreviewDoc] = useState<Documento | null>(null);
+  const [previewArq, setPreviewArq] = useState<Arquivo | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
 
@@ -327,67 +396,154 @@ export default function DiretorioDetail() {
     return m;
   }, [categorias]);
 
+  // ===== Mescla unificada =====
+  const arquivos = useMemo<Arquivo[]>(() => {
+    if (!cedente) return [];
+    const abrev = abrevCedente(cedente.razao_social);
+    const out: Arquivo[] = [];
+
+    documentos.forEach((d) => {
+      const cat = d.categoria_id ? catsById[d.categoria_id] : null;
+      const isLivre = cat?.requer_conciliacao === false;
+      out.push({
+        id: `doc-${d.id}`,
+        tipo: "documento",
+        nome: d.nome_arquivo,
+        nomeOriginal: d.nome_arquivo_original,
+        categoria: cat?.nome ?? null,
+        categoriaId: d.categoria_id,
+        data: d.created_at,
+        autorId: d.uploaded_by,
+        tamanhoBytes: d.tamanho_bytes,
+        storagePath: d.storage_path,
+        mimeType: d.mime_type,
+        origem: isLivre ? "anexo-livre" : "cadastro",
+        status: d.status,
+        raw: d,
+      });
+    });
+
+    historico.forEach((h) => {
+      out.push({
+        id: `ren-${h.id}`,
+        tipo: "renovacao",
+        nome: `${dateToSlug(h.created_at)}_renovacao-cadastral_${abrev}`,
+        data: h.created_at,
+        autorId: h.user_id,
+        origem: "cadastro",
+        raw: h,
+      });
+    });
+
+    atas.forEach((a) => {
+      out.push({
+        id: `ata-${a.id}`,
+        tipo: "ata",
+        nome: `${dateToSlug(a.realizado_em)}_ata-comite-${String(a.numero_comite).padStart(2, "0")}_${abrev}`,
+        data: a.realizado_em,
+        origem: "comite",
+        status: a.decisao === "aprovado" ? "aprovado" : "reprovado",
+        raw: a,
+      });
+    });
+
+    creditVersions.forEach((v) => {
+      out.push({
+        id: `crv-${v.id}`,
+        tipo: "parecer",
+        nome: `${dateToSlug(v.created_at)}_parecer-credito_${abrev}_v${String(v.versao).padStart(2, "0")}`,
+        categoria: "Crédito",
+        data: v.created_at,
+        autorId: v.created_by,
+        origem: "credito",
+        raw: v,
+      });
+    });
+
+    visitVersions.forEach((v) => {
+      out.push({
+        id: `vrv-${v.id}`,
+        tipo: "parecer",
+        nome: `${dateToSlug(v.created_at)}_parecer-comercial-visita_${abrev}_v${String(v.versao).padStart(2, "0")}`,
+        categoria: "Comercial",
+        data: v.created_at,
+        autorId: v.created_by,
+        origem: "visita",
+        raw: v,
+      });
+    });
+
+    return out;
+  }, [documentos, historico, atas, creditVersions, visitVersions, catsById, cedente]);
+
+  const totalsByTipo = useMemo(() => {
+    const t: Record<TipoArquivo, number> = { documento: 0, renovacao: 0, ata: 0, parecer: 0 };
+    arquivos.forEach((a) => (t[a.tipo] += 1));
+    return t;
+  }, [arquivos]);
+
   // ===== Filtragem + ordenação =====
-  const filteredSortedDocs = useMemo(() => {
+  const filteredSorted = useMemo(() => {
     const q = search.trim().toLowerCase();
-    let list = documentos.filter((d) => {
-      if (q && !d.nome_arquivo.toLowerCase().includes(q) && !(d.nome_arquivo_original ?? "").toLowerCase().includes(q))
-        return false;
-      if (filterCats.size > 0 && (!d.categoria_id || !filterCats.has(d.categoria_id))) return false;
-      if (filterOrigem.size > 0) {
-        const cat = d.categoria_id ? catsById[d.categoria_id] : null;
-        const origem = cat?.requer_conciliacao === false ? "livre" : "cadastro";
-        if (!filterOrigem.has(origem)) return false;
+    let list = arquivos.filter((a) => {
+      if (q && !a.nome.toLowerCase().includes(q) && !(a.nomeOriginal ?? "").toLowerCase().includes(q)) return false;
+      if (filterTipos.size > 0 && !filterTipos.has(a.tipo)) return false;
+      if (filterCats.size > 0) {
+        if (!a.categoriaId || !filterCats.has(a.categoriaId)) return false;
       }
-      if (filterStatus.size > 0 && !filterStatus.has(d.status)) return false;
+      if (filterOrigem.size > 0 && !filterOrigem.has(a.origem)) return false;
+      if (filterStatus.size > 0 && (!a.status || !filterStatus.has(a.status))) return false;
       return true;
     });
 
     const dir = sortDir === "asc" ? 1 : -1;
-    const cmp = (a: Documento, b: Documento) => {
+    const cmp = (a: Arquivo, b: Arquivo) => {
       switch (sortKey) {
         case "nome":
-          return a.nome_arquivo.localeCompare(b.nome_arquivo) * dir;
-        case "categoria": {
-          const ca = a.categoria_id ? catsById[a.categoria_id]?.nome ?? "" : "";
-          const cb = b.categoria_id ? catsById[b.categoria_id]?.nome ?? "" : "";
-          return ca.localeCompare(cb) * dir;
-        }
-        case "origem": {
-          const oa = a.categoria_id && catsById[a.categoria_id]?.requer_conciliacao === false ? "livre" : "cadastro";
-          const ob = b.categoria_id && catsById[b.categoria_id]?.requer_conciliacao === false ? "livre" : "cadastro";
-          return oa.localeCompare(ob) * dir;
-        }
+          return a.nome.localeCompare(b.nome) * dir;
+        case "tipo":
+          return TIPO_LABEL[a.tipo].localeCompare(TIPO_LABEL[b.tipo]) * dir;
+        case "categoria":
+          return (a.categoria ?? "").localeCompare(b.categoria ?? "") * dir;
+        case "origem":
+          return a.origem.localeCompare(b.origem) * dir;
         case "status":
-          return a.status.localeCompare(b.status) * dir;
+          return (a.status ?? "").localeCompare(b.status ?? "") * dir;
         case "tamanho":
-          return ((a.tamanho_bytes ?? 0) - (b.tamanho_bytes ?? 0)) * dir;
+          return ((a.tamanhoBytes ?? 0) - (b.tamanhoBytes ?? 0)) * dir;
         case "por": {
-          const pa = profilesById[a.uploaded_by] ?? "";
-          const pb = profilesById[b.uploaded_by] ?? "";
+          const pa = a.autorId ? profilesById[a.autorId] ?? "" : "";
+          const pb = b.autorId ? profilesById[b.autorId] ?? "" : "";
           return pa.localeCompare(pb) * dir;
         }
         case "data":
         default:
-          return (new Date(a.created_at).getTime() - new Date(b.created_at).getTime()) * dir;
+          return (new Date(a.data).getTime() - new Date(b.data).getTime()) * dir;
       }
     };
     return list.sort(cmp);
-  }, [documentos, search, filterCats, filterOrigem, filterStatus, sortKey, sortDir, catsById, profilesById]);
+  }, [arquivos, search, filterTipos, filterCats, filterOrigem, filterStatus, sortKey, sortDir, profilesById]);
 
-  const activeFilterCount = filterCats.size + filterOrigem.size + filterStatus.size;
+  const activeFilterCount = filterTipos.size + filterCats.size + filterOrigem.size + filterStatus.size;
 
-  const groupedDocs = useMemo(() => {
-    if (!grouped) return null;
-    const map = new Map<string, { label: string; docs: Documento[] }>();
-    for (const d of filteredSortedDocs) {
-      const key = d.categoria_id ?? "__sem__";
-      const label = d.categoria_id ? catsById[d.categoria_id]?.nome ?? "Sem categoria" : "Sem categoria";
-      if (!map.has(key)) map.set(key, { label, docs: [] });
-      map.get(key)!.docs.push(d);
+  const groups = useMemo(() => {
+    if (groupBy === "nenhum") return null;
+    const map = new Map<string, { label: string; items: Arquivo[] }>();
+    for (const a of filteredSorted) {
+      let key: string;
+      let label: string;
+      if (groupBy === "tipo") {
+        key = a.tipo;
+        label = TIPO_LABEL[a.tipo];
+      } else {
+        key = a.categoriaId ?? `__semcat_${a.tipo}`;
+        label = a.categoria ?? "Sem categoria";
+      }
+      if (!map.has(key)) map.set(key, { label, items: [] });
+      map.get(key)!.items.push(a);
     }
     return Array.from(map.entries()).map(([key, v]) => ({ key, ...v }));
-  }, [filteredSortedDocs, grouped, catsById]);
+  }, [filteredSorted, groupBy]);
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -398,27 +554,39 @@ export default function DiretorioDetail() {
     }
   };
 
-  const handleDownload = async (storagePath: string) => {
-    const { data, error } = await supabase.storage.from("cedente-docs").createSignedUrl(storagePath, 60);
-    if (error || !data) {
-      toast.error("Erro ao gerar link", { description: error?.message });
-      return;
+  const handleDownload = async (a: Arquivo) => {
+    if (a.tipo === "documento" && a.storagePath) {
+      const { data, error } = await supabase.storage.from("cedente-docs").createSignedUrl(a.storagePath, 60);
+      if (error || !data) {
+        toast.error("Erro ao gerar link", { description: error?.message });
+        return;
+      }
+      window.open(data.signedUrl, "_blank");
+    } else if (a.tipo === "ata") {
+      try {
+        await downloadAtaById(a.raw.id);
+      } catch (e: any) {
+        toast.error("Erro ao gerar PDF", { description: e.message });
+      }
+    } else {
+      toast.info("Abra no cedente para visualizar/baixar.");
     }
-    window.open(data.signedUrl, "_blank");
   };
 
-  const openPreview = async (d: Documento) => {
-    setPreviewDoc(d);
+  const openPreview = async (a: Arquivo) => {
+    setPreviewArq(a);
     setPreviewUrl(null);
-    const { data, error } = await supabase.storage.from("cedente-docs").createSignedUrl(d.storage_path, 300);
-    if (error || !data) {
-      toast.error("Erro ao gerar preview", { description: error?.message });
-      return;
+    if (a.tipo === "documento" && a.storagePath) {
+      const { data, error } = await supabase.storage.from("cedente-docs").createSignedUrl(a.storagePath, 300);
+      if (error || !data) {
+        toast.error("Erro ao gerar preview", { description: error?.message });
+        return;
+      }
+      setPreviewUrl(data.signedUrl);
     }
-    setPreviewUrl(data.signedUrl);
   };
 
-  // Drag & drop global na aba Documentos
+  // Drag & drop
   const handleDocsDragOver = (e: React.DragEvent) => {
     if (e.dataTransfer?.types?.includes("Files")) {
       e.preventDefault();
@@ -455,6 +623,15 @@ export default function DiretorioDetail() {
         <ChevronDown className="h-3 w-3 inline ml-0.5" />
       )
     ) : null;
+
+  const toggleTipoFilter = (t: TipoArquivo) => {
+    setFilterTipos((s) => {
+      const ns = new Set(s);
+      if (ns.has(t)) ns.delete(t);
+      else ns.add(t);
+      return ns;
+    });
+  };
 
   return (
     <TooltipProvider>
@@ -495,490 +672,440 @@ export default function DiretorioDetail() {
           </div>
         </div>
 
-        <Tabs defaultValue="documentos" className="space-y-3">
-          <TabsList className="h-8">
-            <TabsTrigger value="documentos" className="text-[12px]">
-              Documentos · {documentos.length}
-            </TabsTrigger>
-            <TabsTrigger value="renovacoes" className="text-[12px]">
-              Renovações · {historico.length}
-            </TabsTrigger>
-            <TabsTrigger value="atas" className="text-[12px]">
-              Atas · {atas.length}
-            </TabsTrigger>
-            <TabsTrigger value="pareceres" className="text-[12px]">
-              Pareceres · {creditVersions.length + visitVersions.length}
-            </TabsTrigger>
-          </TabsList>
+        {/* Chips por tipo (clicáveis = filtro) */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          {(Object.keys(TIPO_LABEL) as TipoArquivo[]).map((t) => {
+            const Icon = TIPO_ICON[t];
+            const active = filterTipos.has(t);
+            return (
+              <button
+                key={t}
+                onClick={() => toggleTipoFilter(t)}
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-md border px-2 h-6 text-[11px] transition-colors",
+                  active ? TIPO_BADGE[t] : "bg-card hover:bg-muted/40 text-foreground border-border",
+                )}
+              >
+                <Icon className="h-3 w-3" />
+                {TIPO_LABEL[t]}
+                <span className={cn("ml-1 tabular-nums", active ? "" : "text-muted-foreground")}>
+                  {totalsByTipo[t]}
+                </span>
+              </button>
+            );
+          })}
+          {filterTipos.size > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 text-[10px] text-muted-foreground"
+              onClick={() => setFilterTipos(new Set())}
+            >
+              <X className="h-3 w-3 mr-0.5" /> limpar
+            </Button>
+          )}
+        </div>
 
-          {/* === DOCUMENTOS === */}
-          <TabsContent value="documentos" className="space-y-3">
-            {/* Toolbar */}
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="relative flex-1 min-w-[200px] max-w-sm">
-                <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Buscar arquivo…"
-                  className="pl-8 h-7 text-[12px]"
-                />
-              </div>
+        {/* Toolbar */}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative flex-1 min-w-[200px] max-w-sm">
+            <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar arquivo…"
+              className="pl-8 h-7 text-[12px]"
+            />
+          </div>
 
-              {/* Sort */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-7 text-[11px]">
-                    <ArrowUpDown className="h-3 w-3 mr-1" /> Ordenar
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="text-[12px]">
-                  <DropdownMenuLabel>Ordenar por</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => { setSortKey("data"); setSortDir("desc"); }}>
-                    Data (mais recente)
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => { setSortKey("data"); setSortDir("asc"); }}>
-                    Data (mais antigo)
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => { setSortKey("nome"); setSortDir("asc"); }}>
-                    Nome (A→Z)
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => { setSortKey("nome"); setSortDir("desc"); }}>
-                    Nome (Z→A)
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => { setSortKey("tamanho"); setSortDir("desc"); }}>
-                    Tamanho (maior)
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => { setSortKey("categoria"); setSortDir("asc"); }}>
-                    Categoria (A→Z)
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+          {/* Sort */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="h-7 text-[11px]">
+                <ArrowUpDown className="h-3 w-3 mr-1" /> Ordenar
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="text-[12px]">
+              <DropdownMenuLabel>Ordenar por</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => { setSortKey("data"); setSortDir("desc"); }}>
+                Data (mais recente)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => { setSortKey("data"); setSortDir("asc"); }}>
+                Data (mais antigo)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => { setSortKey("nome"); setSortDir("asc"); }}>
+                Nome (A→Z)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => { setSortKey("nome"); setSortDir("desc"); }}>
+                Nome (Z→A)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => { setSortKey("tipo"); setSortDir("asc"); }}>
+                Tipo (A→Z)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => { setSortKey("tamanho"); setSortDir("desc"); }}>
+                Tamanho (maior)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => { setSortKey("categoria"); setSortDir("asc"); }}>
+                Categoria (A→Z)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
+          {/* Group by */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
               <Button
-                variant={grouped ? "secondary" : "outline"}
+                variant={groupBy !== "nenhum" ? "secondary" : "outline"}
                 size="sm"
                 className="h-7 text-[11px]"
-                onClick={() => setGrouped((v) => !v)}
               >
-                <Folder className="h-3 w-3 mr-1" /> Agrupar
+                <Folder className="h-3 w-3 mr-1" />
+                Agrupar: {groupBy === "nenhum" ? "nenhum" : groupBy}
               </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="text-[12px]">
+              <DropdownMenuItem onClick={() => setGroupBy("nenhum")}>Sem grupos</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setGroupBy("tipo")}>Por tipo</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setGroupBy("categoria")}>Por categoria</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
-              <div className="ml-auto flex items-center gap-2">
-                {/* Filter */}
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" className="h-7 text-[11px] relative">
-                      <Filter className="h-3 w-3 mr-1" /> Filtrar
-                      {activeFilterCount > 0 && (
-                        <Badge className="ml-1.5 h-4 px-1 text-[9px] bg-primary text-primary-foreground">
-                          {activeFilterCount}
-                        </Badge>
-                      )}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent align="end" className="w-72 text-[12px] space-y-3">
-                    <div>
-                      <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Categoria</Label>
-                      <div className="mt-1 max-h-40 overflow-y-auto space-y-1 pr-1">
-                        {categorias.map((c) => {
-                          const checked = filterCats.has(c.id);
-                          return (
-                            <label key={c.id} className="flex items-center gap-2 cursor-pointer">
-                              <Checkbox
-                                checked={checked}
-                                onCheckedChange={(v) => {
-                                  setFilterCats((s) => {
-                                    const ns = new Set(s);
-                                    if (v) ns.add(c.id); else ns.delete(c.id);
-                                    return ns;
-                                  });
-                                }}
-                              />
-                              <span className="truncate">{c.nome}</span>
-                            </label>
-                          );
-                        })}
-                      </div>
-                    </div>
-                    <div>
-                      <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Origem</Label>
-                      <div className="mt-1 flex gap-3">
-                        {(["cadastro", "livre"] as const).map((o) => (
-                          <label key={o} className="flex items-center gap-1.5 cursor-pointer capitalize">
-                            <Checkbox
-                              checked={filterOrigem.has(o)}
-                              onCheckedChange={(v) => {
-                                setFilterOrigem((s) => {
-                                  const ns = new Set(s);
-                                  if (v) ns.add(o); else ns.delete(o);
-                                  return ns;
-                                });
-                              }}
-                            />
-                            {o === "livre" ? "Anexo livre" : "Cadastro"}
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Status</Label>
-                      <div className="mt-1 flex gap-3">
-                        {(["aprovado", "pendente", "reprovado"] as const).map((s) => (
-                          <label key={s} className="flex items-center gap-1.5 cursor-pointer capitalize">
-                            <Checkbox
-                              checked={filterStatus.has(s)}
-                              onCheckedChange={(v) => {
-                                setFilterStatus((cur) => {
-                                  const ns = new Set(cur);
-                                  if (v) ns.add(s); else ns.delete(s);
-                                  return ns;
-                                });
-                              }}
-                            />
-                            {s}
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                    {activeFilterCount > 0 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 text-[11px] w-full"
-                        onClick={() => {
-                          setFilterCats(new Set());
-                          setFilterOrigem(new Set());
-                          setFilterStatus(new Set());
-                        }}
-                      >
-                        <X className="h-3 w-3 mr-1" /> Limpar filtros
-                      </Button>
-                    )}
-                  </PopoverContent>
-                </Popover>
-
-                {/* Colunas */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="h-7 text-[11px]">
-                      <Columns3 className="h-3 w-3 mr-1" /> Colunas
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="text-[12px]">
-                    <DropdownMenuLabel>Colunas visíveis</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    {(Object.keys(COL_DEFAULT) as (keyof ColVis)[]).map((k) => (
-                      <DropdownMenuCheckboxItem
-                        key={k}
-                        checked={colVis[k]}
-                        onCheckedChange={(v) => setColVis((c) => ({ ...c, [k]: !!v }))}
-                        className="capitalize"
-                      >
-                        {k}
-                      </DropdownMenuCheckboxItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-                {/* View toggle */}
-                <div className="flex border rounded-md overflow-hidden">
-                  <Button
-                    variant={viewMode === "list" ? "secondary" : "ghost"}
-                    size="sm"
-                    className="h-7 px-2 rounded-none"
-                    onClick={() => setViewMode("list")}
-                  >
-                    <LayoutList className="h-3.5 w-3.5" />
-                  </Button>
-                  <Button
-                    variant={viewMode === "grid" ? "secondary" : "ghost"}
-                    size="sm"
-                    className="h-7 px-2 rounded-none"
-                    onClick={() => setViewMode("grid")}
-                  >
-                    <LayoutGrid className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-
-                <Button
-                  size="sm"
-                  className="h-7 text-[11px]"
-                  onClick={() => {
-                    setUploadInitialFiles(null);
-                    setUploadOpen(true);
-                  }}
-                  disabled={!catLivre}
-                >
-                  <Paperclip className="h-3 w-3 mr-1" /> Adicionar anexo livre
+          <div className="ml-auto flex items-center gap-2">
+            {/* Filter */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="h-7 text-[11px] relative">
+                  <Filter className="h-3 w-3 mr-1" /> Filtrar
+                  {activeFilterCount > 0 && (
+                    <Badge className="ml-1.5 h-4 px-1 text-[9px] bg-primary text-primary-foreground">
+                      {activeFilterCount}
+                    </Badge>
+                  )}
                 </Button>
-              </div>
-            </div>
-
-            {/* Drop zone wrapper */}
-            <div
-              onDragOver={handleDocsDragOver}
-              onDragLeave={() => setDragActive(false)}
-              onDrop={handleDocsDrop}
-              className={cn(
-                "relative rounded-md transition-colors",
-                dragActive && "ring-2 ring-primary ring-offset-2 bg-primary/5",
-              )}
-            >
-              {dragActive && (
-                <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none rounded-md border-2 border-dashed border-primary bg-primary/10">
-                  <div className="text-[13px] font-medium text-primary flex items-center gap-2">
-                    <Upload className="h-4 w-4" /> Solte para adicionar ao dossiê
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-72 text-[12px] space-y-3">
+                <div>
+                  <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Tipo</Label>
+                  <div className="mt-1 flex flex-wrap gap-2">
+                    {(Object.keys(TIPO_LABEL) as TipoArquivo[]).map((t) => (
+                      <label key={t} className="flex items-center gap-1.5 cursor-pointer">
+                        <Checkbox
+                          checked={filterTipos.has(t)}
+                          onCheckedChange={(v) => {
+                            setFilterTipos((s) => {
+                              const ns = new Set(s);
+                              if (v) ns.add(t); else ns.delete(t);
+                              return ns;
+                            });
+                          }}
+                        />
+                        {TIPO_LABEL[t]}
+                      </label>
+                    ))}
                   </div>
                 </div>
-              )}
-
-              {filteredSortedDocs.length === 0 ? (
-                <div className="rounded-md border bg-card p-6 text-center text-[12px] text-muted-foreground">
-                  {documentos.length === 0
-                    ? "Sem documentos anexados. Arraste arquivos aqui."
-                    : "Nenhum documento corresponde aos filtros."}
-                </div>
-              ) : viewMode === "grid" ? (
-                <DocumentosGrid
-                  groups={groupedDocs}
-                  flatDocs={filteredSortedDocs}
-                  catsById={catsById}
-                  profilesById={profilesById}
-                  collapsed={collapsed}
-                  toggleCollapse={(k) =>
-                    setCollapsed((s) => {
-                      const ns = new Set(s);
-                      if (ns.has(k)) ns.delete(k); else ns.add(k);
-                      return ns;
-                    })
-                  }
-                  onOpen={openPreview}
-                  onDownload={handleDownload}
-                />
-              ) : (
-                <DocumentosTable
-                  groups={groupedDocs}
-                  flatDocs={filteredSortedDocs}
-                  catsById={catsById}
-                  profilesById={profilesById}
-                  colVis={colVis}
-                  sortKey={sortKey}
-                  sortIcon={sortIcon}
-                  onSort={handleSort}
-                  collapsed={collapsed}
-                  toggleCollapse={(k) =>
-                    setCollapsed((s) => {
-                      const ns = new Set(s);
-                      if (ns.has(k)) ns.delete(k); else ns.add(k);
-                      return ns;
-                    })
-                  }
-                  onOpen={openPreview}
-                  onDownload={handleDownload}
-                />
-              )}
-            </div>
-          </TabsContent>
-
-          {/* === RENOVAÇÕES === */}
-          <TabsContent value="renovacoes" className="space-y-3">
-            {renovInfo && (
-              <div className="rounded-md border bg-card p-2.5 flex items-center gap-2">
-                <RotateCcw className="h-3.5 w-3.5 text-muted-foreground" />
-                <span className="text-[11px] text-muted-foreground">Estado atual:</span>
-                <Badge variant="outline" className={cn("text-[10px] border", renovBadgeClass(renovInfo))}>
-                  {renovacaoLabel(renovInfo)}
-                </Badge>
-                {renovInfo.proximaEm && (
-                  <span className="text-[11px] text-muted-foreground ml-2">
-                    Próxima revisão: {fmtDate(renovInfo.proximaEm.toISOString())}
-                  </span>
-                )}
-              </div>
-            )}
-
-            {historico.length === 0 ? (
-              <div className="rounded-md border bg-card p-6 text-center text-[12px] text-muted-foreground">
-                Sem revisões cadastrais registradas.
-              </div>
-            ) : (
-              <div className="rounded-md border bg-card divide-y">
-                {historico.map((h) => (
-                  <div key={h.id} className="p-2.5 leading-tight">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="text-[10px]">Revisão cadastral</Badge>
-                      <span className="text-[11px] text-muted-foreground">{fmtDateTime(h.created_at)}</span>
-                      <span className="text-[11px] text-muted-foreground ml-auto">
-                        {h.user_id ? profilesById[h.user_id] ?? "—" : "Sistema"}
-                      </span>
-                    </div>
-                    {h.detalhes?.observacao && (
-                      <p className="text-[12px] text-foreground mt-1.5">{h.detalhes.observacao}</p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-
-          {/* === ATAS === */}
-          <TabsContent value="atas" className="space-y-3">
-            {atas.length === 0 ? (
-              <div className="rounded-md border bg-card p-6 text-center text-[12px] text-muted-foreground">
-                Sem atas de comitê para este cedente.
-              </div>
-            ) : (
-              <div className="rounded-md border bg-card overflow-hidden">
-                <table className="w-full text-[12px]">
-                  <thead className="bg-muted/40 text-[10px] uppercase tracking-wide text-muted-foreground">
-                    <tr>
-                      <th className="text-left px-3 py-2 font-medium">Comitê</th>
-                      <th className="text-left px-3 py-2 font-medium">Data</th>
-                      <th className="text-left px-3 py-2 font-medium">Decisão</th>
-                      <th className="text-right px-3 py-2 font-medium">Valor</th>
-                      <th className="text-left px-3 py-2 font-medium">Alçada</th>
-                      <th className="px-3 py-2"></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {atas.map((a) => {
-                      const valor = a.pleito?.valor_solicitado ?? null;
-                      const isAprovado = a.decisao === "aprovado";
+                <div>
+                  <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Categoria</Label>
+                  <div className="mt-1 max-h-40 overflow-y-auto space-y-1 pr-1">
+                    {categorias.map((c) => {
+                      const checked = filterCats.has(c.id);
                       return (
-                        <tr key={a.id} className="border-t hover:bg-muted/30 leading-tight">
-                          <td className="px-3 py-1.5 font-mono">#{a.numero_comite}</td>
-                          <td className="px-3 py-1.5 text-muted-foreground">{fmtDate(a.realizado_em)}</td>
-                          <td className="px-3 py-1.5">
-                            <Badge
-                              variant="outline"
-                              className={cn(
-                                "text-[10px] capitalize",
-                                isAprovado
-                                  ? "border-emerald-500/30 text-emerald-700 dark:text-emerald-400 bg-emerald-500/10"
-                                  : "border-destructive/30 text-destructive bg-destructive/10",
-                              )}
-                            >
-                              {a.decisao}
-                            </Badge>
-                          </td>
-                          <td className="px-3 py-1.5 text-right tabular-nums">{fmtBRL(valor)}</td>
-                          <td className="px-3 py-1.5 text-muted-foreground">{a.alcada_nome ?? "—"}</td>
-                          <td className="px-3 py-1.5 text-right">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 text-[11px]"
-                              onClick={() =>
-                                downloadAtaById(a.id).catch((e) =>
-                                  toast.error("Erro ao gerar PDF", { description: e.message }),
-                                )
-                              }
-                            >
-                              <Download className="h-3 w-3 mr-1" /> PDF
-                            </Button>
-                          </td>
-                        </tr>
+                        <label key={c.id} className="flex items-center gap-2 cursor-pointer">
+                          <Checkbox
+                            checked={checked}
+                            onCheckedChange={(v) => {
+                              setFilterCats((s) => {
+                                const ns = new Set(s);
+                                if (v) ns.add(c.id); else ns.delete(c.id);
+                                return ns;
+                              });
+                            }}
+                          />
+                          <span className="truncate">{c.nome}</span>
+                        </label>
                       );
                     })}
-                  </tbody>
-                </table>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Origem</Label>
+                  <div className="mt-1 flex flex-wrap gap-2">
+                    {(["cadastro", "anexo-livre", "comite", "credito", "visita"] as const).map((o) => (
+                      <label key={o} className="flex items-center gap-1.5 cursor-pointer capitalize">
+                        <Checkbox
+                          checked={filterOrigem.has(o)}
+                          onCheckedChange={(v) => {
+                            setFilterOrigem((s) => {
+                              const ns = new Set(s);
+                              if (v) ns.add(o); else ns.delete(o);
+                              return ns;
+                            });
+                          }}
+                        />
+                        {o}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Status</Label>
+                  <div className="mt-1 flex gap-3">
+                    {(["aprovado", "pendente", "reprovado"] as const).map((s) => (
+                      <label key={s} className="flex items-center gap-1.5 cursor-pointer capitalize">
+                        <Checkbox
+                          checked={filterStatus.has(s)}
+                          onCheckedChange={(v) => {
+                            setFilterStatus((cur) => {
+                              const ns = new Set(cur);
+                              if (v) ns.add(s); else ns.delete(s);
+                              return ns;
+                            });
+                          }}
+                        />
+                        {s}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                {activeFilterCount > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 text-[11px] w-full"
+                    onClick={() => {
+                      setFilterTipos(new Set());
+                      setFilterCats(new Set());
+                      setFilterOrigem(new Set());
+                      setFilterStatus(new Set());
+                    }}
+                  >
+                    <X className="h-3 w-3 mr-1" /> Limpar filtros
+                  </Button>
+                )}
+              </PopoverContent>
+            </Popover>
+
+            {/* Colunas */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-7 text-[11px]">
+                  <Columns3 className="h-3 w-3 mr-1" /> Colunas
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="text-[12px]">
+                <DropdownMenuLabel>Colunas visíveis</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {(Object.keys(COL_DEFAULT) as (keyof ColVis)[]).map((k) => (
+                  <DropdownMenuCheckboxItem
+                    key={k}
+                    checked={colVis[k]}
+                    onCheckedChange={(v) => setColVis((c) => ({ ...c, [k]: !!v }))}
+                    className="capitalize"
+                  >
+                    {k}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* View toggle */}
+            <div className="flex border rounded-md overflow-hidden">
+              <Button
+                variant={viewMode === "list" ? "secondary" : "ghost"}
+                size="sm"
+                className="h-7 px-2 rounded-none"
+                onClick={() => setViewMode("list")}
+              >
+                <LayoutList className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                variant={viewMode === "grid" ? "secondary" : "ghost"}
+                size="sm"
+                className="h-7 px-2 rounded-none"
+                onClick={() => setViewMode("grid")}
+              >
+                <LayoutGrid className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+
+            <Button
+              size="sm"
+              className="h-7 text-[11px]"
+              onClick={() => {
+                setUploadInitialFiles(null);
+                setUploadOpen(true);
+              }}
+              disabled={!catLivre}
+            >
+              <Paperclip className="h-3 w-3 mr-1" /> Adicionar anexo livre
+            </Button>
+          </div>
+        </div>
+
+        {/* Drop zone wrapper */}
+        <div
+          onDragOver={handleDocsDragOver}
+          onDragLeave={() => setDragActive(false)}
+          onDrop={handleDocsDrop}
+          className={cn(
+            "relative rounded-md transition-colors",
+            dragActive && "ring-2 ring-primary ring-offset-2 bg-primary/5",
+          )}
+        >
+          {dragActive && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none rounded-md border-2 border-dashed border-primary bg-primary/10">
+              <div className="text-[13px] font-medium text-primary flex items-center gap-2">
+                <Upload className="h-4 w-4" /> Solte para adicionar ao dossiê
               </div>
-            )}
-          </TabsContent>
+            </div>
+          )}
 
-          {/* === PARECERES === */}
-          <TabsContent value="pareceres" className="space-y-4">
-            <section className="space-y-1.5">
-              <h3 className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">
-                Relatórios de crédito ({creditVersions.length})
-              </h3>
-              {creditVersions.length === 0 ? (
-                <div className="rounded-md border bg-card p-3 text-[12px] text-muted-foreground">
-                  Nenhuma versão de relatório de crédito.
-                </div>
-              ) : (
-                <div className="rounded-md border bg-card divide-y">
-                  {creditVersions.map((v) => (
-                    <div key={v.id} className="p-2 flex items-center gap-3 leading-tight">
-                      <Badge variant="outline" className="text-[10px]">v{v.versao}</Badge>
-                      <span className="text-[11px] text-muted-foreground">{fmtDateTime(v.created_at)}</span>
-                      <span className="text-[11px] text-muted-foreground">
-                        {profilesById[v.created_by] ?? "—"}
-                      </span>
-                      <Button asChild variant="ghost" size="sm" className="h-6 text-[11px] ml-auto">
-                        <Link to={`/cedentes/${cedente.id}`}>Abrir</Link>
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </section>
-
-            <section className="space-y-1.5">
-              <h3 className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">
-                Pareceres comerciais — visitas ({visitVersions.length})
-              </h3>
-              {visitVersions.length === 0 ? (
-                <div className="rounded-md border bg-card p-3 text-[12px] text-muted-foreground">
-                  Nenhuma versão de relatório de visita.
-                </div>
-              ) : (
-                <div className="rounded-md border bg-card divide-y">
-                  {visitVersions.map((v) => (
-                    <div key={v.id} className="p-2 flex items-center gap-3 leading-tight">
-                      <Badge variant="outline" className="text-[10px]">v{v.versao}</Badge>
-                      <span className="text-[11px] text-muted-foreground">{fmtDateTime(v.created_at)}</span>
-                      <span className="text-[11px] text-muted-foreground">
-                        {profilesById[v.created_by] ?? "—"}
-                      </span>
-                      <Button asChild variant="ghost" size="sm" className="h-6 text-[11px] ml-auto">
-                        <Link to={`/cedentes/${cedente.id}`}>Abrir</Link>
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </section>
-          </TabsContent>
-        </Tabs>
+          {filteredSorted.length === 0 ? (
+            <div className="rounded-md border bg-card p-6 text-center text-[12px] text-muted-foreground">
+              {arquivos.length === 0
+                ? "Sem arquivos no dossiê. Arraste arquivos aqui."
+                : "Nenhum arquivo corresponde aos filtros."}
+            </div>
+          ) : viewMode === "grid" ? (
+            <ArquivosGrid
+              groups={groups}
+              flat={filteredSorted}
+              profilesById={profilesById}
+              collapsed={collapsed}
+              toggleCollapse={(k) =>
+                setCollapsed((s) => {
+                  const ns = new Set(s);
+                  if (ns.has(k)) ns.delete(k); else ns.add(k);
+                  return ns;
+                })
+              }
+              onOpen={openPreview}
+              onDownload={handleDownload}
+            />
+          ) : (
+            <ArquivosTable
+              groups={groups}
+              flat={filteredSorted}
+              profilesById={profilesById}
+              colVis={colVis}
+              sortKey={sortKey}
+              sortIcon={sortIcon}
+              onSort={handleSort}
+              collapsed={collapsed}
+              toggleCollapse={(k) =>
+                setCollapsed((s) => {
+                  const ns = new Set(s);
+                  if (ns.has(k)) ns.delete(k); else ns.add(k);
+                  return ns;
+                })
+              }
+              onOpen={openPreview}
+              onDownload={handleDownload}
+            />
+          )}
+        </div>
       </div>
 
       {/* Preview Sheet */}
-      <Sheet open={!!previewDoc} onOpenChange={(v) => { if (!v) { setPreviewDoc(null); setPreviewUrl(null); } }}>
+      <Sheet open={!!previewArq} onOpenChange={(v) => { if (!v) { setPreviewArq(null); setPreviewUrl(null); } }}>
         <SheetContent side="right" className="w-full sm:max-w-2xl flex flex-col">
           <SheetHeader>
-            <SheetTitle className="text-[14px] truncate">{previewDoc?.nome_arquivo}</SheetTitle>
+            <SheetTitle className="text-[14px] truncate">{previewArq?.nome}</SheetTitle>
             <SheetDescription className="text-[11px]">
-              {previewDoc?.nome_arquivo_original && previewDoc.nome_arquivo_original !== previewDoc.nome_arquivo && (
-                <>Original: {previewDoc.nome_arquivo_original} · </>
+              {previewArq && (
+                <>
+                  <Badge variant="outline" className={cn("text-[10px] border mr-1.5", TIPO_BADGE[previewArq.tipo])}>
+                    {TIPO_LABEL[previewArq.tipo]}
+                  </Badge>
+                  {previewArq.nomeOriginal && previewArq.nomeOriginal !== previewArq.nome && (
+                    <>Original: {previewArq.nomeOriginal} · </>
+                  )}
+                  {previewArq.tamanhoBytes ? <>{fmtBytes(previewArq.tamanhoBytes)} · </> : null}
+                  {fmtDateTime(previewArq.data)}
+                </>
               )}
-              {fmtBytes(previewDoc?.tamanho_bytes ?? null)} · {fmtDateTime(previewDoc?.created_at ?? null)}
             </SheetDescription>
           </SheetHeader>
-          <div className="flex-1 mt-3 min-h-0">
-            {!previewUrl ? (
-              <div className="flex items-center justify-center h-full text-muted-foreground text-[12px]">
-                <Loader2 className="h-4 w-4 animate-spin mr-2" /> Carregando…
-              </div>
-            ) : (previewDoc?.mime_type ?? "").startsWith("image/") ? (
-              <img src={previewUrl} alt={previewDoc?.nome_arquivo} className="max-w-full max-h-full object-contain mx-auto" />
-            ) : (previewDoc?.mime_type === "application/pdf" || getExt(previewDoc?.nome_arquivo ?? "") === "pdf") ? (
-              <iframe src={previewUrl} className="w-full h-full border rounded-md" title="preview" />
-            ) : (
-              <div className="text-center py-10 space-y-3">
-                <FileText className="h-10 w-10 mx-auto text-muted-foreground" />
-                <p className="text-[12px] text-muted-foreground">Preview não disponível para este tipo de arquivo.</p>
-                <Button size="sm" onClick={() => previewDoc && handleDownload(previewDoc.storage_path)}>
-                  <Download className="h-3.5 w-3.5 mr-1" /> Baixar
+          <div className="flex-1 mt-3 min-h-0 overflow-auto">
+            {previewArq?.tipo === "documento" ? (
+              !previewUrl ? (
+                <div className="flex items-center justify-center h-full text-muted-foreground text-[12px]">
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" /> Carregando…
+                </div>
+              ) : (previewArq?.mimeType ?? "").startsWith("image/") ? (
+                <img src={previewUrl} alt={previewArq?.nome} className="max-w-full max-h-full object-contain mx-auto" />
+              ) : (previewArq?.mimeType === "application/pdf" || getExt(previewArq?.nome ?? "") === "pdf") ? (
+                <iframe src={previewUrl} className="w-full h-full border rounded-md" title="preview" />
+              ) : (
+                <div className="text-center py-10 space-y-3">
+                  <FileText className="h-10 w-10 mx-auto text-muted-foreground" />
+                  <p className="text-[12px] text-muted-foreground">Preview não disponível para este tipo de arquivo.</p>
+                  <Button size="sm" onClick={() => previewArq && handleDownload(previewArq)}>
+                    <Download className="h-3.5 w-3.5 mr-1" /> Baixar
+                  </Button>
+                </div>
+              )
+            ) : previewArq?.tipo === "renovacao" ? (
+              <div className="space-y-2 text-[12px]">
+                <div className="rounded-md border bg-card p-2.5 leading-tight space-y-1">
+                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Revisão cadastral</div>
+                  <div>{fmtDateTime(previewArq.data)}</div>
+                  <div className="text-muted-foreground">
+                    Por: {previewArq.autorId ? profilesById[previewArq.autorId] ?? "—" : "Sistema"}
+                  </div>
+                  {previewArq.raw?.detalhes?.observacao && (
+                    <p className="pt-1.5 border-t mt-1.5">{previewArq.raw.detalhes.observacao}</p>
+                  )}
+                </div>
+                <Button asChild variant="outline" size="sm">
+                  <Link to={`/cedentes/${cedente.id}`}>Ver no histórico do cedente</Link>
                 </Button>
               </div>
-            )}
+            ) : previewArq?.tipo === "ata" ? (
+              <div className="space-y-2 text-[12px]">
+                <div className="rounded-md border bg-card p-2.5 leading-tight space-y-1">
+                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                    Ata #{previewArq.raw.numero_comite}
+                  </div>
+                  <div>{fmtDate(previewArq.raw.realizado_em)}</div>
+                  <div>
+                    Decisão:{" "}
+                    <Badge variant="outline" className="text-[10px] capitalize">
+                      {previewArq.raw.decisao}
+                    </Badge>
+                  </div>
+                  {previewArq.raw.alcada_nome && (
+                    <div className="text-muted-foreground">Alçada: {previewArq.raw.alcada_nome}</div>
+                  )}
+                  {previewArq.raw.pleito?.valor_solicitado != null && (
+                    <div className="text-muted-foreground">Valor: {fmtBRL(previewArq.raw.pleito.valor_solicitado)}</div>
+                  )}
+                </div>
+                <Button size="sm" onClick={() => previewArq && handleDownload(previewArq)}>
+                  <Download className="h-3.5 w-3.5 mr-1" /> Baixar PDF
+                </Button>
+              </div>
+            ) : previewArq?.tipo === "parecer" ? (
+              <div className="space-y-2 text-[12px]">
+                <div className="rounded-md border bg-card p-2.5 leading-tight space-y-1">
+                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                    {previewArq.origem === "credito" ? "Parecer de crédito" : "Parecer comercial (visita)"} v{previewArq.raw.versao}
+                  </div>
+                  <div>{fmtDateTime(previewArq.data)}</div>
+                  <div className="text-muted-foreground">
+                    Por: {previewArq.autorId ? profilesById[previewArq.autorId] ?? "—" : "—"}
+                  </div>
+                </div>
+                <Button asChild variant="outline" size="sm">
+                  <Link to={`/cedentes/${cedente.id}`}>Abrir no cedente</Link>
+                </Button>
+              </div>
+            ) : null}
           </div>
-          {previewDoc && previewUrl && (
+          {previewArq?.tipo === "documento" && previewUrl && (
             <div className="mt-3 flex justify-end">
-              <Button size="sm" variant="outline" onClick={() => handleDownload(previewDoc.storage_path)}>
+              <Button size="sm" variant="outline" onClick={() => previewArq && handleDownload(previewArq)}>
                 <Download className="h-3.5 w-3.5 mr-1" /> Baixar
               </Button>
             </div>
@@ -1003,13 +1130,12 @@ export default function DiretorioDetail() {
 }
 
 /* ============================================================== */
-/*  Tabela de documentos                                          */
+/*  Tabela unificada                                              */
 /* ============================================================== */
 
 interface TableProps {
-  groups: { key: string; label: string; docs: Documento[] }[] | null;
-  flatDocs: Documento[];
-  catsById: Record<string, Categoria>;
+  groups: { key: string; label: string; items: Arquivo[] }[] | null;
+  flat: Arquivo[];
   profilesById: Record<string, string>;
   colVis: ColVis;
   sortKey: SortKey;
@@ -1017,82 +1143,85 @@ interface TableProps {
   onSort: (k: SortKey) => void;
   collapsed: Set<string>;
   toggleCollapse: (k: string) => void;
-  onOpen: (d: Documento) => void;
-  onDownload: (path: string) => void;
+  onOpen: (a: Arquivo) => void;
+  onDownload: (a: Arquivo) => void;
 }
 
-function DocumentosTable(p: TableProps) {
-  const renderRow = (d: Documento) => {
-    const cat = d.categoria_id ? p.catsById[d.categoria_id] : null;
-    const isLivre = cat?.requer_conciliacao === false;
-    const Icon = fileIcon(d.mime_type, d.nome_arquivo);
+function ArquivosTable(p: TableProps) {
+  const renderRow = (a: Arquivo) => {
+    const Icon = fileIcon(a);
     return (
       <tr
-        key={d.id}
+        key={a.id}
         className="border-t hover:bg-muted/30 leading-tight cursor-pointer"
-        onClick={() => p.onOpen(d)}
+        onClick={() => p.onOpen(a)}
       >
         <td className="px-3 py-1.5">
           <div className="flex items-center gap-1.5">
             <Icon className="h-3 w-3 text-muted-foreground shrink-0" />
-            {d.nome_arquivo_original && d.nome_arquivo_original !== d.nome_arquivo ? (
+            {a.nomeOriginal && a.nomeOriginal !== a.nome ? (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span className="truncate max-w-[280px]">{d.nome_arquivo}</span>
+                  <span className="truncate max-w-[280px]">{a.nome}</span>
                 </TooltipTrigger>
-                <TooltipContent className="text-[11px]">Original: {d.nome_arquivo_original}</TooltipContent>
+                <TooltipContent className="text-[11px]">Original: {a.nomeOriginal}</TooltipContent>
               </Tooltip>
             ) : (
-              <span className="truncate max-w-[280px]">{d.nome_arquivo}</span>
+              <span className="truncate max-w-[280px]">{a.nome}</span>
             )}
           </div>
         </td>
-        {p.colVis.categoria && (
-          <td className="px-3 py-1.5 text-muted-foreground">{cat?.nome ?? "Sem categoria"}</td>
-        )}
-        {p.colVis.origem && (
+        {p.colVis.tipo && (
           <td className="px-3 py-1.5">
-            <Badge
-              variant="outline"
-              className={cn(
-                "text-[10px]",
-                isLivre ? "border-blue-500/30 text-blue-700 dark:text-blue-400 bg-blue-500/10" : "",
-              )}
-            >
-              {isLivre ? "Anexo livre" : "Cadastro"}
+            <Badge variant="outline" className={cn("text-[10px] border", TIPO_BADGE[a.tipo])}>
+              {TIPO_LABEL[a.tipo]}
             </Badge>
           </td>
+        )}
+        {p.colVis.categoria && (
+          <td className="px-3 py-1.5 text-muted-foreground">{a.categoria ?? "—"}</td>
+        )}
+        {p.colVis.origem && (
+          <td className="px-3 py-1.5 text-muted-foreground capitalize">{a.origem.replace("-", " ")}</td>
         )}
         {p.colVis.status && (
           <td className="px-3 py-1.5">
-            <Badge
-              variant="outline"
-              className={cn(
-                "text-[10px]",
-                d.status === "aprovado" &&
-                  "border-emerald-500/30 text-emerald-700 dark:text-emerald-400 bg-emerald-500/10",
-                d.status === "reprovado" && "border-destructive/30 text-destructive bg-destructive/10",
-                d.status === "pendente" &&
-                  "border-amber-500/30 text-amber-700 dark:text-amber-400 bg-amber-500/10",
-              )}
-            >
-              {d.status}
-            </Badge>
+            {a.status ? (
+              <Badge
+                variant="outline"
+                className={cn(
+                  "text-[10px]",
+                  a.status === "aprovado" &&
+                    "border-emerald-500/30 text-emerald-700 dark:text-emerald-400 bg-emerald-500/10",
+                  a.status === "reprovado" && "border-destructive/30 text-destructive bg-destructive/10",
+                  a.status === "pendente" &&
+                    "border-amber-500/30 text-amber-700 dark:text-amber-400 bg-amber-500/10",
+                )}
+              >
+                {a.status}
+              </Badge>
+            ) : (
+              <span className="text-muted-foreground">—</span>
+            )}
           </td>
         )}
         {p.colVis.tamanho && (
-          <td className="px-3 py-1.5 text-muted-foreground tabular-nums">{fmtBytes(d.tamanho_bytes)}</td>
+          <td className="px-3 py-1.5 text-muted-foreground tabular-nums">{fmtBytes(a.tamanhoBytes)}</td>
         )}
         {p.colVis.data && (
-          <td className="px-3 py-1.5 text-muted-foreground">{fmtDate(d.created_at)}</td>
+          <td className="px-3 py-1.5 text-muted-foreground">{fmtDate(a.data)}</td>
         )}
         {p.colVis.por && (
-          <td className="px-3 py-1.5 text-muted-foreground">{p.profilesById[d.uploaded_by] ?? "—"}</td>
+          <td className="px-3 py-1.5 text-muted-foreground">
+            {a.autorId ? p.profilesById[a.autorId] ?? "—" : a.tipo === "renovacao" ? "Sistema" : "—"}
+          </td>
         )}
         <td className="px-3 py-1.5 text-right" onClick={(e) => e.stopPropagation()}>
-          <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => p.onDownload(d.storage_path)}>
-            <Download className="h-3 w-3" />
-          </Button>
+          {(a.tipo === "documento" || a.tipo === "ata") && (
+            <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => p.onDownload(a)}>
+              <Download className="h-3 w-3" />
+            </Button>
+          )}
         </td>
       </tr>
     );
@@ -1100,6 +1229,7 @@ function DocumentosTable(p: TableProps) {
 
   const colSpan =
     1 +
+    Number(p.colVis.tipo) +
     Number(p.colVis.categoria) +
     Number(p.colVis.origem) +
     Number(p.colVis.status) +
@@ -1119,6 +1249,14 @@ function DocumentosTable(p: TableProps) {
             >
               Arquivo {p.sortIcon("nome")}
             </th>
+            {p.colVis.tipo && (
+              <th
+                className="text-left px-3 py-2 font-medium cursor-pointer select-none"
+                onClick={() => p.onSort("tipo")}
+              >
+                Tipo {p.sortIcon("tipo")}
+              </th>
+            )}
             {p.colVis.categoria && (
               <th
                 className="text-left px-3 py-2 font-medium cursor-pointer select-none"
@@ -1182,7 +1320,7 @@ function DocumentosTable(p: TableProps) {
                   renderRow={renderRow}
                 />
               ))
-            : p.flatDocs.map(renderRow)}
+            : p.flat.map(renderRow)}
         </tbody>
       </table>
     </div>
@@ -1196,11 +1334,11 @@ function FragmentGroup({
   colSpan,
   renderRow,
 }: {
-  g: { key: string; label: string; docs: Documento[] };
+  g: { key: string; label: string; items: Arquivo[] };
   collapsed: boolean;
   toggle: () => void;
   colSpan: number;
-  renderRow: (d: Documento) => React.ReactNode;
+  renderRow: (a: Arquivo) => React.ReactNode;
 }) {
   return (
     <>
@@ -1210,72 +1348,75 @@ function FragmentGroup({
             {collapsed ? <ChevronDown className="h-3 w-3 -rotate-90" /> : <ChevronDown className="h-3 w-3" />}
             <Folder className="h-3 w-3" />
             {g.label}
-            <span className="text-muted-foreground/70">({g.docs.length})</span>
+            <span className="text-muted-foreground/70">({g.items.length})</span>
           </div>
         </td>
       </tr>
-      {!collapsed && g.docs.map(renderRow)}
+      {!collapsed && g.items.map(renderRow)}
     </>
   );
 }
 
 /* ============================================================== */
-/*  Grid de documentos                                            */
+/*  Grid unificado                                                */
 /* ============================================================== */
 
-function DocumentosGrid({
+function ArquivosGrid({
   groups,
-  flatDocs,
-  catsById,
-  profilesById,
+  flat,
+  profilesById: _profilesById,
   collapsed,
   toggleCollapse,
   onOpen,
   onDownload,
 }: {
-  groups: { key: string; label: string; docs: Documento[] }[] | null;
-  flatDocs: Documento[];
-  catsById: Record<string, Categoria>;
+  groups: { key: string; label: string; items: Arquivo[] }[] | null;
+  flat: Arquivo[];
   profilesById: Record<string, string>;
   collapsed: Set<string>;
   toggleCollapse: (k: string) => void;
-  onOpen: (d: Documento) => void;
-  onDownload: (path: string) => void;
+  onOpen: (a: Arquivo) => void;
+  onDownload: (a: Arquivo) => void;
 }) {
-  const renderCard = (d: Documento) => {
-    const cat = d.categoria_id ? catsById[d.categoria_id] : null;
-    const Icon = fileIcon(d.mime_type, d.nome_arquivo);
+  const renderCard = (a: Arquivo) => {
+    const Icon = fileIcon(a);
+    const downloadable = a.tipo === "documento" || a.tipo === "ata";
     return (
       <div
-        key={d.id}
+        key={a.id}
         className="group rounded-md border bg-card hover:border-primary/40 hover:shadow-sm transition cursor-pointer p-2.5 flex flex-col gap-1.5"
-        onClick={() => onOpen(d)}
+        onClick={() => onOpen(a)}
       >
         <div className="flex items-start justify-between">
           <Icon className="h-7 w-7 text-muted-foreground" />
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDownload(d.storage_path);
-            }}
-          >
-            <Download className="h-3 w-3" />
-          </Button>
+          {downloadable && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDownload(a);
+              }}
+            >
+              <Download className="h-3 w-3" />
+            </Button>
+          )}
         </div>
-        <div className="text-[11px] leading-tight line-clamp-2 break-all">{d.nome_arquivo}</div>
-        <div className="flex items-center gap-1 mt-auto">
-          {cat && (
+        <div className="text-[11px] leading-tight line-clamp-2 break-all">{a.nome}</div>
+        <div className="flex items-center gap-1 mt-auto flex-wrap">
+          <Badge variant="outline" className={cn("text-[9px]", TIPO_BADGE[a.tipo])}>
+            {TIPO_LABEL[a.tipo]}
+          </Badge>
+          {a.categoria && (
             <Badge variant="outline" className="text-[9px] truncate max-w-full">
-              {cat.nome}
+              {a.categoria}
             </Badge>
           )}
         </div>
         <div className="flex justify-between text-[9px] text-muted-foreground">
-          <span>{fmtDate(d.created_at)}</span>
-          <span>{fmtBytes(d.tamanho_bytes)}</span>
+          <span>{fmtDate(a.data)}</span>
+          <span>{fmtBytes(a.tamanhoBytes)}</span>
         </div>
       </div>
     );
@@ -1299,11 +1440,11 @@ function DocumentosGrid({
                 )}
                 <Folder className="h-3 w-3" />
                 {g.label}
-                <span className="text-muted-foreground/70">({g.docs.length})</span>
+                <span className="text-muted-foreground/70">({g.items.length})</span>
               </button>
               {!isCollapsed && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 p-2.5 pt-0">
-                  {g.docs.map(renderCard)}
+                  {g.items.map(renderCard)}
                 </div>
               )}
             </div>
@@ -1315,7 +1456,7 @@ function DocumentosGrid({
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
-      {flatDocs.map(renderCard)}
+      {flat.map(renderCard)}
     </div>
   );
 }
@@ -1359,7 +1500,6 @@ function UploadAnexoLivreDialog({
     if (files.length === 0 || !catLivre || !userId) return;
     setBusy(true);
     try {
-      // Conta documentos existentes nesta categoria para esse cedente para versão inicial
       const { count: baseCount } = await supabase
         .from("documentos")
         .select("id", { count: "exact", head: true })
