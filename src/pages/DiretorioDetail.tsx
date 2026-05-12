@@ -555,18 +555,38 @@ export default function DiretorioDetail() {
     }
   };
 
-  const openPreview = async (a: Arquivo) => {
-    setPreviewArq(a);
-    setPreviewUrl(null);
-    if (a.tipo === "documento" && a.storagePath) {
-      const { data, error } = await supabase.storage.from("cedente-docs").createSignedUrl(a.storagePath, 300);
-      if (error || !data) {
-        toast.error("Erro ao gerar preview", { description: error?.message });
-        return;
-      }
-      setPreviewUrl(data.signedUrl);
+  const revokePreviewUrl = (url: string | null) => {
+    if (url && url.startsWith("blob:")) {
+      try { URL.revokeObjectURL(url); } catch { /* ignore */ }
     }
   };
+
+  const openPreview = async (a: Arquivo) => {
+    setPreviewArq(a);
+    setPreviewUrl((prev) => { revokePreviewUrl(prev); return null; });
+    try {
+      if (a.tipo === "documento" && a.storagePath) {
+        const { data, error } = await supabase.storage.from("cedente-docs").createSignedUrl(a.storagePath, 300);
+        if (error || !data) {
+          toast.error("Erro ao gerar preview", { description: error?.message });
+          return;
+        }
+        setPreviewUrl(data.signedUrl);
+      } else if (a.tipo === "ata") {
+        const { url } = await generateAtaPdfBlobById(a.raw.id);
+        setPreviewUrl(url);
+      } else if (a.tipo === "parecer" && a.origem === "credito") {
+        const res = await generateCreditReportPdf(a.raw, cedente?.razao_social, "blob");
+        if (res) setPreviewUrl(res.url);
+      } else if (a.tipo === "parecer" && a.origem === "visita") {
+        const res = await generateVisitReportPdf(a.raw, cedente!.id, `v${a.raw.versao}`, "blob");
+        if (res) setPreviewUrl(res.url);
+      }
+    } catch (e: any) {
+      toast.error("Erro ao gerar preview", { description: e?.message });
+    }
+  };
+
 
   // Drag & drop
   const handleDocsDragOver = (e: React.DragEvent) => {
