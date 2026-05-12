@@ -226,7 +226,7 @@ function abrevCedente(razao: string) {
 type SortKey = "nome" | "tipo" | "categoria" | "origem" | "status" | "tamanho" | "data" | "por";
 type SortDir = "asc" | "desc";
 type ViewMode = "list" | "grid";
-type GroupBy = "nenhum" | "tipo" | "categoria";
+
 
 interface ColVis {
   tipo: boolean;
