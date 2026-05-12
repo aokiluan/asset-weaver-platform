@@ -38,7 +38,6 @@ interface Cedente {
   cep: string | null;
   setor: string | null;
   faturamento_medio: number | null;
-  status: "prospect" | "em_analise" | "aprovado" | "reprovado" | "inativo";
   stage: CedenteStage;
   limite_aprovado: number | null;
   observacoes: string | null;
