@@ -1,18 +1,19 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Pencil, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Pencil, Trash2, ChevronLeft, ChevronRight, Phone } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useEffect, useState } from "react";
 import {
   fmtCompactBRL,
+  INVESTOR_ACTIVITY_LABEL,
   INVESTOR_TYPE_LABEL,
-  isAdvance,
   nextStage,
   prevStage,
   STAGE_LABEL,
   STAGE_ORDER,
-  todayISO,
+  type InvestorActivity,
   type InvestorContact,
   type InvestorStage,
 } from "@/lib/investor-contacts";
@@ -23,10 +24,34 @@ interface Props {
   onClose: () => void;
   onChanged: () => void;
   onEdit: (c: InvestorContact) => void;
+  onRegisterContact: (c: InvestorContact) => void;
+  onRequestStageMove: (c: InvestorContact, to: InvestorStage) => void;
 }
 
-export function InvestorContactDrawer({ contact, onClose, onChanged, onEdit }: Props) {
+export function InvestorContactDrawer({
+  contact,
+  onClose,
+  onChanged,
+  onEdit,
+  onRegisterContact,
+  onRequestStageMove,
+}: Props) {
   const open = !!contact;
+  const [activities, setActivities] = useState<InvestorActivity[]>([]);
+
+  useEffect(() => {
+    if (!contact) {
+      setActivities([]);
+      return;
+    }
+    supabase
+      .from("investor_contact_activities")
+      .select("*")
+      .eq("contact_id", contact.id)
+      .order("occurred_at", { ascending: false })
+      .limit(10)
+      .then(({ data }) => setActivities((data ?? []) as InvestorActivity[]));
+  }, [contact]);
 
   async function moveStage(dir: "prev" | "next") {
     if (!contact) return;
