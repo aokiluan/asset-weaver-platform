@@ -8,9 +8,10 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Loader2, UserPlus, X } from "lucide-react";
+import { Loader2, UserPlus, X, Shield } from "lucide-react";
 import { toast } from "sonner";
 import { AppRole, ROLE_LABEL, PRIMARY_ROLES } from "@/lib/roles";
+import UserModulePermissionsDialog from "./UserModulePermissionsDialog";
 
 const ALL_ROLES: AppRole[] = [...PRIMARY_ROLES, "gestor_geral"];
 
@@ -29,6 +30,7 @@ export default function AdminUsuarios() {
   const [emailLookup, setEmailLookup] = useState("");
   const [rolesToAdd, setRolesToAdd] = useState<AppRole[]>([]);
   const [adding, setAdding] = useState(false);
+  const [permsUser, setPermsUser] = useState<UserRow | null>(null);
 
   const teamsById = useMemo(() => Object.fromEntries(teams.map(t => [t.id, t])), [teams]);
 
@@ -158,7 +160,7 @@ export default function AdminUsuarios() {
       </div>
 
       <p className="text-[11px] text-muted-foreground mt-2">
-        Os módulos acessíveis por cada papel são configurados em <strong>Configurações → Permissões</strong>.
+        Os módulos acessíveis por cada usuário são configurados pelo botão <strong>Permissões</strong> ou em <strong>Configurações → Permissões</strong>.
       </p>
 
       <div className="rounded-md border bg-card mt-2">
@@ -170,12 +172,13 @@ export default function AdminUsuarios() {
               <TableHead>E-mail</TableHead>
               <TableHead>Funções</TableHead>
               <TableHead>Equipe</TableHead>
+              <TableHead className="w-px"></TableHead>
               <TableHead className="w-px text-right pr-3">Ativo</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {loading && <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-3 text-[12px]">Carregando...</TableCell></TableRow>}
-            {!loading && users.length === 0 && <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-3 text-[12px]">Nenhum usuário.</TableCell></TableRow>}
+            {loading && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-3 text-[12px]">Carregando...</TableCell></TableRow>}
+            {!loading && users.length === 0 && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-3 text-[12px]">Nenhum usuário.</TableCell></TableRow>}
             {users.map((u) => {
               return (
                 <TableRow key={u.id} className="group">
@@ -206,6 +209,17 @@ export default function AdminUsuarios() {
                       </SelectContent>
                     </Select>
                   </TableCell>
+                  <TableCell>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-[11px]"
+                      onClick={() => setPermsUser(u)}
+                    >
+                      <Shield className="h-3.5 w-3.5 mr-1" />
+                      Permissões
+                    </Button>
+                  </TableCell>
                   <TableCell className="text-right pr-3">
                     <Switch className="ml-auto" checked={u.ativo} onCheckedChange={() => toggleAtivo(u)} />
                   </TableCell>
@@ -215,6 +229,16 @@ export default function AdminUsuarios() {
           </TableBody>
         </Table>
       </div>
+
+      {permsUser && (
+        <UserModulePermissionsDialog
+          open={!!permsUser}
+          onOpenChange={(o) => !o && setPermsUser(null)}
+          userId={permsUser.id}
+          userName={permsUser.nome}
+          userIsAdmin={permsUser.roles.includes("admin")}
+        />
+      )}
     </div>
   );
 }
