@@ -55,6 +55,7 @@ export default function InvestidoresCRM() {
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<View>("kanban");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("todos");
+  const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<InvestorContact | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<InvestorContact | null>(null);
@@ -86,10 +87,18 @@ export default function InvestidoresCRM() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rows]);
 
-  const filtered = useMemo(
-    () => (typeFilter === "todos" ? rows : rows.filter((r) => r.type === typeFilter)),
-    [rows, typeFilter],
-  );
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return rows.filter((r) => {
+      if (typeFilter !== "todos" && r.type !== typeFilter) return false;
+      if (!q) return true;
+      return (
+        r.name.toLowerCase().includes(q) ||
+        (r.contact_name ?? "").toLowerCase().includes(q) ||
+        (r.next_action ?? "").toLowerCase().includes(q)
+      );
+    });
+  }, [rows, typeFilter, search]);
 
   const metrics = useMemo(() => {
     const ativos = rows.filter((r) => r.stage === "ativo");
@@ -97,11 +106,19 @@ export default function InvestidoresCRM() {
     const total = rows.length;
     const tickets = rows.map((r) => r.ticket ?? 0);
     const avg = total ? tickets.reduce((a, b) => a + b, 0) / total : 0;
+    // Forecast ponderado (Salesforce): Σ ticket × probabilidade do estágio (excluindo já ativos)
+    const forecast = pipeline.reduce(
+      (a, r) => a + (r.ticket ?? 0) * STAGE_PROBABILITY[r.stage],
+      0,
+    );
+    const stale = rows.filter((r) => isStale(r.stage, r.last_contact_date)).length;
     return {
       capitalAtivo: ativos.reduce((a, r) => a + (r.ticket ?? 0), 0),
       capitalAtivoCount: ativos.length,
       pipeline: pipeline.reduce((a, r) => a + (r.ticket ?? 0), 0),
       pipelineCount: pipeline.length,
+      forecast,
+      stale,
       total,
       ticketMedio: avg,
     };
