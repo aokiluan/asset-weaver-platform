@@ -39,26 +39,20 @@ interface Props {
 }
 
 interface FormState {
-  name: string;
   contact_name: string;
   phone: string;
   ticket: number | null;
-  last_contact_date: string;
   type: InvestorType;
   stage: InvestorStage;
-  next_action: string;
   notes: string;
 }
 
 const empty: FormState = {
-  name: "",
   contact_name: "",
   phone: "",
   ticket: null,
-  last_contact_date: "",
   type: "investidor_pj",
   stage: "prospeccao",
-  next_action: "",
   notes: "",
 };
 
@@ -77,14 +71,11 @@ export function InvestorContactFormDialog({
       setForm(
         contact
           ? {
-              name: contact.name ?? "",
-              contact_name: contact.contact_name ?? "",
+              contact_name: contact.contact_name ?? contact.name ?? "",
               phone: contact.phone ?? "",
               ticket: contact.ticket,
-              last_contact_date: contact.last_contact_date ?? "",
               type: contact.type,
               stage: contact.stage,
-              next_action: contact.next_action ?? "",
               notes: contact.notes ?? "",
             }
           : empty,
@@ -96,20 +87,19 @@ export function InvestorContactFormDialog({
     setForm((s) => ({ ...s, [k]: v }));
 
   async function handleSave() {
-    if (!form.name.trim()) {
-      toast.error("Nome/Empresa é obrigatório");
+    if (!form.contact_name.trim()) {
+      toast.error("Nome do contato é obrigatório");
       return;
     }
     setSaving(true);
+    const name = form.contact_name.trim();
     const payload = {
-      name: form.name.trim(),
-      contact_name: form.contact_name.trim() || null,
+      name,
+      contact_name: name,
       phone: form.phone.trim() || null,
       ticket: form.ticket,
-      last_contact_date: form.last_contact_date || null,
       type: form.type,
       stage: form.stage,
-      next_action: form.next_action.trim() || null,
       notes: form.notes.trim() || null,
     };
     const { error } = contact
