@@ -174,7 +174,7 @@ export default function InvestidoresCRM() {
               className="h-7"
               onClick={() => setImportOpen(true)}
             >
-              <Upload className="h-3.5 w-3.5 mr-1" /> Importar
+              <Upload className="h-3.5 w-3.5 mr-1" /> Importar leads
             </Button>
             <Button size="sm" className="h-7" onClick={openNew}>
               <Plus className="h-3.5 w-3.5 mr-1" /> Novo contato
