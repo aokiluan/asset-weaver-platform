@@ -26,6 +26,8 @@ interface Transition {
   isReturn?: boolean; // exige motivo
   // se definido, ignora avaliação por gates (ex: devolução não precisa de gates)
   skipGates?: boolean;
+  // se true, avança direto sem abrir diálogo de observação (apenas marco no histórico)
+  skipConfirm?: boolean;
 }
 
 const TRANSITIONS: Transition[] = [
