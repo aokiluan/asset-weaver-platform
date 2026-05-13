@@ -52,7 +52,7 @@ const empty: FormState = {
   phone: "",
   ticket: null,
   type: "investidor_pj",
-  stage: "prospeccao",
+  stage: "lead",
   notes: "",
 };
 
