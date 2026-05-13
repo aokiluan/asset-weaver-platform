@@ -242,7 +242,7 @@ export default function AdminPermissoes() {
       <div>
         <h1 className="text-[20px] font-medium tracking-tight">Permissões</h1>
         <p className="text-[12px] text-muted-foreground leading-tight mt-1">
-          Controle quais módulos do menu cada perfil enxerga.
+          Controle quais módulos do menu cada usuário enxerga. Padrão: bloqueado quando não marcado.
         </p>
       </div>
 
