@@ -258,7 +258,6 @@ export default function AdminPermissoes() {
                 <tbody>
                   {filteredUsers.map((u) => {
                     const isAdminRow = u.roles.includes("admin");
-                    const availableRoles = ALL_ROLES.filter((r) => !u.roles.includes(r));
                     return (
                       <tr key={u.id} className="border-t border-border align-top">
                         <td className="px-2.5 py-1.5 sticky left-0 bg-card">
@@ -268,52 +267,17 @@ export default function AdminPermissoes() {
                           </div>
                         </td>
                         <td className="px-2 py-1.5">
-                          <div className="flex flex-wrap gap-1 items-center">
-                            {u.roles.length === 0 && (
-                              <span className="text-[11px] text-muted-foreground">Sem função</span>
-                            )}
-                            {u.roles.map((r) => (
-                              <Badge
-                                key={r}
-                                variant="secondary"
-                                className="gap-1 h-5 px-1.5 text-[11px] font-normal"
-                              >
-                                {ROLE_LABEL[r]}
-                                <button
-                                  onClick={() => removeRole(u, r)}
-                                  className="hover:text-destructive"
-                                  aria-label={`Remover função ${ROLE_LABEL[r]}`}
-                                >
-                                  <X className="h-3 w-3" />
-                                </button>
-                              </Badge>
-                            ))}
-                            {availableRoles.length > 0 && (
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <button
-                                    className="h-5 w-5 inline-flex items-center justify-center rounded-md border border-dashed border-border text-muted-foreground hover:text-foreground hover:border-foreground"
-                                    aria-label="Adicionar função"
-                                  >
-                                    <Plus className="h-3 w-3" />
-                                  </button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-44 p-1" align="start">
-                                  <div className="space-y-0.5">
-                                    {availableRoles.map((r) => (
-                                      <button
-                                        key={r}
-                                        onClick={() => addRole(u, r)}
-                                        className="w-full text-left px-2 py-1 text-[12px] rounded hover:bg-accent"
-                                      >
-                                        {ROLE_LABEL[r]}
-                                      </button>
-                                    ))}
-                                  </div>
-                                </PopoverContent>
-                              </Popover>
-                            )}
-                          </div>
+                          <button
+                            onClick={() => setRolesDrawerUserId(u.id)}
+                            className="inline-flex items-center gap-1.5 h-6 px-2 rounded-md border border-border hover:border-foreground hover:bg-accent text-[11px] leading-none transition-colors"
+                          >
+                            <Settings2 className="h-3.5 w-3.5 text-muted-foreground" />
+                            <span className="text-muted-foreground">
+                              {u.roles.length === 0
+                                ? "Sem função"
+                                : `${u.roles.length} ${u.roles.length === 1 ? "função" : "funções"}`}
+                            </span>
+                          </button>
                         </td>
                         <td className="px-2 py-1.5">
                           <Select
