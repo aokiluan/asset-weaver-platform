@@ -200,42 +200,6 @@ export default function AdminPermissoes() {
     qc.invalidateQueries({ queryKey: ["user-module-permissions"] });
   }
 
-  async function assignRole() {
-    if (!emailLookup.trim()) {
-      toast.error("Selecione um usuário");
-      return;
-    }
-    if (rolesToAdd.length === 0) {
-      toast.error("Selecione ao menos uma função");
-      return;
-    }
-    setAdding(true);
-    const { data: uid, error: e1 } = await supabase.rpc("admin_find_user_by_email", {
-      _email: emailLookup.trim(),
-    });
-    if (e1 || !uid) {
-      setAdding(false);
-      toast.error("Usuário não encontrado", {
-        description: "O usuário precisa ter feito login pelo menos uma vez.",
-      });
-      return;
-    }
-    const rows = rolesToAdd.map((r) => ({ user_id: uid as string, role: r }));
-    const { error: e2 } = await supabase
-      .from("user_roles")
-      .upsert(rows, { onConflict: "user_id,role", ignoreDuplicates: true });
-    setAdding(false);
-    if (e2) {
-      toast.error("Erro", { description: e2.message });
-      return;
-    }
-    toast.success(rolesToAdd.length > 1 ? "Funções atribuídas" : "Função atribuída");
-    setEmailLookup("");
-    setRolesToAdd([]);
-    setAssignOpen(false);
-    load();
-  }
-
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-end justify-between gap-2">
