@@ -15,14 +15,29 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Plus, LayoutGrid, List as ListIcon, Pencil, Loader2 } from "lucide-react";
+import {
+  DndContext,
+  DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
+  PointerSensor,
+  useDraggable,
+  useDroppable,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
   fmtCompactBRL,
   INVESTOR_TYPES,
   INVESTOR_TYPE_LABEL,
+  isAdvance,
   STAGE_LABEL,
   STAGE_ORDER,
+  todayISO,
   type InvestorContact,
+  type InvestorStage,
   type InvestorType,
 } from "@/lib/investor-contacts";
 import { InvestorContactFormDialog } from "./InvestorContactFormDialog";
@@ -81,7 +96,9 @@ export default function InvestidoresCRM() {
     const avg = total ? tickets.reduce((a, b) => a + b, 0) / total : 0;
     return {
       capitalAtivo: ativos.reduce((a, r) => a + (r.ticket ?? 0), 0),
+      capitalAtivoCount: ativos.length,
       pipeline: pipeline.reduce((a, r) => a + (r.ticket ?? 0), 0),
+      pipelineCount: pipeline.length,
       total,
       ticketMedio: avg,
     };
@@ -95,6 +112,39 @@ export default function InvestidoresCRM() {
   function openEdit(c: InvestorContact) {
     setEditing(c);
     setDialogOpen(true);
+  }
+
+  // Drag-and-drop: move estágio com optimistic update + auto-stamp ao avançar
+  async function handleStageMove(contactId: string, newStage: InvestorStage) {
+    const current = rows.find((r) => r.id === contactId);
+    if (!current || current.stage === newStage) return;
+
+    const advancing = isAdvance(current.stage, newStage);
+    const stamp = advancing ? todayISO() : null;
+
+    // Optimistic
+    setRows((prev) =>
+      prev.map((r) =>
+        r.id === contactId
+          ? { ...r, stage: newStage, ...(stamp ? { last_contact_date: stamp } : {}) }
+          : r,
+      ),
+    );
+
+    const patch: { stage: InvestorStage; last_contact_date?: string } = { stage: newStage };
+    if (stamp) patch.last_contact_date = stamp;
+
+    const { error } = await supabase
+      .from("investor_contacts")
+      .update(patch)
+      .eq("id", contactId);
+
+    if (error) {
+      toast.error("Erro ao mover", { description: error.message });
+      load();
+    } else {
+      toast.success(`Movido para ${STAGE_LABEL[newStage]}`);
+    }
   }
 
   return (
@@ -111,10 +161,26 @@ export default function InvestidoresCRM() {
 
       <div className="space-y-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <MetricCard label="Capital Ativo" value={fmtCompactBRL(metrics.capitalAtivo)} />
-          <MetricCard label="Pipeline" value={fmtCompactBRL(metrics.pipeline)} />
-          <MetricCard label="Total de Contatos" value={String(metrics.total)} />
-          <MetricCard label="Ticket Médio" value={fmtCompactBRL(metrics.ticketMedio)} />
+          <MetricCard
+            label="Capital Ativo"
+            value={fmtCompactBRL(metrics.capitalAtivo)}
+            sub={`${metrics.capitalAtivoCount} ${metrics.capitalAtivoCount === 1 ? "contato" : "contatos"}`}
+          />
+          <MetricCard
+            label="Pipeline"
+            value={fmtCompactBRL(metrics.pipeline)}
+            sub={`${metrics.pipelineCount} em negociação`}
+          />
+          <MetricCard
+            label="Total de Contatos"
+            value={String(metrics.total)}
+            sub="na base"
+          />
+          <MetricCard
+            label="Ticket Médio"
+            value={fmtCompactBRL(metrics.ticketMedio)}
+            sub="por contato"
+          />
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -151,7 +217,7 @@ export default function InvestidoresCRM() {
             <Loader2 className="h-4 w-4 animate-spin mr-2" /> Carregando...
           </div>
         ) : view === "kanban" ? (
-          <KanbanView rows={filtered} onOpen={setSelected} />
+          <KanbanView rows={filtered} onOpen={setSelected} onStageMove={handleStageMove} />
         ) : (
           <ListView rows={filtered} onOpen={setSelected} onEdit={openEdit} />
         )}
@@ -175,7 +241,7 @@ export default function InvestidoresCRM() {
   );
 }
 
-function MetricCard({ label, value }: { label: string; value: string }) {
+function MetricCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
     <Card className="p-2.5">
       <div className="text-[10px] uppercase tracking-wide text-muted-foreground leading-none">
@@ -184,6 +250,9 @@ function MetricCard({ label, value }: { label: string; value: string }) {
       <div className="text-[16px] font-medium text-foreground leading-tight mt-1.5">
         {value}
       </div>
+      {sub && (
+        <div className="text-[10px] text-muted-foreground leading-none mt-1">{sub}</div>
+      )}
     </Card>
   );
 }
@@ -191,67 +260,140 @@ function MetricCard({ label, value }: { label: string; value: string }) {
 function KanbanView({
   rows,
   onOpen,
+  onStageMove,
 }: {
   rows: InvestorContact[];
   onOpen: (c: InvestorContact) => void;
+  onStageMove: (id: string, stage: InvestorStage) => void;
 }) {
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+  );
+
+  const activeCard = activeId ? rows.find((r) => r.id === activeId) ?? null : null;
+
   return (
-    <div className="overflow-x-auto -mx-2 px-2">
-      <div className="flex gap-3 min-w-max pb-2">
-        {STAGE_ORDER.map((stage) => {
-          const items = rows.filter((r) => r.stage === stage);
-          const total = items.reduce((a, r) => a + (r.ticket ?? 0), 0);
-          return (
-            <div key={stage} className="w-[220px] shrink-0">
-              <div className="flex items-center justify-between px-1 mb-2">
-                <div className="text-[11px] font-medium text-foreground">
-                  {STAGE_LABEL[stage]}
-                  <span className="text-muted-foreground font-normal ml-1">
-                    {items.length}
-                  </span>
-                </div>
-                <span className="text-[10px] text-muted-foreground">
-                  {fmtCompactBRL(total)}
-                </span>
-              </div>
-              <div className="space-y-2">
-                {items.map((c) => (
-                  <button
-                    key={c.id}
-                    onClick={() => onOpen(c)}
-                    className="w-full text-left rounded-md border bg-card p-2.5 hover:border-primary/40 hover:shadow-sm transition-colors"
-                  >
-                    <div className="text-[12px] font-medium text-foreground leading-tight truncate">
-                      {c.name}
-                    </div>
-                    <div className="flex items-center justify-between mt-1.5">
-                      <Badge
-                        variant="secondary"
-                        className="text-[9px] font-normal h-4 px-1.5"
-                      >
-                        {INVESTOR_TYPE_LABEL[c.type]}
-                      </Badge>
-                      <span className="text-[11px] text-foreground">
-                        {fmtCompactBRL(c.ticket)}
-                      </span>
-                    </div>
-                    {c.next_action && (
-                      <div className="text-[11px] text-muted-foreground leading-tight mt-1.5 truncate">
-                        {c.next_action}
-                      </div>
-                    )}
-                  </button>
-                ))}
-                {items.length === 0 && (
-                  <div className="text-[11px] text-muted-foreground/70 text-center py-6 border border-dashed rounded-md">
-                    vazio
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })}
+    <DndContext
+      sensors={sensors}
+      onDragStart={(e: DragStartEvent) => setActiveId(String(e.active.id))}
+      onDragEnd={(e: DragEndEvent) => {
+        setActiveId(null);
+        const { active, over } = e;
+        if (!over) return;
+        onStageMove(String(active.id), String(over.id) as InvestorStage);
+      }}
+      onDragCancel={() => setActiveId(null)}
+    >
+      <div className="overflow-x-auto -mx-2 px-2">
+        <div className="flex gap-3 min-w-max pb-2">
+          {STAGE_ORDER.map((stage) => {
+            const items = rows.filter((r) => r.stage === stage);
+            return (
+              <KanbanColumn key={stage} stage={stage} items={items} onOpen={onOpen} />
+            );
+          })}
+        </div>
       </div>
+      <DragOverlay>
+        {activeCard && (
+          <div className="w-[220px] rounded-md border bg-card p-2.5 shadow-[var(--shadow-elegant)]">
+            <div className="text-[12px] font-medium text-foreground leading-tight truncate">
+              {activeCard.name}
+            </div>
+            <div className="text-[10px] text-muted-foreground mt-1">
+              {fmtCompactBRL(activeCard.ticket)}
+            </div>
+          </div>
+        )}
+      </DragOverlay>
+    </DndContext>
+  );
+}
+
+function KanbanColumn({
+  stage,
+  items,
+  onOpen,
+}: {
+  stage: InvestorStage;
+  items: InvestorContact[];
+  onOpen: (c: InvestorContact) => void;
+}) {
+  const { setNodeRef, isOver } = useDroppable({ id: stage });
+  const total = items.reduce((a, r) => a + (r.ticket ?? 0), 0);
+
+  return (
+    <div className="w-[220px] shrink-0">
+      <div className="flex items-center justify-between px-1 mb-2">
+        <div className="flex items-center gap-1.5 text-[11px] font-medium text-foreground">
+          <span>{STAGE_LABEL[stage]}</span>
+          <Badge variant="secondary" className="text-[9px] font-normal h-4 px-1.5">
+            {items.length}
+          </Badge>
+        </div>
+        <span className="text-[10px] text-muted-foreground">{fmtCompactBRL(total)}</span>
+      </div>
+      <div
+        ref={setNodeRef}
+        className={cn(
+          "space-y-2 rounded-md p-1 min-h-[80px] transition-colors",
+          isOver && "ring-2 ring-primary bg-primary/5",
+        )}
+      >
+        {items.map((c) => (
+          <KanbanCard key={c.id} contact={c} onOpen={onOpen} />
+        ))}
+        {items.length === 0 && (
+          <div className="text-[11px] text-muted-foreground/70 text-center py-6 border border-dashed rounded-md">
+            vazio
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function KanbanCard({
+  contact,
+  onOpen,
+}: {
+  contact: InvestorContact;
+  onOpen: (c: InvestorContact) => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: contact.id,
+  });
+  const style = transform
+    ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
+    : undefined;
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...listeners}
+      {...attributes}
+      onDoubleClick={() => onOpen(contact)}
+      className={cn(
+        "rounded-md border bg-card p-2.5 cursor-grab active:cursor-grabbing hover:border-primary/40 hover:shadow-sm transition-colors",
+        isDragging && "opacity-40",
+      )}
+    >
+      <div className="text-[12px] font-medium text-foreground leading-tight truncate">
+        {contact.name}
+      </div>
+      <div className="flex items-center justify-between mt-1.5">
+        <Badge variant="secondary" className="text-[9px] font-normal h-4 px-1.5">
+          {INVESTOR_TYPE_LABEL[contact.type]}
+        </Badge>
+        <span className="text-[11px] text-foreground">{fmtCompactBRL(contact.ticket)}</span>
+      </div>
+      {contact.next_action && (
+        <div className="text-[11px] text-primary leading-tight mt-1.5 truncate">
+          → {contact.next_action}
+        </div>
+      )}
     </div>
   );
 }
