@@ -70,10 +70,7 @@ export default function AdminPermissoes() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("");
 
-  const [assignOpen, setAssignOpen] = useState(false);
-  const [emailLookup, setEmailLookup] = useState("");
-  const [rolesToAdd, setRolesToAdd] = useState<AppRole[]>([]);
-  const [adding, setAdding] = useState(false);
+  const [rolesDrawerUserId, setRolesDrawerUserId] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
