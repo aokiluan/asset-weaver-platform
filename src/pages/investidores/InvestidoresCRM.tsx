@@ -432,6 +432,7 @@ function KanbanColumn({
         ref={setNodeRef}
         className={cn(
           "space-y-2 rounded-md p-1 min-h-[80px] transition-colors",
+          terminal && "border border-dashed border-border/60 bg-muted/20",
           isOver && "ring-2 ring-primary bg-primary/5",
         )}
       >
