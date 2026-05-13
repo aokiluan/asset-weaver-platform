@@ -261,21 +261,16 @@ export default function AdminPermissoes() {
       {/* Bloco 1 — Matriz Papel × Etapa (editável) */}
       <Card className="p-2.5">
         <div className="space-y-2">
-          <div className="flex items-start justify-between gap-2">
-            <div>
-              <div className="text-[10px] uppercase leading-none text-muted-foreground tracking-wide">
-                Bloco 1
-              </div>
-              <div className="text-[13px] font-medium leading-tight mt-0.5">
-                Quem pode ENVIAR a partir de cada etapa
-              </div>
+          <div>
+            <div className="text-[10px] uppercase leading-none text-muted-foreground tracking-wide">
+              Bloco 1
             </div>
-            {isAdmin && (
-              <Button size="sm" className="h-7 text-[11px]" onClick={openNew}>
-                <Plus className="size-3.5 mr-1" />
-                Novo perfil
-              </Button>
-            )}
+            <div className="text-[13px] font-medium leading-tight mt-0.5">
+              Quem pode ENVIAR a partir de cada etapa
+            </div>
+            <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">
+              Visualização somente leitura. Edição desabilitada.
+            </p>
           </div>
 
           {loadingProfiles ? (
