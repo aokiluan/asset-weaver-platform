@@ -26,6 +26,8 @@ interface Transition {
   isReturn?: boolean; // exige motivo
   // se definido, ignora avaliação por gates (ex: devolução não precisa de gates)
   skipGates?: boolean;
+  // se true, avança direto sem abrir diálogo de observação (apenas marco no histórico)
+  skipConfirm?: boolean;
 }
 
 const TRANSITIONS: Transition[] = [
@@ -66,6 +68,7 @@ const TRANSITIONS: Transition[] = [
     roles: ["credito", "admin", "gestor_geral"],
     variant: "default",
     icon: Send,
+    skipConfirm: true,
   },
   {
     key: "to-ativo",
@@ -75,6 +78,7 @@ const TRANSITIONS: Transition[] = [
     roles: ["formalizacao", "admin", "gestor_geral"],
     variant: "default",
     icon: Send,
+    skipConfirm: true,
   },
 ];
 
@@ -203,6 +207,7 @@ export function CedenteStageActions({ cedenteId, stage, isOwner, gateInfo, onCha
               disabled={disabled}
               onClick={() => {
                 if (t.isReturn) setReturnOpen(t);
+                else if (t.skipConfirm) doAdvance(t.target);
                 else setConfirmTarget(t);
               }}
             >
