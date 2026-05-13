@@ -14,7 +14,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, LayoutGrid, List as ListIcon, Pencil, Loader2 } from "lucide-react";
+import { Plus, LayoutGrid, List as ListIcon, Pencil, Loader2, Search, Snowflake } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import {
   DndContext,
   DragEndEvent,
@@ -33,8 +34,10 @@ import {
   INVESTOR_TYPES,
   INVESTOR_TYPE_LABEL,
   isAdvance,
+  isStale,
   STAGE_LABEL,
   STAGE_ORDER,
+  STAGE_PROBABILITY,
   todayISO,
   type InvestorContact,
   type InvestorStage,
