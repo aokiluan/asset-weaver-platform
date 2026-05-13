@@ -229,7 +229,13 @@ export default function InvestidoresCRM() {
             <Loader2 className="h-4 w-4 animate-spin mr-2" /> Carregando...
           </div>
         ) : view === "kanban" ? (
-          <KanbanView rows={filtered} onOpen={setSelected} onStageMove={handleStageMove} />
+          <KanbanView
+            rows={filtered}
+            onOpen={setSelected}
+            onStageMove={requestStageMove}
+            onQuickView={setQuickView}
+            onRegisterContact={setRegisterFor}
+          />
         ) : (
           <ListView rows={filtered} onOpen={setSelected} onEdit={openEdit} />
         )}
@@ -248,7 +254,38 @@ export default function InvestidoresCRM() {
         onClose={() => setSelected(null)}
         onChanged={load}
         onEdit={openEdit}
+        onRegisterContact={setRegisterFor}
+        onRequestStageMove={(c, to) => setPendingMove({ contact: c, to })}
       />
+
+      <RegistrarContatoDialog
+        open={!!registerFor}
+        onOpenChange={(v) => !v && setRegisterFor(null)}
+        contact={registerFor}
+        onSaved={load}
+      />
+
+      <QuickViewDialog
+        open={!!quickView}
+        onOpenChange={(v) => !v && setQuickView(null)}
+        contact={quickView}
+        onRegisterContact={setRegisterFor}
+        onOpenDetails={setSelected}
+      />
+
+      {pendingMove && (
+        <ConfirmStageMoveDialog
+          open
+          onOpenChange={(v) => !v && setPendingMove(null)}
+          contactName={pendingMove.contact.name}
+          fromStage={pendingMove.contact.stage}
+          toStage={pendingMove.to}
+          onConfirm={() => {
+            executeStageMove(pendingMove.contact, pendingMove.to);
+            setPendingMove(null);
+          }}
+        />
+      )}
     </div>
   );
 }
