@@ -123,18 +123,21 @@ export default function InvestidoresCRM() {
     setDialogOpen(true);
   }
 
-  // Drag-and-drop: move estágio com optimistic update + auto-stamp ao avançar
-  async function handleStageMove(contactId: string, newStage: InvestorStage) {
+  // Drag-and-drop: solicita confirmação antes de mover
+  function requestStageMove(contactId: string, newStage: InvestorStage) {
     const current = rows.find((r) => r.id === contactId);
     if (!current || current.stage === newStage) return;
+    setPendingMove({ contact: current, to: newStage });
+  }
 
-    const advancing = isAdvance(current.stage, newStage);
+  async function executeStageMove(contact: InvestorContact, newStage: InvestorStage) {
+    const advancing = isAdvance(contact.stage, newStage);
     const stamp = advancing ? todayISO() : null;
 
     // Optimistic
     setRows((prev) =>
       prev.map((r) =>
-        r.id === contactId
+        r.id === contact.id
           ? { ...r, stage: newStage, ...(stamp ? { last_contact_date: stamp } : {}) }
           : r,
       ),
@@ -146,7 +149,7 @@ export default function InvestidoresCRM() {
     const { error } = await supabase
       .from("investor_contacts")
       .update(patch)
-      .eq("id", contactId);
+      .eq("id", contact.id);
 
     if (error) {
       toast.error("Erro ao mover", { description: error.message });
