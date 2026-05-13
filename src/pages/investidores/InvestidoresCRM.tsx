@@ -14,7 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, LayoutGrid, List as ListIcon, Pencil, Loader2 } from "lucide-react";
+import { Plus, LayoutGrid, List as ListIcon, Pencil, Loader2, Eye, Phone } from "lucide-react";
 import {
   DndContext,
   DragEndEvent,
@@ -42,6 +42,9 @@ import {
 } from "@/lib/investor-contacts";
 import { InvestorContactFormDialog } from "./InvestorContactFormDialog";
 import { InvestorContactDrawer } from "./InvestorContactDrawer";
+import { RegistrarContatoDialog } from "./RegistrarContatoDialog";
+import { ConfirmStageMoveDialog } from "./ConfirmStageMoveDialog";
+import { QuickViewDialog } from "./QuickViewDialog";
 
 type View = "kanban" | "list";
 type TypeFilter = "todos" | InvestorType;
@@ -55,6 +58,12 @@ export default function InvestidoresCRM() {
   const [selected, setSelected] = useState<InvestorContact | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<InvestorContact | null>(null);
+  const [registerFor, setRegisterFor] = useState<InvestorContact | null>(null);
+  const [quickView, setQuickView] = useState<InvestorContact | null>(null);
+  const [pendingMove, setPendingMove] = useState<{
+    contact: InvestorContact;
+    to: InvestorStage;
+  } | null>(null);
 
   useEffect(() => {
     document.title = "CRM de Prospecção | Relação com Investidores";
@@ -114,18 +123,21 @@ export default function InvestidoresCRM() {
     setDialogOpen(true);
   }
 
-  // Drag-and-drop: move estágio com optimistic update + auto-stamp ao avançar
-  async function handleStageMove(contactId: string, newStage: InvestorStage) {
+  // Drag-and-drop: solicita confirmação antes de mover
+  function requestStageMove(contactId: string, newStage: InvestorStage) {
     const current = rows.find((r) => r.id === contactId);
     if (!current || current.stage === newStage) return;
+    setPendingMove({ contact: current, to: newStage });
+  }
 
-    const advancing = isAdvance(current.stage, newStage);
+  async function executeStageMove(contact: InvestorContact, newStage: InvestorStage) {
+    const advancing = isAdvance(contact.stage, newStage);
     const stamp = advancing ? todayISO() : null;
 
     // Optimistic
     setRows((prev) =>
       prev.map((r) =>
-        r.id === contactId
+        r.id === contact.id
           ? { ...r, stage: newStage, ...(stamp ? { last_contact_date: stamp } : {}) }
           : r,
       ),
@@ -137,7 +149,7 @@ export default function InvestidoresCRM() {
     const { error } = await supabase
       .from("investor_contacts")
       .update(patch)
-      .eq("id", contactId);
+      .eq("id", contact.id);
 
     if (error) {
       toast.error("Erro ao mover", { description: error.message });
@@ -217,7 +229,13 @@ export default function InvestidoresCRM() {
             <Loader2 className="h-4 w-4 animate-spin mr-2" /> Carregando...
           </div>
         ) : view === "kanban" ? (
-          <KanbanView rows={filtered} onOpen={setSelected} onStageMove={handleStageMove} />
+          <KanbanView
+            rows={filtered}
+            onOpen={setSelected}
+            onStageMove={requestStageMove}
+            onQuickView={setQuickView}
+            onRegisterContact={setRegisterFor}
+          />
         ) : (
           <ListView rows={filtered} onOpen={setSelected} onEdit={openEdit} />
         )}
@@ -236,7 +254,38 @@ export default function InvestidoresCRM() {
         onClose={() => setSelected(null)}
         onChanged={load}
         onEdit={openEdit}
+        onRegisterContact={setRegisterFor}
+        onRequestStageMove={(c, to) => setPendingMove({ contact: c, to })}
       />
+
+      <RegistrarContatoDialog
+        open={!!registerFor}
+        onOpenChange={(v) => !v && setRegisterFor(null)}
+        contact={registerFor}
+        onSaved={load}
+      />
+
+      <QuickViewDialog
+        open={!!quickView}
+        onOpenChange={(v) => !v && setQuickView(null)}
+        contact={quickView}
+        onRegisterContact={setRegisterFor}
+        onOpenDetails={setSelected}
+      />
+
+      {pendingMove && (
+        <ConfirmStageMoveDialog
+          open
+          onOpenChange={(v) => !v && setPendingMove(null)}
+          contactName={pendingMove.contact.name}
+          fromStage={pendingMove.contact.stage}
+          toStage={pendingMove.to}
+          onConfirm={() => {
+            executeStageMove(pendingMove.contact, pendingMove.to);
+            setPendingMove(null);
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -261,10 +310,14 @@ function KanbanView({
   rows,
   onOpen,
   onStageMove,
+  onQuickView,
+  onRegisterContact,
 }: {
   rows: InvestorContact[];
   onOpen: (c: InvestorContact) => void;
   onStageMove: (id: string, stage: InvestorStage) => void;
+  onQuickView: (c: InvestorContact) => void;
+  onRegisterContact: (c: InvestorContact) => void;
 }) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const sensors = useSensors(
@@ -290,7 +343,14 @@ function KanbanView({
           {STAGE_ORDER.map((stage) => {
             const items = rows.filter((r) => r.stage === stage);
             return (
-              <KanbanColumn key={stage} stage={stage} items={items} onOpen={onOpen} />
+              <KanbanColumn
+                key={stage}
+                stage={stage}
+                items={items}
+                onOpen={onOpen}
+                onQuickView={onQuickView}
+                onRegisterContact={onRegisterContact}
+              />
             );
           })}
         </div>
@@ -315,10 +375,14 @@ function KanbanColumn({
   stage,
   items,
   onOpen,
+  onQuickView,
+  onRegisterContact,
 }: {
   stage: InvestorStage;
   items: InvestorContact[];
   onOpen: (c: InvestorContact) => void;
+  onQuickView: (c: InvestorContact) => void;
+  onRegisterContact: (c: InvestorContact) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: stage });
   const total = items.reduce((a, r) => a + (r.ticket ?? 0), 0);
@@ -342,7 +406,13 @@ function KanbanColumn({
         )}
       >
         {items.map((c) => (
-          <KanbanCard key={c.id} contact={c} onOpen={onOpen} />
+          <KanbanCard
+            key={c.id}
+            contact={c}
+            onOpen={onOpen}
+            onQuickView={onQuickView}
+            onRegisterContact={onRegisterContact}
+          />
         ))}
         {items.length === 0 && (
           <div className="text-[11px] text-muted-foreground/70 text-center py-6 border border-dashed rounded-md">
@@ -357,9 +427,13 @@ function KanbanColumn({
 function KanbanCard({
   contact,
   onOpen,
+  onQuickView,
+  onRegisterContact,
 }: {
   contact: InvestorContact;
   onOpen: (c: InvestorContact) => void;
+  onQuickView: (c: InvestorContact) => void;
+  onRegisterContact: (c: InvestorContact) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: contact.id,
@@ -372,31 +446,68 @@ function KanbanCard({
     <div
       ref={setNodeRef}
       style={style}
-      {...listeners}
-      {...attributes}
       onDoubleClick={() => onOpen(contact)}
       className={cn(
-        "rounded-md border bg-card p-2.5 cursor-grab active:cursor-grabbing hover:border-primary/40 hover:shadow-sm transition-colors",
+        "rounded-md border bg-card p-2.5 hover:border-primary/40 hover:shadow-sm transition-colors",
         isDragging && "opacity-40",
       )}
     >
-      <div className="text-[12px] font-medium text-foreground leading-tight truncate">
-        {contact.name}
-      </div>
-      <div className="flex items-center justify-between mt-1.5">
-        <Badge variant="secondary" className="text-[9px] font-normal h-4 px-1.5">
-          {INVESTOR_TYPE_LABEL[contact.type]}
-        </Badge>
-        <span className="text-[11px] text-foreground">{fmtCompactBRL(contact.ticket)}</span>
-      </div>
-      {contact.next_action && (
-        <div className="text-[11px] text-primary leading-tight mt-1.5 truncate">
-          → {contact.next_action}
+      <div className="flex items-start justify-between gap-1">
+        <div
+          {...listeners}
+          {...attributes}
+          className="flex-1 min-w-0 cursor-grab active:cursor-grabbing"
+        >
+          <div className="text-[12px] font-medium text-foreground leading-tight truncate">
+            {contact.name}
+          </div>
         </div>
-      )}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onQuickView(contact);
+          }}
+          className="h-5 w-5 inline-flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted shrink-0"
+          aria-label="Visualização rápida"
+        >
+          <Eye className="h-3 w-3" />
+        </button>
+      </div>
+      <div
+        {...listeners}
+        {...attributes}
+        className="cursor-grab active:cursor-grabbing"
+      >
+        <div className="flex items-center justify-between mt-1.5">
+          <Badge variant="secondary" className="text-[9px] font-normal h-4 px-1.5">
+            {INVESTOR_TYPE_LABEL[contact.type]}
+          </Badge>
+          <span className="text-[11px] text-foreground">{fmtCompactBRL(contact.ticket)}</span>
+        </div>
+        {contact.next_action && (
+          <div className="text-[11px] text-primary leading-tight mt-1.5 truncate">
+            → {contact.next_action}
+          </div>
+        )}
+      </div>
+      <div className="flex justify-end mt-1.5">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onRegisterContact(contact);
+          }}
+          className="h-5 w-5 inline-flex items-center justify-center rounded text-muted-foreground hover:text-primary hover:bg-muted"
+          aria-label="Registrar contato"
+        >
+          <Phone className="h-3 w-3" />
+        </button>
+      </div>
     </div>
   );
 }
+
 
 function ListView({
   rows,

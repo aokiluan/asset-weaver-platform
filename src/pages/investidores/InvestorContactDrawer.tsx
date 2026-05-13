@@ -1,18 +1,19 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Pencil, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Pencil, Trash2, ChevronLeft, ChevronRight, Phone } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useEffect, useState } from "react";
 import {
   fmtCompactBRL,
+  INVESTOR_ACTIVITY_LABEL,
   INVESTOR_TYPE_LABEL,
-  isAdvance,
   nextStage,
   prevStage,
   STAGE_LABEL,
   STAGE_ORDER,
-  todayISO,
+  type InvestorActivity,
   type InvestorContact,
   type InvestorStage,
 } from "@/lib/investor-contacts";
@@ -23,26 +24,40 @@ interface Props {
   onClose: () => void;
   onChanged: () => void;
   onEdit: (c: InvestorContact) => void;
+  onRegisterContact: (c: InvestorContact) => void;
+  onRequestStageMove: (c: InvestorContact, to: InvestorStage) => void;
 }
 
-export function InvestorContactDrawer({ contact, onClose, onChanged, onEdit }: Props) {
+export function InvestorContactDrawer({
+  contact,
+  onClose,
+  onChanged,
+  onEdit,
+  onRegisterContact,
+  onRequestStageMove,
+}: Props) {
   const open = !!contact;
+  const [activities, setActivities] = useState<InvestorActivity[]>([]);
 
-  async function moveStage(dir: "prev" | "next") {
+  useEffect(() => {
+    if (!contact) {
+      setActivities([]);
+      return;
+    }
+    supabase
+      .from("investor_contact_activities")
+      .select("*")
+      .eq("contact_id", contact.id)
+      .order("occurred_at", { ascending: false })
+      .limit(10)
+      .then(({ data }) => setActivities((data ?? []) as InvestorActivity[]));
+  }, [contact]);
+
+  function moveStage(dir: "prev" | "next") {
     if (!contact) return;
     const target = dir === "next" ? nextStage(contact.stage) : prevStage(contact.stage);
     if (!target) return;
-    const patch: { stage: InvestorStage; last_contact_date?: string } = { stage: target };
-    // Auto-stamp do último contato apenas ao avançar
-    if (isAdvance(contact.stage, target)) patch.last_contact_date = todayISO();
-
-    const { error } = await supabase
-      .from("investor_contacts")
-      .update(patch)
-      .eq("id", contact.id);
-    if (error) return toast.error("Erro ao mover estágio", { description: error.message });
-    toast.success(`Movido para ${STAGE_LABEL[target]}`);
-    onChanged();
+    onRequestStageMove(contact, target);
   }
 
   async function handleDelete() {
@@ -93,6 +108,42 @@ export function InvestorContactDrawer({ contact, onClose, onChanged, onEdit }: P
                   accent={!!contact.next_action}
                 />
                 <Row label="Notas" value={contact.notes ?? "—"} multiline />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground leading-none">
+                    Histórico de interações
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2 text-[11px]"
+                    onClick={() => onRegisterContact(contact)}
+                  >
+                    <Phone className="h-3 w-3 mr-1" />
+                    Registrar
+                  </Button>
+                </div>
+                {activities.length === 0 ? (
+                  <div className="text-[11px] text-muted-foreground py-2 border border-dashed rounded-md text-center">
+                    Nenhum contato registrado.
+                  </div>
+                ) : (
+                  <div className="space-y-1.5">
+                    {activities.map((a) => (
+                      <div key={a.id} className="border-l-2 border-border pl-2">
+                        <div className="text-[10px] text-muted-foreground leading-none">
+                          {new Date(a.occurred_at).toLocaleDateString("pt-BR")} ·{" "}
+                          {INVESTOR_ACTIVITY_LABEL[a.type]}
+                        </div>
+                        <div className="text-[12px] text-foreground leading-tight mt-0.5 whitespace-pre-wrap">
+                          {a.description}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
