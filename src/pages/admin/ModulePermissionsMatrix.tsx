@@ -95,10 +95,10 @@ export default function ModulePermissionsMatrix({ isAdmin }: { isAdmin: boolean 
       <div className="space-y-2">
         <div>
           <div className="text-[13px] font-medium leading-tight">
-            Acesso a módulos por papel
+            Acesso a módulos por perfil
           </div>
           <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">
-            Controla quais grupos do menu cada papel enxerga. Não altera RLS nem regras de etapas.
+            Controla quais grupos do menu cada perfil enxerga. Não altera RLS nem regras de etapas.
           </p>
         </div>
 
