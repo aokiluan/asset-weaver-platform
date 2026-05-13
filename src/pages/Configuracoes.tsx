@@ -7,7 +7,7 @@ export default function Configuracoes() {
       <PageTabs
         title="Configurações"
         tabs={[
-          { label: "Usuários", to: "/configuracoes/usuarios" },
+          
           { label: "Equipes", to: "/configuracoes/equipes" },
           { label: "Alçadas", to: "/configuracoes/alcadas" },
           { label: "Pipeline", to: "/configuracoes/pipeline" },
