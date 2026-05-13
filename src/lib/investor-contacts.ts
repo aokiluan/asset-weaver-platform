@@ -39,6 +39,53 @@ export const STAGE_LABEL: Record<InvestorStage, string> = {
   ativo: "Ativo",
 };
 
+/** Probabilidade de fechamento por estágio (estilo Salesforce Sales Path). */
+export const STAGE_PROBABILITY: Record<InvestorStage, number> = {
+  prospeccao: 0.1,
+  apresentacao: 0.25,
+  due_diligence: 0.5,
+  proposta: 0.75,
+  fechamento: 0.9,
+  ativo: 1,
+};
+
+export type ActivityType = "ligacao" | "email" | "reuniao" | "nota" | "tarefa";
+
+export const ACTIVITY_TYPES: ActivityType[] = ["ligacao", "email", "reuniao", "nota", "tarefa"];
+
+export const ACTIVITY_LABEL: Record<ActivityType, string> = {
+  ligacao: "Ligação",
+  email: "E-mail",
+  reuniao: "Reunião",
+  nota: "Nota",
+  tarefa: "Tarefa",
+};
+
+export interface InvestorActivity {
+  id: string;
+  contact_id: string;
+  user_id: string;
+  type: ActivityType;
+  description: string;
+  occurred_at: string;
+  created_at: string;
+}
+
+/** Dias desde o último contato (null se nunca contatado). */
+export function daysSince(dateISO: string | null | undefined): number | null {
+  if (!dateISO) return null;
+  const then = new Date(dateISO + "T00:00:00").getTime();
+  const now = Date.now();
+  return Math.floor((now - then) / 86_400_000);
+}
+
+/** Contato "frio": não-fechado e sem contato há 14+ dias (ou nunca). */
+export function isStale(stage: InvestorStage, lastContactDate: string | null | undefined): boolean {
+  if (stage === "ativo") return false;
+  const d = daysSince(lastContactDate);
+  return d == null || d >= 14;
+}
+
 export interface InvestorContact {
   id: string;
   name: string;
