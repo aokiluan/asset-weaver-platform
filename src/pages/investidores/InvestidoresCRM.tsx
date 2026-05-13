@@ -58,6 +58,12 @@ export default function InvestidoresCRM() {
   const [selected, setSelected] = useState<InvestorContact | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<InvestorContact | null>(null);
+  const [registerFor, setRegisterFor] = useState<InvestorContact | null>(null);
+  const [quickView, setQuickView] = useState<InvestorContact | null>(null);
+  const [pendingMove, setPendingMove] = useState<{
+    contact: InvestorContact;
+    to: InvestorStage;
+  } | null>(null);
 
   useEffect(() => {
     document.title = "CRM de Prospecção | Relação com Investidores";
