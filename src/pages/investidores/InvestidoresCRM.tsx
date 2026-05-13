@@ -33,6 +33,7 @@ import {
   INVESTOR_TYPES,
   INVESTOR_TYPE_LABEL,
   isAdvance,
+  isTerminal,
   STAGE_LABEL,
   STAGE_ORDER,
   todayISO,
