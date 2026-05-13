@@ -1,10 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -15,32 +12,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Loader2, Plus, UserPlus, X } from "lucide-react";
+import { Settings2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
-import { type AppRole, ROLE_LABEL, PRIMARY_ROLES } from "@/lib/roles";
-
-const ALL_ROLES: AppRole[] = [...PRIMARY_ROLES, "gestor_geral"];
+import { type AppRole, ROLE_LABEL } from "@/lib/roles";
+import { UserRolesDrawer } from "./UserRolesDrawer";
 
 const MODULES: { key: string; label: string }[] = [
   { key: "gestao", label: "Gestão" },
@@ -85,10 +67,7 @@ export default function AdminPermissoes() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("");
 
-  const [assignOpen, setAssignOpen] = useState(false);
-  const [emailLookup, setEmailLookup] = useState("");
-  const [rolesToAdd, setRolesToAdd] = useState<AppRole[]>([]);
-  const [adding, setAdding] = useState(false);
+  const [rolesDrawerUserId, setRolesDrawerUserId] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -218,42 +197,6 @@ export default function AdminPermissoes() {
     qc.invalidateQueries({ queryKey: ["user-module-permissions"] });
   }
 
-  async function assignRole() {
-    if (!emailLookup.trim()) {
-      toast.error("Selecione um usuário");
-      return;
-    }
-    if (rolesToAdd.length === 0) {
-      toast.error("Selecione ao menos uma função");
-      return;
-    }
-    setAdding(true);
-    const { data: uid, error: e1 } = await supabase.rpc("admin_find_user_by_email", {
-      _email: emailLookup.trim(),
-    });
-    if (e1 || !uid) {
-      setAdding(false);
-      toast.error("Usuário não encontrado", {
-        description: "O usuário precisa ter feito login pelo menos uma vez.",
-      });
-      return;
-    }
-    const rows = rolesToAdd.map((r) => ({ user_id: uid as string, role: r }));
-    const { error: e2 } = await supabase
-      .from("user_roles")
-      .upsert(rows, { onConflict: "user_id,role", ignoreDuplicates: true });
-    setAdding(false);
-    if (e2) {
-      toast.error("Erro", { description: e2.message });
-      return;
-    }
-    toast.success(rolesToAdd.length > 1 ? "Funções atribuídas" : "Função atribuída");
-    setEmailLookup("");
-    setRolesToAdd([]);
-    setAssignOpen(false);
-    load();
-  }
-
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-end justify-between gap-2">
@@ -271,73 +214,6 @@ export default function AdminPermissoes() {
             className="h-7 text-[12px] w-[220px]"
           />
           <span className="text-[11px] text-muted-foreground">{users.length} usuários</span>
-          <Dialog open={assignOpen} onOpenChange={setAssignOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm" className="h-7 text-[12px]">
-                <UserPlus className="h-3.5 w-3.5 mr-1" /> Atribuir função
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Atribuir função a usuário</DialogTitle>
-                <DialogDescription>
-                  O usuário precisa ter criado uma conta no sistema (login feito ao menos uma vez).
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-3">
-                <div className="space-y-2">
-                  <Label>Usuário</Label>
-                  <Select value={emailLookup} onValueChange={setEmailLookup}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione um usuário" />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-[280px]">
-                      {users.map((u) => (
-                        <SelectItem key={u.id} value={u.email}>
-                          <span className="font-medium">{u.nome}</span>
-                          <span className="text-muted-foreground ml-2 text-[11px]">{u.email}</span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Funções</Label>
-                  <div className="rounded-md border p-2 grid grid-cols-2 gap-1.5">
-                    {ALL_ROLES.map((r) => {
-                      const checked = rolesToAdd.includes(r);
-                      return (
-                        <label
-                          key={r}
-                          className="flex items-center gap-2 text-[12px] cursor-pointer hover:bg-accent rounded px-1.5 py-1"
-                        >
-                          <input
-                            type="checkbox"
-                            className="h-3.5 w-3.5 accent-primary"
-                            checked={checked}
-                            onChange={(e) => {
-                              setRolesToAdd((prev) =>
-                                e.target.checked ? [...prev, r] : prev.filter((x) => x !== r),
-                              );
-                            }}
-                          />
-                          {ROLE_LABEL[r]}
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setAssignOpen(false)}>
-                  Cancelar
-                </Button>
-                <Button onClick={assignRole} disabled={adding}>
-                  {adding && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} Atribuir
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
         </div>
       </div>
 
@@ -379,7 +255,6 @@ export default function AdminPermissoes() {
                 <tbody>
                   {filteredUsers.map((u) => {
                     const isAdminRow = u.roles.includes("admin");
-                    const availableRoles = ALL_ROLES.filter((r) => !u.roles.includes(r));
                     return (
                       <tr key={u.id} className="border-t border-border align-top">
                         <td className="px-2.5 py-1.5 sticky left-0 bg-card">
@@ -389,52 +264,17 @@ export default function AdminPermissoes() {
                           </div>
                         </td>
                         <td className="px-2 py-1.5">
-                          <div className="flex flex-wrap gap-1 items-center">
-                            {u.roles.length === 0 && (
-                              <span className="text-[11px] text-muted-foreground">Sem função</span>
-                            )}
-                            {u.roles.map((r) => (
-                              <Badge
-                                key={r}
-                                variant="secondary"
-                                className="gap-1 h-5 px-1.5 text-[11px] font-normal"
-                              >
-                                {ROLE_LABEL[r]}
-                                <button
-                                  onClick={() => removeRole(u, r)}
-                                  className="hover:text-destructive"
-                                  aria-label={`Remover função ${ROLE_LABEL[r]}`}
-                                >
-                                  <X className="h-3 w-3" />
-                                </button>
-                              </Badge>
-                            ))}
-                            {availableRoles.length > 0 && (
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <button
-                                    className="h-5 w-5 inline-flex items-center justify-center rounded-md border border-dashed border-border text-muted-foreground hover:text-foreground hover:border-foreground"
-                                    aria-label="Adicionar função"
-                                  >
-                                    <Plus className="h-3 w-3" />
-                                  </button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-44 p-1" align="start">
-                                  <div className="space-y-0.5">
-                                    {availableRoles.map((r) => (
-                                      <button
-                                        key={r}
-                                        onClick={() => addRole(u, r)}
-                                        className="w-full text-left px-2 py-1 text-[12px] rounded hover:bg-accent"
-                                      >
-                                        {ROLE_LABEL[r]}
-                                      </button>
-                                    ))}
-                                  </div>
-                                </PopoverContent>
-                              </Popover>
-                            )}
-                          </div>
+                          <button
+                            onClick={() => setRolesDrawerUserId(u.id)}
+                            className="inline-flex items-center gap-1.5 h-6 px-2 rounded-md border border-border hover:border-foreground hover:bg-accent text-[11px] leading-none transition-colors"
+                          >
+                            <Settings2 className="h-3.5 w-3.5 text-muted-foreground" />
+                            <span className="text-muted-foreground">
+                              {u.roles.length === 0
+                                ? "Sem função"
+                                : `${u.roles.length} ${u.roles.length === 1 ? "função" : "funções"}`}
+                            </span>
+                          </button>
                         </td>
                         <td className="px-2 py-1.5">
                           <Select
@@ -507,6 +347,20 @@ export default function AdminPermissoes() {
           </TooltipProvider>
         )}
       </Card>
+
+      <UserRolesDrawer
+        open={!!rolesDrawerUserId}
+        onOpenChange={(v) => !v && setRolesDrawerUserId(null)}
+        user={users.find((u) => u.id === rolesDrawerUserId) ?? null}
+        onAdd={(role) => {
+          const u = users.find((x) => x.id === rolesDrawerUserId);
+          if (u) addRole(u, role);
+        }}
+        onRemove={(role) => {
+          const u = users.find((x) => x.id === rolesDrawerUserId);
+          if (u) removeRole(u, role);
+        }}
+      />
     </div>
   );
 }
