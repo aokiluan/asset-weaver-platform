@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -121,14 +121,14 @@ export function CedenteImportDialog({ open, onOpenChange, onImported }: Props) {
   const currentStepIdx = STEPS.findIndex((s) => s.id === step);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl">
-        <DialogHeader>
-          <DialogTitle className="text-base">Importar cedentes via planilha</DialogTitle>
-          <DialogDescription className="text-xs">
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle className="text-base">Importar cedentes via planilha</SheetTitle>
+          <SheetDescription className="text-xs">
             Baixe o modelo, preencha e envie. Aceita .xlsx e .csv (até 5MB).
-          </DialogDescription>
-        </DialogHeader>
+          </SheetDescription>
+        </SheetHeader>
 
         {/* Stepper */}
         <div className="flex items-center gap-2 text-[11px]">
@@ -229,7 +229,7 @@ export function CedenteImportDialog({ open, onOpenChange, onImported }: Props) {
           </div>
         )}
 
-        <DialogFooter className="gap-2">
+        <SheetFooter className="gap-2">
           {step !== "importing" && (
             <Button variant="ghost" className="h-7 text-[12px]" onClick={() => onOpenChange(false)}>
               Cancelar
@@ -243,8 +243,8 @@ export function CedenteImportDialog({ open, onOpenChange, onImported }: Props) {
               </Button>
             </>
           )}
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }
