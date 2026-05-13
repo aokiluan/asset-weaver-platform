@@ -182,6 +182,7 @@ export function InvestorContactFormDialog({
               />
             </Field>
           </div>
+        </div>
 
         <SheetFooter className="p-4 border-t gap-2 sm:justify-end">
           <Button
