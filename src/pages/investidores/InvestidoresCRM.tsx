@@ -192,14 +192,14 @@ export default function InvestidoresCRM() {
             sub={`${metrics.pipelineCount} em negociação`}
           />
           <MetricCard
-            label="Total de Contatos"
-            value={String(metrics.total)}
-            sub="na base"
+            label="Forecast Ponderado"
+            value={fmtCompactBRL(metrics.forecast)}
+            sub="ticket × prob. estágio"
           />
           <MetricCard
             label="Ticket Médio"
             value={fmtCompactBRL(metrics.ticketMedio)}
-            sub="por contato"
+            sub={`${metrics.total} na base`}
           />
         </div>
 
@@ -216,20 +216,40 @@ export default function InvestidoresCRM() {
                 {t === "todos" ? "Todos" : INVESTOR_TYPE_LABEL[t]}
               </Button>
             ))}
+            {metrics.stale > 0 && (
+              <Badge
+                variant="outline"
+                className="h-6 px-1.5 text-[10px] font-normal gap-1 ml-1 border-warning/40 text-warning"
+                title="Sem contato há 14+ dias"
+              >
+                <Snowflake className="h-3 w-3" /> {metrics.stale} frio{metrics.stale > 1 ? "s" : ""}
+              </Badge>
+            )}
           </div>
-          <ToggleGroup
-            type="single"
-            value={view}
-            onValueChange={(v) => v && setView(v as View)}
-            size="sm"
-          >
-            <ToggleGroupItem value="kanban" className="h-7 px-2">
-              <LayoutGrid className="h-3.5 w-3.5" />
-            </ToggleGroupItem>
-            <ToggleGroupItem value="list" className="h-7 px-2">
-              <ListIcon className="h-3.5 w-3.5" />
-            </ToggleGroupItem>
-          </ToggleGroup>
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Buscar..."
+                className="h-7 w-40 pl-7 text-[12px]"
+              />
+            </div>
+            <ToggleGroup
+              type="single"
+              value={view}
+              onValueChange={(v) => v && setView(v as View)}
+              size="sm"
+            >
+              <ToggleGroupItem value="kanban" className="h-7 px-2">
+                <LayoutGrid className="h-3.5 w-3.5" />
+              </ToggleGroupItem>
+              <ToggleGroupItem value="list" className="h-7 px-2">
+                <ListIcon className="h-3.5 w-3.5" />
+              </ToggleGroupItem>
+            </ToggleGroup>
+          </div>
         </div>
 
         {loading ? (
