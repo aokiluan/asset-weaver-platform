@@ -1,25 +1,56 @@
+# Plano: Matriz de Permissões Editável com Perfis Customizados
+
 ## Objetivo
-Hoje o sidebar usa `hidden md:flex`/`hidden md:block`, então some abaixo de 768px. Em telas comprimidas (ex.: 537px do preview) o usuário fica sem navegação. Ajustar para que o sidebar apareça sempre — em telas estreitas ele aparece em modo colapsado (somente ícones, 60px), e o usuário pode expandir manualmente clicando no botão de menu/pin como já existe.
+Transformar a tela atual de auditoria de permissões (`/configuracoes/permissoes`) em uma matriz editável persistida no banco, permitindo incluir e gerenciar novos perfis de permissão além dos 8 papéis base existentes.
 
-## Mudanças (apenas `src/components/AppSidebar.tsx`)
+## Escopo
+- Apenas a **matriz Papel × Etapa** da esteira (envio entre estágios).
+- Não altera RLS policies, enum `app_role` nem gates de validação.
+- Perfis customizados funcionam como "linhas" independentes na matriz; para o resto do sistema se mapeiam a papéis base do enum.
 
-1. **Spacer (div fantasma que reserva largura)**
-   - Remover `hidden md:block` → sempre visível.
-   - Largura: sempre `COLLAPSED_W` em mobile (sem expandir empurrando o conteúdo); em ≥md continua respeitando `pinned`.
+## Etapas
 
-2. **`<aside>` do sidebar**
-   - Remover `hidden md:flex` → sempre `flex`.
-   - Em telas <md, forçar largura colapsada (60px) e ignorar hover-expand para não cobrir o conteúdo. Expansão fica disponível apenas via clique no botão de menu (ainda funcional, abre como overlay com sombra, igual ao comportamento atual de hover não-pinado).
-   - Manter os mesmos tokens de cor (`bg-sidebar`, etc.) — sem mudanças visuais de design system.
+### 1. Banco de dados — tabelas de permissões
+Criar tabelas via migration:
+- `permission_profiles` (`id`, `nome`, `descricao`, `ativo`, `created_at`, `updated_at`) — perfis que aparecem na matriz.
+- `profile_role_bindings` (`profile_id`, `app_role`) — vínculo de cada perfil aos papéis base do enum (um perfil pode ter 1 ou mais papéis).
+- `stage_permissions` (`profile_id`, `stage` (cedente_stage), `can_send`, `created_at`, `updated_at`) — células editáveis da matriz.
 
-3. **Header do AppLayout**
-   - Sem alterações funcionais, mas o spacer do sidebar agora ocupa 60px em mobile, então o header/main já se ajustam naturalmente via flex.
-   - A busca global continua `hidden md:block` (sem espaço em mobile, ok).
+RLS: apenas `admin` pode editar; autenticados podem ler.
 
-## Não muda
-- Nenhuma regra de papéis/permissões.
-- Nenhum token de design (cores, tipografia, espaçamento) é alterado.
-- Comportamento desktop (≥768px) idêntico ao atual: hover expande, pin fixa.
+### 2. Seed inicial
+Popular `stage_permissions` com os valores atuais de `STAGE_PERMISSIONS` para os papéis base, garantindo paridade.
 
-## Resultado esperado
-Em 537px o usuário verá a barra lateral colapsada de 60px com ícones de cada grupo/rota; pode tocar no ícone de menu para expandir temporariamente como overlay e navegar.
+### 3. Backend — consumo das permissões
+- Criar RPC `list_stage_permissions()` retornando a matriz completa.
+- Atualizar `CedenteStageStepper.tsx` para consultar `stage_permissions` via RPC em vez de `STAGE_PERMISSIONS` hardcoded.
+- Manter fallback local caso a tabela esteja vazia.
+
+### 4. UI — Matriz editável (Bloco 1)
+- Substituir a tabela estática por checkboxes interativos.
+- Cada checkbox atualiza `stage_permissions` (toggle `can_send`).
+- Remover a coluna **"Ativo"** da matriz (só exibir estágios que têm transição de saída: Novo, Cadastro, Análise, Comitê, Formalização).
+- Agrupar visualmente: papéis base primeiro, depois perfis customizados.
+
+### 5. UI — CRUD de perfis customizados
+- Adicionar seção acima da matriz com:
+  - Lista de perfis existentes (nome, descricao, ativo, vínculos de papel).
+  - Botão "Novo perfil" abrindo um dialog com:
+    - Nome, descrição, ativo/inativo.
+    - Multi-select de papéis base do enum (`app_role`) que o perfil representa.
+  - Ao criar um perfil, inserir linha default em `stage_permissions` (tudo `false`); admin edita a matriz depois.
+
+### 6. Blocos 2 e 3
+- Bloco 2 (Gates): permanece somente leitura.
+- Bloco 3 (Usuários por papel): permanece somente leitura.
+
+## Mudanças de arquivos
+- Nova migration SQL.
+- `src/lib/cedente-stages.ts`: manter `STAGE_PERMISSIONS` como fallback, marcar como `@deprecated`.
+- `src/components/cedentes/CedenteStageStepper.tsx`: consultar RPC.
+- `src/pages/admin/AdminPermissoes.tsx`: reescrita para matriz editável + CRUD de perfis.
+
+## Segurança
+- Tabela `stage_permissions` com RLS — só admin escreve.
+- Enum `app_role` **não é alterado**; RLS policies existentes continuam intactas.
+- Perfis customizados sem vínculo (`profile_role_bindings`) são apenas auditórios na matriz.
