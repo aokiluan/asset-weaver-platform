@@ -11,27 +11,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { Settings2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
-import { type AppRole, ROLE_LABEL } from "@/lib/roles";
-import { UserRolesDrawer } from "./UserRolesDrawer";
+import { type AppRole, OPERACAO_ROLES } from "@/lib/roles";
+import { UserAccessDrawer } from "./UserAccessDrawer";
 
-const MODULES: { key: string; label: string }[] = [
-  { key: "gestao", label: "Gestão" },
-  { key: "operacao", label: "Operação" },
-  { key: "diretorio", label: "Diretório" },
-  { key: "financeiro_mod", label: "Financeiro" },
-  { key: "config", label: "Config" },
-  { key: "bi", label: "BI" },
-];
+const ALL_MODULE_KEYS = ["gestao", "operacao", "diretorio", "financeiro_mod", "config", "bi"];
 
 interface Team {
   id: string;
@@ -57,8 +44,7 @@ interface PermRow {
 }
 
 export default function AdminPermissoes() {
-  const { user, hasRole } = useAuth();
-  const isAdmin = hasRole("admin");
+  const { user } = useAuth();
   const qc = useQueryClient();
 
   const [users, setUsers] = useState<UserRow[]>([]);
@@ -66,8 +52,7 @@ export default function AdminPermissoes() {
   const [perms, setPerms] = useState<PermRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("");
-
-  const [rolesDrawerUserId, setRolesDrawerUserId] = useState<string | null>(null);
+  const [drawerUserId, setDrawerUserId] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -107,59 +92,55 @@ export default function AdminPermissoes() {
   // ---- Handlers
   async function toggleAtivo(u: UserRow) {
     const { error } = await supabase.from("profiles").update({ ativo: !u.ativo }).eq("id", u.id);
-    if (error) {
-      toast.error("Erro", { description: error.message });
-      return;
-    }
+    if (error) return toast.error("Erro", { description: error.message });
     toast.success(`Usuário ${!u.ativo ? "ativado" : "desativado"}`);
     setUsers((rs) => rs.map((r) => (r.id === u.id ? { ...r, ativo: !u.ativo } : r)));
   }
 
   async function setTeam(u: UserRow, teamId: string | null) {
     const { error } = await supabase.from("profiles").update({ team_id: teamId }).eq("id", u.id);
-    if (error) {
-      toast.error("Erro", { description: error.message });
-      return;
-    }
+    if (error) return toast.error("Erro", { description: error.message });
     toast.success("Equipe atualizada");
     setUsers((rs) => rs.map((r) => (r.id === u.id ? { ...r, team_id: teamId } : r)));
   }
 
-  async function removeRole(u: UserRow, role: AppRole) {
-    const { error } = await supabase
-      .from("user_roles")
-      .delete()
-      .eq("user_id", u.id)
-      .eq("role", role);
-    if (error) {
-      toast.error("Erro", { description: error.message });
-      return;
+  async function toggleRole(u: UserRow, role: AppRole, next: boolean) {
+    if (next) {
+      const { error } = await supabase.from("user_roles").insert({ user_id: u.id, role });
+      if (error) return toast.error("Erro", { description: error.message });
+      setUsers((rs) =>
+        rs.map((r) => (r.id === u.id ? { ...r, roles: [...r.roles, role] } : r)),
+      );
+    } else {
+      const { error } = await supabase
+        .from("user_roles")
+        .delete()
+        .eq("user_id", u.id)
+        .eq("role", role);
+      if (error) return toast.error("Erro", { description: error.message });
+      setUsers((rs) =>
+        rs.map((r) => (r.id === u.id ? { ...r, roles: r.roles.filter((x) => x !== role) } : r)),
+      );
     }
-    toast.success("Função removida");
-    setUsers((rs) =>
-      rs.map((r) => (r.id === u.id ? { ...r, roles: r.roles.filter((x) => x !== role) } : r)),
-    );
   }
 
-  async function addRole(u: UserRow, role: AppRole) {
-    if (u.roles.includes(role)) return;
-    const { error } = await supabase
-      .from("user_roles")
-      .insert({ user_id: u.id, role });
-    if (error) {
-      toast.error("Erro", { description: error.message });
-      return;
-    }
-    toast.success("Função atribuída");
-    setUsers((rs) =>
-      rs.map((r) => (r.id === u.id ? { ...r, roles: [...r.roles, role] } : r)),
-    );
+  async function toggleAdmin(u: UserRow, next: boolean) {
+    await toggleRole(u, "admin", next);
   }
 
   async function toggleModule(u: UserRow, moduleKey: string, value: boolean) {
-    const isAdminRow = u.roles.includes("admin");
-    if (!isAdmin || isAdminRow) return;
     const prev = matrix[u.id]?.[moduleKey] ?? false;
+
+    // Se for desligar Operação, avisa que funções operacionais serão removidas
+    if (moduleKey === "operacao" && !value) {
+      const opRoles = u.roles.filter((r) => OPERACAO_ROLES.includes(r));
+      if (opRoles.length > 0 && !window.confirm(
+        `Ao desativar o módulo Operação, as ${opRoles.length} função(ões) operacional(is) serão removidas. Continuar?`,
+      )) {
+        return;
+      }
+    }
+
     setPerms((rs) => {
       const idx = rs.findIndex((r) => r.user_id === u.id && r.module_key === moduleKey);
       if (idx >= 0) {
@@ -169,6 +150,7 @@ export default function AdminPermissoes() {
       }
       return [...rs, { user_id: u.id, module_key: moduleKey, enabled: value }];
     });
+
     const { error } = await (supabase as any)
       .from("user_module_permissions")
       .upsert(
@@ -191,10 +173,36 @@ export default function AdminPermissoes() {
         }
         return rs;
       });
-      toast.error("Erro ao salvar", { description: error.message });
-      return;
+      return toast.error("Erro ao salvar", { description: error.message });
+    }
+
+    // Se desligou Operação, recarrega para refletir cascade que removeu roles
+    if (moduleKey === "operacao" && !value) {
+      await load();
     }
     qc.invalidateQueries({ queryKey: ["user-module-permissions"] });
+  }
+
+  const drawerUser = users.find((u) => u.id === drawerUserId) ?? null;
+  const drawerData = drawerUser
+    ? {
+        id: drawerUser.id,
+        nome: drawerUser.nome,
+        email: drawerUser.email,
+        roles: drawerUser.roles,
+        modules: matrix[drawerUser.id] ?? {},
+      }
+    : null;
+
+  function summary(u: UserRow) {
+    if (u.roles.includes("admin")) return "Admin";
+    const mods = ALL_MODULE_KEYS.filter((k) => matrix[u.id]?.[k]).length;
+    const fns = u.roles.filter((r) => OPERACAO_ROLES.includes(r)).length;
+    if (mods === 0 && fns === 0) return "Sem acesso";
+    const parts: string[] = [];
+    if (mods > 0) parts.push(`${mods} ${mods === 1 ? "módulo" : "módulos"}`);
+    if (fns > 0) parts.push(`${fns} ${fns === 1 ? "função" : "funções"}`);
+    return parts.join(" · ");
   }
 
   return (
@@ -203,7 +211,7 @@ export default function AdminPermissoes() {
         <div>
           <h1 className="text-[20px] font-medium tracking-tight">Permissões</h1>
           <p className="text-[12px] text-muted-foreground leading-tight mt-1">
-            Funções, equipe e acesso a módulos do menu por usuário. Padrão de módulos: bloqueado quando não marcado.
+            Acesso por usuário: administrador, módulos do menu e funções de Operação. Padrão bloqueado.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -225,141 +233,89 @@ export default function AdminPermissoes() {
             ))}
           </div>
         ) : (
-          <TooltipProvider>
-            <div className="overflow-x-auto -mx-2.5">
-              <table className="w-full text-[12px] border-separate border-spacing-0">
-                <thead>
-                  <tr>
-                    <th className="text-left font-medium px-2.5 py-1.5 text-[11px] text-muted-foreground sticky left-0 bg-card z-10">
-                      Usuário
-                    </th>
-                    <th className="text-left font-medium px-2 py-1.5 text-[11px] text-muted-foreground">
-                      Funções
-                    </th>
-                    <th className="text-left font-medium px-2 py-1.5 text-[11px] text-muted-foreground">
-                      Equipe
-                    </th>
-                    {MODULES.map((m) => (
-                      <th
-                        key={m.key}
-                        className="text-center font-medium px-2 py-1.5 text-[11px] text-muted-foreground whitespace-nowrap"
+          <div className="overflow-x-auto -mx-2.5">
+            <table className="w-full text-[12px] border-separate border-spacing-0">
+              <thead>
+                <tr>
+                  <th className="text-left font-medium px-2.5 py-1.5 text-[11px] text-muted-foreground">
+                    Usuário
+                  </th>
+                  <th className="text-left font-medium px-2 py-1.5 text-[11px] text-muted-foreground">
+                    Acessos
+                  </th>
+                  <th className="text-left font-medium px-2 py-1.5 text-[11px] text-muted-foreground">
+                    Equipe
+                  </th>
+                  <th className="text-center font-medium px-2 py-1.5 text-[11px] text-muted-foreground">
+                    Ativo
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredUsers.map((u) => (
+                  <tr key={u.id} className="border-t border-border align-top">
+                    <td className="px-2.5 py-1.5">
+                      <div className="font-medium leading-tight">{u.nome}</div>
+                      <div className="text-[10px] text-muted-foreground leading-none mt-0.5">
+                        {u.email}
+                      </div>
+                    </td>
+                    <td className="px-2 py-1.5">
+                      <button
+                        onClick={() => setDrawerUserId(u.id)}
+                        className="inline-flex items-center gap-1.5 h-6 px-2 rounded-md border border-border hover:border-foreground hover:bg-accent text-[11px] leading-none transition-colors"
                       >
-                        {m.label}
-                      </th>
-                    ))}
-                    <th className="text-center font-medium px-2 py-1.5 text-[11px] text-muted-foreground">
-                      Ativo
-                    </th>
+                        <Settings2 className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span className="text-foreground">{summary(u)}</span>
+                      </button>
+                    </td>
+                    <td className="px-2 py-1.5">
+                      <Select
+                        value={u.team_id ?? "none"}
+                        onValueChange={(v) => setTeam(u, v === "none" ? null : v)}
+                      >
+                        <SelectTrigger className="h-7 w-[160px] text-[12px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">— Sem equipe —</SelectItem>
+                          {teams.map((t) => (
+                            <SelectItem key={t.id} value={t.id}>
+                              {t.nome}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </td>
+                    <td className="text-center px-2 py-1.5">
+                      <Switch
+                        checked={u.ativo}
+                        onCheckedChange={() => toggleAtivo(u)}
+                        aria-label={`${u.nome} ativo`}
+                      />
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {filteredUsers.map((u) => {
-                    const isAdminRow = u.roles.includes("admin");
-                    return (
-                      <tr key={u.id} className="border-t border-border align-top">
-                        <td className="px-2.5 py-1.5 sticky left-0 bg-card">
-                          <div className="font-medium leading-tight">{u.nome}</div>
-                          <div className="text-[10px] text-muted-foreground leading-none mt-0.5">
-                            {u.email}
-                          </div>
-                        </td>
-                        <td className="px-2 py-1.5">
-                          <button
-                            onClick={() => setRolesDrawerUserId(u.id)}
-                            className="inline-flex items-center gap-1.5 h-6 px-2 rounded-md border border-border hover:border-foreground hover:bg-accent text-[11px] leading-none transition-colors"
-                          >
-                            <Settings2 className="h-3.5 w-3.5 text-muted-foreground" />
-                            <span className="text-muted-foreground">
-                              {u.roles.length === 0
-                                ? "Sem função"
-                                : `${u.roles.length} ${u.roles.length === 1 ? "função" : "funções"}`}
-                            </span>
-                          </button>
-                        </td>
-                        <td className="px-2 py-1.5">
-                          <Select
-                            value={u.team_id ?? "none"}
-                            onValueChange={(v) => setTeam(u, v === "none" ? null : v)}
-                          >
-                            <SelectTrigger className="h-7 w-[150px] text-[12px]">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="none">— Sem equipe —</SelectItem>
-                              {teams.map((t) => (
-                                <SelectItem key={t.id} value={t.id}>
-                                  {t.nome} ({ROLE_LABEL[t.papel_principal]})
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </td>
-                        {MODULES.map((m) => {
-                          const checked = isAdminRow ? true : matrix[u.id]?.[m.key] ?? false;
-                          const sw = (
-                            <Switch
-                              checked={checked}
-                              disabled={!isAdmin || isAdminRow}
-                              onCheckedChange={(v) => toggleModule(u, m.key, !!v)}
-                              aria-label={`${u.nome} acessa ${m.label}`}
-                            />
-                          );
-                          return (
-                            <td key={m.key} className="text-center px-2 py-1.5">
-                              {isAdminRow ? (
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <span className="inline-flex">{sw}</span>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    Admin sempre tem acesso total a todos os módulos
-                                  </TooltipContent>
-                                </Tooltip>
-                              ) : (
-                                sw
-                              )}
-                            </td>
-                          );
-                        })}
-                        <td className="text-center px-2 py-1.5">
-                          <Switch
-                            checked={u.ativo}
-                            onCheckedChange={() => toggleAtivo(u)}
-                            aria-label={`${u.nome} ativo`}
-                          />
-                        </td>
-                      </tr>
-                    );
-                  })}
-                  {filteredUsers.length === 0 && (
-                    <tr>
-                      <td
-                        colSpan={MODULES.length + 4}
-                        className="text-center text-muted-foreground py-3 text-[11px]"
-                      >
-                        Nenhum usuário encontrado
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </TooltipProvider>
+                ))}
+                {filteredUsers.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="text-center text-muted-foreground py-3 text-[11px]">
+                      Nenhum usuário encontrado
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         )}
       </Card>
 
-      <UserRolesDrawer
-        open={!!rolesDrawerUserId}
-        onOpenChange={(v) => !v && setRolesDrawerUserId(null)}
-        user={users.find((u) => u.id === rolesDrawerUserId) ?? null}
-        onAdd={(role) => {
-          const u = users.find((x) => x.id === rolesDrawerUserId);
-          if (u) addRole(u, role);
-        }}
-        onRemove={(role) => {
-          const u = users.find((x) => x.id === rolesDrawerUserId);
-          if (u) removeRole(u, role);
-        }}
+      <UserAccessDrawer
+        open={!!drawerUserId}
+        onOpenChange={(v) => !v && setDrawerUserId(null)}
+        user={drawerData}
+        onToggleAdmin={(next) => drawerUser && toggleAdmin(drawerUser, next)}
+        onToggleModule={(k, v) => drawerUser && toggleModule(drawerUser, k, v)}
+        onToggleRole={(role, next) => drawerUser && toggleRole(drawerUser, role, next)}
       />
     </div>
   );

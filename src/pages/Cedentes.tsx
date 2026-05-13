@@ -52,7 +52,7 @@ const fmtCNPJ = (s: string | null | undefined) => {
 export default function Cedentes() {
   const navigate = useNavigate();
   const { hasRole, roles, loading: authLoading } = useAuth();
-  const canCreate = hasRole("admin") || hasRole("comercial") || hasRole("gestor_geral");
+  const canCreate = hasRole("admin") || hasRole("comercial");
   const [items, setItems] = useState<Cedente[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");

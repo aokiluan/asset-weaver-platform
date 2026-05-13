@@ -82,10 +82,10 @@ export default function Formalizacao() {
   const [revisarTarget, setRevisarTarget] = useState<CedenteRow | null>(null);
 
   const canSign =
-    hasRole("admin") || hasRole("formalizacao") || hasRole("gestor_geral");
+    hasRole("admin") || hasRole("formalizacao");
   const canGenerate = hasRole("admin") || hasRole("formalizacao");
   const canRevisar =
-    hasRole("admin") || hasRole("formalizacao") || hasRole("cadastro") || hasRole("gestor_geral");
+    hasRole("admin") || hasRole("formalizacao") || hasRole("cadastro");
 
   useEffect(() => {
     document.title = "Formalização | Securitizadora";
