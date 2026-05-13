@@ -139,7 +139,7 @@ export function CedenteVisitReportForm({ cedenteId, onSaved }: Props) {
   const [versionsRefresh, setVersionsRefresh] = useState(0);
   const [form, setForm] = useState<FormState>(empty());
   const { hasRole } = useAuth();
-  const canEdit = hasRole("admin") || hasRole("comercial") || hasRole("gestor_geral");
+  const canEdit = hasRole("admin") || hasRole("comercial");
   const readOnly = mode === "view" || !canEdit;
 
   // Draft só ativa em modo create (nunca em edit/view de versão existente).

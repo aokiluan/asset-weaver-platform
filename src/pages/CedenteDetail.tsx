@@ -452,7 +452,7 @@ export default function CedenteDetail() {
           cedente={cedente}
           latestProposalId={latestProposal?.id ?? null}
           minutaAssinada={minutaAssinada}
-          canSign={hasRole("admin") || hasRole("formalizacao") || hasRole("financeiro")}
+          canSign={hasRole("admin") || hasRole("formalizacao")}
           canGenerate={hasRole("admin") || hasRole("formalizacao")}
           onChanged={load}
         />
