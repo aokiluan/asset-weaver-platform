@@ -14,7 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, LayoutGrid, List as ListIcon, Pencil, Loader2, Eye, Phone } from "lucide-react";
+import { Plus, LayoutGrid, List as ListIcon, Pencil, Loader2, Eye, Phone, Upload } from "lucide-react";
 import {
   DndContext,
   DragEndEvent,
@@ -45,6 +45,7 @@ import { InvestorContactDrawer } from "./InvestorContactDrawer";
 import { RegistrarContatoDialog } from "./RegistrarContatoDialog";
 import { ConfirmStageMoveDialog } from "./ConfirmStageMoveDialog";
 import { QuickViewDialog } from "./QuickViewDialog";
+import { InvestorImportDialog } from "./InvestorImportDialog";
 
 type View = "kanban" | "list";
 type TypeFilter = "todos" | InvestorType;
