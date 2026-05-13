@@ -167,17 +167,19 @@ export default function InvestidoresCRM() {
         title="Relação com Investidores"
         tabs={[{ label: "CRM de Prospecção", to: "/investidores/crm" }]}
         actions={
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-7"
-            onClick={() => setImportOpen(true)}
-          >
-            <Upload className="h-3.5 w-3.5 mr-1" /> Importar
-          </Button>
-          <Button size="sm" className="h-7" onClick={openNew}>
-            <Plus className="h-3.5 w-3.5 mr-1" /> Novo contato
-          </Button>
+          <>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7"
+              onClick={() => setImportOpen(true)}
+            >
+              <Upload className="h-3.5 w-3.5 mr-1" /> Importar
+            </Button>
+            <Button size="sm" className="h-7" onClick={openNew}>
+              <Plus className="h-3.5 w-3.5 mr-1" /> Novo contato
+            </Button>
+          </>
         }
       />
 
