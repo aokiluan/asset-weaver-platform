@@ -9,7 +9,8 @@ export type ModuleKey =
   | "diretorio"
   | "config"
   | "financeiro_mod"
-  | "bi";
+  | "bi"
+  | "relacao_investidores";
 
 export interface UserModulePermission {
   module_key: string;

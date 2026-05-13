@@ -36,6 +36,7 @@ import Diretorio from "./pages/Diretorio.tsx";
 import DiretorioDetail from "./pages/DiretorioDetail.tsx";
 import Investidores from "./pages/Investidores.tsx";
 import InvestidorDetail from "./pages/InvestidorDetail.tsx";
+import InvestidoresCRM from "./pages/investidores/InvestidoresCRM.tsx";
 import RoleGuard from "@/components/RoleGuard";
 import NotFound from "./pages/NotFound.tsx";
 
