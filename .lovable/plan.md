@@ -1,46 +1,71 @@
-## Aprimoramentos funcionais no CRM de Prospecção
+## Objetivo
 
-Comparando o artefato de referência com o que já existe, mantendo o visual Nibo. Lista do que vou adicionar:
+Trazer 3 features do kanban Comercial do projeto `s3capital-painel` para o nosso CRM de Prospecção, mantendo o design system Nibo ultracompacto (sem cores novas, sem libs novas).
 
-### 1. Drag-and-drop no Kanban
-Hoje o avanço/retrocesso de estágio só acontece pelo painel lateral. Adicionar arrastar-e-soltar de cards entre colunas usando `@dnd-kit/core` (já instalado, usado em `Pipeline.tsx`). Solto numa coluna, faz `update stage` no Supabase com optimistic update e toast de confirmação.
+## 1. Registrar Contato (histórico de interações)
 
-### 2. Sub-labels nos cards de métrica
-Hoje cada card mostra só label + valor. Adicionar contexto na linha de baixo:
-- **Capital Ativo** → `N contatos`
-- **Pipeline** → `N em negociação`
-- **Total de Contatos** → `na base`
-- **Ticket Médio** → `por contato`
+Hoje só existe `last_contact_date` como data solta. Criaremos um histórico real.
 
-### 3. Indicador de todos os estágios no painel lateral
-Hoje o painel tem stepper com bolinhas. Trocar por **chips horizontais com todos os estágios** (chip ativo destacado), igual ao artefato — fica mais legível em 420px e mostra de relance onde está a oportunidade.
+**Banco** — nova tabela `investor_contact_interactions`:
+- `id`, `contact_id` (FK → `investor_contacts`), `user_id`
+- `interaction_date` (date, default today)
+- `channel` enum: `telefone | email | whatsapp | presencial | reuniao | outro`
+- `summary` (text, obrigatório curto — "com quem falou / o que rolou")
+- `notes` (text, opcional)
+- `created_at`
+- RLS por `user_id = auth.uid()` (mesmo padrão das demais)
 
-### 4. "Próxima ação" em destaque
-- Nos cards do Kanban: prefixar com `→` e usar token `text-success` (verde semântico) para diferenciar do nome.
-- No painel lateral: usar mesma cor/peso para reforçar que é o call-to-action.
+**Trigger** ao inserir interação: atualiza `investor_contacts.last_contact_date` para `interaction_date` se for mais recente.
 
-### 5. Botão "Avançar" como ação primária no painel
-Hoje os botões Voltar/Avançar têm o mesmo peso (ghost + primary). Manter Avançar primary, mas reforçar que é o caminho feliz: ocupa mais espaço (flex-1 vs flex-shrink no Voltar).
+**UI** — novo `RegistrarContatoDialog.tsx`:
+- Campos: data, canal (select), resumo (input curto), notas (textarea)
+- Botões: Cancelar (ghost) + Salvar (primary), padrão h-7
+- Pontos de entrada:
+  - Ícone `Phone` no card do Kanban (já tem espaço, hoje sem ação)
+  - Botão "Registrar contato" no QuickView e no Drawer
 
-### 6. Atalhos no card do Kanban
-Botão pequeno `→` no canto inferior direito do card, que avança 1 estágio sem precisar abrir o painel. Já que adicionar drag-and-drop, isso fica como atalho redundante mas útil em mobile (viewport 775px). **Decisão**: pular esse, o drag cobre mobile com long-press do dnd-kit.
+## 2. Confirmação de movimentação no Kanban
 
-### 7. Auto-stamp do "Último contato"
-Quando o usuário move o estágio (drag, atalho do painel, ou edição), atualizar `last_contact_date = today` automaticamente. Marca natural de que houve interação. **Pergunta implícita**: deixo como auto, ou deixo só manual? Vou fazer auto **apenas no avanço de estágio**, não no retrocesso e não em edições manuais.
+Hoje o drag-end aplica a mudança direto. Vamos interceptar:
 
-### 8. Contador + soma na coluna do Kanban
-Já tenho contagem e soma. Manter, mas mover a contagem para um badge ao lado do título (mais visível que inline em texto).
+- `KanbanView` mantém o optimistic move suspenso até confirmação
+- Novo `ConfirmStageMoveDialog.tsx`:
+  - Texto: "Mover **{nome}** de **{de}** para **{para}**?"
+  - Aviso quando `isAdvance` for true: "O último contato será atualizado para hoje."
+  - Cancelar / Confirmar
+- Aplica-se também ao botão Avançar/Voltar do Drawer (mesma confirmação)
+- Cancelar = nenhuma chamada ao Supabase, nenhum optimistic update
 
-### O que NÃO vou adicionar (visual/fora de escopo)
-- Cores diferentes por estágio (`STAGE_COLORS`) — fere o design system, fica cinza+primary
-- Ícones esotéricos por estágio (◎◑◕●⬡✦) — só ruído visual
-- Header "S3 Capital · CRM CAPTAÇÃO DE RECURSOS" — `PageTabs` já cumpre essa função
-- Tipografia monoespaçada, gradientes, shadows fortes — Nibo é Inter, sombras sutis
+## 3. Visualização rápida (ícone do olho)
 
-### Arquivos afetados
+- Adiciona botão `Eye` (h-6 w-6, ícone 3) no canto superior direito do `KanbanCard`, ao lado do nome
+- Abre `QuickViewDialog.tsx` (Dialog compacto, ~`max-w-md`):
+  - Cabeçalho: nome + badges (tipo, estágio)
+  - Grid 2 colunas: Telefone / Ticket
+  - Estágio Atual + Próxima Ação (text-primary)
+  - Últimas 3 interações (data + canal + resumo) lidas de `investor_contact_interactions`
+  - Footer: "Registrar Contato" (primary) + "Abrir detalhes" (ghost, abre o Drawer atual) + "Fechar"
+- Clique simples no card continua abrindo o Drawer completo (manter); o olho é atalho
 
-- `src/pages/investidores/InvestidoresCRM.tsx` — métricas com sub-label, botão Kanban com dnd-kit, drag-and-drop, auto-stamp no avanço
-- `src/pages/investidores/InvestorContactDrawer.tsx` — substituir stepper por chips de todos os estágios, destacar próxima ação, auto-stamp no avançar
-- `src/lib/investor-contacts.ts` — helper `todayISO()` para o stamp
+## Arquivos
 
-Sem mudanças de schema nem de RLS.
+**Migration** (nova): `investor_contact_interactions` + enum + trigger + RLS
+
+**Novos componentes** (`src/pages/investidores/`):
+- `RegistrarContatoDialog.tsx`
+- `ConfirmStageMoveDialog.tsx`
+- `QuickViewDialog.tsx`
+
+**Lib** (`src/lib/investor-contacts.ts`):
+- Adicionar tipo `InvestorInteraction` e `INTERACTION_CHANNEL_LABEL`
+
+**Edits**:
+- `InvestidoresCRM.tsx`: integrar confirmação no `onDragEnd` e abrir QuickView pelo `Eye`; passar callback de Registrar Contato para o card
+- `InvestorContactDrawer.tsx`: usar mesma confirmação no Avançar/Voltar; mostrar lista de interações; botão "Registrar contato"
+
+## Fora de escopo
+- Editar/excluir interações (só criar nesta iteração)
+- Notificações ou lembretes
+- Mudanças visuais no design system
+
+Posso seguir para implementação?
