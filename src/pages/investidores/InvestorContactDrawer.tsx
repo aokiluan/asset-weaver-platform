@@ -53,21 +53,11 @@ export function InvestorContactDrawer({
       .then(({ data }) => setActivities((data ?? []) as InvestorActivity[]));
   }, [contact]);
 
-  async function moveStage(dir: "prev" | "next") {
+  function moveStage(dir: "prev" | "next") {
     if (!contact) return;
     const target = dir === "next" ? nextStage(contact.stage) : prevStage(contact.stage);
     if (!target) return;
-    const patch: { stage: InvestorStage; last_contact_date?: string } = { stage: target };
-    // Auto-stamp do último contato apenas ao avançar
-    if (isAdvance(contact.stage, target)) patch.last_contact_date = todayISO();
-
-    const { error } = await supabase
-      .from("investor_contacts")
-      .update(patch)
-      .eq("id", contact.id);
-    if (error) return toast.error("Erro ao mover estágio", { description: error.message });
-    toast.success(`Movido para ${STAGE_LABEL[target]}`);
-    onChanged();
+    onRequestStageMove(contact, target);
   }
 
   async function handleDelete() {
