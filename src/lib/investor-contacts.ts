@@ -95,3 +95,31 @@ export function todayISO(): string {
 export function isAdvance(from: InvestorStage, to: InvestorStage): boolean {
   return STAGE_ORDER.indexOf(to) > STAGE_ORDER.indexOf(from);
 }
+
+export type InvestorActivityType = "ligacao" | "email" | "reuniao" | "nota" | "tarefa";
+
+export const INVESTOR_ACTIVITY_TYPES: InvestorActivityType[] = [
+  "ligacao",
+  "email",
+  "reuniao",
+  "nota",
+  "tarefa",
+];
+
+export const INVESTOR_ACTIVITY_LABEL: Record<InvestorActivityType, string> = {
+  ligacao: "Ligação",
+  email: "E-mail",
+  reuniao: "Reunião",
+  nota: "Nota",
+  tarefa: "Tarefa",
+};
+
+export interface InvestorActivity {
+  id: string;
+  contact_id: string;
+  user_id: string;
+  type: InvestorActivityType;
+  description: string;
+  occurred_at: string;
+  created_at: string;
+}
