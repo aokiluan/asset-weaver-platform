@@ -36,6 +36,7 @@ import {
   useStagePermissions,
   type PermissionProfile,
 } from "@/hooks/useStagePermissions";
+import ModulePermissionsMatrix from "./ModulePermissionsMatrix";
 
 interface UserRow {
   id: string;
