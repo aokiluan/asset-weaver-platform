@@ -1,80 +1,25 @@
 ## Objetivo
+Hoje o sidebar usa `hidden md:flex`/`hidden md:block`, então some abaixo de 768px. Em telas comprimidas (ex.: 537px do preview) o usuário fica sem navegação. Ajustar para que o sidebar apareça sempre — em telas estreitas ele aparece em modo colapsado (somente ícones, 60px), e o usuário pode expandir manualmente clicando no botão de menu/pin como já existe.
 
-Você relatou que, mesmo sendo `admin`, não conseguiu mover um cedente de **Crédito → Comitê**. A investigação confirmou que a permissão de papel está correta, mas você foi bloqueado pelos **gates** da etapa (parecer de crédito não concluído). Para evitar essa confusão no futuro, vamos:
+## Mudanças (apenas `src/components/AppSidebar.tsx`)
 
-1. **Manter o comportamento atual** dos gates (admin não faz bypass — decisão sua).
-2. Criar uma **matriz de permissões por papel × etapa** dentro de Configurações, para você auditar de forma clara quem pode fazer o quê e por que um botão pode ficar desabilitado.
+1. **Spacer (div fantasma que reserva largura)**
+   - Remover `hidden md:block` → sempre visível.
+   - Largura: sempre `COLLAPSED_W` em mobile (sem expandir empurrando o conteúdo); em ≥md continua respeitando `pinned`.
 
-Nenhuma regra de RLS, gate ou papel será alterada — é uma página de leitura/diagnóstico.
+2. **`<aside>` do sidebar**
+   - Remover `hidden md:flex` → sempre `flex`.
+   - Em telas <md, forçar largura colapsada (60px) e ignorar hover-expand para não cobrir o conteúdo. Expansão fica disponível apenas via clique no botão de menu (ainda funcional, abre como overlay com sombra, igual ao comportamento atual de hover não-pinado).
+   - Manter os mesmos tokens de cor (`bg-sidebar`, etc.) — sem mudanças visuais de design system.
 
----
+3. **Header do AppLayout**
+   - Sem alterações funcionais, mas o spacer do sidebar agora ocupa 60px em mobile, então o header/main já se ajustam naturalmente via flex.
+   - A busca global continua `hidden md:block` (sem espaço em mobile, ok).
 
-## O que será construído
+## Não muda
+- Nenhuma regra de papéis/permissões.
+- Nenhum token de design (cores, tipografia, espaçamento) é alterado.
+- Comportamento desktop (≥768px) idêntico ao atual: hover expande, pin fixa.
 
-### Nova aba em Configurações: "Permissões"
-
-Rota: `/configuracoes/permissoes` (adicionar tab em `src/pages/Configuracoes.tsx`).
-
-A página terá **três blocos**:
-
-**Bloco 1 — Matriz Papel × Etapa (quem ENVIA para a próxima etapa)**
-
-Tabela compacta cruzando `AppRole` (linhas) × `CedenteStage` (colunas), montada a partir de `STAGE_PERMISSIONS` em `src/lib/cedente-stages.ts`. Célula marcada quando o papel tem permissão para avançar a partir daquela etapa. Linha extra para "Owner do cedente" (caso especial da etapa "Novo").
-
-```text
-              Novo  Cadastro  Análise  Comitê  Formalização
-admin          ✓       ✓        ✓       ✓         ✓
-comercial      ✓       —        —       —         —
-cadastro       —       ✓        —       —         —
-credito        —       —        ✓       ✓         —
-comite         —       —        —       ✓         —
-formalizacao   —       —        —       —         ✓
-gestor_geral   ✓       ✓        ✓       ✓         ✓
-Owner          ✓ (*)   —        —       —         —
-```
-
-(*) Apenas quando ainda em "Novo".
-
-**Bloco 2 — Gates por etapa (o que precisa estar pronto para avançar)**
-
-Lista textual derivada de `evaluateGates`:
-
-- **Novo → Cadastro**: documentos obrigatórios anexados; relatório comercial preenchido.
-- **Cadastro → Análise**: zero documentos rejeitados; todos os obrigatórios validados.
-- **Análise → Comitê**: parecer de crédito concluído (completude=8 + recomendação preenchida).
-- **Comitê → Formalização**: decisão do comitê registrada.
-- **Formalização → Ativo**: minuta gerada e assinada.
-
-Aviso destacado no topo do bloco: **"Gates valem para todos, inclusive admin e gestor_geral. Se um botão estiver desabilitado, verifique as pendências no tooltip do próprio botão."**
-
-**Bloco 3 — Usuários por papel (snapshot)**
-
-Para cada papel (`admin`, `comercial`, `cadastro`, `credito`, `comite`, `formalizacao`, `financeiro`, `gestor_geral`), listar os usuários ativos com aquele papel. Útil para responder rápido perguntas como "quem pode votar no comitê hoje?". Dados via `admin_list_users` (já existe) — agrupar no front.
-
----
-
-## Detalhes técnicos
-
-- **Nenhuma migração de banco.** Sem alteração de RLS, funções ou tabelas.
-- **Nenhuma mudança em** `cedente-stages.ts`, `CedenteStageActions.tsx` ou `useAuth.tsx`.
-- Nova página: `src/pages/admin/AdminPermissoes.tsx` — só leitura.
-- Adicionar entrada em `src/pages/Configuracoes.tsx` (`PageTabs`) e rota correspondente em `src/App.tsx` protegida por `RoleGuard role="admin"`.
-- Visual: padrão Nibo ultracompacto (cards `p-2.5`, label `text-[10px]`, valor `text-[12px]`, `space-y-2`).
-
----
-
-## Fora de escopo
-
-- Bypass de gates para admin (você optou por manter como está).
-- Adicionar papel `comite` automaticamente ao admin.
-- Alterar a tela `Configurações > Usuários` (atribuição já está adequada).
-- Mudanças nas RLS do banco.
-
----
-
-## Validação após implementação
-
-- Acessar `/configuracoes/permissoes` como admin → ver matriz, gates e snapshot.
-- Tentar como não-admin → redirecionado pelo `RoleGuard`.
-- Conferir que a matriz reflete fielmente `STAGE_PERMISSIONS` (testar adicionando um console.log temporário se necessário).
-- `bun run build` limpo.
+## Resultado esperado
+Em 537px o usuário verá a barra lateral colapsada de 60px com ícones de cada grupo/rota; pode tocar no ícone de menu para expandir temporariamente como overlay e navegar.

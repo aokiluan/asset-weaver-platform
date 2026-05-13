@@ -207,7 +207,7 @@ export function AppSidebar() {
   return (
     <>
       <div
-        className="shrink-0 transition-[width] duration-200 ease-linear hidden md:block"
+        className="shrink-0 transition-[width] duration-200 ease-linear"
         style={{ width: pinned ? EXPANDED_W : COLLAPSED_W }}
         aria-hidden
       />
@@ -216,7 +216,7 @@ export function AppSidebar() {
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         className={cn(
-          "fixed inset-y-0 left-0 z-30 hidden md:flex flex-col",
+          "fixed inset-y-0 left-0 z-30 flex flex-col",
           "bg-sidebar text-sidebar-foreground border-r border-sidebar-border",
           "transition-[width] duration-200 ease-linear",
           expanded && !pinned && "shadow-md",
