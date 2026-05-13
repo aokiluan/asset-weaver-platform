@@ -298,6 +298,13 @@ export default function InvestidoresCRM() {
           }}
         />
       )}
+
+      <InvestorImportDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        userId={user?.id ?? ""}
+        onImported={load}
+      />
     </div>
   );
 }
