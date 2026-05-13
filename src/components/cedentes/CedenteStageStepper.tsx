@@ -11,6 +11,7 @@ import {
   nextStage,
   type CedenteForGates,
 } from "@/lib/cedente-stages";
+import { useStagePermissions, rolesAllowedToSendFrom } from "@/hooks/useStagePermissions";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -24,11 +25,14 @@ interface Props {
 
 export function CedenteStageStepper({ stage, isOwner, gateInfo, onAdvance }: Props) {
   const { hasRole } = useAuth();
+  const { data: profiles } = useStagePermissions();
 
   const next = nextStage(stage);
   const gate = useMemo(() => evaluateGates({ stage, ...gateInfo }), [stage, gateInfo]);
 
-  const allowedRoles = STAGE_PERMISSIONS[stage] ?? [];
+  const allowedRoles = profiles && profiles.length > 0
+    ? rolesAllowedToSendFrom(profiles, stage)
+    : (STAGE_PERMISSIONS[stage] ?? []);
   const userHasRole =
     allowedRoles.some((r) => hasRole(r)) || (stage === "novo" && isOwner);
   const gatesOk = gate.pendentes.length === 0;

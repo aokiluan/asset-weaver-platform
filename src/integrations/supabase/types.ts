@@ -1557,6 +1557,39 @@ export type Database = {
           },
         ]
       }
+      permission_profiles: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          id: string
+          is_system: boolean
+          nome: string
+          ordem: number
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          is_system?: boolean
+          nome: string
+          ordem?: number
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          is_system?: boolean
+          nome?: string
+          ordem?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       pipeline_stages: {
         Row: {
           ativo: boolean
@@ -1592,6 +1625,32 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      profile_role_bindings: {
+        Row: {
+          app_role: Database["public"]["Enums"]["app_role"]
+          created_at: string
+          profile_id: string
+        }
+        Insert: {
+          app_role: Database["public"]["Enums"]["app_role"]
+          created_at?: string
+          profile_id: string
+        }
+        Update: {
+          app_role?: Database["public"]["Enums"]["app_role"]
+          created_at?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_role_bindings_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "permission_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -1809,6 +1868,35 @@ export type Database = {
           },
         ]
       }
+      stage_permissions: {
+        Row: {
+          can_send: boolean
+          profile_id: string
+          stage: Database["public"]["Enums"]["cedente_stage"]
+          updated_at: string
+        }
+        Insert: {
+          can_send?: boolean
+          profile_id: string
+          stage: Database["public"]["Enums"]["cedente_stage"]
+          updated_at?: string
+        }
+        Update: {
+          can_send?: boolean
+          profile_id?: string
+          stage?: Database["public"]["Enums"]["cedente_stage"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stage_permissions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "permission_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       teams: {
         Row: {
           ativo: boolean
@@ -1950,6 +2038,20 @@ export type Database = {
       is_team_manager_of: {
         Args: { _target: string; _viewer: string }
         Returns: boolean
+      }
+      list_stage_permissions: {
+        Args: never
+        Returns: {
+          app_roles: Database["public"]["Enums"]["app_role"][]
+          can_send: boolean
+          profile_ativo: boolean
+          profile_descricao: string
+          profile_id: string
+          profile_is_system: boolean
+          profile_nome: string
+          profile_ordem: number
+          stage: Database["public"]["Enums"]["cedente_stage"]
+        }[]
       }
       marcar_cadastro_revisado: {
         Args: { _cedente_id: string; _observacao?: string }
