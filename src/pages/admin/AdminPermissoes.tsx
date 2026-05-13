@@ -350,6 +350,20 @@ export default function AdminPermissoes() {
           </TooltipProvider>
         )}
       </Card>
+
+      <UserRolesDrawer
+        open={!!rolesDrawerUserId}
+        onOpenChange={(v) => !v && setRolesDrawerUserId(null)}
+        user={users.find((u) => u.id === rolesDrawerUserId) ?? null}
+        onAdd={(role) => {
+          const u = users.find((x) => x.id === rolesDrawerUserId);
+          if (u) addRole(u, role);
+        }}
+        onRemove={(role) => {
+          const u = users.find((x) => x.id === rolesDrawerUserId);
+          if (u) removeRole(u, role);
+        }}
+      />
     </div>
   );
 }
