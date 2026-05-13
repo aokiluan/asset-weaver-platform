@@ -258,7 +258,9 @@ export default function AdminPermissoes() {
         </div>
       </Card>
 
+      {/* Blocos 1, 2 e 3 ocultados a pedido (código preservado abaixo).
       {/* Bloco 1 — Matriz Papel × Etapa (editável) */}
+      {false && (
       <Card className="p-2.5">
         <div className="space-y-2">
           <div>
@@ -358,8 +360,10 @@ export default function AdminPermissoes() {
           </p>
         </div>
       </Card>
+      )}
 
       {/* Bloco 2 — Gates */}
+      {false && (
       <Card className="p-2.5">
         <div className="space-y-2">
           <div>
@@ -390,8 +394,10 @@ export default function AdminPermissoes() {
           </ul>
         </div>
       </Card>
+      )}
 
       {/* Bloco 3 — Usuários por papel */}
+      {false && (
       <Card className="p-2.5">
         <div className="space-y-2">
           <div>
@@ -440,6 +446,7 @@ export default function AdminPermissoes() {
           )}
         </div>
       </Card>
+      )}
 
       {/* Bloco 4 — Matriz Papel × Módulo */}
       <ModulePermissionsMatrix isAdmin={isAdmin} />
