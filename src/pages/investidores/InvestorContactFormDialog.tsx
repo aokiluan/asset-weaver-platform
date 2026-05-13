@@ -129,10 +129,7 @@ export function InvestorContactFormDialog({
 
         <div className="flex-1 overflow-y-auto p-4">
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Nome / Empresa" full>
-              <Input value={form.name} onChange={(e) => set("name", e.target.value)} />
-            </Field>
-            <Field label="Nome do contato">
+            <Field label="Nome do contato" full>
               <Input
                 value={form.contact_name}
                 onChange={(e) => set("contact_name", e.target.value)}
@@ -146,13 +143,6 @@ export function InvestorContactFormDialog({
                 className="h-7 text-[12px] px-2.5 py-1 md:text-[12px]"
                 value={form.ticket}
                 onValueChange={(v) => set("ticket", v)}
-              />
-            </Field>
-            <Field label="Último contato">
-              <Input
-                type="date"
-                value={form.last_contact_date}
-                onChange={(e) => set("last_contact_date", e.target.value)}
               />
             </Field>
             <Field label="Tipo">
@@ -183,12 +173,6 @@ export function InvestorContactFormDialog({
                 </SelectContent>
               </Select>
             </Field>
-            <Field label="Próxima ação" full>
-              <Input
-                value={form.next_action}
-                onChange={(e) => set("next_action", e.target.value)}
-              />
-            </Field>
             <Field label="Notas" full>
               <Textarea
                 rows={3}
@@ -198,7 +182,6 @@ export function InvestorContactFormDialog({
               />
             </Field>
           </div>
-        </div>
 
         <SheetFooter className="p-4 border-t gap-2 sm:justify-end">
           <Button
