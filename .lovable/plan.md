@@ -1,53 +1,42 @@
 ## Objetivo
 
-Trocar o controle de **acesso a módulos do menu** de "por perfil (app_role)" para **"por usuário"**, com default **bloqueado**. Papéis continuam existindo (identidade/função e regras de etapas), mas não decidem mais o que aparece no menu.
+Unificar **Usuários** e **Permissões** numa única tela em `/configuracoes/permissoes`. A aba "Usuários" some do menu de Configurações.
 
-## Modelo de dados
+## Nova tela Permissões
 
-Nova tabela `user_module_permissions`:
-- `user_id` (uuid, FK profiles)
-- `module_key` (text: gestao, operacao, diretorio, financeiro_mod, config, bi)
-- `enabled` (bool, default true)
-- unique (`user_id`, `module_key`)
-- RLS: SELECT para o próprio usuário e admin; INSERT/UPDATE/DELETE só admin
+Uma única tabela com tudo por usuário, no padrão Nibo ultracompacto:
 
-Função `can_access_module(_user_id, _module_key)` (security definer):
-- admin → sempre true
-- senão → existe registro com `enabled = true`? caso contrário false (bloqueado por padrão)
+```
+| Usuário                  | Funções (papéis)        | Equipe        | Gestão | Operação | Diretório | Financeiro | Config | BI | Ativo |
+| Alessandra (email)       | [Comitê x][Cadastro x]+ | [Sem equipe▾] |   ✓    |    ✓     |     ✓     |     —      |   —    | —  |  ⬤    |
+| ...                                                                                                                                  |
+```
 
-A tabela `role_module_permissions` deixa de ser consultada pelo frontend (mantida no banco, sem uso, para evitar perda de histórico — pode ser removida depois).
+- **Filtro** por nome/e-mail no topo.
+- **Botão "Atribuir função"** no header da página (mesmo dialog atual: escolher usuário + papéis).
+- **Coluna Funções**: chips com X para remover; botão "+" abre popover/dialog com checkboxes dos papéis para adicionar.
+- **Coluna Equipe**: select inline (igual hoje).
+- **6 colunas de módulos**: switch por célula. Admin → todos travados em on.
+- **Coluna Ativo**: switch para `profiles.ativo`.
 
-## Frontend
+## Mudanças concretas
 
-**1. Hook `useModulePermissions`** — passa a buscar `user_module_permissions` do usuário logado e expõe `isModuleEnabled(key)` com default `false` (exceto admin).
+1. **`AppSidebar`** — remover item "Usuários" do grupo Configurações.
+2. **Rotas** — manter `/configuracoes/usuarios` redirecionando para `/configuracoes/permissoes` (evita 404 em links salvos).
+3. **`AdminPermissoes.tsx`** — substituir o conteúdo (atualmente só renderiza `ModulePermissionsMatrix`) por uma tela nova que combina:
+   - Header com contagem + botão "Atribuir função" (movido de `AdminUsuarios`)
+   - Filtro de busca
+   - Tabela única com todas as colunas listadas acima
+4. **Componente `UnifiedPermissionsTable`** novo — encapsula a tabela. Reaproveita o handler de toggle de módulos do componente atual e os handlers de papel/equipe/ativo do `AdminUsuarios`.
+5. **Remover** `AdminUsuarios.tsx`, `ModulePermissionsMatrix.tsx` (substituído) e `UserModulePermissionsDialog.tsx` (não é mais necessário porque a edição é inline).
+6. **`PageTabs` de Configurações** — tirar o tab "Usuários".
+7. Atualizar memória do projeto se necessário (não há regra que conflite — não vou tocar).
 
-**2. `AppSidebar`** — cada grupo do menu já é filtrado pelo hook; muda só a fonte de verdade.
+## Sem mudanças em
 
-**3. `RoleGuard` (moduleKey)** — continua igual, redireciona quando módulo não liberado.
+- Banco: `user_roles`, `profiles`, `teams`, `user_module_permissions`, RLS, funções e regras de etapa permanecem iguais.
+- `useAuth`, `roles.ts`, guards.
 
-**4. Tela de Permissões (`/configuracoes/permissoes`)** — substitui a matriz atual (Perfil × Módulo) pela **Matriz Usuário × Módulo**:
-- Linhas: usuários ativos (nome + papéis como chips read-only)
-- Colunas: 6 módulos
-- Switch por célula, salvar otimista (igual ao atual)
-- Filtro de busca por nome/email
-- Admin sempre marcado e desabilitado
+## Observação UX
 
-**5. Admin > Usuários — nova aba "Permissões"** no editor do usuário:
-- Mesma lista de módulos com switches, escopo só daquele usuário
-- Reaproveita o mesmo serviço de upsert
-
-## Migração de dados
-
-Script de seed único: para cada usuário existente, copiar para `user_module_permissions` o resultado efetivo do modelo antigo (união dos `role_module_permissions` dos papéis dele). Isso garante que ninguém perde acesso na virada.
-
-## Fora de escopo (confirmado)
-
-- Permissões de etapa (`stage_permissions`, `permission_profiles`) **não mudam** — continuam por papel via perfis de permissão.
-- Papéis (`user_roles`) continuam controlando RLS de tabelas e regras de etapa.
-
-## Detalhes técnicos
-
-- Migration cria tabela + RLS + função + seed.
-- Invalidar `queryKey: ["user-module-permissions", userId]` após toggles.
-- Remover `ALL_ROLES_FOR_MATRIX` e `ModulePermissionsMatrix` antigo (ou manter só o componente novo no lugar).
-- Sem mudanças em `useAuth`, `roles.ts`, ou guards de etapa.
+Em viewport estreito (640px atual do usuário) a tabela vira scroll horizontal. A coluna "Usuário" fica sticky à esquerda; as 6 colunas de módulos formam um bloco rolável à direita, igual à matriz atual.
