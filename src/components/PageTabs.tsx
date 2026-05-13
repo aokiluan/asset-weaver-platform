@@ -54,7 +54,7 @@ export function PageTabs({ title, description, tabs, actions }: PageTabsProps) {
           </nav>
         </div>
 
-        {actions && <div className="flex items-center gap-2">{actions}</div>}
+        {actions && <div className="flex items-center gap-2 mb-2">{actions}</div>}
       </div>
     </div>
   );
