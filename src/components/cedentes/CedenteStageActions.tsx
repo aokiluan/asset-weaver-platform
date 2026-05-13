@@ -133,12 +133,30 @@ export function CedenteStageActions({ cedenteId, stage, isOwner, gateInfo, onCha
   // Pendências da etapa atual (somente para botões "para frente")
   const gate = useMemo(() => evaluateGates({ stage, ...gateInfo }), [stage, gateInfo]);
 
-  // Mostramos sempre os 4 botões; cada um habilita conforme regras
-  const evaluations = TRANSITIONS.map((t) => {
+  // Inclui atalho de retorno se aplicável (cedente em "novo" devolvido por outra etapa)
+  const transitionsToShow = useMemo(() => {
+    const shortcut = stage === "novo" && returnedFromStage
+      ? RETURN_SHORTCUTS[returnedFromStage]
+      : null;
+    if (!shortcut) return TRANSITIONS;
+    // Substitui "to-cadastro" pelo atalho como ação primária; mantém "to-cadastro" como alternativa
+    return TRANSITIONS.flatMap((t) => {
+      if (t.key === "to-cadastro") {
+        return [
+          shortcut,
+          { ...t, variant: "outline" as const, label: "Enviar para Cadastro (revisão completa)" },
+        ];
+      }
+      return [t];
+    });
+  }, [stage, returnedFromStage]);
+
+  // Mostramos sempre os botões; cada um habilita conforme regras
+  const evaluations = transitionsToShow.map((t) => {
     const isCurrent = t.target === stage;
     const stageOk = t.fromStages.includes(stage);
     const hasAnyRole = t.roles.some((r) => hasRole(r));
-    const ownerOverride = t.key === "to-cadastro" && stage === "novo" && isOwner;
+    const ownerOverride = (t.key === "to-cadastro" || t.key.endsWith("-direct")) && stage === "novo" && isOwner;
     const roleOk = hasAnyRole || ownerOverride;
     const gatesOk = t.skipGates ? true : gate.pendentes.length === 0;
 
