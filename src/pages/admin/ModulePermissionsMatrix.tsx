@@ -94,10 +94,7 @@ export default function ModulePermissionsMatrix({ isAdmin }: { isAdmin: boolean 
     <Card className="p-2.5">
       <div className="space-y-2">
         <div>
-          <div className="text-[10px] uppercase leading-none text-muted-foreground tracking-wide">
-            Bloco 4
-          </div>
-          <div className="text-[13px] font-medium leading-tight mt-0.5">
+          <div className="text-[13px] font-medium leading-tight">
             Acesso a módulos por papel
           </div>
           <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">
