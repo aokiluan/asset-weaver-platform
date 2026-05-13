@@ -1,56 +1,92 @@
-# Plano: Matriz de Permissões Editável com Perfis Customizados
+# Permissões de Módulos por Papel
 
-## Objetivo
-Transformar a tela atual de auditoria de permissões (`/configuracoes/permissoes`) em uma matriz editável persistida no banco, permitindo incluir e gerenciar novos perfis de permissão além dos 8 papéis base existentes.
+Implementar camada parametrizável de visibilidade/acesso de **módulos do menu** por papel, sem tocar em RLS, em `user_roles`, em `roles.ts` ou em `cedente-stages.ts`. Esta camada controla apenas navegação (sidebar + guarda de rota), não dados.
 
-## Escopo
-- Apenas a **matriz Papel × Etapa** da esteira (envio entre estágios).
-- Não altera RLS policies, enum `app_role` nem gates de validação.
-- Perfis customizados funcionam como "linhas" independentes na matriz; para o resto do sistema se mapeiam a papéis base do enum.
+A tela existente de Permissões (matriz papel × estágio) **continua existindo**: vamos criar uma segunda matriz (papel × módulo) na mesma página, em uma seção acima ou abaixo da atual — sem remover nada do que já está lá.
 
 ## Etapas
 
-### 1. Banco de dados — tabelas de permissões
-Criar tabelas via migration:
-- `permission_profiles` (`id`, `nome`, `descricao`, `ativo`, `created_at`, `updated_at`) — perfis que aparecem na matriz.
-- `profile_role_bindings` (`profile_id`, `app_role`) — vínculo de cada perfil aos papéis base do enum (um perfil pode ter 1 ou mais papéis).
-- `stage_permissions` (`profile_id`, `stage` (cedente_stage), `can_send`, `created_at`, `updated_at`) — células editáveis da matriz.
+### 1. Migration Supabase
+Tabela `public.role_module_permissions`:
+- `role text` (string livre, espelha o enum `app_role` mas sem FK para evitar acoplamento)
+- `module_key text`
+- `enabled boolean default true`
+- `updated_at timestamptz default now()`
+- `updated_by uuid references public.profiles(id)`
+- PK `(role, module_key)`
 
-RLS: apenas `admin` pode editar; autenticados podem ler.
+RLS:
+- `SELECT` para qualquer autenticado
+- `ALL` (insert/update/delete) somente `has_role(auth.uid(), 'admin')`
 
-### 2. Seed inicial
-Popular `stage_permissions` com os valores atuais de `STAGE_PERMISSIONS` para os papéis base, garantindo paridade.
+Seed: produto cartesiano de 8 papéis × 6 módulos (`gestao`, `operacao`, `diretorio`, `config`, `financeiro_mod`, `bi`), todos `enabled = true`.
 
-### 3. Backend — consumo das permissões
-- Criar RPC `list_stage_permissions()` retornando a matriz completa.
-- Atualizar `CedenteStageStepper.tsx` para consultar `stage_permissions` via RPC em vez de `STAGE_PERMISSIONS` hardcoded.
-- Manter fallback local caso a tabela esteja vazia.
+Trigger `update_updated_at_column` em UPDATE (já existe a função no projeto).
 
-### 4. UI — Matriz editável (Bloco 1)
-- Substituir a tabela estática por checkboxes interativos.
-- Cada checkbox atualiza `stage_permissions` (toggle `can_send`).
-- Remover a coluna **"Ativo"** da matriz (só exibir estágios que têm transição de saída: Novo, Cadastro, Análise, Comitê, Formalização).
-- Agrupar visualmente: papéis base primeiro, depois perfis customizados.
+### 2. Hook `src/hooks/useModulePermissions.ts`
+- `useQuery(['role-module-permissions'], ...)` lendo todos os registros, `staleTime` 5 min.
+- Usa `useAuth()` para descobrir os papéis do usuário.
+- Retorna `{ isModuleEnabled(moduleKey), isLoading }`.
+- Regra: `enabled = true` se **qualquer** papel do usuário tiver `enabled = true` para aquele `module_key`. Se não houver registro → tratar como `true` (fail-open, evita quebrar prod).
+- Atalho: se o usuário tem papel `admin`, retorna `true` direto.
 
-### 5. UI — CRUD de perfis customizados
-- Adicionar seção acima da matriz com:
-  - Lista de perfis existentes (nome, descricao, ativo, vínculos de papel).
-  - Botão "Novo perfil" abrindo um dialog com:
-    - Nome, descrição, ativo/inativo.
-    - Multi-select de papéis base do enum (`app_role`) que o perfil representa.
-  - Ao criar um perfil, inserir linha default em `stage_permissions` (tudo `false`); admin edita a matriz depois.
+### 3. Tela `AdminPermissoes` — adicionar matriz Papel × Módulo
+Manter a matriz papel × estágio atual. Adicionar nova seção (Card) "Acesso a módulos" com:
 
-### 6. Blocos 2 e 3
-- Bloco 2 (Gates): permanece somente leitura.
-- Bloco 3 (Usuários por papel): permanece somente leitura.
+- Tabela com header fixo (módulos) e primeira coluna fixa (papéis).
+- Labels:
 
-## Mudanças de arquivos
-- Nova migration SQL.
-- `src/lib/cedente-stages.ts`: manter `STAGE_PERMISSIONS` como fallback, marcar como `@deprecated`.
-- `src/components/cedentes/CedenteStageStepper.tsx`: consultar RPC.
-- `src/pages/admin/AdminPermissoes.tsx`: reescrita para matriz editável + CRUD de perfis.
+```text
+gestao          → Gestão
+operacao        → Operação
+diretorio       → Diretório
+financeiro_mod  → Financeiro
+config          → Configurações
+bi              → BI
+```
 
-## Segurança
-- Tabela `stage_permissions` com RLS — só admin escreve.
-- Enum `app_role` **não é alterado**; RLS policies existentes continuam intactas.
-- Perfis customizados sem vínculo (`profile_role_bindings`) são apenas auditórios na matriz.
+- Células com `Switch` (shadcn).
+- Loading: Skeleton.
+- Autosave: ao alternar, `upsert` em `role_module_permissions` setando `updated_by = auth.uid()`. Toast de sucesso/erro via `sonner`. Em erro, reverte estado local.
+- Linha `admin`: switches sempre marcados e `disabled`, com `Tooltip` "Admin sempre tem acesso total a todos os módulos". O upsert não é executado para essa linha.
+- Realtime opcional: invalidar a query após mutação.
+
+### 4. `AppSidebar.tsx` — filtro por módulo
+- Importar `useModulePermissions`.
+- Em `visibleGroups`, adicionar `.filter(g => isModuleEnabled(g.key))` após o filtro de roles.
+- Confirmar que os `key` de `GROUPS` batem com `module_key` da tabela. Hoje temos: `gestao`, `operacao`, `diretorio`, `config`. Não existe grupo `bi` nem `financeiro_mod` separados — BI está dentro de "Configurações", e Financeiro também é item dentro de "Configurações". Decisão para manter o spec coerente:
+  - Filtrar **grupos** pelo `module_key` igual à `key` do grupo.
+  - Filtrar **itens individuais** que mapeiam para módulos específicos:
+    - item `Financeiro` (`/financeiro`) → `financeiro_mod`
+    - itens `BI – *` (`/bi/*`) → `bi`
+  - Demais itens herdam o módulo do grupo.
+
+### 5. `RoleGuard` + rotas em `App.tsx`
+- Adicionar prop opcional `moduleKey?: string` em `RoleGuard`.
+- Se fornecida e `isModuleEnabled(moduleKey)` for `false` (após `loading`), `<Navigate to="/gestao/comercial" replace />`.
+- Mantém o `hasRole` atual — módulo é camada adicional.
+- Em `App.tsx`, passar `moduleKey`:
+  - `/comite` → `operacao`
+  - `/formalizacao` → `operacao`
+  - `/financeiro` → `financeiro_mod`
+  - `/configuracoes/*` → `config`
+  - `/bi/*` → `bi` (envolver `BI` em `RoleGuard` com `role="admin"` + `moduleKey="bi"` — já tem o role guard).
+
+### 6. `AdminUsuarios` — ajuste visual
+- Garantir que **todos** os papéis do usuário são exibidos como `Badge` separados (a função `admin_list_users` já retorna `roles app_role[]`).
+- Texto de apoio abaixo da seção de papéis: *"Os módulos acessíveis por cada papel são configurados em Configurações → Permissões."*
+- Sem controle por usuário.
+
+## Arquivos afetados
+- `supabase/migrations/<timestamp>_role_module_permissions.sql` (novo)
+- `src/hooks/useModulePermissions.ts` (novo)
+- `src/pages/admin/AdminPermissoes.tsx` (adicionar seção)
+- `src/components/AppSidebar.tsx`
+- `src/components/RoleGuard.tsx`
+- `src/App.tsx`
+- `src/pages/admin/AdminUsuarios.tsx`
+
+## Fora do escopo
+- Não mexer em `user_roles`, `roles.ts`, `cedente-stages.ts`, RLS de outras tabelas.
+- Não criar permissão por usuário individual.
+- Matriz papel × estágio (já existente) permanece intacta.
