@@ -121,14 +121,14 @@ export function CedenteImportDialog({ open, onOpenChange, onImported }: Props) {
   const currentStepIdx = STEPS.findIndex((s) => s.id === step);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl">
-        <DialogHeader>
-          <DialogTitle className="text-base">Importar cedentes via planilha</DialogTitle>
-          <DialogDescription className="text-xs">
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle className="text-base">Importar cedentes via planilha</SheetTitle>
+          <SheetDescription className="text-xs">
             Baixe o modelo, preencha e envie. Aceita .xlsx e .csv (até 5MB).
-          </DialogDescription>
-        </DialogHeader>
+          </SheetDescription>
+        </SheetHeader>
 
         {/* Stepper */}
         <div className="flex items-center gap-2 text-[11px]">
