@@ -14,7 +14,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, LayoutGrid, List as ListIcon, Pencil, Loader2 } from "lucide-react";
+import { Plus, LayoutGrid, List as ListIcon, Pencil, Loader2, Search, Snowflake } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import {
   DndContext,
   DragEndEvent,
@@ -33,8 +34,10 @@ import {
   INVESTOR_TYPES,
   INVESTOR_TYPE_LABEL,
   isAdvance,
+  isStale,
   STAGE_LABEL,
   STAGE_ORDER,
+  STAGE_PROBABILITY,
   todayISO,
   type InvestorContact,
   type InvestorStage,
@@ -52,6 +55,7 @@ export default function InvestidoresCRM() {
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<View>("kanban");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("todos");
+  const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<InvestorContact | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<InvestorContact | null>(null);
@@ -83,10 +87,18 @@ export default function InvestidoresCRM() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rows]);
 
-  const filtered = useMemo(
-    () => (typeFilter === "todos" ? rows : rows.filter((r) => r.type === typeFilter)),
-    [rows, typeFilter],
-  );
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return rows.filter((r) => {
+      if (typeFilter !== "todos" && r.type !== typeFilter) return false;
+      if (!q) return true;
+      return (
+        r.name.toLowerCase().includes(q) ||
+        (r.contact_name ?? "").toLowerCase().includes(q) ||
+        (r.next_action ?? "").toLowerCase().includes(q)
+      );
+    });
+  }, [rows, typeFilter, search]);
 
   const metrics = useMemo(() => {
     const ativos = rows.filter((r) => r.stage === "ativo");
@@ -94,11 +106,19 @@ export default function InvestidoresCRM() {
     const total = rows.length;
     const tickets = rows.map((r) => r.ticket ?? 0);
     const avg = total ? tickets.reduce((a, b) => a + b, 0) / total : 0;
+    // Forecast ponderado (Salesforce): Σ ticket × probabilidade do estágio (excluindo já ativos)
+    const forecast = pipeline.reduce(
+      (a, r) => a + (r.ticket ?? 0) * STAGE_PROBABILITY[r.stage],
+      0,
+    );
+    const stale = rows.filter((r) => isStale(r.stage, r.last_contact_date)).length;
     return {
       capitalAtivo: ativos.reduce((a, r) => a + (r.ticket ?? 0), 0),
       capitalAtivoCount: ativos.length,
       pipeline: pipeline.reduce((a, r) => a + (r.ticket ?? 0), 0),
       pipelineCount: pipeline.length,
+      forecast,
+      stale,
       total,
       ticketMedio: avg,
     };
@@ -172,14 +192,14 @@ export default function InvestidoresCRM() {
             sub={`${metrics.pipelineCount} em negociação`}
           />
           <MetricCard
-            label="Total de Contatos"
-            value={String(metrics.total)}
-            sub="na base"
+            label="Forecast Ponderado"
+            value={fmtCompactBRL(metrics.forecast)}
+            sub="ticket × prob. estágio"
           />
           <MetricCard
             label="Ticket Médio"
             value={fmtCompactBRL(metrics.ticketMedio)}
-            sub="por contato"
+            sub={`${metrics.total} na base`}
           />
         </div>
 
@@ -196,20 +216,40 @@ export default function InvestidoresCRM() {
                 {t === "todos" ? "Todos" : INVESTOR_TYPE_LABEL[t]}
               </Button>
             ))}
+            {metrics.stale > 0 && (
+              <Badge
+                variant="outline"
+                className="h-6 px-1.5 text-[10px] font-normal gap-1 ml-1 border-warning/40 text-warning"
+                title="Sem contato há 14+ dias"
+              >
+                <Snowflake className="h-3 w-3" /> {metrics.stale} frio{metrics.stale > 1 ? "s" : ""}
+              </Badge>
+            )}
           </div>
-          <ToggleGroup
-            type="single"
-            value={view}
-            onValueChange={(v) => v && setView(v as View)}
-            size="sm"
-          >
-            <ToggleGroupItem value="kanban" className="h-7 px-2">
-              <LayoutGrid className="h-3.5 w-3.5" />
-            </ToggleGroupItem>
-            <ToggleGroupItem value="list" className="h-7 px-2">
-              <ListIcon className="h-3.5 w-3.5" />
-            </ToggleGroupItem>
-          </ToggleGroup>
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Buscar..."
+                className="h-7 w-40 pl-7 text-[12px]"
+              />
+            </div>
+            <ToggleGroup
+              type="single"
+              value={view}
+              onValueChange={(v) => v && setView(v as View)}
+              size="sm"
+            >
+              <ToggleGroupItem value="kanban" className="h-7 px-2">
+                <LayoutGrid className="h-3.5 w-3.5" />
+              </ToggleGroupItem>
+              <ToggleGroupItem value="list" className="h-7 px-2">
+                <ListIcon className="h-3.5 w-3.5" />
+              </ToggleGroupItem>
+            </ToggleGroup>
+          </div>
         </div>
 
         {loading ? (
@@ -368,6 +408,8 @@ function KanbanCard({
     ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
     : undefined;
 
+  const stale = isStale(contact.stage, contact.last_contact_date);
+
   return (
     <div
       ref={setNodeRef}
@@ -380,8 +422,16 @@ function KanbanCard({
         isDragging && "opacity-40",
       )}
     >
-      <div className="text-[12px] font-medium text-foreground leading-tight truncate">
-        {contact.name}
+      <div className="flex items-start justify-between gap-1.5">
+        <div className="text-[12px] font-medium text-foreground leading-tight truncate flex-1">
+          {contact.name}
+        </div>
+        {stale && (
+          <Snowflake
+            className="h-3 w-3 text-warning shrink-0 mt-0.5"
+            aria-label="Sem contato há 14+ dias"
+          />
+        )}
       </div>
       <div className="flex items-center justify-between mt-1.5">
         <Badge variant="secondary" className="text-[9px] font-normal h-4 px-1.5">
