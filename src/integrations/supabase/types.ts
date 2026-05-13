@@ -1976,6 +1976,44 @@ export type Database = {
           },
         ]
       }
+      user_module_permissions: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          id: string
+          module_key: string
+          updated_at: string
+          updated_by: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          module_key: string
+          updated_at?: string
+          updated_by?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          module_key?: string
+          updated_at?: string
+          updated_by?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_module_permissions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -2015,6 +2053,10 @@ export type Database = {
           roles: Database["public"]["Enums"]["app_role"][]
           team_id: string
         }[]
+      }
+      can_access_module: {
+        Args: { _module_key: string; _user_id: string }
+        Returns: boolean
       }
       can_decide_proposal: { Args: { _user_id: string }; Returns: boolean }
       can_edit_cedente: {

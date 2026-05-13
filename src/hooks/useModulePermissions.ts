@@ -11,23 +11,24 @@ export type ModuleKey =
   | "financeiro_mod"
   | "bi";
 
-export interface RoleModulePermission {
-  role: string;
+export interface UserModulePermission {
   module_key: string;
   enabled: boolean;
 }
 
 export function useModulePermissions() {
-  const { roles, loading: authLoading } = useAuth();
+  const { user, roles, loading: authLoading } = useAuth();
 
   const query = useQuery({
-    queryKey: ["role-module-permissions"],
-    queryFn: async (): Promise<RoleModulePermission[]> => {
+    queryKey: ["user-module-permissions", user?.id],
+    enabled: !!user?.id,
+    queryFn: async (): Promise<UserModulePermission[]> => {
       const { data, error } = await (supabase as any)
-        .from("role_module_permissions")
-        .select("role, module_key, enabled");
+        .from("user_module_permissions")
+        .select("module_key, enabled")
+        .eq("user_id", user!.id);
       if (error) throw error;
-      return (data ?? []) as RoleModulePermission[];
+      return (data ?? []) as UserModulePermission[];
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -36,14 +37,11 @@ export function useModulePermissions() {
 
   function isModuleEnabled(moduleKey: string): boolean {
     if (isAdmin) return true;
-    if (!roles || roles.length === 0) return false;
+    if (!user) return false;
     const data = query.data;
-    if (!data) return true; // fail-open enquanto carrega
-    const relevant = data.filter((r) => r.module_key === moduleKey);
-    if (relevant.length === 0) return true; // sem registro = libera
-    return roles.some((userRole) =>
-      relevant.some((r) => r.role === userRole && r.enabled),
-    );
+    if (!data) return true; // fail-open enquanto carrega para evitar flicker
+    const row = data.find((r) => r.module_key === moduleKey);
+    return !!row?.enabled; // default bloqueado quando sem registro
   }
 
   return {

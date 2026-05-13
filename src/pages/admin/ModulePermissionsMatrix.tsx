@@ -4,12 +4,13 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
-import { ALL_ROLES_FOR_MATRIX, ROLE_LABEL, type AppRole } from "@/lib/roles";
+import { ROLE_LABEL, type AppRole } from "@/lib/roles";
 
-const MODULES: { key: string; label: string }[] = [
+export const MODULES: { key: string; label: string }[] = [
   { key: "gestao", label: "Gestão" },
   { key: "operacao", label: "Operação" },
   { key: "diretorio", label: "Diretório" },
@@ -18,8 +19,16 @@ const MODULES: { key: string; label: string }[] = [
   { key: "bi", label: "BI" },
 ];
 
-interface Row {
-  role: string;
+interface UserRow {
+  id: string;
+  nome: string;
+  email: string;
+  ativo: boolean;
+  roles: AppRole[];
+}
+
+interface PermRow {
+  user_id: string;
   module_key: string;
   enabled: boolean;
 }
@@ -27,19 +36,20 @@ interface Row {
 export default function ModulePermissionsMatrix({ isAdmin }: { isAdmin: boolean }) {
   const { user } = useAuth();
   const qc = useQueryClient();
-  const [rows, setRows] = useState<Row[]>([]);
+  const [users, setUsers] = useState<UserRow[]>([]);
+  const [rows, setRows] = useState<PermRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState("");
 
   useEffect(() => {
     (async () => {
-      const { data, error } = await (supabase as any)
-        .from("role_module_permissions")
-        .select("role, module_key, enabled");
-      if (error) {
-        toast.error("Erro ao carregar permissões de módulos", { description: error.message });
-      } else {
-        setRows((data as Row[]) ?? []);
-      }
+      const [{ data: us }, { data: perms, error }] = await Promise.all([
+        supabase.rpc("admin_list_users"),
+        (supabase as any).from("user_module_permissions").select("user_id, module_key, enabled"),
+      ]);
+      if (error) toast.error("Erro ao carregar permissões", { description: error.message });
+      setUsers(((us as UserRow[]) ?? []).filter((u) => u.ativo));
+      setRows((perms as PermRow[]) ?? []);
       setLoading(false);
     })();
   }, []);
@@ -47,35 +57,47 @@ export default function ModulePermissionsMatrix({ isAdmin }: { isAdmin: boolean 
   const matrix = useMemo(() => {
     const m: Record<string, Record<string, boolean>> = {};
     for (const r of rows) {
-      if (!m[r.role]) m[r.role] = {};
-      m[r.role][r.module_key] = r.enabled;
+      if (!m[r.user_id]) m[r.user_id] = {};
+      m[r.user_id][r.module_key] = r.enabled;
     }
     return m;
   }, [rows]);
 
-  async function toggle(role: AppRole, moduleKey: string, value: boolean) {
-    if (!isAdmin || role === "admin") return;
-    const prev = matrix[role]?.[moduleKey] ?? true;
-    // Optimistic update
+  const filteredUsers = useMemo(() => {
+    const q = filter.trim().toLowerCase();
+    if (!q) return users;
+    return users.filter(
+      (u) => u.nome.toLowerCase().includes(q) || u.email.toLowerCase().includes(q),
+    );
+  }, [users, filter]);
+
+  async function toggle(userId: string, moduleKey: string, value: boolean, isAdminRow: boolean) {
+    if (!isAdmin || isAdminRow) return;
+    const prev = matrix[userId]?.[moduleKey] ?? false;
     setRows((rs) => {
-      const idx = rs.findIndex((r) => r.role === role && r.module_key === moduleKey);
+      const idx = rs.findIndex((r) => r.user_id === userId && r.module_key === moduleKey);
       if (idx >= 0) {
         const next = [...rs];
         next[idx] = { ...next[idx], enabled: value };
         return next;
       }
-      return [...rs, { role, module_key: moduleKey, enabled: value }];
+      return [...rs, { user_id: userId, module_key: moduleKey, enabled: value }];
     });
     const { error } = await (supabase as any)
-      .from("role_module_permissions")
+      .from("user_module_permissions")
       .upsert(
-        { role, module_key: moduleKey, enabled: value, updated_by: user?.id ?? null, updated_at: new Date().toISOString() },
-        { onConflict: "role,module_key" },
+        {
+          user_id: userId,
+          module_key: moduleKey,
+          enabled: value,
+          updated_by: user?.id ?? null,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "user_id,module_key" },
       );
     if (error) {
-      // rollback
       setRows((rs) => {
-        const idx = rs.findIndex((r) => r.role === role && r.module_key === moduleKey);
+        const idx = rs.findIndex((r) => r.user_id === userId && r.module_key === moduleKey);
         if (idx >= 0) {
           const next = [...rs];
           next[idx] = { ...next[idx], enabled: prev };
@@ -86,20 +108,27 @@ export default function ModulePermissionsMatrix({ isAdmin }: { isAdmin: boolean 
       toast.error("Erro ao salvar", { description: error.message });
       return;
     }
-    toast.success("Permissão atualizada");
-    qc.invalidateQueries({ queryKey: ["role-module-permissions"] });
+    qc.invalidateQueries({ queryKey: ["user-module-permissions"] });
   }
 
   return (
     <Card className="p-2.5">
       <div className="space-y-2">
-        <div>
-          <div className="text-[13px] font-medium leading-tight">
-            Acesso a módulos por perfil
+        <div className="flex items-end justify-between gap-2 flex-wrap">
+          <div>
+            <div className="text-[13px] font-medium leading-tight">
+              Acesso a módulos por usuário
+            </div>
+            <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">
+              Controla quais grupos do menu cada usuário enxerga. Padrão: bloqueado quando não marcado. Não altera RLS nem regras de etapas.
+            </p>
           </div>
-          <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">
-            Controla quais grupos do menu cada perfil enxerga. Não altera RLS nem regras de etapas.
-          </p>
+          <Input
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            placeholder="Filtrar por nome ou e-mail"
+            className="h-7 text-[12px] w-[220px]"
+          />
         </div>
 
         {loading ? (
@@ -115,7 +144,7 @@ export default function ModulePermissionsMatrix({ isAdmin }: { isAdmin: boolean 
                 <thead>
                   <tr>
                     <th className="text-left font-medium px-2.5 py-1.5 text-[11px] text-muted-foreground sticky left-0 bg-card">
-                      Perfil
+                      Usuário
                     </th>
                     {MODULES.map((m) => (
                       <th
@@ -128,23 +157,29 @@ export default function ModulePermissionsMatrix({ isAdmin }: { isAdmin: boolean 
                   </tr>
                 </thead>
                 <tbody>
-                  {ALL_ROLES_FOR_MATRIX.map((role) => {
-                    const isAdminRow = role === "admin";
+                  {filteredUsers.map((u) => {
+                    const isAdminRow = u.roles.includes("admin");
                     return (
-                      <tr key={role} className="border-t border-border">
-                        <td className="px-2.5 py-1.5 sticky left-0 bg-card font-medium">
-                          {ROLE_LABEL[role]}
+                      <tr key={u.id} className="border-t border-border">
+                        <td className="px-2.5 py-1.5 sticky left-0 bg-card">
+                          <div className="font-medium leading-tight">{u.nome}</div>
+                          <div className="text-[10px] text-muted-foreground leading-none mt-0.5">
+                            {u.email}
+                            {u.roles.length > 0 && (
+                              <span className="ml-1.5">
+                                · {u.roles.map((r) => ROLE_LABEL[r]).join(", ")}
+                              </span>
+                            )}
+                          </div>
                         </td>
                         {MODULES.map((m) => {
-                          const checked = isAdminRow
-                            ? true
-                            : matrix[role]?.[m.key] ?? true;
+                          const checked = isAdminRow ? true : matrix[u.id]?.[m.key] ?? false;
                           const sw = (
                             <Switch
                               checked={checked}
                               disabled={!isAdmin || isAdminRow}
-                              onCheckedChange={(v) => toggle(role, m.key, !!v)}
-                              aria-label={`${ROLE_LABEL[role]} acessa ${m.label}`}
+                              onCheckedChange={(v) => toggle(u.id, m.key, !!v, isAdminRow)}
+                              aria-label={`${u.nome} acessa ${m.label}`}
                             />
                           );
                           return (
@@ -167,6 +202,13 @@ export default function ModulePermissionsMatrix({ isAdmin }: { isAdmin: boolean 
                       </tr>
                     );
                   })}
+                  {filteredUsers.length === 0 && (
+                    <tr>
+                      <td colSpan={MODULES.length + 1} className="text-center text-muted-foreground py-3 text-[11px]">
+                        Nenhum usuário encontrado
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
