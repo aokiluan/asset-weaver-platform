@@ -15,32 +15,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Loader2, Plus, UserPlus, X } from "lucide-react";
+import { Settings2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
-import { type AppRole, ROLE_LABEL, PRIMARY_ROLES } from "@/lib/roles";
-
-const ALL_ROLES: AppRole[] = [...PRIMARY_ROLES, "gestor_geral"];
+import { type AppRole, ROLE_LABEL } from "@/lib/roles";
+import { UserRolesDrawer } from "./UserRolesDrawer";
 
 const MODULES: { key: string; label: string }[] = [
   { key: "gestao", label: "Gestão" },
