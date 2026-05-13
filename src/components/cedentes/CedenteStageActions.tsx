@@ -68,6 +68,7 @@ const TRANSITIONS: Transition[] = [
     roles: ["credito", "admin", "gestor_geral"],
     variant: "default",
     icon: Send,
+    skipConfirm: true,
   },
   {
     key: "to-ativo",
@@ -77,6 +78,7 @@ const TRANSITIONS: Transition[] = [
     roles: ["formalizacao", "admin", "gestor_geral"],
     variant: "default",
     icon: Send,
+    skipConfirm: true,
   },
 ];
 
