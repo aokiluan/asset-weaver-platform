@@ -80,12 +80,6 @@ type Group = {
   adminOnly?: boolean;
   items: Item[];
 };
-  key: string;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-  adminOnly?: boolean;
-  items: Item[];
-};
 
 const GROUPS: Group[] = [
   {
