@@ -70,9 +70,16 @@ type Item = {
   url: string;
   icon: React.ComponentType<{ className?: string }>;
   roles?: readonly string[];
+  moduleKey?: string;
 };
 
 type Group = {
+  key: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  adminOnly?: boolean;
+  items: Item[];
+};
   key: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
