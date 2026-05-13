@@ -229,7 +229,7 @@ export function CedenteImportDialog({ open, onOpenChange, onImported }: Props) {
           </div>
         )}
 
-        <DialogFooter className="gap-2">
+        <SheetFooter className="gap-2">
           {step !== "importing" && (
             <Button variant="ghost" className="h-7 text-[12px]" onClick={() => onOpenChange(false)}>
               Cancelar
@@ -243,8 +243,8 @@ export function CedenteImportDialog({ open, onOpenChange, onImported }: Props) {
               </Button>
             </>
           )}
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }
