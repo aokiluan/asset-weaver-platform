@@ -98,8 +98,8 @@ export default function InvestidoresCRM() {
   );
 
   const metrics = useMemo(() => {
-    const ativos = rows.filter((r) => r.stage === "ativo");
-    const pipeline = rows.filter((r) => r.stage !== "ativo");
+    const ativos = rows.filter((r) => r.stage === "investidor_ativo");
+    const pipeline = rows.filter((r) => r.stage !== "investidor_ativo");
     const total = rows.length;
     const tickets = rows.map((r) => r.ticket ?? 0);
     const avg = total ? tickets.reduce((a, b) => a + b, 0) / total : 0;
