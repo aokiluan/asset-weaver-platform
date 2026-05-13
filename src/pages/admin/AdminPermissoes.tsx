@@ -242,21 +242,9 @@ export default function AdminPermissoes() {
       <div>
         <h1 className="text-[20px] font-medium tracking-tight">Permissões</h1>
         <p className="text-[12px] text-muted-foreground leading-tight mt-1">
-          Edite quem pode movimentar a esteira e gerencie perfis customizados.
+          Controle quais módulos do menu cada papel enxerga.
         </p>
       </div>
-
-      {/* Aviso */}
-      <Card className="p-2.5 border-amber-500/40 bg-amber-50/40 dark:bg-amber-950/20">
-        <div className="flex items-start gap-2">
-          <AlertTriangle className="size-3.5 text-amber-600 mt-0.5 shrink-0" />
-          <div className="text-[12px] leading-tight text-foreground">
-            <strong>Os gates valem para todos, inclusive admin e gestor geral.</strong>{" "}
-            Mesmo com permissão na matriz, as pendências de cada etapa precisam ser resolvidas pelo
-            time responsável.
-          </div>
-        </div>
-      </Card>
 
       {/* Blocos 1, 2 e 3 ocultados a pedido (código preservado abaixo).
       {/* Bloco 1 — Matriz Papel × Etapa (editável) */}
