@@ -161,14 +161,14 @@ export function InvestorImportDialog({ open, onOpenChange, userId, onImported }:
   const currentStepIdx = STEPS.findIndex((s) => s.id === step);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl">
-        <DialogHeader>
-          <DialogTitle className="text-[14px]">Importar contatos via planilha</DialogTitle>
-          <DialogDescription className="text-[11px]">
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle className="text-[14px]">Importar leads via planilha</SheetTitle>
+          <SheetDescription className="text-[11px]">
             Baixe o modelo, preencha e envie. Aceita .xlsx e .csv (até 5MB).
-          </DialogDescription>
-        </DialogHeader>
+          </SheetDescription>
+        </SheetHeader>
 
         <div className="flex items-center gap-2 text-[11px]">
           {STEPS.map((s, i) => (
