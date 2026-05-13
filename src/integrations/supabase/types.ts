@@ -1469,44 +1469,6 @@ export type Database = {
         }
         Relationships: []
       }
-      investor_contact_activities: {
-        Row: {
-          contact_id: string
-          created_at: string
-          description: string
-          id: string
-          occurred_at: string
-          type: Database["public"]["Enums"]["investor_activity_type"]
-          user_id: string
-        }
-        Insert: {
-          contact_id: string
-          created_at?: string
-          description: string
-          id?: string
-          occurred_at?: string
-          type: Database["public"]["Enums"]["investor_activity_type"]
-          user_id?: string
-        }
-        Update: {
-          contact_id?: string
-          created_at?: string
-          description?: string
-          id?: string
-          occurred_at?: string
-          type?: Database["public"]["Enums"]["investor_activity_type"]
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "investor_contact_activities_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "investor_contacts"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       investor_contacts: {
         Row: {
           contact_name: string | null
@@ -2257,12 +2219,6 @@ export type Database = {
         | "inativo"
       dashboard_widget_tipo: "kpi" | "bar" | "line" | "pie" | "table"
       documento_status: "pendente" | "aprovado" | "reprovado"
-      investor_activity_type:
-        | "ligacao"
-        | "email"
-        | "reuniao"
-        | "nota"
-        | "tarefa"
       lead_tipo: "cedente" | "investidor"
       opinion_recommendation:
         | "favoravel"
@@ -2429,7 +2385,6 @@ export const Constants = {
       ],
       dashboard_widget_tipo: ["kpi", "bar", "line", "pie", "table"],
       documento_status: ["pendente", "aprovado", "reprovado"],
-      investor_activity_type: ["ligacao", "email", "reuniao", "nota", "tarefa"],
       lead_tipo: ["cedente", "investidor"],
       opinion_recommendation: [
         "favoravel",
