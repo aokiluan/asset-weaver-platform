@@ -507,9 +507,7 @@ function KanbanCard({
     </div>
   );
 }
-    </div>
-  );
-}
+
 
 function ListView({
   rows,
