@@ -475,6 +475,9 @@ export default function AdminPermissoes() {
         </div>
       </Card>
 
+      {/* Bloco 4 — Matriz Papel × Módulo */}
+      <ModulePermissionsMatrix isAdmin={isAdmin} />
+
       {/* Dialog: novo / editar perfil */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-md">
