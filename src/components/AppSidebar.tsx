@@ -28,6 +28,7 @@ import {
 } from "@phosphor-icons/react";
 import { forwardRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useModulePermissions } from "@/hooks/useModulePermissions";
 import { cn } from "@/lib/utils";
 
 // Wrapper que aplica peso "thin" por padrão e expõe a API simples { className }
@@ -70,6 +71,7 @@ type Item = {
   url: string;
   icon: React.ComponentType<{ className?: string }>;
   roles?: readonly string[];
+  moduleKey?: string;
 };
 
 type Group = {
@@ -133,15 +135,16 @@ const GROUPS: Group[] = [
         url: "/financeiro",
         icon: IconWallet,
         roles: ["admin", "financeiro", "gestor_geral"] as const,
+        moduleKey: "financeiro_mod",
       },
       { title: "Usuários", url: "/configuracoes/usuarios", icon: IconUsers },
       { title: "Equipes", url: "/configuracoes/equipes", icon: IconUsers },
       { title: "Alçadas", url: "/configuracoes/alcadas", icon: IconGavel },
       { title: "Pipeline", url: "/configuracoes/pipeline", icon: IconListChecks },
       { title: "Categorias de doc.", url: "/configuracoes/categorias", icon: IconTags },
-      { title: "BI – Datasets", url: "/bi/datasets", icon: IconDatabase },
-      { title: "BI – Uploads", url: "/bi/uploads", icon: IconExcel },
-      { title: "BI – Widgets", url: "/bi/widgets", icon: IconGrid },
+      { title: "BI – Datasets", url: "/bi/datasets", icon: IconDatabase, moduleKey: "bi" },
+      { title: "BI – Uploads", url: "/bi/uploads", icon: IconExcel, moduleKey: "bi" },
+      { title: "BI – Widgets", url: "/bi/widgets", icon: IconGrid, moduleKey: "bi" },
     ],
   },
 ];
@@ -154,6 +157,7 @@ const EXPANDED_W = 240;
 export function AppSidebar() {
   const { pathname } = useLocation();
   const { hasRole } = useAuth();
+  const { isModuleEnabled } = useModulePermissions();
 
   const [pinned, setPinned] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
@@ -168,11 +172,16 @@ export function AppSidebar() {
     () =>
       GROUPS.map((g) => ({
         ...g,
-        items: g.items.filter((i) => !i.roles || i.roles.some((r) => hasRole(r as any))),
+        items: g.items.filter(
+          (i) =>
+            (!i.roles || i.roles.some((r) => hasRole(r as any))) &&
+            (!i.moduleKey || isModuleEnabled(i.moduleKey)),
+        ),
       }))
+        .filter((g) => isModuleEnabled(g.key))
         .filter((g) => (g.adminOnly ? hasRole("admin") || g.items.some((i) => i.roles) : true))
         .filter((g) => g.items.length > 0),
-    [hasRole],
+    [hasRole, isModuleEnabled],
   );
 
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {

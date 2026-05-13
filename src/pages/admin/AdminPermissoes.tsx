@@ -36,6 +36,7 @@ import {
   useStagePermissions,
   type PermissionProfile,
 } from "@/hooks/useStagePermissions";
+import ModulePermissionsMatrix from "./ModulePermissionsMatrix";
 
 interface UserRow {
   id: string;
@@ -473,6 +474,9 @@ export default function AdminPermissoes() {
           )}
         </div>
       </Card>
+
+      {/* Bloco 4 — Matriz Papel × Módulo */}
+      <ModulePermissionsMatrix isAdmin={isAdmin} />
 
       {/* Dialog: novo / editar perfil */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

@@ -157,7 +157,11 @@ export default function AdminUsuarios() {
         </div>
       </div>
 
-      <div className="rounded-md border bg-card mt-4">
+      <p className="text-[11px] text-muted-foreground mt-2">
+        Os módulos acessíveis por cada papel são configurados em <strong>Configurações → Permissões</strong>.
+      </p>
+
+      <div className="rounded-md border bg-card mt-2">
 
         <Table>
           <TableHeader>
