@@ -207,6 +207,7 @@ export function CedenteStageActions({ cedenteId, stage, isOwner, gateInfo, onCha
               disabled={disabled}
               onClick={() => {
                 if (t.isReturn) setReturnOpen(t);
+                else if (t.skipConfirm) doAdvance(t.target);
                 else setConfirmTarget(t);
               }}
             >
