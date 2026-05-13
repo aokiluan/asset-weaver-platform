@@ -110,7 +110,7 @@ const App = () => (
               <Route
                 path="/configuracoes"
                 element={
-                  <RoleGuard role="admin">
+                  <RoleGuard role="admin" moduleKey="config">
                     <Configuracoes />
                   </RoleGuard>
                 }
@@ -128,7 +128,7 @@ const App = () => (
               <Route
                 path="/bi"
                 element={
-                  <RoleGuard role="admin">
+                  <RoleGuard role="admin" moduleKey="bi">
                     <BI />
                   </RoleGuard>
                 }
