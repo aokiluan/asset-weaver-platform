@@ -328,7 +328,7 @@ export function InvestorImportDialog({ open, onOpenChange, userId, onImported }:
           </div>
         )}
 
-        <DialogFooter className="gap-2">
+        <SheetFooter className="gap-2">
           {step !== "importing" && (
             <Button
               variant="ghost"
@@ -352,13 +352,13 @@ export function InvestorImportDialog({ open, onOpenChange, userId, onImported }:
                 disabled={summary.importable === 0}
                 onClick={doImport}
               >
-                Importar {summary.importable} contato
+                Importar {summary.importable} lead
                 {summary.importable !== 1 ? "s" : ""}
               </Button>
             </>
           )}
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }
