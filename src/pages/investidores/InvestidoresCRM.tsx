@@ -14,7 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, LayoutGrid, List as ListIcon, Pencil, Loader2, Eye, Phone } from "lucide-react";
+import { Plus, LayoutGrid, List as ListIcon, Pencil, Loader2, Eye, Phone, Upload } from "lucide-react";
 import {
   DndContext,
   DragEndEvent,
@@ -45,6 +45,7 @@ import { InvestorContactDrawer } from "./InvestorContactDrawer";
 import { RegistrarContatoDialog } from "./RegistrarContatoDialog";
 import { ConfirmStageMoveDialog } from "./ConfirmStageMoveDialog";
 import { QuickViewDialog } from "./QuickViewDialog";
+import { InvestorImportDialog } from "./InvestorImportDialog";
 
 type View = "kanban" | "list";
 type TypeFilter = "todos" | InvestorType;
@@ -60,6 +61,7 @@ export default function InvestidoresCRM() {
   const [editing, setEditing] = useState<InvestorContact | null>(null);
   const [registerFor, setRegisterFor] = useState<InvestorContact | null>(null);
   const [quickView, setQuickView] = useState<InvestorContact | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
   const [pendingMove, setPendingMove] = useState<{
     contact: InvestorContact;
     to: InvestorStage;
@@ -165,9 +167,19 @@ export default function InvestidoresCRM() {
         title="Relação com Investidores"
         tabs={[{ label: "CRM de Prospecção", to: "/investidores/crm" }]}
         actions={
-          <Button size="sm" className="h-7" onClick={openNew}>
-            <Plus className="h-3.5 w-3.5 mr-1" /> Novo contato
-          </Button>
+          <>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7"
+              onClick={() => setImportOpen(true)}
+            >
+              <Upload className="h-3.5 w-3.5 mr-1" /> Importar
+            </Button>
+            <Button size="sm" className="h-7" onClick={openNew}>
+              <Plus className="h-3.5 w-3.5 mr-1" /> Novo contato
+            </Button>
+          </>
         }
       />
 
@@ -286,6 +298,13 @@ export default function InvestidoresCRM() {
           }}
         />
       )}
+
+      <InvestorImportDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        userId={user?.id ?? ""}
+        onImported={load}
+      />
     </div>
   );
 }
