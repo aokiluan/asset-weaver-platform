@@ -1,83 +1,46 @@
-## Novo módulo: Relação com Investidores
+## Aprimoramentos funcionais no CRM de Prospecção
 
-Adiciona um módulo independente, com a primeira tela "CRM de Prospecção". Mantém o padrão Nibo ultracompacto, `PageTabs`, tokens semânticos e componentes shadcn já usados. Sem novas libs.
+Comparando o artefato de referência com o que já existe, mantendo o visual Nibo. Lista do que vou adicionar:
 
-### 1. Banco (migration)
+### 1. Drag-and-drop no Kanban
+Hoje o avanço/retrocesso de estágio só acontece pelo painel lateral. Adicionar arrastar-e-soltar de cards entre colunas usando `@dnd-kit/core` (já instalado, usado em `Pipeline.tsx`). Solto numa coluna, faz `update stage` no Supabase com optimistic update e toast de confirmação.
 
-Tabela `public.investor_contacts`:
+### 2. Sub-labels nos cards de métrica
+Hoje cada card mostra só label + valor. Adicionar contexto na linha de baixo:
+- **Capital Ativo** → `N contatos`
+- **Pipeline** → `N em negociação`
+- **Total de Contatos** → `na base`
+- **Ticket Médio** → `por contato`
 
-- `id uuid pk default gen_random_uuid()`
-- `name text not null`
-- `type text not null check in ('assessoria','investidor_pf','investidor_pj','institucional')`
-- `stage text not null default 'prospeccao' check in ('prospeccao','apresentacao','due_diligence','proposta','fechamento','ativo')`
-- `ticket numeric`
-- `contact_name text`
-- `phone text`
-- `last_contact_date date`
-- `next_action text`
-- `notes text`
-- `user_id uuid not null default auth.uid()`
-- `created_at timestamptz not null default now()`
-- `updated_at timestamptz not null default now()` + trigger `update_updated_at_column`
+### 3. Indicador de todos os estágios no painel lateral
+Hoje o painel tem stepper com bolinhas. Trocar por **chips horizontais com todos os estágios** (chip ativo destacado), igual ao artefato — fica mais legível em 420px e mostra de relance onde está a oportunidade.
 
-RLS habilitada com 4 políticas (`select/insert/update/delete`) onde `user_id = auth.uid()`. Sem dependência de roles — escopo estritamente por usuário, conforme pedido.
+### 4. "Próxima ação" em destaque
+- Nos cards do Kanban: prefixar com `→` e usar token `text-success` (verde semântico) para diferenciar do nome.
+- No painel lateral: usar mesma cor/peso para reforçar que é o call-to-action.
 
-Novo módulo no menu: chave `relacao_investidores`. Backfill: ativar para `admin` automaticamente via `can_access_module` (já trata admin). Para usuários comuns, ativar manualmente em Permissões (já existente).
+### 5. Botão "Avançar" como ação primária no painel
+Hoje os botões Voltar/Avançar têm o mesmo peso (ghost + primary). Manter Avançar primary, mas reforçar que é o caminho feliz: ocupa mais espaço (flex-1 vs flex-shrink no Voltar).
 
-### 2. Navegação
+### 6. Atalhos no card do Kanban
+Botão pequeno `→` no canto inferior direito do card, que avança 1 estágio sem precisar abrir o painel. Já que adicionar drag-and-drop, isso fica como atalho redundante mas útil em mobile (viewport 775px). **Decisão**: pular esse, o drag cobre mobile com long-press do dnd-kit.
 
-`src/components/AppSidebar.tsx` — novo grupo:
+### 7. Auto-stamp do "Último contato"
+Quando o usuário move o estágio (drag, atalho do painel, ou edição), atualizar `last_contact_date = today` automaticamente. Marca natural de que houve interação. **Pergunta implícita**: deixo como auto, ou deixo só manual? Vou fazer auto **apenas no avanço de estágio**, não no retrocesso e não em edições manuais.
 
-```text
-Relação com Investidores  (key: relacao_investidores, ícone Handshake/Briefcase thin)
-  └─ CRM de Prospecção  → /investidores/crm
-```
+### 8. Contador + soma na coluna do Kanban
+Já tenho contagem e soma. Manter, mas mover a contagem para um badge ao lado do título (mais visível que inline em texto).
 
-`src/App.tsx` — nova rota protegida por `<RoleGuard moduleKey="relacao_investidores">` apontando para `pages/investidores/InvestidoresCRM.tsx`. Index do módulo redireciona para `crm`.
+### O que NÃO vou adicionar (visual/fora de escopo)
+- Cores diferentes por estágio (`STAGE_COLORS`) — fere o design system, fica cinza+primary
+- Ícones esotéricos por estágio (◎◑◕●⬡✦) — só ruído visual
+- Header "S3 Capital · CRM CAPTAÇÃO DE RECURSOS" — `PageTabs` já cumpre essa função
+- Tipografia monoespaçada, gradientes, shadows fortes — Nibo é Inter, sombras sutis
 
-### 3. Tela `InvestidoresCRM.tsx`
+### Arquivos afetados
 
-Layout com `PageTabs` (title "Relação com Investidores", uma aba "CRM de Prospecção"), seguido de:
+- `src/pages/investidores/InvestidoresCRM.tsx` — métricas com sub-label, botão Kanban com dnd-kit, drag-and-drop, auto-stamp no avanço
+- `src/pages/investidores/InvestorContactDrawer.tsx` — substituir stepper por chips de todos os estágios, destacar próxima ação, auto-stamp no avançar
+- `src/lib/investor-contacts.ts` — helper `todayISO()` para o stamp
 
-**Métricas (4 Cards p-2.5 densos)** — `Capital Ativo`, `Pipeline`, `Total de Contatos`, `Ticket Médio`. Função `fmtCompactBRL(v)`:
-
-- ≥ 1.000.000 → `R$ 1,5M`
-- ≥ 1.000 → `R$ 500k`
-- senão → `R$ 250`
-
-**Toolbar** — toggle Kanban/Lista (`ToggleGroup` shadcn) + filtro por tipo (`Tabs` ou chips: Todos/Assessoria/PF/PJ/Institucional) + botão `+ Novo contato` (h-7).
-
-**Kanban** — 6 colunas na ordem: Prospecção, Apresentação, Due Diligence, Proposta, Fechamento, Ativo. Cards mostram nome, badge de tipo, ticket compacto, próxima ação (`text-[11px] text-muted-foreground`). Sem drag-and-drop nesta primeira versão — avanço/retrocesso pelo painel de detalhes (mantém escopo simples e consistente com pedido). Coluna usa `overflow-x-auto` para caber em viewport mobile.
-
-**Lista** — `Table` shadcn com colunas Nome, Tipo, Estágio (badge), Ticket, Contato, Último Contato, Próxima Ação, ação editar (`Pencil` icon-only h-7 w-7). Linha clicável abre o painel.
-
-**Painel lateral** — `Sheet` (right, w-[420px]). Conteúdo:
-
-- Stepper horizontal compacto dos 6 estágios (bolinhas + linha, igual padrão `CedenteStageStepper` mas reduzido)
-- Bloco view denso (label text-[10px] / valor text-[12px], `space-y-2`) com todos os campos
-- Footer: `‹ Voltar etapa` (ghost, disabled no primeiro), `Avançar etapa ›` (primary, disabled no último), `Editar`, `Excluir` (destructive ghost)
-
-**Modal Add/Edit** — `Dialog` shadcn com form (react-hook-form + zod). Campos: Nome/Empresa, Nome do Contato, Telefone, Ticket (CurrencyInput existente), Último Contato (`Input type=date`), Tipo (Select), Estágio (Select), Próxima Ação, Notas (Textarea). Footer Nibo: Cancelar ghost + Salvar primary, ambos h-7.
-
-### 4. Detalhes técnicos
-
-Arquivos novos:
-
-- `supabase/migrations/<ts>_investor_contacts.sql`
-- `src/pages/investidores/InvestidoresCRM.tsx`
-- `src/pages/investidores/InvestidorContactDrawer.tsx`
-- `src/pages/investidores/InvestidorContactFormDialog.tsx`
-- `src/lib/investor-contacts.ts` (enums, labels, ordem de estágios, `fmtCompactBRL`)
-
-Arquivos editados:
-
-- `src/App.tsx` — rota nova
-- `src/components/AppSidebar.tsx` — grupo novo
-- `src/hooks/useModulePermissions.ts` — adicionar `"relacao_investidores"` ao `ModuleKey`
-
-Tudo em pt-BR, valores monetários compactos, persistência via Supabase, RLS por `user_id`.
-
-### Pontos de atenção
-
-- O escopo "só vê os próprios" significa que admin não vê de todos por essa RLS; se quiser admin ver tudo depois, adicionamos política extra com `has_role(auth.uid(),'admin')`. Hoje fica fiel ao pedido.
-- Sem drag-and-drop no Kanban v1 (avanço pelo painel). Posso adicionar depois se quiser.
+Sem mudanças de schema nem de RLS.

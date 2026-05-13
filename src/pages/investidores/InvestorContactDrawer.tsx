@@ -7,11 +7,14 @@ import { toast } from "sonner";
 import {
   fmtCompactBRL,
   INVESTOR_TYPE_LABEL,
+  isAdvance,
   nextStage,
   prevStage,
   STAGE_LABEL,
   STAGE_ORDER,
+  todayISO,
   type InvestorContact,
+  type InvestorStage,
 } from "@/lib/investor-contacts";
 import { cn } from "@/lib/utils";
 
@@ -29,9 +32,13 @@ export function InvestorContactDrawer({ contact, onClose, onChanged, onEdit }: P
     if (!contact) return;
     const target = dir === "next" ? nextStage(contact.stage) : prevStage(contact.stage);
     if (!target) return;
+    const patch: { stage: InvestorStage; last_contact_date?: string } = { stage: target };
+    // Auto-stamp do último contato apenas ao avançar
+    if (isAdvance(contact.stage, target)) patch.last_contact_date = todayISO();
+
     const { error } = await supabase
       .from("investor_contacts")
-      .update({ stage: target })
+      .update(patch)
       .eq("id", contact.id);
     if (error) return toast.error("Erro ao mover estágio", { description: error.message });
     toast.success(`Movido para ${STAGE_LABEL[target]}`);
@@ -64,7 +71,7 @@ export function InvestorContactDrawer({ contact, onClose, onChanged, onEdit }: P
             </SheetHeader>
 
             <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4">
-              <Stepper stage={contact.stage} />
+              <StageChips stage={contact.stage} />
 
               <div className="rounded-md border bg-card p-2.5 space-y-2">
                 <Row label="Ticket" value={fmtCompactBRL(contact.ticket)} />
@@ -80,7 +87,11 @@ export function InvestorContactDrawer({ contact, onClose, onChanged, onEdit }: P
                       : "—"
                   }
                 />
-                <Row label="Próxima ação" value={contact.next_action ?? "—"} />
+                <Row
+                  label="Próxima ação"
+                  value={contact.next_action ?? "—"}
+                  accent={!!contact.next_action}
+                />
                 <Row label="Notas" value={contact.notes ?? "—"} multiline />
               </div>
             </div>
@@ -138,10 +149,12 @@ function Row({
   label,
   value,
   multiline,
+  accent,
 }: {
   label: string;
   value: string;
   multiline?: boolean;
+  accent?: boolean;
 }) {
   return (
     <div className="flex flex-col gap-0.5">
@@ -152,6 +165,7 @@ function Row({
         className={cn(
           "text-[12px] text-foreground leading-tight",
           multiline && "whitespace-pre-wrap",
+          accent && "text-primary font-medium",
         )}
       >
         {value}
@@ -160,38 +174,27 @@ function Row({
   );
 }
 
-function Stepper({ stage }: { stage: (typeof STAGE_ORDER)[number] }) {
+function StageChips({ stage }: { stage: InvestorStage }) {
   const idx = STAGE_ORDER.indexOf(stage);
   return (
-    <div className="flex items-center gap-1">
-      {STAGE_ORDER.map((s, i) => (
-        <div key={s} className="flex items-center gap-1 flex-1">
-          <div className="flex flex-col items-center gap-1 flex-1 min-w-0">
-            <div
-              className={cn(
-                "h-2 w-2 rounded-full shrink-0",
-                i <= idx ? "bg-primary" : "bg-muted-foreground/30",
-              )}
-            />
-            <span
-              className={cn(
-                "text-[9px] leading-none text-center truncate w-full",
-                i === idx ? "text-foreground font-medium" : "text-muted-foreground",
-              )}
-            >
-              {STAGE_LABEL[s]}
-            </span>
-          </div>
-          {i < STAGE_ORDER.length - 1 && (
-            <div
-              className={cn(
-                "h-px flex-1 -mt-3",
-                i < idx ? "bg-primary" : "bg-muted-foreground/30",
-              )}
-            />
-          )}
-        </div>
-      ))}
+    <div className="flex flex-wrap gap-1">
+      {STAGE_ORDER.map((s, i) => {
+        const active = i === idx;
+        const done = i < idx;
+        return (
+          <span
+            key={s}
+            className={cn(
+              "text-[10px] leading-none px-1.5 py-1 rounded border",
+              active && "bg-primary/10 border-primary/40 text-primary font-medium",
+              done && !active && "bg-muted border-transparent text-muted-foreground",
+              !active && !done && "border-border text-muted-foreground/70",
+            )}
+          >
+            {STAGE_LABEL[s]}
+          </span>
+        );
+      })}
     </div>
   );
 }
