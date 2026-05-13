@@ -261,21 +261,16 @@ export default function AdminPermissoes() {
       {/* Bloco 1 — Matriz Papel × Etapa (editável) */}
       <Card className="p-2.5">
         <div className="space-y-2">
-          <div className="flex items-start justify-between gap-2">
-            <div>
-              <div className="text-[10px] uppercase leading-none text-muted-foreground tracking-wide">
-                Bloco 1
-              </div>
-              <div className="text-[13px] font-medium leading-tight mt-0.5">
-                Quem pode ENVIAR a partir de cada etapa
-              </div>
+          <div>
+            <div className="text-[10px] uppercase leading-none text-muted-foreground tracking-wide">
+              Bloco 1
             </div>
-            {isAdmin && (
-              <Button size="sm" className="h-7 text-[11px]" onClick={openNew}>
-                <Plus className="size-3.5 mr-1" />
-                Novo perfil
-              </Button>
-            )}
+            <div className="text-[13px] font-medium leading-tight mt-0.5">
+              Quem pode ENVIAR a partir de cada etapa
+            </div>
+            <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">
+              Visualização somente leitura. Edição desabilitada.
+            </p>
           </div>
 
           {loadingProfiles ? (
@@ -296,7 +291,6 @@ export default function AdminPermissoes() {
                         {STAGE_LABEL[s]}
                       </th>
                     ))}
-                    {isAdmin && <th className="w-12" />}
                   </tr>
                 </thead>
                 <tbody>
@@ -328,39 +322,12 @@ export default function AdminPermissoes() {
                           <td key={s} className="text-center px-2 py-1.5">
                             <Checkbox
                               checked={checked}
-                              disabled={!isAdmin}
-                              onCheckedChange={(v) => toggleCell(p, s, !!v)}
+                              disabled
                               aria-label={`${p.nome} pode enviar de ${STAGE_LABEL[s]}`}
                             />
                           </td>
                         );
                       })}
-                      {isAdmin && (
-                        <td className="px-1 py-1.5 text-right">
-                          <div className="flex items-center justify-end gap-0.5">
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="h-6 w-6"
-                              onClick={() => openEdit(p)}
-                              title="Editar perfil"
-                            >
-                              <Pencil className="size-3" />
-                            </Button>
-                            {!p.is_system && (
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                className="h-6 w-6 text-destructive hover:text-destructive"
-                                onClick={() => setConfirmDelete(p)}
-                                title="Remover perfil"
-                              >
-                                <Trash2 className="size-3" />
-                              </Button>
-                            )}
-                          </div>
-                        </td>
-                      )}
                     </tr>
                   ))}
                   {/* Owner (caso especial) */}
@@ -380,7 +347,6 @@ export default function AdminPermissoes() {
                         )}
                       </td>
                     ))}
-                    {isAdmin && <td />}
                   </tr>
                 </tbody>
               </table>
