@@ -28,6 +28,7 @@ import {
 } from "@phosphor-icons/react";
 import { forwardRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useModulePermissions } from "@/hooks/useModulePermissions";
 import { cn } from "@/lib/utils";
 
 // Wrapper que aplica peso "thin" por padrão e expõe a API simples { className }
