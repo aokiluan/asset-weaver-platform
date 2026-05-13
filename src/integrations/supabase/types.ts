@@ -575,6 +575,9 @@ export type Database = {
           owner_id: string | null
           razao_social: string
           representantes_sincronizado_em: string | null
+          returned_from_stage:
+            | Database["public"]["Enums"]["cedente_stage"]
+            | null
           setor: string | null
           situacao_cadastral: string | null
           stage: Database["public"]["Enums"]["cedente_stage"]
@@ -611,6 +614,9 @@ export type Database = {
           owner_id?: string | null
           razao_social: string
           representantes_sincronizado_em?: string | null
+          returned_from_stage?:
+            | Database["public"]["Enums"]["cedente_stage"]
+            | null
           setor?: string | null
           situacao_cadastral?: string | null
           stage?: Database["public"]["Enums"]["cedente_stage"]
@@ -647,6 +653,9 @@ export type Database = {
           owner_id?: string | null
           razao_social?: string
           representantes_sincronizado_em?: string | null
+          returned_from_stage?:
+            | Database["public"]["Enums"]["cedente_stage"]
+            | null
           setor?: string | null
           situacao_cadastral?: string | null
           stage?: Database["public"]["Enums"]["cedente_stage"]
