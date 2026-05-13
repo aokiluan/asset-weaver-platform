@@ -408,6 +408,8 @@ function KanbanCard({
     ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
     : undefined;
 
+  const stale = isStale(contact.stage, contact.last_contact_date);
+
   return (
     <div
       ref={setNodeRef}
@@ -420,8 +422,16 @@ function KanbanCard({
         isDragging && "opacity-40",
       )}
     >
-      <div className="text-[12px] font-medium text-foreground leading-tight truncate">
-        {contact.name}
+      <div className="flex items-start justify-between gap-1.5">
+        <div className="text-[12px] font-medium text-foreground leading-tight truncate flex-1">
+          {contact.name}
+        </div>
+        {stale && (
+          <Snowflake
+            className="h-3 w-3 text-warning shrink-0 mt-0.5"
+            aria-label="Sem contato há 14+ dias"
+          />
+        )}
       </div>
       <div className="flex items-center justify-between mt-1.5">
         <Badge variant="secondary" className="text-[9px] font-normal h-4 px-1.5">
