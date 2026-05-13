@@ -109,6 +109,42 @@ export function InvestorContactDrawer({
                 />
                 <Row label="Notas" value={contact.notes ?? "—"} multiline />
               </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground leading-none">
+                    Histórico de interações
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2 text-[11px]"
+                    onClick={() => onRegisterContact(contact)}
+                  >
+                    <Phone className="h-3 w-3 mr-1" />
+                    Registrar
+                  </Button>
+                </div>
+                {activities.length === 0 ? (
+                  <div className="text-[11px] text-muted-foreground py-2 border border-dashed rounded-md text-center">
+                    Nenhum contato registrado.
+                  </div>
+                ) : (
+                  <div className="space-y-1.5">
+                    {activities.map((a) => (
+                      <div key={a.id} className="border-l-2 border-border pl-2">
+                        <div className="text-[10px] text-muted-foreground leading-none">
+                          {new Date(a.occurred_at).toLocaleDateString("pt-BR")} ·{" "}
+                          {INVESTOR_ACTIVITY_LABEL[a.type]}
+                        </div>
+                        <div className="text-[12px] text-foreground leading-tight mt-0.5 whitespace-pre-wrap">
+                          {a.description}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="border-t px-4 py-3 flex items-center justify-between gap-2">
