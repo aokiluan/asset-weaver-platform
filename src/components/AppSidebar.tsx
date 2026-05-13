@@ -137,7 +137,7 @@ const GROUPS: Group[] = [
         roles: ["admin", "financeiro", "gestor_geral"] as const,
         moduleKey: "financeiro_mod",
       },
-      { title: "Usuários", url: "/configuracoes/usuarios", icon: IconUsers },
+      
       { title: "Equipes", url: "/configuracoes/equipes", icon: IconUsers },
       { title: "Alçadas", url: "/configuracoes/alcadas", icon: IconGavel },
       { title: "Pipeline", url: "/configuracoes/pipeline", icon: IconListChecks },

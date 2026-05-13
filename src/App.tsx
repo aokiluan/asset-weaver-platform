@@ -17,7 +17,7 @@ import Financeiro from "./pages/Financeiro.tsx";
 import Configuracoes from "./pages/Configuracoes.tsx";
 import BI from "./pages/BI.tsx";
 import BIIndicadores from "./pages/bi/BIIndicadores.tsx";
-import AdminUsuarios from "./pages/admin/AdminUsuarios.tsx";
+
 import AdminEquipes from "./pages/admin/AdminEquipes.tsx";
 import AdminAlcadas from "./pages/admin/AdminAlcadas.tsx";
 import AdminPipeline from "./pages/admin/AdminPipeline.tsx";
@@ -115,8 +115,8 @@ const App = () => (
                   </RoleGuard>
                 }
               >
-                <Route index element={<Navigate to="usuarios" replace />} />
-                <Route path="usuarios" element={<AdminUsuarios />} />
+                <Route index element={<Navigate to="permissoes" replace />} />
+                <Route path="usuarios" element={<Navigate to="/configuracoes/permissoes" replace />} />
                 <Route path="equipes" element={<AdminEquipes />} />
                 <Route path="alcadas" element={<AdminAlcadas />} />
                 <Route path="pipeline" element={<AdminPipeline />} />
@@ -141,7 +141,7 @@ const App = () => (
               </Route>
 
               {/* Redirects das rotas antigas */}
-              <Route path="/admin/usuarios" element={<Navigate to="/configuracoes/usuarios" replace />} />
+              <Route path="/admin/usuarios" element={<Navigate to="/configuracoes/permissoes" replace />} />
               <Route path="/admin/alcadas" element={<Navigate to="/configuracoes/alcadas" replace />} />
               <Route path="/admin/pipeline" element={<Navigate to="/configuracoes/pipeline" replace />} />
               <Route path="/admin/categorias" element={<Navigate to="/configuracoes/categorias" replace />} />
