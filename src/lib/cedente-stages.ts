@@ -132,11 +132,11 @@ export const STAGE_COLORS: Record<CedenteStage, string> = {
 // Quem pode ENVIAR (avançar) a partir desta etapa para a próxima.
 // O "owner" do cedente é tratado adicionalmente na UI para a etapa "novo".
 export const STAGE_PERMISSIONS: Record<CedenteStage, AppRole[]> = {
-  novo: ["admin", "comercial"],
-  cadastro: ["admin", "cadastro"],
-  analise: ["admin", "credito"],
-  comite: ["admin", "comite", "credito"],
-  formalizacao: ["admin", "formalizacao"],
+  novo: ["admin", "gestor_geral", "comercial"],
+  cadastro: ["admin", "gestor_geral", "cadastro"],
+  analise: ["admin", "gestor_geral", "credito"],
+  comite: ["admin", "gestor_geral", "comite", "credito"],
+  formalizacao: ["admin", "gestor_geral", "formalizacao"],
   ativo: [],
   inativo: [],
 };
