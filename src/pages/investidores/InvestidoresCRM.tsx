@@ -310,10 +310,14 @@ function KanbanView({
   rows,
   onOpen,
   onStageMove,
+  onQuickView,
+  onRegisterContact,
 }: {
   rows: InvestorContact[];
   onOpen: (c: InvestorContact) => void;
   onStageMove: (id: string, stage: InvestorStage) => void;
+  onQuickView: (c: InvestorContact) => void;
+  onRegisterContact: (c: InvestorContact) => void;
 }) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const sensors = useSensors(
