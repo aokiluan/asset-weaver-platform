@@ -343,7 +343,14 @@ function KanbanView({
           {STAGE_ORDER.map((stage) => {
             const items = rows.filter((r) => r.stage === stage);
             return (
-              <KanbanColumn key={stage} stage={stage} items={items} onOpen={onOpen} />
+              <KanbanColumn
+                key={stage}
+                stage={stage}
+                items={items}
+                onOpen={onOpen}
+                onQuickView={onQuickView}
+                onRegisterContact={onRegisterContact}
+              />
             );
           })}
         </div>
@@ -368,10 +375,14 @@ function KanbanColumn({
   stage,
   items,
   onOpen,
+  onQuickView,
+  onRegisterContact,
 }: {
   stage: InvestorStage;
   items: InvestorContact[];
   onOpen: (c: InvestorContact) => void;
+  onQuickView: (c: InvestorContact) => void;
+  onRegisterContact: (c: InvestorContact) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: stage });
   const total = items.reduce((a, r) => a + (r.ticket ?? 0), 0);
