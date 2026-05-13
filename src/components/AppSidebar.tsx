@@ -172,11 +172,16 @@ export function AppSidebar() {
     () =>
       GROUPS.map((g) => ({
         ...g,
-        items: g.items.filter((i) => !i.roles || i.roles.some((r) => hasRole(r as any))),
+        items: g.items.filter(
+          (i) =>
+            (!i.roles || i.roles.some((r) => hasRole(r as any))) &&
+            (!i.moduleKey || isModuleEnabled(i.moduleKey)),
+        ),
       }))
+        .filter((g) => isModuleEnabled(g.key))
         .filter((g) => (g.adminOnly ? hasRole("admin") || g.items.some((i) => i.roles) : true))
         .filter((g) => g.items.length > 0),
-    [hasRole],
+    [hasRole, isModuleEnabled],
   );
 
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
