@@ -126,86 +126,91 @@ export function InvestorContactFormDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle className="text-[14px]">
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="right"
+        className="w-full sm:max-w-lg flex flex-col gap-0 p-0"
+      >
+        <SheetHeader className="p-4 border-b">
+          <SheetTitle className="text-[14px]">
             {contact ? "Editar contato" : "Novo contato"}
-          </DialogTitle>
-        </DialogHeader>
+          </SheetTitle>
+        </SheetHeader>
 
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Nome / Empresa" full>
-            <Input value={form.name} onChange={(e) => set("name", e.target.value)} />
-          </Field>
-          <Field label="Nome do contato">
-            <Input
-              value={form.contact_name}
-              onChange={(e) => set("contact_name", e.target.value)}
-            />
-          </Field>
-          <Field label="Telefone">
-            <Input value={form.phone} onChange={(e) => set("phone", e.target.value)} />
-          </Field>
-          <Field label="Ticket (R$)">
-            <CurrencyInput
-              className="h-7 text-[12px] px-2.5 py-1 md:text-[12px]"
-              value={form.ticket}
-              onValueChange={(v) => set("ticket", v)}
-            />
-          </Field>
-          <Field label="Último contato">
-            <Input
-              type="date"
-              value={form.last_contact_date}
-              onChange={(e) => set("last_contact_date", e.target.value)}
-            />
-          </Field>
-          <Field label="Tipo">
-            <Select value={form.type} onValueChange={(v) => set("type", v as InvestorType)}>
-              <SelectTrigger className="h-7 text-[12px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {INVESTOR_TYPES.map((t) => (
-                  <SelectItem key={t} value={t}>
-                    {INVESTOR_TYPE_LABEL[t]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
-          <Field label="Estágio">
-            <Select value={form.stage} onValueChange={(v) => set("stage", v as InvestorStage)}>
-              <SelectTrigger className="h-7 text-[12px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {STAGE_ORDER.map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {STAGE_LABEL[s]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
-          <Field label="Próxima ação" full>
-            <Input
-              value={form.next_action}
-              onChange={(e) => set("next_action", e.target.value)}
-            />
-          </Field>
-          <Field label="Notas" full>
-            <Textarea
-              rows={3}
-              className="text-[12px]"
-              value={form.notes}
-              onChange={(e) => set("notes", e.target.value)}
-            />
-          </Field>
+        <div className="flex-1 overflow-y-auto p-4">
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Nome / Empresa" full>
+              <Input value={form.name} onChange={(e) => set("name", e.target.value)} />
+            </Field>
+            <Field label="Nome do contato">
+              <Input
+                value={form.contact_name}
+                onChange={(e) => set("contact_name", e.target.value)}
+              />
+            </Field>
+            <Field label="Telefone">
+              <Input value={form.phone} onChange={(e) => set("phone", e.target.value)} />
+            </Field>
+            <Field label="Ticket (R$)">
+              <CurrencyInput
+                className="h-7 text-[12px] px-2.5 py-1 md:text-[12px]"
+                value={form.ticket}
+                onValueChange={(v) => set("ticket", v)}
+              />
+            </Field>
+            <Field label="Último contato">
+              <Input
+                type="date"
+                value={form.last_contact_date}
+                onChange={(e) => set("last_contact_date", e.target.value)}
+              />
+            </Field>
+            <Field label="Tipo">
+              <Select value={form.type} onValueChange={(v) => set("type", v as InvestorType)}>
+                <SelectTrigger className="h-7 text-[12px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {INVESTOR_TYPES.map((t) => (
+                    <SelectItem key={t} value={t}>
+                      {INVESTOR_TYPE_LABEL[t]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="Estágio">
+              <Select value={form.stage} onValueChange={(v) => set("stage", v as InvestorStage)}>
+                <SelectTrigger className="h-7 text-[12px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {STAGE_ORDER.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {STAGE_LABEL[s]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="Próxima ação" full>
+              <Input
+                value={form.next_action}
+                onChange={(e) => set("next_action", e.target.value)}
+              />
+            </Field>
+            <Field label="Notas" full>
+              <Textarea
+                rows={3}
+                className="text-[12px]"
+                value={form.notes}
+                onChange={(e) => set("notes", e.target.value)}
+              />
+            </Field>
+          </div>
         </div>
 
-        <DialogFooter className="gap-2">
+        <SheetFooter className="p-4 border-t gap-2 sm:justify-end">
           <Button
             variant="ghost"
             size="sm"
@@ -218,9 +223,9 @@ export function InvestorContactFormDialog({
           <Button size="sm" className="h-7" onClick={handleSave} disabled={saving}>
             Salvar
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }
 
