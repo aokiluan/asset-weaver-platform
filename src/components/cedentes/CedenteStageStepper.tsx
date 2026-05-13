@@ -11,6 +11,7 @@ import {
   nextStage,
   type CedenteForGates,
 } from "@/lib/cedente-stages";
+import { useStagePermissions, rolesAllowedToSendFrom } from "@/hooks/useStagePermissions";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
