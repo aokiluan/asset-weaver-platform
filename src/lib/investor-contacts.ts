@@ -1,11 +1,12 @@
 export type InvestorType = "assessoria" | "investidor_pf" | "investidor_pj" | "institucional";
 export type InvestorStage =
-  | "prospeccao"
-  | "apresentacao"
-  | "due_diligence"
-  | "proposta"
-  | "fechamento"
-  | "ativo";
+  | "lead"
+  | "primeiro_contato"
+  | "em_negociacao"
+  | "boleta_em_andamento"
+  | "investidor_ativo"
+  | "manter_relacionamento"
+  | "perdido";
 
 export const INVESTOR_TYPES: InvestorType[] = [
   "assessoria",
@@ -22,21 +23,21 @@ export const INVESTOR_TYPE_LABEL: Record<InvestorType, string> = {
 };
 
 export const STAGE_ORDER: InvestorStage[] = [
-  "prospeccao",
-  "apresentacao",
-  "due_diligence",
-  "proposta",
-  "fechamento",
-  "ativo",
+  "lead",
+  "primeiro_contato",
+  "em_negociacao",
+  "boleta_em_andamento",
+  "investidor_ativo",
 ];
 
 export const STAGE_LABEL: Record<InvestorStage, string> = {
-  prospeccao: "Prospecção",
-  apresentacao: "Apresentação",
-  due_diligence: "Due Diligence",
-  proposta: "Proposta",
-  fechamento: "Fechamento",
-  ativo: "Ativo",
+  lead: "Lead",
+  primeiro_contato: "Primeiro Contato",
+  em_negociacao: "Em Negociação",
+  boleta_em_andamento: "Boleta em Andamento",
+  investidor_ativo: "Investidor Ativo",
+  manter_relacionamento: "Manter Relacionamento",
+  perdido: "Perdido",
 };
 
 export interface InvestorContact {
