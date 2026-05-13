@@ -78,15 +78,51 @@ const TRANSITIONS: Transition[] = [
   },
 ];
 
+// Atalho de retorno: quando o cedente foi devolvido ao Comercial,
+// permitir reenviar direto para a etapa que pediu a revisão (sem passar pelo Cadastro).
+const RETURN_SHORTCUTS: Record<string, Transition> = {
+  analise: {
+    key: "to-credito-direct",
+    label: "Reenviar para Crédito",
+    target: "analise",
+    fromStages: ["novo"],
+    roles: ["comercial", "admin", "gestor_geral"],
+    variant: "default",
+    icon: Send,
+    skipGates: true,
+  },
+  comite: {
+    key: "to-comite-direct",
+    label: "Reenviar para Comitê",
+    target: "comite",
+    fromStages: ["novo"],
+    roles: ["comercial", "admin", "gestor_geral"],
+    variant: "default",
+    icon: Send,
+    skipGates: true,
+  },
+  formalizacao: {
+    key: "to-formalizacao-direct",
+    label: "Reenviar para Formalização",
+    target: "formalizacao",
+    fromStages: ["novo"],
+    roles: ["comercial", "admin", "gestor_geral"],
+    variant: "default",
+    icon: Send,
+    skipGates: true,
+  },
+};
+
 interface Props {
   cedenteId: string;
   stage: CedenteStage;
   isOwner: boolean;
   gateInfo: Omit<CedenteForGates, "stage">;
   onChanged: () => void;
+  returnedFromStage?: CedenteStage | null;
 }
 
-export function CedenteStageActions({ cedenteId, stage, isOwner, gateInfo, onChanged }: Props) {
+export function CedenteStageActions({ cedenteId, stage, isOwner, gateInfo, onChanged, returnedFromStage }: Props) {
   const { hasRole } = useAuth();
   const [confirmTarget, setConfirmTarget] = useState<Transition | null>(null);
   const [returnOpen, setReturnOpen] = useState<Transition | null>(null);
