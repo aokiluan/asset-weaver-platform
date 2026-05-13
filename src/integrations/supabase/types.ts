@@ -1469,6 +1469,54 @@ export type Database = {
         }
         Relationships: []
       }
+      investor_contacts: {
+        Row: {
+          contact_name: string | null
+          created_at: string
+          id: string
+          last_contact_date: string | null
+          name: string
+          next_action: string | null
+          notes: string | null
+          phone: string | null
+          stage: string
+          ticket: number | null
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          contact_name?: string | null
+          created_at?: string
+          id?: string
+          last_contact_date?: string | null
+          name: string
+          next_action?: string | null
+          notes?: string | null
+          phone?: string | null
+          stage?: string
+          ticket?: number | null
+          type: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          contact_name?: string | null
+          created_at?: string
+          id?: string
+          last_contact_date?: string | null
+          name?: string
+          next_action?: string | null
+          notes?: string | null
+          phone?: string | null
+          stage?: string
+          ticket?: number | null
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       lead_interactions: {
         Row: {
           created_at: string

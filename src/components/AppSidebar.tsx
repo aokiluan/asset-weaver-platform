@@ -24,6 +24,7 @@ import {
   Scales,
   NotePencil,
   FolderOpen,
+  Handshake,
   type Icon as PhosphorIcon,
 } from "@phosphor-icons/react";
 import { forwardRef } from "react";
@@ -64,6 +65,7 @@ const IconCalendar = thin(CalendarBlank);
 const IconVote = thin(Scales);
 const IconSignature = thin(NotePencil);
 const IconFolder = thin(FolderOpen);
+const IconHandshake = thin(Handshake);
 
 
 type Item = {
@@ -122,6 +124,14 @@ const GROUPS: Group[] = [
     items: [
       { title: "Pasta de Cedentes", url: "/diretorio", icon: IconBuilding },
       { title: "Pasta de Investidores", url: "/diretorio/investidores", icon: IconWallet },
+    ],
+  },
+  {
+    key: "relacao_investidores",
+    label: "Relação com Investidores",
+    icon: IconHandshake,
+    items: [
+      { title: "CRM de Prospecção", url: "/investidores/crm", icon: IconKanban },
     ],
   },
   {

@@ -36,6 +36,7 @@ import Diretorio from "./pages/Diretorio.tsx";
 import DiretorioDetail from "./pages/DiretorioDetail.tsx";
 import Investidores from "./pages/Investidores.tsx";
 import InvestidorDetail from "./pages/InvestidorDetail.tsx";
+import InvestidoresCRM from "./pages/investidores/InvestidoresCRM.tsx";
 import RoleGuard from "@/components/RoleGuard";
 import NotFound from "./pages/NotFound.tsx";
 
@@ -69,6 +70,18 @@ const App = () => (
               <Route path="/diretorio/investidores" element={<Investidores />} />
               <Route path="/diretorio/investidores/:id" element={<InvestidorDetail />} />
               <Route path="/diretorio/:id" element={<DiretorioDetail />} />
+
+              {/* Relação com Investidores */}
+              <Route path="/investidores" element={<Navigate to="/investidores/crm" replace />} />
+              <Route
+                path="/investidores/crm"
+                element={
+                  <RoleGuard role={["admin","comercial","cadastro","credito","comite","formalizacao"]} moduleKey="relacao_investidores">
+                    <InvestidoresCRM />
+                  </RoleGuard>
+                }
+              />
+
               {/* Rotas legadas redirecionam para a tela do cedente */}
               <Route path="/credito" element={<Navigate to="/cedentes" replace />} />
               <Route path="/credito/:id" element={<Navigate to="/cedentes" replace />} />

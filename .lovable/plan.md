@@ -1,126 +1,83 @@
-## Objetivo
+## Novo módulo: Relação com Investidores
 
-Simplificar a permissão para 3 conceitos:
+Adiciona um módulo independente, com a primeira tela "CRM de Prospecção". Mantém o padrão Nibo ultracompacto, `PageTabs`, tokens semânticos e componentes shadcn já usados. Sem novas libs.
 
-1. **Admin** — acesso global, único papel "fora da hierarquia" (gerencia o sistema, vê tudo, faz tudo).
-2. **Módulos** — switch on/off por usuário (Gestão, Operação, Diretório, Financeiro, Config, BI).
-3. **Funções de Operação** — subgrupo: `comercial`, `cadastro`, `credito`, `comite`, `formalizacao`. Só atribuíveis se o módulo Operação estiver on.
+### 1. Banco (migration)
 
-`gestor_geral` e `financeiro` deixam de existir como funções.
+Tabela `public.investor_contacts`:
 
-## Mapa de migração
+- `id uuid pk default gen_random_uuid()`
+- `name text not null`
+- `type text not null check in ('assessoria','investidor_pf','investidor_pj','institucional')`
+- `stage text not null default 'prospeccao' check in ('prospeccao','apresentacao','due_diligence','proposta','fechamento','ativo')`
+- `ticket numeric`
+- `contact_name text`
+- `phone text`
+- `last_contact_date date`
+- `next_action text`
+- `notes text`
+- `user_id uuid not null default auth.uid()`
+- `created_at timestamptz not null default now()`
+- `updated_at timestamptz not null default now()` + trigger `update_updated_at_column`
 
-| Hoje | Vira |
-|---|---|
-| `gestor_geral` | `admin` (sobe pra admin) |
-| `financeiro` | módulo `financeiro_mod` habilitado (sem função) |
-| `comercial`, `cadastro`, `credito`, `comite`, `formalizacao` | mantém + força módulo Operação on |
-| `admin` | inalterado |
+RLS habilitada com 4 políticas (`select/insert/update/delete`) onde `user_id = auth.uid()`. Sem dependência de roles — escopo estritamente por usuário, conforme pedido.
 
-## Backend (migração SQL)
+Novo módulo no menu: chave `relacao_investidores`. Backfill: ativar para `admin` automaticamente via `can_access_module` (já trata admin). Para usuários comuns, ativar manualmente em Permissões (já existente).
 
-### 1. Backfill de dados
+### 2. Navegação
 
-```sql
--- gestor_geral → admin (idempotente via ON CONFLICT)
-INSERT INTO user_roles(user_id, role)
-SELECT user_id, 'admin'::app_role FROM user_roles WHERE role='gestor_geral'
-ON CONFLICT DO NOTHING;
-
--- financeiro → módulo financeiro_mod
-INSERT INTO user_module_permissions(user_id, module_key, enabled)
-SELECT user_id, 'financeiro_mod', true FROM user_roles WHERE role='financeiro'
-ON CONFLICT (user_id, module_key) DO UPDATE SET enabled=true;
-
--- Funções operacionais → módulo operacao
-INSERT INTO user_module_permissions(user_id, module_key, enabled)
-SELECT DISTINCT user_id, 'operacao', true FROM user_roles
-WHERE role IN ('comercial','cadastro','credito','comite','formalizacao')
-ON CONFLICT (user_id, module_key) DO UPDATE SET enabled=true;
-
--- Remove papéis obsoletos
-DELETE FROM user_roles WHERE role IN ('gestor_geral','financeiro');
-```
-
-### 2. Funções/políticas de RLS
-
-- **`is_gestor_geral(uid)`** — redefinir como `SELECT public.has_role(_user_id,'admin')`. Mantém compat com as ~15 chamadas existentes sem reescrever cada policy.
-- **`has_role(uid,'financeiro')`** nas policies de `investidores` (3 policies) — trocar por `public.can_access_module(uid,'financeiro_mod')`.
-- Enum `app_role` **não é alterado** (evita migration pesada de tipos); `gestor_geral` e `financeiro` ficam órfãos no enum, sem usuários.
-
-### 3. Hierarquia: triggers de consistência
-
-```sql
--- Bloqueia atribuir função operacional sem módulo Operação
-CREATE FUNCTION enforce_role_module_dependency() RETURNS trigger ...
-  IF NEW.role IN ('comercial','cadastro','credito','comite','formalizacao')
-     AND NOT can_access_module(NEW.user_id, 'operacao')
-  THEN RAISE EXCEPTION 'Ative o módulo Operação antes';
-
--- Cascade: desativar módulo Operação remove funções operacionais
-CREATE FUNCTION cascade_module_disable() RETURNS trigger ...
-  IF NEW.module_key='operacao' AND NEW.enabled=false THEN
-    DELETE FROM user_roles WHERE user_id=NEW.user_id
-      AND role IN ('comercial','cadastro','credito','comite','formalizacao');
-```
-
-## Frontend
-
-### `src/lib/roles.ts`
-- `PRIMARY_ROLES` passa a ter só: `comercial`, `cadastro`, `credito`, `comite`, `formalizacao`.
-- `ALL_ROLES` = `[...PRIMARY_ROLES, 'admin']`.
-- Remover `gestor_geral` e `financeiro` dos labels exibidos (mantém no enum por compat).
-
-### `AdminPermissoes.tsx`
-Tabela enxuta — 4 colunas:
+`src/components/AppSidebar.tsx` — novo grupo:
 
 ```text
-Usuário | Acessos (botão "3 módulos · 2 funções") | Equipe | Ativo
+Relação com Investidores  (key: relacao_investidores, ícone Handshake/Briefcase thin)
+  └─ CRM de Prospecção  → /investidores/crm
 ```
 
-- Remove as 6 colunas de módulos da grade e a coluna Funções.
-- Botão "Acessos" abre o drawer.
+`src/App.tsx` — nova rota protegida por `<RoleGuard moduleKey="relacao_investidores">` apontando para `pages/investidores/InvestidoresCRM.tsx`. Index do módulo redireciona para `crm`.
 
-### `UserAccessDrawer.tsx` (renomeia `UserRolesDrawer.tsx`)
+### 3. Tela `InvestidoresCRM.tsx`
 
-Drawer agrupa tudo num só lugar:
+Layout com `PageTabs` (title "Relação com Investidores", uma aba "CRM de Prospecção"), seguido de:
 
-```text
-┌─ Administrador                    [○] ┐
-│   Acesso global a todos os módulos    │
-└───────────────────────────────────────┘
+**Métricas (4 Cards p-2.5 densos)** — `Capital Ativo`, `Pipeline`, `Total de Contatos`, `Ticket Médio`. Função `fmtCompactBRL(v)`:
 
-┌─ Operação                         [●] ┐
-│ Funções:                              │
-│  [Comercial] [Cadastro] [Crédito]     │
-│  [Comitê]    [Formalização]           │
-└───────────────────────────────────────┘
+- ≥ 1.000.000 → `R$ 1,5M`
+- ≥ 1.000 → `R$ 500k`
+- senão → `R$ 250`
 
-┌─ Outros módulos ──────────────────────┐
-│ [●] Gestão        [●] Diretório       │
-│ [●] Financeiro    [○] Config  [○] BI  │
-└───────────────────────────────────────┘
-```
+**Toolbar** — toggle Kanban/Lista (`ToggleGroup` shadcn) + filtro por tipo (`Tabs` ou chips: Todos/Assessoria/PF/PJ/Institucional) + botão `+ Novo contato` (h-7).
 
-- Toggle Admin no topo (quando on, todos os módulos ficam on e travados, igual hoje).
-- Seção Operação: switch do módulo + grid de chips selecionáveis das 5 funções. Chips desabilitados quando módulo off.
-- Seção "Outros módulos" — só switches.
-- Desligar Operação remove funções (com `confirm()`).
+**Kanban** — 6 colunas na ordem: Prospecção, Apresentação, Due Diligence, Proposta, Fechamento, Ativo. Cards mostram nome, badge de tipo, ticket compacto, próxima ação (`text-[11px] text-muted-foreground`). Sem drag-and-drop nesta primeira versão — avanço/retrocesso pelo painel de detalhes (mantém escopo simples e consistente com pedido). Coluna usa `overflow-x-auto` para caber em viewport mobile.
 
-## Impactos secundários a revisar
+**Lista** — `Table` shadcn com colunas Nome, Tipo, Estágio (badge), Ticket, Contato, Último Contato, Próxima Ação, ação editar (`Pencil` icon-only h-7 w-7). Linha clicável abre o painel.
 
-- `useAuth.hasRole('gestor_geral')` / `hasRole('financeiro')` em componentes — substituir por `hasRole('admin')` ou `useModulePermissions().has('financeiro_mod')`. Buscar usos com `rg`.
-- `committee_eligible_voter_ids()` — continua usando `role='comite'`, ok.
-- `admin_list_users` retorna roles[]; o drawer ignora `gestor_geral`/`financeiro` mesmo se aparecerem.
+**Painel lateral** — `Sheet` (right, w-[420px]). Conteúdo:
 
-## Arquivos
+- Stepper horizontal compacto dos 6 estágios (bolinhas + linha, igual padrão `CedenteStageStepper` mas reduzido)
+- Bloco view denso (label text-[10px] / valor text-[12px], `space-y-2`) com todos os campos
+- Footer: `‹ Voltar etapa` (ghost, disabled no primeiro), `Avançar etapa ›` (primary, disabled no último), `Editar`, `Excluir` (destructive ghost)
 
-- **Editar**: `src/pages/admin/AdminPermissoes.tsx`, `src/lib/roles.ts`, qualquer componente que use `hasRole('gestor_geral')` ou `hasRole('financeiro')`.
-- **Renomear/reescrever**: `src/pages/admin/UserRolesDrawer.tsx` → `UserAccessDrawer.tsx`.
-- **Migração SQL**: 1 arquivo com backfill + redefinição de `is_gestor_geral` + atualização das 3 policies de `investidores` + 2 triggers de consistência.
+**Modal Add/Edit** — `Dialog` shadcn com form (react-hook-form + zod). Campos: Nome/Empresa, Nome do Contato, Telefone, Ticket (CurrencyInput existente), Último Contato (`Input type=date`), Tipo (Select), Estágio (Select), Próxima Ação, Notas (Textarea). Footer Nibo: Cancelar ghost + Salvar primary, ambos h-7.
 
-## Trade-offs
+### 4. Detalhes técnicos
 
-- **Ganha**: 3 papéis a menos, hierarquia explícita módulo→função, tabela enxuta, drawer único e auto-explicativo.
-- **Custo**: migração de dados sensível (admin é elevado a partir de gestor_geral); políticas de `investidores` mudam semântica (módulo passa a ser suficiente).
-- **Reversível**: enum mantém os valores antigos; se precisar voltar, é só repopular `user_roles`.
+Arquivos novos:
+
+- `supabase/migrations/<ts>_investor_contacts.sql`
+- `src/pages/investidores/InvestidoresCRM.tsx`
+- `src/pages/investidores/InvestidorContactDrawer.tsx`
+- `src/pages/investidores/InvestidorContactFormDialog.tsx`
+- `src/lib/investor-contacts.ts` (enums, labels, ordem de estágios, `fmtCompactBRL`)
+
+Arquivos editados:
+
+- `src/App.tsx` — rota nova
+- `src/components/AppSidebar.tsx` — grupo novo
+- `src/hooks/useModulePermissions.ts` — adicionar `"relacao_investidores"` ao `ModuleKey`
+
+Tudo em pt-BR, valores monetários compactos, persistência via Supabase, RLS por `user_id`.
+
+### Pontos de atenção
+
+- O escopo "só vê os próprios" significa que admin não vê de todos por essa RLS; se quiser admin ver tudo depois, adicionamos política extra com `has_role(auth.uid(),'admin')`. Hoje fica fiel ao pedido.
+- Sem drag-and-drop no Kanban v1 (avanço pelo painel). Posso adicionar depois se quiser.
