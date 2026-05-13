@@ -7,12 +7,11 @@ export default function Configuracoes() {
       <PageTabs
         title="Configurações"
         tabs={[
-          
+          { label: "Permissões", to: "/configuracoes/permissoes" },
           { label: "Equipes", to: "/configuracoes/equipes" },
           { label: "Alçadas", to: "/configuracoes/alcadas" },
           { label: "Pipeline", to: "/configuracoes/pipeline" },
           { label: "Categorias de doc.", to: "/configuracoes/categorias" },
-          { label: "Permissões", to: "/configuracoes/permissoes" },
         ]}
       />
       <div className="max-w-7xl mx-auto">
