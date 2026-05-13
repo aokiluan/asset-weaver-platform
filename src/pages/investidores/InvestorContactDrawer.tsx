@@ -12,6 +12,8 @@ import {
   nextStage,
   prevStage,
   STAGE_LABEL,
+  FUNNEL_STAGES,
+  isTerminal,
   STAGE_ORDER,
   type InvestorActivity,
   type InvestorContact,
