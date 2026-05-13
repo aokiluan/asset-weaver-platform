@@ -285,6 +285,7 @@ export default function CedenteDetail() {
             cedenteId={cedente.id}
             stage={cedente.stage}
             isOwner={isOwner}
+            returnedFromStage={(cedente as any).returned_from_stage ?? null}
             gateInfo={{
               hasVisitReport,
               obrigatoriosFaltando,
