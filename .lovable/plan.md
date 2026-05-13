@@ -1,92 +1,48 @@
-# Permissões de Módulos por Papel
+## Problema
 
-Implementar camada parametrizável de visibilidade/acesso de **módulos do menu** por papel, sem tocar em RLS, em `user_roles`, em `roles.ts` ou em `cedente-stages.ts`. Esta camada controla apenas navegação (sidebar + guarda de rota), não dados.
+Hoje, quando o Cadastro processa a conciliação:
 
-A tela existente de Permissões (matriz papel × estágio) **continua existindo**: vamos criar uma segunda matriz (papel × módulo) na mesma página, em uma seção acima ou abaixo da atual — sem remover nada do que já está lá.
+1. Ao **reprovar cada documento**, abre um diálogo "Informe o motivo" → o motivo vai para o **Histórico** como comentário (`📄 Documento reprovado · arquivo.pdf — motivo`).
+2. Ao clicar em **"Devolver ao comercial"** (`RevisarCadastroActions`), abre **outro** diálogo pedindo motivo de devolução → vai para `cedentes.observacoes`.
 
-## Etapas
+O Cadastro acaba digitando duas vezes a mesma coisa ("documentos X e Y reprovados, faltam Z").
 
-### 1. Migration Supabase
-Tabela `public.role_module_permissions`:
-- `role text` (string livre, espelha o enum `app_role` mas sem FK para evitar acoplamento)
-- `module_key text`
-- `enabled boolean default true`
-- `updated_at timestamptz default now()`
-- `updated_by uuid references public.profiles(id)`
-- PK `(role, module_key)`
+## Diagnóstico
 
-RLS:
-- `SELECT` para qualquer autenticado
-- `ALL` (insert/update/delete) somente `has_role(auth.uid(), 'admin')`
+Arquivos envolvidos:
+- `src/components/cedentes/ConciliacaoDocumentosSheet.tsx` (linhas 233–276) — reprova doc + insere comentário no `cedente_history`.
+- `src/components/cedentes/RevisarCadastroActions.tsx` (linhas 38–54) — diálogo "Devolver ao comercial" + grava em `cedentes.observacoes`.
 
-Seed: produto cartesiano de 8 papéis × 6 módulos (`gestao`, `operacao`, `diretorio`, `config`, `financeiro_mod`, `bi`), todos `enabled = true`.
+Os dois caminhos são independentes hoje, sem conexão.
 
-Trigger `update_updated_at_column` em UPDATE (já existe a função no projeto).
+## Solução proposta
 
-### 2. Hook `src/hooks/useModulePermissions.ts`
-- `useQuery(['role-module-permissions'], ...)` lendo todos os registros, `staleTime` 5 min.
-- Usa `useAuth()` para descobrir os papéis do usuário.
-- Retorna `{ isModuleEnabled(moduleKey), isLoading }`.
-- Regra: `enabled = true` se **qualquer** papel do usuário tiver `enabled = true` para aquele `module_key`. Se não houver registro → tratar como `true` (fail-open, evita quebrar prod).
-- Atalho: se o usuário tem papel `admin`, retorna `true` direto.
+**Tornar o diálogo de devolução condicional:** se já existem documentos reprovados (status `reprovado`) para o cedente, a devolução vira **um clique único, sem abrir diálogo de motivo**, porque os motivos já estão no Histórico.
 
-### 3. Tela `AdminPermissoes` — adicionar matriz Papel × Módulo
-Manter a matriz papel × estágio atual. Adicionar nova seção (Card) "Acesso a módulos" com:
+### Comportamento
 
-- Tabela com header fixo (módulos) e primeira coluna fixa (papéis).
-- Labels:
+Em `RevisarCadastroActions.tsx`, antes de abrir o `Dialog` de motivo:
 
-```text
-gestao          → Gestão
-operacao        → Operação
-diretorio       → Diretório
-financeiro_mod  → Financeiro
-config          → Configurações
-bi              → BI
-```
+1. Consultar `documentos` do cedente: `count(status = 'reprovado')`.
+2. **Se houver ≥1 reprovado:**
+   - Mostrar um `AlertDialog` curto de confirmação: "Devolver ao comercial? Os N documento(s) reprovado(s) já estão registrados no Histórico com os motivos." → botões `Cancelar` / `Devolver`.
+   - Ao confirmar, executar o update direto, **sem campo de texto**.
+   - Em `cedentes.observacoes`, gravar algo como `[Devolvido pela análise]: N documento(s) reprovado(s) — ver Histórico`.
+3. **Se não houver reprovados** (ex.: devolução por outro motivo, como relatório de visita inconsistente): manter o diálogo atual com Textarea obrigatório.
 
-- Células com `Switch` (shadcn).
-- Loading: Skeleton.
-- Autosave: ao alternar, `upsert` em `role_module_permissions` setando `updated_by = auth.uid()`. Toast de sucesso/erro via `sonner`. Em erro, reverte estado local.
-- Linha `admin`: switches sempre marcados e `disabled`, com `Tooltip` "Admin sempre tem acesso total a todos os módulos". O upsert não é executado para essa linha.
-- Realtime opcional: invalidar a query após mutação.
+### Bônus opcional (recomendado)
 
-### 4. `AppSidebar.tsx` — filtro por módulo
-- Importar `useModulePermissions`.
-- Em `visibleGroups`, adicionar `.filter(g => isModuleEnabled(g.key))` após o filtro de roles.
-- Confirmar que os `key` de `GROUPS` batem com `module_key` da tabela. Hoje temos: `gestao`, `operacao`, `diretorio`, `config`. Não existe grupo `bi` nem `financeiro_mod` separados — BI está dentro de "Configurações", e Financeiro também é item dentro de "Configurações". Decisão para manter o spec coerente:
-  - Filtrar **grupos** pelo `module_key` igual à `key` do grupo.
-  - Filtrar **itens individuais** que mapeiam para módulos específicos:
-    - item `Financeiro` (`/financeiro`) → `financeiro_mod`
-    - itens `BI – *` (`/bi/*`) → `bi`
-  - Demais itens herdam o módulo do grupo.
+Também publicar um único marco no `cedente_history` no momento da devolução (evento `COMENTARIO` com texto curto: "Cadastro devolveu ao comercial · N documento(s) reprovado(s)"), para o comercial ver claramente a transição na timeline. Hoje a devolução só aparece como `mudanca_estagio` (cadastro→novo), sem contexto.
 
-### 5. `RoleGuard` + rotas em `App.tsx`
-- Adicionar prop opcional `moduleKey?: string` em `RoleGuard`.
-- Se fornecida e `isModuleEnabled(moduleKey)` for `false` (após `loading`), `<Navigate to="/gestao/comercial" replace />`.
-- Mantém o `hasRole` atual — módulo é camada adicional.
-- Em `App.tsx`, passar `moduleKey`:
-  - `/comite` → `operacao`
-  - `/formalizacao` → `operacao`
-  - `/financeiro` → `financeiro_mod`
-  - `/configuracoes/*` → `config`
-  - `/bi/*` → `bi` (envolver `BI` em `RoleGuard` com `role="admin"` + `moduleKey="bi"` — já tem o role guard).
+## O que NÃO muda
 
-### 6. `AdminUsuarios` — ajuste visual
-- Garantir que **todos** os papéis do usuário são exibidos como `Badge` separados (a função `admin_list_users` já retorna `roles app_role[]`).
-- Texto de apoio abaixo da seção de papéis: *"Os módulos acessíveis por cada papel são configurados em Configurações → Permissões."*
-- Sem controle por usuário.
+- Fluxo de reprovação de documento na conciliação permanece igual.
+- Diálogo de motivo continua existindo para o caso "sem documentos reprovados".
+- Nenhuma alteração de RLS, schema, ou de outras telas.
+- Nenhuma mudança em `cedente-stages.ts` ou no stepper.
 
-## Arquivos afetados
-- `supabase/migrations/<timestamp>_role_module_permissions.sql` (novo)
-- `src/hooks/useModulePermissions.ts` (novo)
-- `src/pages/admin/AdminPermissoes.tsx` (adicionar seção)
-- `src/components/AppSidebar.tsx`
-- `src/components/RoleGuard.tsx`
-- `src/App.tsx`
-- `src/pages/admin/AdminUsuarios.tsx`
+## Arquivos a editar
 
-## Fora do escopo
-- Não mexer em `user_roles`, `roles.ts`, `cedente-stages.ts`, RLS de outras tabelas.
-- Não criar permissão por usuário individual.
-- Matriz papel × estágio (já existente) permanece intacta.
+- `src/components/cedentes/RevisarCadastroActions.tsx` — adicionar consulta de docs reprovados, branch condicional (AlertDialog vs Dialog atual), update de `observacoes` adaptativo, e (opcional) insert no `cedente_history`.
+
+Nenhuma migration necessária.
