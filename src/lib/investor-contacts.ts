@@ -22,13 +22,24 @@ export const INVESTOR_TYPE_LABEL: Record<InvestorType, string> = {
   institucional: "Institucional",
 };
 
-export const STAGE_ORDER: InvestorStage[] = [
+/** Funil principal (progressão linear). */
+export const FUNNEL_STAGES: InvestorStage[] = [
   "lead",
   "primeiro_contato",
   "em_negociacao",
   "boleta_em_andamento",
   "investidor_ativo",
 ];
+
+/** Estágios terminais paralelos (fora do funil linear). */
+export const TERMINAL_STAGES: InvestorStage[] = [
+  "manter_relacionamento",
+  "perdido",
+];
+
+/** Ordem completa exibida no Kanban: funil + terminais à direita. */
+export const STAGE_ORDER: InvestorStage[] = [...FUNNEL_STAGES, ...TERMINAL_STAGES];
+
 
 export const STAGE_LABEL: Record<InvestorStage, string> = {
   lead: "Lead",
