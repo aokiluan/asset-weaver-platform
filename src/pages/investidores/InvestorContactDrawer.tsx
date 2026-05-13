@@ -12,6 +12,8 @@ import {
   nextStage,
   prevStage,
   STAGE_LABEL,
+  FUNNEL_STAGES,
+  isTerminal,
   STAGE_ORDER,
   type InvestorActivity,
   type InvestorContact,
@@ -226,12 +228,13 @@ function Row({
 }
 
 function StageChips({ stage }: { stage: InvestorStage }) {
-  const idx = STAGE_ORDER.indexOf(stage);
+  const terminal = isTerminal(stage);
+  const idx = terminal ? -1 : FUNNEL_STAGES.indexOf(stage);
   return (
-    <div className="flex flex-wrap gap-1">
-      {STAGE_ORDER.map((s, i) => {
-        const active = i === idx;
-        const done = i < idx;
+    <div className="flex flex-wrap gap-1 items-center">
+      {FUNNEL_STAGES.map((s, i) => {
+        const active = !terminal && i === idx;
+        const done = !terminal && i < idx;
         return (
           <span
             key={s}
@@ -246,6 +249,18 @@ function StageChips({ stage }: { stage: InvestorStage }) {
           </span>
         );
       })}
+      {terminal && (
+        <span
+          className={cn(
+            "text-[10px] leading-none px-1.5 py-1 rounded border ml-1",
+            stage === "perdido"
+              ? "bg-destructive/10 border-destructive/40 text-destructive font-medium"
+              : "bg-muted border-border text-foreground font-medium",
+          )}
+        >
+          {STAGE_LABEL[stage]}
+        </span>
+      )}
     </div>
   );
 }

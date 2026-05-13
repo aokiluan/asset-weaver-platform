@@ -1,23 +1,25 @@
-## Objetivo
+## Adicionar "Manter Relacionamento" e "Perdido" como colunas do Kanban
 
-Padronizar o formulário de criação/edição de contato (`InvestorContactFormDialog`) para abrir como **painel lateral deslizando da direita**, no mesmo padrão do `InvestorContactDrawer` já existente.
+Hoje esses dois estágios existem como tipo válido e label, mas não estão em `STAGE_ORDER`, então não aparecem no board nem nos seletores de UI. Vou adicioná-los como duas colunas extras à direita, depois de "Investidor Ativo".
 
-## Mudanças
+### Mudanças
 
-### 1. `src/pages/investidores/InvestorContactFormDialog.tsx`
-- Trocar `Dialog`/`DialogContent`/`DialogHeader`/`DialogFooter` (de `@/components/ui/dialog`) por `Sheet`/`SheetContent`/`SheetHeader`/`SheetFooter` (de `@/components/ui/sheet`).
-- `SheetContent` com `side="right"` e largura compatível com o drawer atual (`w-full sm:max-w-lg`).
-- Manter toda a lógica do formulário (estado, validação, submit, react-hook-form/handlers existentes) — apenas substituir o invólucro visual.
-- Footer: manter padrão Nibo — Cancelar (ghost) + Salvar (primário) à direita.
-- Manter a mesma API de props (`open`, `onOpenChange`, `contact`, etc.) para não quebrar o consumidor.
+**1. `src/lib/investor-contacts.ts`**
+- Adicionar `manter_relacionamento` e `perdido` ao final de `STAGE_ORDER` (vira array de 7).
+- Ajustar `isAdvance` / `nextStage` / `prevStage` para tratar esses dois como **terminais paralelos**, não como progressão linear:
+  - De qualquer estágio é possível ir para `manter_relacionamento` ou `perdido` (não conta como "avanço").
+  - `nextStage`/`prevStage` desses dois retornam `null` (não há próximo/anterior natural).
+  - A progressão linear `lead → primeiro_contato → … → investidor_ativo` continua igual.
 
-### 2. Renomear (opcional, recomendado)
-- Renomear arquivo para `InvestorContactFormSheet.tsx` e atualizar import em `InvestidoresCRM.tsx`. 
-- Se preferir evitar churn, manter o nome `InvestorContactFormDialog.tsx` e só trocar o conteúdo interno.
+**2. `src/pages/investidores/InvestidoresCRM.tsx` (kanban)**
+- O `STAGE_ORDER.map` já vai renderizar as duas colunas novas automaticamente.
+- Estilizar visualmente as colunas terminais com tom mais discreto (header em `text-muted-foreground`, possivelmente borda tracejada) para diferenciar do funil ativo.
 
-## Fora de escopo
-- Demais dialogs (`QuickViewDialog`, `RegistrarContatoDialog`, `ConfirmStageMoveDialog`) permanecem como Dialog.
-- Sem mudanças no schema, RLS ou lógica de negócio.
+**3. Drawer/Form/ConfirmStageMove**
+- O stepper do `InvestorContactDrawer` mostra a sequência linear; vou mantê-lo só com os 5 estágios do funil e exibir `manter_relacionamento`/`perdido` como **badges/ações separadas** ("Mover para Manter Relacionamento", "Marcar como Perdido"), evitando poluir o stepper.
+- O select de estágio no `InvestorContactFormDialog` lista todos os 7 (já usa `STAGE_ORDER`).
+- `ConfirmStageMoveDialog` continua funcionando — só mostra "avanço/retrocesso" quando aplicável.
 
-## Pergunta
-Prefere **renomear** o arquivo para `...FormSheet.tsx` ou **manter o nome atual** apenas trocando o conteúdo?
+### Não muda
+- Schema do banco (constraint já aceita os 7 valores desde a migration anterior).
+- Lógica de import (já mapeia os 7 estágios).

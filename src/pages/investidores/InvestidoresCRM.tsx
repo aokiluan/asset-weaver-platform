@@ -33,6 +33,7 @@ import {
   INVESTOR_TYPES,
   INVESTOR_TYPE_LABEL,
   isAdvance,
+  isTerminal,
   STAGE_LABEL,
   STAGE_ORDER,
   todayISO,
@@ -101,7 +102,9 @@ export default function InvestidoresCRM() {
 
   const metrics = useMemo(() => {
     const ativos = rows.filter((r) => r.stage === "investidor_ativo");
-    const pipeline = rows.filter((r) => r.stage !== "investidor_ativo");
+    const pipeline = rows.filter(
+      (r) => r.stage !== "investidor_ativo" && !isTerminal(r.stage),
+    );
     const total = rows.length;
     const tickets = rows.map((r) => r.ticket ?? 0);
     const avg = total ? tickets.reduce((a, b) => a + b, 0) / total : 0;
@@ -405,13 +408,23 @@ function KanbanColumn({
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: stage });
   const total = items.reduce((a, r) => a + (r.ticket ?? 0), 0);
+  const terminal = isTerminal(stage);
+  const isPerdido = stage === "perdido";
 
   return (
-    <div className="w-[220px] shrink-0">
+    <div className={cn("w-[220px] shrink-0", terminal && "opacity-90")}>
       <div className="flex items-center justify-between px-1 mb-2">
-        <div className="flex items-center gap-1.5 text-[11px] font-medium text-foreground">
+        <div
+          className={cn(
+            "flex items-center gap-1.5 text-[11px] font-medium",
+            terminal ? "text-muted-foreground" : "text-foreground",
+          )}
+        >
           <span>{STAGE_LABEL[stage]}</span>
-          <Badge variant="secondary" className="text-[9px] font-normal h-4 px-1.5">
+          <Badge
+            variant={isPerdido ? "destructive" : "secondary"}
+            className="text-[9px] font-normal h-4 px-1.5"
+          >
             {items.length}
           </Badge>
         </div>
@@ -421,6 +434,7 @@ function KanbanColumn({
         ref={setNodeRef}
         className={cn(
           "space-y-2 rounded-md p-1 min-h-[80px] transition-colors",
+          terminal && "border border-dashed border-border/60 bg-muted/20",
           isOver && "ring-2 ring-primary bg-primary/5",
         )}
       >

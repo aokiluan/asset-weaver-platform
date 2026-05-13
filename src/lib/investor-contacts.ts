@@ -22,13 +22,24 @@ export const INVESTOR_TYPE_LABEL: Record<InvestorType, string> = {
   institucional: "Institucional",
 };
 
-export const STAGE_ORDER: InvestorStage[] = [
+/** Funil principal (progressão linear). */
+export const FUNNEL_STAGES: InvestorStage[] = [
   "lead",
   "primeiro_contato",
   "em_negociacao",
   "boleta_em_andamento",
   "investidor_ativo",
 ];
+
+/** Estágios terminais paralelos (fora do funil linear). */
+export const TERMINAL_STAGES: InvestorStage[] = [
+  "manter_relacionamento",
+  "perdido",
+];
+
+/** Ordem completa exibida no Kanban: funil + terminais à direita. */
+export const STAGE_ORDER: InvestorStage[] = [...FUNNEL_STAGES, ...TERMINAL_STAGES];
+
 
 export const STAGE_LABEL: Record<InvestorStage, string> = {
   lead: "Lead",
@@ -73,14 +84,20 @@ export function fmtCompactBRL(v: number | null | undefined): string {
   return `R$ ${v.toFixed(0)}`;
 }
 
+export function isTerminal(stage: InvestorStage): boolean {
+  return TERMINAL_STAGES.includes(stage);
+}
+
 export function nextStage(stage: InvestorStage): InvestorStage | null {
-  const i = STAGE_ORDER.indexOf(stage);
-  return i < STAGE_ORDER.length - 1 ? STAGE_ORDER[i + 1] : null;
+  if (isTerminal(stage)) return null;
+  const i = FUNNEL_STAGES.indexOf(stage);
+  return i >= 0 && i < FUNNEL_STAGES.length - 1 ? FUNNEL_STAGES[i + 1] : null;
 }
 
 export function prevStage(stage: InvestorStage): InvestorStage | null {
-  const i = STAGE_ORDER.indexOf(stage);
-  return i > 0 ? STAGE_ORDER[i - 1] : null;
+  if (isTerminal(stage)) return null;
+  const i = FUNNEL_STAGES.indexOf(stage);
+  return i > 0 ? FUNNEL_STAGES[i - 1] : null;
 }
 
 /** Retorna a data atual no formato YYYY-MM-DD (date column do Postgres). */
@@ -92,9 +109,13 @@ export function todayISO(): string {
   return `${y}-${m}-${day}`;
 }
 
-/** Retorna se o movimento entre estágios é um avanço (índice maior). */
+/**
+ * Retorna se o movimento entre estágios é um avanço.
+ * Movimentos para/entre terminais não contam como avanço linear.
+ */
 export function isAdvance(from: InvestorStage, to: InvestorStage): boolean {
-  return STAGE_ORDER.indexOf(to) > STAGE_ORDER.indexOf(from);
+  if (isTerminal(from) || isTerminal(to)) return false;
+  return FUNNEL_STAGES.indexOf(to) > FUNNEL_STAGES.indexOf(from);
 }
 
 export type InvestorActivityType = "ligacao" | "email" | "reuniao" | "nota" | "tarefa";
