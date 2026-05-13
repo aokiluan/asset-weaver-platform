@@ -81,3 +81,17 @@ export function prevStage(stage: InvestorStage): InvestorStage | null {
   const i = STAGE_ORDER.indexOf(stage);
   return i > 0 ? STAGE_ORDER[i - 1] : null;
 }
+
+/** Retorna a data atual no formato YYYY-MM-DD (date column do Postgres). */
+export function todayISO(): string {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+/** Retorna se o movimento entre estágios é um avanço (índice maior). */
+export function isAdvance(from: InvestorStage, to: InvestorStage): boolean {
+  return STAGE_ORDER.indexOf(to) > STAGE_ORDER.indexOf(from);
+}
