@@ -157,6 +157,7 @@ const EXPANDED_W = 240;
 export function AppSidebar() {
   const { pathname } = useLocation();
   const { hasRole } = useAuth();
+  const { isModuleEnabled } = useModulePermissions();
 
   const [pinned, setPinned] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
