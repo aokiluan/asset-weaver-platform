@@ -406,7 +406,13 @@ function KanbanColumn({
         )}
       >
         {items.map((c) => (
-          <KanbanCard key={c.id} contact={c} onOpen={onOpen} />
+          <KanbanCard
+            key={c.id}
+            contact={c}
+            onOpen={onOpen}
+            onQuickView={onQuickView}
+            onRegisterContact={onRegisterContact}
+          />
         ))}
         {items.length === 0 && (
           <div className="text-[11px] text-muted-foreground/70 text-center py-6 border border-dashed rounded-md">
@@ -421,9 +427,13 @@ function KanbanColumn({
 function KanbanCard({
   contact,
   onOpen,
+  onQuickView,
+  onRegisterContact,
 }: {
   contact: InvestorContact;
   onOpen: (c: InvestorContact) => void;
+  onQuickView: (c: InvestorContact) => void;
+  onRegisterContact: (c: InvestorContact) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: contact.id,
@@ -436,28 +446,67 @@ function KanbanCard({
     <div
       ref={setNodeRef}
       style={style}
-      {...listeners}
-      {...attributes}
       onDoubleClick={() => onOpen(contact)}
       className={cn(
-        "rounded-md border bg-card p-2.5 cursor-grab active:cursor-grabbing hover:border-primary/40 hover:shadow-sm transition-colors",
+        "rounded-md border bg-card p-2.5 hover:border-primary/40 hover:shadow-sm transition-colors",
         isDragging && "opacity-40",
       )}
     >
-      <div className="text-[12px] font-medium text-foreground leading-tight truncate">
-        {contact.name}
-      </div>
-      <div className="flex items-center justify-between mt-1.5">
-        <Badge variant="secondary" className="text-[9px] font-normal h-4 px-1.5">
-          {INVESTOR_TYPE_LABEL[contact.type]}
-        </Badge>
-        <span className="text-[11px] text-foreground">{fmtCompactBRL(contact.ticket)}</span>
-      </div>
-      {contact.next_action && (
-        <div className="text-[11px] text-primary leading-tight mt-1.5 truncate">
-          → {contact.next_action}
+      <div className="flex items-start justify-between gap-1">
+        <div
+          {...listeners}
+          {...attributes}
+          className="flex-1 min-w-0 cursor-grab active:cursor-grabbing"
+        >
+          <div className="text-[12px] font-medium text-foreground leading-tight truncate">
+            {contact.name}
+          </div>
         </div>
-      )}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onQuickView(contact);
+          }}
+          className="h-5 w-5 inline-flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted shrink-0"
+          aria-label="Visualização rápida"
+        >
+          <Eye className="h-3 w-3" />
+        </button>
+      </div>
+      <div
+        {...listeners}
+        {...attributes}
+        className="cursor-grab active:cursor-grabbing"
+      >
+        <div className="flex items-center justify-between mt-1.5">
+          <Badge variant="secondary" className="text-[9px] font-normal h-4 px-1.5">
+            {INVESTOR_TYPE_LABEL[contact.type]}
+          </Badge>
+          <span className="text-[11px] text-foreground">{fmtCompactBRL(contact.ticket)}</span>
+        </div>
+        {contact.next_action && (
+          <div className="text-[11px] text-primary leading-tight mt-1.5 truncate">
+            → {contact.next_action}
+          </div>
+        )}
+      </div>
+      <div className="flex justify-end mt-1.5">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onRegisterContact(contact);
+          }}
+          className="h-5 w-5 inline-flex items-center justify-center rounded text-muted-foreground hover:text-primary hover:bg-muted"
+          aria-label="Registrar contato"
+        >
+          <Phone className="h-3 w-3" />
+        </button>
+      </div>
+    </div>
+  );
+}
     </div>
   );
 }
