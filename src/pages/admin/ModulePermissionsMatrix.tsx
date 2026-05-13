@@ -115,7 +115,7 @@ export default function ModulePermissionsMatrix({ isAdmin }: { isAdmin: boolean 
                 <thead>
                   <tr>
                     <th className="text-left font-medium px-2.5 py-1.5 text-[11px] text-muted-foreground sticky left-0 bg-card">
-                      Papel
+                      Perfil
                     </th>
                     {MODULES.map((m) => (
                       <th
