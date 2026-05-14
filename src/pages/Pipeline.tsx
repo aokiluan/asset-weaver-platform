@@ -201,7 +201,33 @@ export default function Pipeline() {
 
   return (
     <>
-      <PageTabs title="Pipeline de Cedentes" tabs={[]} />
+      <PageTabs
+        title="Pipeline de Cedentes"
+        tabs={[]}
+        actions={
+          <TooltipProvider delayDuration={200}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span tabIndex={0} className="inline-flex">
+                  <Button
+                    onClick={() => setNovoOpen(true)}
+                    disabled={authLoading || !canCreate}
+                    size="sm"
+                    className="h-7 text-[12px]"
+                  >
+                    <Plus className="h-3.5 w-3.5 mr-1" /> Novo cadastro
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              {!canCreate && !authLoading && (
+                <TooltipContent side="bottom" className="max-w-xs text-xs">
+                  Seu usuário não tem permissão
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
+        }
+      />
 
       <div className="space-y-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
