@@ -2158,6 +2158,50 @@ export type Database = {
           },
         ]
       }
+      signature_tracking: {
+        Row: {
+          autentique_document_id: string
+          boleta_id: string
+          created_at: string
+          document_name: string | null
+          finished_at: string | null
+          id: string
+          signers: Json
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          autentique_document_id: string
+          boleta_id: string
+          created_at?: string
+          document_name?: string | null
+          finished_at?: string | null
+          id?: string
+          signers?: Json
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          autentique_document_id?: string
+          boleta_id?: string
+          created_at?: string
+          document_name?: string | null
+          finished_at?: string | null
+          id?: string
+          signers?: Json
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "signature_tracking_boleta_id_fkey"
+            columns: ["boleta_id"]
+            isOneToOne: false
+            referencedRelation: "investor_boletas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stage_permissions: {
         Row: {
           can_send: boolean
