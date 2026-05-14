@@ -48,25 +48,65 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
+interface BoletaRow {
+  id: string;
+  valor: number | null;
+  concluida_em: string | null;
+  status: string;
+  signed_files: Array<{ name: string; storage_path: string }>;
+}
+
+const fmtMoneyBRL = (v: number | null) =>
+  v == null ? "—" : v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+const fmtDate = (s: string | null) =>
+  s ? new Date(s).toLocaleDateString("pt-BR") : "—";
+
 export default function InvestidorDetail() {
   const { id } = useParams();
   const [data, setData] = useState<Investidor | null>(null);
   const [loading, setLoading] = useState(true);
+  const [boletas, setBoletas] = useState<BoletaRow[]>([]);
+  const [downloading, setDownloading] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
       if (!id) return;
       setLoading(true);
       const { data } = await supabase
-        .from("investidores")
-        .select("*")
-        .eq("id", id)
-        .maybeSingle();
+        .from("investidores").select("*").eq("id", id).maybeSingle();
       setData(data as Investidor | null);
+
+      const { data: bols } = await supabase
+        .from("investor_boletas")
+        .select("id,valor,concluida_em,status")
+        .eq("investidor_id", id)
+        .order("concluida_em", { ascending: false });
+      const ids = (bols ?? []).map((b: any) => b.id);
+      let byBoleta: Record<string, any[]> = {};
+      if (ids.length) {
+        const { data: tracks } = await (supabase.from as any)("signature_tracking")
+          .select("boleta_id, signed_files").in("boleta_id", ids);
+        for (const t of (tracks ?? []) as any[]) {
+          if (Array.isArray(t.signed_files)) byBoleta[t.boleta_id] = t.signed_files;
+        }
+      }
+      setBoletas(((bols ?? []) as any[]).map((b) => ({ ...b, signed_files: byBoleta[b.id] ?? [] })));
       setLoading(false);
       document.title = `${(data as any)?.razao_social ?? "Investidor"} | Securitizadora`;
     })();
   }, [id]);
+
+  async function handleDownload(path: string) {
+    setDownloading(path);
+    const { data, error } = await supabase.storage
+      .from("investor-boletas").createSignedUrl(path, 60);
+    setDownloading(null);
+    if (error || !data?.signedUrl) {
+      toast.error("Não foi possível gerar o link", { description: error?.message });
+      return;
+    }
+    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+  }
 
   return (
     <>
