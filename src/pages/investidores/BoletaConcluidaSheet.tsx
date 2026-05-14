@@ -6,7 +6,7 @@ import {
 } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Download, FileText, ExternalLink, Loader2 } from "lucide-react";
+import { Download, Eye, FileText, ExternalLink, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   BOLETA_STATUS_LABEL, BOLETA_STATUS_VARIANT, fmtBRL,
