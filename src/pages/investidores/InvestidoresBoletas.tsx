@@ -18,6 +18,7 @@ import {
 } from "@/lib/investor-boletas";
 import { type InvestorContact } from "@/lib/investor-contacts";
 import { BoletaWizardSheet } from "./BoletaWizardSheet";
+import { BoletaConcluidaSheet } from "./BoletaConcluidaSheet";
 
 export default function InvestidoresBoletas() {
   const { user } = useAuth();
