@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
 } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { PdfPreview } from "@/components/ui/pdf-preview";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Download, Eye, FileText, ExternalLink, Loader2 } from "lucide-react";
@@ -101,6 +103,9 @@ export function BoletaConcluidaSheet({ open, onOpenChange, boleta, contact, seri
   }
 
   const [viewing, setViewing] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewName, setPreviewName] = useState<string>("");
+
   async function handleView(file: SignedFile) {
     setViewing(file.storage_path);
     try {
@@ -109,14 +114,19 @@ export function BoletaConcluidaSheet({ open, onOpenChange, boleta, contact, seri
         .download(file.storage_path);
       if (error || !data) throw error ?? new Error("Falha ao abrir");
       const url = URL.createObjectURL(new Blob([data], { type: "application/pdf" }));
-      const w = window.open(url, "_blank", "noopener,noreferrer");
-      if (!w) toast.error("Pop-up bloqueado pelo navegador");
-      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      setPreviewName(file.name);
+      setPreviewUrl(url);
     } catch (e: any) {
       toast.error("Não foi possível visualizar", { description: e?.message });
     } finally {
       setViewing(null);
     }
+  }
+
+  function closePreview() {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+    setPreviewName("");
   }
 
   if (!boleta) return null;
@@ -227,6 +237,17 @@ export function BoletaConcluidaSheet({ open, onOpenChange, boleta, contact, seri
           </div>
         </div>
       </SheetContent>
+
+      <Dialog open={!!previewUrl} onOpenChange={(v) => { if (!v) closePreview(); }}>
+        <DialogContent className="max-w-5xl w-[95vw] h-[90vh] p-0 flex flex-col gap-0">
+          <DialogHeader className="px-3 py-2 border-b">
+            <DialogTitle className="text-[12px] font-medium truncate">{previewName}</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-hidden">
+            {previewUrl && <PdfPreview src={previewUrl} className="h-full" />}
+          </div>
+        </DialogContent>
+      </Dialog>
     </Sheet>
   );
 }

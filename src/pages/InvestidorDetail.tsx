@@ -3,6 +3,8 @@ import { Link, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { PageTabs } from "@/components/PageTabs";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { PdfPreview } from "@/components/ui/pdf-preview";
 import { ArrowLeft, FileText, Download, Eye, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -68,6 +70,8 @@ export default function InvestidorDetail() {
   const [boletas, setBoletas] = useState<BoletaRow[]>([]);
   const [downloading, setDownloading] = useState<string | null>(null);
   const [viewing, setViewing] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewName, setPreviewName] = useState<string>("");
 
   useEffect(() => {
     (async () => {
@@ -118,21 +122,26 @@ export default function InvestidorDetail() {
     }
   }
 
-  async function handleView(path: string) {
+  async function handleView(path: string, name?: string) {
     setViewing(path);
     try {
       const { data, error } = await supabase.storage
         .from("investor-boletas").download(path);
       if (error || !data) throw error ?? new Error("Falha ao abrir");
       const url = URL.createObjectURL(new Blob([data], { type: "application/pdf" }));
-      const w = window.open(url, "_blank", "noopener,noreferrer");
-      if (!w) toast.error("Pop-up bloqueado pelo navegador");
-      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      setPreviewName(name ?? path.split("/").pop() ?? "Documento");
+      setPreviewUrl(url);
     } catch (e: any) {
       toast.error("Não foi possível visualizar", { description: e?.message });
     } finally {
       setViewing(null);
     }
+  }
+
+  function closePreview() {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+    setPreviewName("");
   }
 
   return (
@@ -219,7 +228,7 @@ export default function InvestidorDetail() {
                               <div className="min-w-0 flex-1 text-[11px] truncate">{f.name}</div>
                               <Button
                                 variant="ghost" size="sm" className="h-6 text-[11px] px-2"
-                                onClick={() => handleView(f.storage_path)}
+                                onClick={() => handleView(f.storage_path, f.name)}
                                 disabled={viewing === f.storage_path}
                               >
                                 {viewing === f.storage_path
@@ -258,6 +267,17 @@ export default function InvestidorDetail() {
           </>
         )}
       </div>
+
+      <Dialog open={!!previewUrl} onOpenChange={(v) => { if (!v) closePreview(); }}>
+        <DialogContent className="max-w-5xl w-[95vw] h-[90vh] p-0 flex flex-col gap-0">
+          <DialogHeader className="px-3 py-2 border-b">
+            <DialogTitle className="text-[12px] font-medium truncate">{previewName}</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-hidden">
+            {previewUrl && <PdfPreview src={previewUrl} className="h-full" />}
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
