@@ -385,6 +385,15 @@ export default function Pipeline() {
         cedente={registerFor}
         onSaved={load}
       />
+
+      <CedenteNovoSheet
+        open={novoOpen}
+        onOpenChange={setNovoOpen}
+        onCreated={async (id) => {
+          await load();
+          navigate(`/cedentes/${id}`);
+        }}
+      />
     </>
   );
 }
