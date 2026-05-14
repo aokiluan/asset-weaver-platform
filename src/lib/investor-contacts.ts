@@ -118,10 +118,11 @@ export function isAdvance(from: InvestorStage, to: InvestorStage): boolean {
   return FUNNEL_STAGES.indexOf(to) > FUNNEL_STAGES.indexOf(from);
 }
 
-export type InvestorActivityType = "ligacao" | "email" | "reuniao" | "nota" | "tarefa";
+export type InvestorActivityType = "ligacao" | "whatsapp" | "email" | "reuniao" | "nota" | "tarefa";
 
 export const INVESTOR_ACTIVITY_TYPES: InvestorActivityType[] = [
   "ligacao",
+  "whatsapp",
   "email",
   "reuniao",
   "nota",
@@ -130,6 +131,7 @@ export const INVESTOR_ACTIVITY_TYPES: InvestorActivityType[] = [
 
 export const INVESTOR_ACTIVITY_LABEL: Record<InvestorActivityType, string> = {
   ligacao: "Ligação",
+  whatsapp: "WhatsApp",
   email: "E-mail",
   reuniao: "Reunião",
   nota: "Nota",
