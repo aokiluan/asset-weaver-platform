@@ -1066,6 +1066,7 @@ export default function DiretorioDetail() {
         }}
         cedente={cedente}
         catLivre={catLivre}
+        categorias={categorias}
         userId={user?.id ?? null}
         onUploaded={reload}
         initialFiles={uploadInitialFiles}
