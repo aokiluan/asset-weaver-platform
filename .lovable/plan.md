@@ -1,58 +1,31 @@
-# Reorganizar módulo Configurações
+# Desabilitar "+ Novo cadastro" do Pipeline de Cedentes
 
-## Estado final das abas (`src/pages/Configuracoes.tsx`)
+## Análise de impacto (sem riscos)
 
-```
-Configurações
-  1. Permissões              → /configuracoes/permissoes
-  2. Equipes                 → /configuracoes/equipes
-  3. Alçadas de crédito      → /configuracoes/alcadas
-  4. Séries de investimento  → /configuracoes/series-investidor
-```
+Mapeei todas as referências ao fluxo acionado pelo botão:
 
-- A aba **Pipeline** é removida (etapas comerciais já fechadas — sem necessidade de edição).
-- A aba **Categorias de doc.** sai do nível raiz e passa a viver **dentro de Alçadas de crédito** como sub-aba, alinhada à ideia de que a exigibilidade documental varia por faixa de faturamento.
-- Renomear "Alçadas" → "Alçadas de crédito".
+| Item | Onde é usado | Decisão |
+|------|--------------|---------|
+| Botão "Novo cadastro" em `Pipeline.tsx` (linhas 204-212) | Apenas no Pipeline | **Remover** |
+| Rota `/cedentes/novo` em `App.tsx` (linha 69) | Acionada **somente** por esse botão. Nenhum outro `navigate`, `Link` ou `href` aponta para ela | **Remover** |
+| Página `CedenteCadastro.tsx` | Também serve `/cedentes/:id/editar` (edição de cedente existente) | **Manter** — mexer quebraria a edição |
+| `CedenteNovoSheet.tsx` | Usado pelo botão "Novo cadastro" da página `/cedentes` (lista) — fluxo separado, em sheet | **Manter** — fluxo independente |
+| Backend (tabela `cedentes`, RLS, edge functions) | Compartilhado com a lista, edição, importação, etc. | **Não tocar** |
 
-## Estrutura interna de Alçadas de crédito
+Nenhum hook, edge function, migration ou outro componente depende exclusivamente do caminho `/cedentes/novo`. Logo, removê-lo não tem efeito colateral.
 
-`/configuracoes/alcadas` ganha um nível de sub-abas próprio (PageTabs interno ou `Tabs` do shadcn — sub-abs leves para não conflitar com o `PageTabs` da página pai). Sub-abas:
+## Mudanças
 
-```
-Alçadas de crédito
-  • Faixas de alçada        (conteúdo atual de AdminAlcadas)
-  • Categorias de documento (conteúdo atual de AdminCategorias)
-```
+**1. `src/pages/Pipeline.tsx`**
+- Remover a prop `actions={...}` do `<PageTabs>` (linhas 204-212).
+- Remover o import não usado `Plus` de `lucide-react` se ficar órfão (verificar — `Plus` não é usado em outro lugar do arquivo).
+- Remover o `useNavigate` se ficar não usado (ele ainda é usado em `navigate("/cedentes/${id}")`, então **mantém**).
 
-Implementação: criar uma página container `AdminAlcadasIndex` (novo arquivo `src/pages/admin/AdminAlcadasIndex.tsx`) que renderiza um `Tabs` com os dois conteúdos, mostrando `<AdminAlcadas />` ou `<AdminCategorias />` conforme aba selecionada (state local + query param `?sub=categorias`). Sem rotas filhas — mantém URL única e reaproveita 100% dos componentes existentes.
-
-> Nota: o vínculo real "categoria exigida por faixa" exige nova relação no schema (`approval_level_id` em `documento_categorias` ou tabela ponte). **Não está nesta task** — fica como evolução futura. Esta task apenas organiza a UI para preparar a transição visual.
-
-## Rotas (`src/App.tsx`)
-
-- Remover rotas: `<Route path="pipeline" element={<AdminPipeline />} />` e `<Route path="categorias" element={<AdminCategorias />} />`.
-- Substituir `<Route path="alcadas" element={<AdminAlcadas />} />` por `<Route path="alcadas" element={<AdminAlcadasIndex />} />`.
-- Adicionar redirects de compatibilidade:
-  - `/configuracoes/pipeline` → `/configuracoes/permissoes` (Navigate replace)
-  - `/configuracoes/categorias` → `/configuracoes/alcadas?sub=categorias` (Navigate replace)
-- Imports: remover `AdminPipeline` e (se não usado em outro lugar) `AdminCategorias` direto; adicionar `AdminAlcadasIndex`.
-
-## Detalhes técnicos
-
-- Arquivos a editar:
-  - `src/pages/Configuracoes.tsx` (lista e ordem das abas; renomear "Alçadas" → "Alçadas de crédito"; remover Pipeline e Categorias de doc.)
-  - `src/App.tsx` (rotas)
-- Arquivos a criar:
-  - `src/pages/admin/AdminAlcadasIndex.tsx` — container com `Tabs` internas, lê/escreve `?sub=categorias` no query string para deep-link.
-- Arquivos preservados sem alteração interna:
-  - `src/pages/admin/AdminAlcadas.tsx` (passa a ser embutido pelo Index)
-  - `src/pages/admin/AdminCategorias.tsx` (passa a ser embutido pelo Index)
-  - `src/pages/admin/AdminPipeline.tsx` (fica órfão de rota, pode ser limpo no futuro)
-- Sem alterações em: schema do banco (`documento_categorias`, `approval_levels`), RLS, hooks, edge functions, ou qualquer outra lógica.
-- `useModulePermissions` / `RoleGuard` continuam apontando para `moduleKey: "config"` no nível raiz — sub-abas herdam.
+**2. `src/App.tsx`**
+- Remover a linha 69: `<Route path="/cedentes/novo" element={<CedenteCadastro />} />`.
+- Manter a linha 70 (`/cedentes/:id/editar`) e o import de `CedenteCadastro`.
 
 ## Fora de escopo
 
-- Vincular categorias de documento a faixas de alçada no banco (modelagem futura).
-- Remover fisicamente `AdminPipeline.tsx`.
-- Renomear rotas (`/configuracoes/alcadas` permanece).
+- Nenhuma alteração em schema, RLS, edge functions ou outros componentes.
+- O fluxo de criar cedente continua disponível via `/cedentes` (lista) → botão "Novo cadastro" → `CedenteNovoSheet`.
