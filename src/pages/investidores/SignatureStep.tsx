@@ -177,6 +177,12 @@ export function SignatureStep({ boletaId, boleta, dados, series, onAdvance, onCl
             ))}
           </div>
           <p className="text-[10px] text-muted-foreground">Atualizando a cada 15s…</p>
+          <div className="pt-1">
+            <Button variant="outline" size="sm" className="h-7 text-destructive hover:text-destructive"
+              onClick={() => setConfirmCancel(true)} disabled={cancelling}>
+              <XCircle className="h-3.5 w-3.5 mr-1" /> Cancelar processo de assinatura
+            </Button>
+          </div>
         </>
       )}
 
