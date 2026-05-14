@@ -19,7 +19,7 @@ import BI from "./pages/BI.tsx";
 import BIIndicadores from "./pages/bi/BIIndicadores.tsx";
 
 import AdminEquipes from "./pages/admin/AdminEquipes.tsx";
-import AdminAlcadas from "./pages/admin/AdminAlcadas.tsx";
+
 import AdminAlcadasIndex from "./pages/admin/AdminAlcadasIndex.tsx";
 import AdminPermissoes from "./pages/admin/AdminPermissoes.tsx";
 import AdminDatasets from "./pages/admin/AdminDatasets.tsx";
