@@ -79,17 +79,20 @@ export function generateBoletimHtml({ boleta, dados, series }: DocInput): string
   const idx = serieIndex(series);
   return `<!DOCTYPE html>
 <html lang="pt-BR"><head><meta charset="UTF-8"><style>
-@page { size: A4; margin: 20mm 25mm; }
-body { font-family: 'Times New Roman', serif; font-size: 11pt; color: #000; margin: 0; padding: 20px; }
-h1 { text-align: center; font-size: 14pt; font-weight: bold; margin-bottom: 4px; }
-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
-td, th { border: 1px solid #000; padding: 4px 6px; font-size: 10pt; vertical-align: top; }
+@page { size: A4; margin: 12mm 15mm; }
+html, body { height: auto; }
+body { font-family: 'Times New Roman', serif; font-size: 9.5pt; color: #000; margin: 0; padding: 0; page-break-inside: avoid; }
+h1 { text-align: center; font-size: 12pt; font-weight: bold; margin: 0 0 6px; }
+table { width: 100%; border-collapse: collapse; margin-bottom: 4px; }
+td, th { border: 1px solid #000; padding: 2px 4px; font-size: 8.5pt; vertical-align: middle; }
 th { font-weight: bold; text-align: left; background: #f5f5f5; }
-.section-title { font-weight: bold; font-size: 10pt; margin: 12px 0 4px; }
-.signature-block { text-align: center; margin-top: 30px; }
-.signature-line { border-top: 1px solid #000; width: 300px; margin: 40px auto 4px; }
+.section-title { font-weight: bold; font-size: 9pt; margin: 6px 0 2px; }
+.classe-destaque { font-size: 9.5pt; margin: 2px 0 4px; letter-spacing: 0.3px; }
+.signature-block { text-align: center; margin-top: 14px; }
+.signature-line { border-top: 1px solid #000; width: 240px; margin: 22px auto 2px; }
 .italic { font-style: italic; }
-p { margin: 4px 0; font-size: 10pt; }
+p { margin: 2px 0; font-size: 8.5pt; }
+.declaracao { font-size: 8pt; line-height: 1.25; font-style: italic; }
 </style></head><body>
 
 <h1>BOLETIM DE SUBSCRIÇÃO DE DEBÊNTURES SIMPLES</h1>
@@ -110,9 +113,10 @@ p { margin: 4px 0; font-size: 10pt; }
 </table>
 
 <p class="section-title">Característica da Emissão</p>
+<p class="classe-destaque"><strong>Classe: SÊNIOR</strong></p>
 <p class="italic">Emissão privada, aprovada pela Assembleia Geral Extraordinária da <strong>EMISSORA</strong> realizada em 28 de Abril de 2025.</p>
 <p>Data da Emissão: <span class="italic">05/05/2025</span>. Valor Total da Emissão: <span class="italic">R$ 20.000.000,00 (VINTE MILHÕES DE REAIS)</span>, em 11 (ONZE) séries.</p>
-<p>Classe: <span class="italic">Sênior.</span> Série: <span class="italic">${series.nome}</span>. Indexador: <span class="italic">${idx || "—"}</span>. Data Vencimento: <span class="italic">${maturityDate(series.prazo_meses)}</span>.</p>
+<p>Série: <span class="italic">${series.nome}</span>. Indexador: <span class="italic">${idx || "—"}</span>. Data Vencimento: <span class="italic">${maturityDate(series.prazo_meses)}</span>.</p>
 
 <table>
   <tr><th>Nome do Adquirente</th><th>CPF/CNPJ</th></tr>
