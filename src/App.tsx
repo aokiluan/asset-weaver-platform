@@ -83,6 +83,14 @@ const App = () => (
                   </RoleGuard>
                 }
               />
+              <Route
+                path="/investidores/boletas"
+                element={
+                  <RoleGuard role={["admin","comercial","cadastro","credito","comite","formalizacao"]} moduleKey="relacao_investidores">
+                    <InvestidoresBoletas />
+                  </RoleGuard>
+                }
+              />
 
               {/* Rotas legadas redirecionam para a tela do cedente */}
               <Route path="/credito" element={<Navigate to="/cedentes" replace />} />
