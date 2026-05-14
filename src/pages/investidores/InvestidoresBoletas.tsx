@@ -139,7 +139,7 @@ export default function InvestidoresBoletas() {
   }
 
   function contactById(id: string) {
-    return contacts.find((c) => c.id === id);
+    return contacts.find((c) => c.id === id) ?? extraContacts.find((c) => c.id === id);
   }
 
   async function handleDelete() {
