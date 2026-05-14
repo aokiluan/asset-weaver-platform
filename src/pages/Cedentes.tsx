@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Trash2, ExternalLink, Building2, History, Upload, FolderOpen } from "lucide-react";
+import { Search, Trash2, ExternalLink, Building2, History, FolderOpen } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
@@ -13,9 +13,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-import { CedenteImportDialog } from "@/components/cedentes/CedenteImportDialog";
 import { useAuth } from "@/hooks/useAuth";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { computeRenovacao } from "@/lib/cadastro-renovacao";
 import { STAGE_LABEL, STAGE_COLORS, type CedenteStage } from "@/lib/cedente-stages";
 
@@ -58,8 +56,6 @@ export default function Cedentes() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  
-  const [importOpen, setImportOpen] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -122,24 +118,6 @@ export default function Cedentes() {
           <p className="text-sm text-muted-foreground">
             Cadastro de cedentes, status de análise e limites aprovados.
           </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <TooltipProvider delayDuration={200}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span tabIndex={0} className="inline-flex">
-                  <Button variant="outline" onClick={() => setImportOpen(true)} disabled={authLoading || !canCreate}>
-                    <Upload className="h-4 w-4 mr-2" /> Importar Cedentes
-                  </Button>
-                </span>
-              </TooltipTrigger>
-              {!canCreate && !authLoading && (
-                <TooltipContent side="bottom" className="max-w-xs text-xs">
-                  Seu usuário não tem permissão
-                </TooltipContent>
-              )}
-            </Tooltip>
-          </TooltipProvider>
         </div>
       </div>
 
@@ -362,11 +340,6 @@ export default function Cedentes() {
         </div>
       </div>
 
-      <CedenteImportDialog
-        open={importOpen}
-        onOpenChange={setImportOpen}
-        onImported={() => load()}
-      />
     </div>
   );
 }
