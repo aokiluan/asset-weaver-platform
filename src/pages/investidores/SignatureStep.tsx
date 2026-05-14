@@ -106,6 +106,23 @@ export function SignatureStep({ boletaId, boleta, dados, series, onAdvance, onCl
     URL.revokeObjectURL(url);
   };
 
+  const handleCancel = async () => {
+    setCancelling(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("cancel-autentique", { body: { boletaId } });
+      if (error) throw error;
+      if (!(data as any)?.success) throw new Error((data as any)?.error || "Erro ao cancelar");
+      toast.success("Processo de assinatura cancelado");
+      setConfirmCancel(false);
+      onClose?.();
+    } catch (err) {
+      console.error(err);
+      toast.error(err instanceof Error ? err.message : "Erro ao cancelar");
+    } finally {
+      setCancelling(false);
+    }
+  };
+
   return (
     <div className="space-y-3">
       {state === "preview" && (
