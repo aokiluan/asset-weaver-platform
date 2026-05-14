@@ -96,16 +96,25 @@ export default function InvestidorDetail() {
     })();
   }, [id]);
 
-  async function handleDownload(path: string) {
+  async function handleDownload(path: string, name?: string) {
     setDownloading(path);
-    const { data, error } = await supabase.storage
-      .from("investor-boletas").createSignedUrl(path, 60);
-    setDownloading(null);
-    if (error || !data?.signedUrl) {
-      toast.error("Não foi possível gerar o link", { description: error?.message });
-      return;
+    try {
+      const { data, error } = await supabase.storage
+        .from("investor-boletas").download(path);
+      if (error || !data) throw error ?? new Error("Falha no download");
+      const url = URL.createObjectURL(data);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = name ?? path.split("/").pop() ?? "documento.pdf";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (e: any) {
+      toast.error("Não foi possível baixar", { description: e?.message });
+    } finally {
+      setDownloading(null);
     }
-    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
   }
 
   return (
