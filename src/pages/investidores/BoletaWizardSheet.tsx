@@ -417,7 +417,7 @@ export function BoletaWizardSheet({ open, onOpenChange, contact, boleta, onSaved
                 </span>
               ) : null}
             </span>
-            {step < 4 && (
+            {step < 3 && (
               <Button size="sm" className="h-7" disabled={saving} onClick={handleNext}>
                 {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <>Próximo <ArrowRight className="h-3.5 w-3.5 ml-1" /></>}
               </Button>
