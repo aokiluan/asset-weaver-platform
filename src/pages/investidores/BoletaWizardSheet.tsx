@@ -117,7 +117,7 @@ export function BoletaWizardSheet({ open, onOpenChange, contact, boleta, onSaved
     } else {
       const { data, error } = await supabase
         .from("investor_boletas")
-        .insert(payload)
+        .insert(base)
         .select("id")
         .single();
       if (error || !data) {
