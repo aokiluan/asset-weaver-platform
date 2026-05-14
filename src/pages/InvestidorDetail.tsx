@@ -85,9 +85,22 @@ export default function InvestidorDetail() {
 
       const { data: bols } = await supabase
         .from("investor_boletas")
-        .select("id,valor,concluida_em,status")
+        .select("id,valor,concluida_em,status,contact_id")
         .eq("investidor_id", id)
         .order("concluida_em", { ascending: false });
+      const contactIds = Array.from(
+        new Set(((bols ?? []) as any[]).map((b) => b.contact_id).filter(Boolean)),
+      );
+      if (contactIds.length) {
+        const { data: acts } = await supabase
+          .from("investor_contact_activities")
+          .select("*")
+          .in("contact_id", contactIds)
+          .order("occurred_at", { ascending: false });
+        setActivities((acts ?? []) as InvestorActivity[]);
+      } else {
+        setActivities([]);
+      }
       const ids = (bols ?? []).map((b: any) => b.id);
       let byBoleta: Record<string, any[]> = {};
       if (ids.length) {
