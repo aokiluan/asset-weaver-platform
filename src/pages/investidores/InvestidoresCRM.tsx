@@ -132,6 +132,14 @@ export default function InvestidoresCRM() {
   function requestStageMove(contactId: string, newStage: InvestorStage) {
     const current = rows.find((r) => r.id === contactId);
     if (!current || current.stage === newStage) return;
+    if (newStage === "investidor_ativo") {
+      toast.info("O investidor é promovido automaticamente quando a boleta for concluída.");
+      return;
+    }
+    if (current.stage === "investidor_ativo") {
+      toast.info("Investidor Ativo é um estágio controlado pelo processo de boleta e não pode ser movido manualmente.");
+      return;
+    }
     setPendingMove({ contact: current, to: newStage });
   }
 
