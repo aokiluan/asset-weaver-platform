@@ -261,6 +261,14 @@ export default function InvestidoresBoletas() {
         onSaved={load}
       />
 
+      <BoletaConcluidaSheet
+        open={!!viewBoleta}
+        onOpenChange={(v) => { if (!v) setViewBoleta(null); }}
+        boleta={viewBoleta}
+        contact={viewBoleta ? contactById(viewBoleta.contact_id) ?? null : null}
+        series={viewBoleta?.series_id ? seriesById.get(viewBoleta.series_id) : undefined}
+      />
+
       <AlertDialog open={!!deleteId} onOpenChange={(v) => !v && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
