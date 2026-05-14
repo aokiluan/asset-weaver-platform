@@ -18,7 +18,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { type AppRole, OPERACAO_ROLES } from "@/lib/roles";
 import { UserAccessDrawer } from "./UserAccessDrawer";
 
-const ALL_MODULE_KEYS = ["gestao", "operacao", "diretorio", "financeiro_mod", "config", "bi"];
+const ALL_MODULE_KEYS = ["gestao", "operacao", "governanca", "financeiro_mod", "config", "bi"];
 
 interface Team {
   id: string;

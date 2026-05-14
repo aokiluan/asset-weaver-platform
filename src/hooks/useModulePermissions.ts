@@ -6,7 +6,7 @@ import type { AppRole } from "@/lib/roles";
 export type ModuleKey =
   | "gestao"
   | "operacao"
-  | "diretorio"
+  | "governanca"
   | "config"
   | "financeiro_mod"
   | "bi"

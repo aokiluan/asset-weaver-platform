@@ -119,12 +119,10 @@ const GROUPS: Group[] = [
     ],
   },
   {
-    key: "diretorio",
-    label: "Diretório",
+    key: "governanca",
+    label: "Governança",
     icon: IconFolder,
-    items: [
-      { title: "Pasta de Investidores", url: "/diretorio/investidores", icon: IconWallet },
-    ],
+    items: [],
   },
   {
     key: "relacao_investidores",
@@ -132,6 +130,7 @@ const GROUPS: Group[] = [
     icon: IconHandshake,
     items: [
       { title: "Pipeline de Investidores", url: "/investidores/crm", icon: IconKanban },
+      { title: "Investidores", url: "/diretorio/investidores", icon: IconWallet },
     ],
   },
   {
