@@ -63,7 +63,7 @@ export function BoletaWizardSheet({ open, onOpenChange, contact, boleta, onSaved
     if (!open) return;
     if (boleta) {
       setBoletaId(boleta.id);
-      setStep(boleta.current_step || 1);
+      setStep(Math.min(boleta.current_step || 1, 3));
       setDados(boleta.dados_investidor || {});
       setSeriesId(boleta.series_id ?? "");
       setValor(boleta.valor ?? null);
