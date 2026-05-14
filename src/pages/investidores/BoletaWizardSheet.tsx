@@ -290,7 +290,20 @@ export function BoletaWizardSheet({ open, onOpenChange, contact, boleta, onSaved
                 <Field label="Órgão emissor" value={dados.orgao_emissor ?? ""} onChange={(v) => setDados({ ...dados, orgao_emissor: v })} />
               </div>
               <div className="grid grid-cols-3 gap-2">
-                <Field label="CEP" value={dados.cep ?? ""} onChange={(v) => setDados({ ...dados, cep: v })} />
+                <CepField
+                  value={dados.cep ?? ""}
+                  onChange={(v) => setDados((d) => ({ ...d, cep: v }))}
+                  onResolved={(addr) =>
+                    setDados((d) => ({
+                      ...d,
+                      cep: addr.cep,
+                      endereco: addr.logradouro || d.endereco,
+                      bairro: addr.bairro || d.bairro,
+                      cidade: addr.cidade || d.cidade,
+                      estado: addr.estado || d.estado,
+                    }))
+                  }
+                />
                 <Field label="Cidade" value={dados.cidade ?? ""} onChange={(v) => setDados({ ...dados, cidade: v })} />
                 <Field label="UF" value={dados.estado ?? ""} onChange={(v) => setDados({ ...dados, estado: v })} />
               </div>
@@ -437,6 +450,53 @@ function Field({ label, value, onChange }: { label: string; value: string; onCha
     <div>
       <Label className="text-[10px] uppercase text-muted-foreground">{label}</Label>
       <Input value={value} onChange={(e) => onChange(e.target.value)} className="h-7 text-[12px]" />
+    </div>
+  );
+}
+
+function CepField({
+  value,
+  onChange,
+  onResolved,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  onResolved: (addr: { cep: string; logradouro: string; bairro: string; cidade: string; estado: string }) => void;
+}) {
+  const [loading, setLoading] = useState(false);
+  const lookup = async (raw: string) => {
+    const clean = raw.replace(/\D/g, "");
+    if (clean.length !== 8) return;
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("validate-cep", { body: { cep: clean } });
+      if (error) throw error;
+      if (!(data as any)?.success) throw new Error((data as any)?.error || "CEP não encontrado");
+      onResolved((data as any).data);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erro ao buscar CEP");
+    } finally {
+      setLoading(false);
+    }
+  };
+  return (
+    <div>
+      <Label className="text-[10px] uppercase text-muted-foreground">CEP</Label>
+      <div className="relative">
+        <Input
+          value={value}
+          onChange={(e) => {
+            const v = e.target.value;
+            onChange(v);
+            if (v.replace(/\D/g, "").length === 8) lookup(v);
+          }}
+          onBlur={(e) => lookup(e.target.value)}
+          className="h-7 text-[12px] pr-7"
+          inputMode="numeric"
+          maxLength={9}
+        />
+        {loading && <Loader2 className="h-3.5 w-3.5 animate-spin absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground" />}
+      </div>
     </div>
   );
 }
