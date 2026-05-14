@@ -1363,37 +1363,39 @@ function UploadAnexoLivreDialog({
   initialFiles: File[] | null;
 }) {
   const fileRef = useRef<HTMLInputElement | null>(null);
-  const [items, setItems] = useState<{ file: File; categoriaId: string }[]>([]);
-  const [obs, setObs] = useState("");
+  const [items, setItems] = useState<{ file: File; categoriaId: string; descricao: string }[]>([]);
   const [busy, setBusy] = useState(false);
 
   const defaultCatId = catLivre?.id ?? categorias[0]?.id ?? "";
 
   useEffect(() => {
     if (open && initialFiles && initialFiles.length > 0) {
-      setItems(initialFiles.map((f) => ({ file: f, categoriaId: defaultCatId })));
+      setItems(initialFiles.map((f) => ({ file: f, categoriaId: defaultCatId, descricao: "" })));
     } else if (!open) {
       setItems([]);
-      setObs("");
     }
   }, [open, initialFiles, defaultCatId]);
 
   const addFiles = (fs: File[]) => {
-    setItems((prev) => [...prev, ...fs.map((f) => ({ file: f, categoriaId: defaultCatId }))]);
+    setItems((prev) => [...prev, ...fs.map((f) => ({ file: f, categoriaId: defaultCatId, descricao: "" }))]);
   };
 
   const removeAt = (i: number) => setItems((prev) => prev.filter((_, idx) => idx !== i));
   const setCategoriaAt = (i: number, categoriaId: string) =>
     setItems((prev) => prev.map((it, idx) => (idx === i ? { ...it, categoriaId } : it)));
+  const setDescricaoAt = (i: number, descricao: string) =>
+    setItems((prev) => prev.map((it, idx) => (idx === i ? { ...it, descricao } : it)));
 
   const canSubmit =
-    items.length > 0 && items.every((it) => !!it.categoriaId) && !busy && !!userId;
+    items.length > 0 &&
+    items.every((it) => !!it.categoriaId && it.descricao.trim().length > 0) &&
+    !busy &&
+    !!userId;
 
   const handleUpload = async () => {
     if (!canSubmit) return;
     setBusy(true);
     try {
-      // Próxima versão por categoria usada no batch
       const usedCatIds = Array.from(new Set(items.map((it) => it.categoriaId)));
       const nextByCat: Record<string, number> = {};
       await Promise.all(
@@ -1424,11 +1426,13 @@ function UploadAnexoLivreDialog({
         }
 
         const versao = nextByCat[cat.id]++;
+        const descricao = it.descricao.trim();
         const novoNome = buildDocumentoFileName({
           originalName: file.name,
           categoria: cat.nome,
           cedente: cedente.razao_social,
           versao,
+          descricao,
         });
 
         const { error: insErr } = await supabase.from("documentos").insert({
@@ -1442,7 +1446,7 @@ function UploadAnexoLivreDialog({
           uploaded_by: userId!,
           status: "aprovado",
           classificacao_status: "sugerido",
-          observacoes: obs.trim() || null,
+          observacoes: descricao || null,
           reviewed_by: userId!,
           reviewed_at: new Date().toISOString(),
         });
@@ -1467,17 +1471,16 @@ function UploadAnexoLivreDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle className="text-[14px]">Adicionar anexo livre</DialogTitle>
-          <DialogDescription className="text-[12px]">
-            Classifique cada arquivo na categoria correspondente. Os nomes serão
-            padronizados automaticamente (<code>aaaa.mm.dd_categoria_cedente_vNN.ext</code>).
+        <DialogHeader className="space-y-0.5">
+          <DialogTitle className="text-[13px]">Adicionar anexo livre</DialogTitle>
+          <DialogDescription className="text-[11px] leading-tight">
+            Classifique e descreva cada arquivo. Os nomes seguem o padrão do projeto.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-2.5">
+        <div className="space-y-2">
           <div>
-            <label className="text-[11px] text-muted-foreground">Arquivos e classificação</label>
+            <label className="text-[11px] text-muted-foreground">Arquivos</label>
             <Input
               ref={fileRef}
               type="file"
@@ -1494,56 +1497,54 @@ function UploadAnexoLivreDialog({
                 {items.map((it, i) => (
                   <li
                     key={i}
-                    className="flex items-center gap-2 rounded-md border border-border/60 px-2 py-1"
+                    className="rounded-md border border-border/60 px-2 py-1.5 space-y-1"
                   >
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-[12px] leading-tight">{it.file.name}</div>
-                      <div className="text-[10px] text-muted-foreground leading-none">
-                        {(it.file.size / 1024).toFixed(1)} KB
+                    <div className="flex items-center gap-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-[12px] leading-tight">{it.file.name}</div>
+                        <div className="text-[10px] text-muted-foreground leading-none">
+                          {(it.file.size / 1024).toFixed(1)} KB
+                        </div>
                       </div>
+                      <Select
+                        value={it.categoriaId}
+                        onValueChange={(v) => setCategoriaAt(i, v)}
+                      >
+                        <SelectTrigger className="h-7 w-[150px] text-[11px]">
+                          <SelectValue placeholder="Categoria" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categorias.map((c) => (
+                            <SelectItem key={c.id} value={c.id} className="text-[12px]">
+                              {c.nome}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 shrink-0"
+                        onClick={() => removeAt(i)}
+                        title="Remover"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </Button>
                     </div>
-                    <Select
-                      value={it.categoriaId}
-                      onValueChange={(v) => setCategoriaAt(i, v)}
-                    >
-                      <SelectTrigger className="h-7 w-[160px] text-[11px]">
-                        <SelectValue placeholder="Categoria" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categorias.map((c) => (
-                          <SelectItem key={c.id} value={c.id} className="text-[12px]">
-                            {c.nome}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 shrink-0"
-                      onClick={() => removeAt(i)}
-                      title="Remover"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </Button>
+                    <Input
+                      value={it.descricao}
+                      onChange={(e) => setDescricaoAt(i, e.target.value)}
+                      placeholder="Descrição (curta) — usada no nome do arquivo"
+                      maxLength={40}
+                      className="h-7 text-[11px]"
+                    />
                   </li>
                 ))}
               </ul>
             )}
             <p className="mt-1 text-[10px] text-muted-foreground leading-tight">
-              Use <b>Outros / Anexo livre</b> para itens sem categoria. Anexos classificados
-              entram normalmente no dossiê do Cadastro.
+              Use <b>Outros / Anexo livre</b> p/ itens sem categoria.
             </p>
-          </div>
-          <div>
-            <label className="text-[11px] text-muted-foreground">Observação (opcional)</label>
-            <Textarea
-              value={obs}
-              onChange={(e) => setObs(e.target.value)}
-              placeholder="Ex.: anexo enviado pelo cedente em 11/05"
-              rows={3}
-              className="text-[12px]"
-            />
           </div>
         </div>
 

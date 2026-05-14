@@ -56,6 +56,8 @@ export interface BuildNameInput {
   versao: number;
   /** Data — default = hoje. */
   data?: Date;
+  /** Descrição curta opcional, incorporada ao nome entre cedente e versão. */
+  descricao?: string;
 }
 
 export function buildDocumentoFileName(p: BuildNameInput): string {
@@ -64,6 +66,9 @@ export function buildDocumentoFileName(p: BuildNameInput): string {
   const ced = abreviarRazaoSocial(p.cedente);
   const v = `v${String(Math.max(1, p.versao)).padStart(2, "0")}`;
   const date = dateStrYMD(p.data ?? new Date());
-  const base = `${date}_${cat}_${ced}_${v}`;
+  const desc = p.descricao ? slugify(p.descricao, 24) : "";
+  const base = desc
+    ? `${date}_${cat}_${ced}_${desc}_${v}`
+    : `${date}_${cat}_${ced}_${v}`;
   return ext ? `${base}.${ext}` : base;
 }
