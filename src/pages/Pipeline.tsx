@@ -33,6 +33,7 @@ import {
   type CedenteQuickView,
 } from "@/components/cedentes/CedenteQuickViewDialog";
 import { RegistrarContatoCedenteDialog } from "@/components/cedentes/RegistrarContatoCedenteDialog";
+import { CedenteNovoSheet } from "@/components/cedentes/CedenteNovoSheet";
 
 interface CedenteCard {
   id: string;
