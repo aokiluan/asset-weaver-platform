@@ -10,13 +10,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { STAGE_LABEL, STAGE_COLORS, type CedenteStage } from "@/lib/cedente-stages";
 
-const FLUXO_STAGES: CedenteStage[] = [
-  "novo" as CedenteStage,
-  "cadastro" as CedenteStage,
-  "analise" as CedenteStage,
-  "comite" as CedenteStage,
-  "formalizacao" as CedenteStage,
-];
+const FLUXO_STAGES = ["novo", "cadastro", "analise", "comite", "formalizacao"] as const satisfies readonly CedenteStage[];
 
 interface Row {
   id: string;
