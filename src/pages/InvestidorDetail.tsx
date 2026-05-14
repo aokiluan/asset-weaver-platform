@@ -168,6 +168,47 @@ export default function InvestidorDetail() {
               </div>
             </div>
 
+            <div className="rounded-md border bg-card p-2.5 space-y-2">
+              <div className="text-[10px] leading-none uppercase tracking-wide text-muted-foreground">
+                Boletas e documentos assinados
+              </div>
+              {boletas.length === 0 ? (
+                <div className="text-[11px] text-muted-foreground/80 py-2">Nenhuma boleta vinculada.</div>
+              ) : (
+                <div className="space-y-2">
+                  {boletas.map((b) => (
+                    <div key={b.id} className="rounded border p-2 space-y-1.5">
+                      <div className="text-[12px] leading-tight">
+                        Boleta · {fmtMoneyBRL(b.valor)}
+                        <span className="text-muted-foreground"> · {fmtDate(b.concluida_em)}</span>
+                      </div>
+                      {b.signed_files.length === 0 ? (
+                        <div className="text-[10px] text-muted-foreground/70">Nenhum PDF assinado salvo.</div>
+                      ) : (
+                        <div className="space-y-1">
+                          {b.signed_files.map((f) => (
+                            <div key={f.storage_path} className="flex items-center gap-2">
+                              <FileText className="h-3 w-3 text-muted-foreground shrink-0" />
+                              <div className="min-w-0 flex-1 text-[11px] truncate">{f.name}</div>
+                              <Button
+                                variant="ghost" size="sm" className="h-6 text-[11px]"
+                                onClick={() => handleDownload(f.storage_path)}
+                                disabled={downloading === f.storage_path}
+                              >
+                                {downloading === f.storage_path
+                                  ? <Loader2 className="h-3 w-3 animate-spin" />
+                                  : <><Download className="h-3 w-3 mr-1" /> Baixar</>}
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             {data.observacoes && (
               <div className="rounded-md border bg-card p-2.5 space-y-2">
                 <div className="text-[10px] leading-none uppercase tracking-wide text-muted-foreground">
