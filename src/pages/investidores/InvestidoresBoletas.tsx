@@ -188,7 +188,7 @@ export default function InvestidoresBoletas() {
           </div>
         ) : contacts.length === 0 ? (
           <div className="text-[12px] text-muted-foreground/80 text-center py-12 border border-dashed rounded-md">
-            Nenhum contato no estágio "Boleta em andamento". Mova um contato pelo CRM para começar.
+            Nenhum contato no estágio "Boleta em andamento". Mova um contato pelo Pipeline para começar.
           </div>
         ) : (
           <div className="space-y-4">
