@@ -221,12 +221,16 @@ export default function InvestidoresBoletas() {
                 {concluidasRecentes.map((b) => {
                   const c = contactById(b.contact_id);
                   return (
-                    <Card key={b.id} className="p-2.5">
+                    <Card
+                      key={b.id}
+                      className="p-2.5 hover:border-primary/40 cursor-pointer transition-colors"
+                      onClick={() => setViewBoleta(b)}
+                    >
                       <div className="flex items-center gap-3">
                         <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
-                            <div className="text-[12px] font-medium truncate">{c?.name ?? "—"}</div>
+                            <div className="text-[12px] font-medium truncate">{c?.name ?? (b.dados_investidor as any)?.nome ?? "—"}</div>
                             <Badge variant={BOLETA_STATUS_VARIANT[b.status]} className="text-[9px] h-4 px-1.5">
                               {BOLETA_STATUS_LABEL[b.status]}
                             </Badge>
@@ -235,6 +239,7 @@ export default function InvestidoresBoletas() {
                             {b.series_id ? seriesById.get(b.series_id)?.nome ?? "Série" : "Sem série"} · {fmtBRL(b.valor)}
                           </div>
                         </div>
+                        <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
                       </div>
                     </Card>
                   );
