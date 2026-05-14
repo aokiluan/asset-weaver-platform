@@ -177,8 +177,13 @@ export function SignatureStep({ boletaId, boleta, dados, series, onAdvance, onCl
       {state === "signed" && (
         <div className="flex flex-col items-center gap-2 py-6">
           <CheckCircle2 className="h-6 w-6 text-emerald-600" />
-          <p className="text-[12px] font-medium">Contratos assinados!</p>
-          <p className="text-[11px] text-muted-foreground">Avançando…</p>
+          <p className="text-[12px] font-medium">Boleta concluída!</p>
+          <p className="text-[11px] text-muted-foreground leading-tight text-center">
+            Todos os signatários assinaram. A boleta foi marcada como concluída automaticamente.
+          </p>
+          {onClose && (
+            <Button size="sm" className="h-7 mt-2" onClick={onClose}>Fechar</Button>
+          )}
         </div>
       )}
 
