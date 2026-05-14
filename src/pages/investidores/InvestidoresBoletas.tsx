@@ -55,6 +55,22 @@ export default function InvestidoresBoletas() {
     setBoletas((b.data ?? []) as unknown as InvestorBoleta[]);
     setContacts((c.data ?? []) as InvestorContact[]);
     setSeries((s.data ?? []) as InvestorSeries[]);
+
+    // Carrega contatos referenciados em boletas concluídas (não estão no funil ativo)
+    const closedIds = Array.from(
+      new Set(((b.data ?? []) as any[])
+        .filter((x) => x.status === "concluida" || x.status === "cancelada")
+        .map((x) => x.contact_id)),
+    );
+    const inFunil = new Set(((c.data ?? []) as any[]).map((x) => x.id));
+    const missing = closedIds.filter((id) => !inFunil.has(id));
+    if (missing.length > 0) {
+      const { data: extra } = await supabase
+        .from("investor_contacts").select("*").in("id", missing);
+      setExtraContacts((extra ?? []) as InvestorContact[]);
+    } else {
+      setExtraContacts([]);
+    }
     setLoading(false);
   }
 
