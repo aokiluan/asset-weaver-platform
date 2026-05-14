@@ -102,7 +102,9 @@ function toQuickView(c: CedenteCard): CedenteQuickView {
 
 export default function Pipeline() {
   const navigate = useNavigate();
-  const { user, roles } = useAuth();
+  const { user, roles, hasRole, loading: authLoading } = useAuth();
+  const canCreate = hasRole("admin") || hasRole("comercial");
+  const [novoOpen, setNovoOpen] = useState(false);
   const [cedentes, setCedentes] = useState<CedenteCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
