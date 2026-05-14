@@ -371,7 +371,7 @@ export function generateMinutaPDF(data: MinutaData): jsPDF {
   writeTitle("TERMO ADITIVO PARA INCLUSÃO DE NOTAS FISCAIS");
   y += 2;
   writeP(
-    "S3 CAPITAL SECURITIZADORA S/A, pessoa jurídica de direito privado, devidamente inscrita no CNPJ/MF sob o n. 60.353.126/0001-71, com endereço à Av. Júlio Diniz, n. 257, sala 09, Jd. Nossa Senhora Auxiliadora, na cidade de Campinas, estado de São Paulo, CEP: 13075-420, neste ato representada conforme determinação de seus Atos Constitutivos, de ora em diante denominada simplesmente como CONTRATADA ou FOMENTADORA e, de outro lado,",
+    "S3 CAPITAL SECURITIZADORA S/A, pessoa jurídica de direito privado, devidamente inscrita no CNPJ/MF sob o n. 60.353.126/0001-71, com endereço à Avenida Doutor Heitor Nascimento, n. 196, sala 76, bloco A, Edifício Centro Comercial Aliança, Bairro Morumbi, na cidade de Paulínia, estado de São Paulo, CEP: 13140-729, neste ato representada conforme determinação de seus Atos Constitutivos, de ora em diante denominada simplesmente como CONTRATADA ou FOMENTADORA e, de outro lado,",
   );
   writeP(blocoContratante(data.cedente));
   writeP(`Têm, como justo e acordado o quanto segue no que diz respeito ao termo aditivo do contrato de fomento firmado pelas partes em ${PH} de ${PH} de ${PH}, de modo que os termos do presente passarão a compor o contrato principal de maneira subsidiária e complementar.`);
