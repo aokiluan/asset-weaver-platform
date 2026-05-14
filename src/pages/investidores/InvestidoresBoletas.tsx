@@ -231,7 +231,7 @@ export default function InvestidoresBoletas() {
                         <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
-                            <div className="text-[12px] font-medium truncate">{(b.dados_investidor as any)?.nome ?? c?.name ?? "—"}</div>
+                            <div className="text-[12px] font-medium truncate">{resolveInvestorName(c, b)}</div>
                             <Badge variant={BOLETA_STATUS_VARIANT[b.status]} className="text-[9px] h-4 px-1.5">
                               {BOLETA_STATUS_LABEL[b.status]}
                             </Badge>
