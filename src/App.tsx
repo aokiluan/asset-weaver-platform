@@ -37,6 +37,8 @@ import DiretorioDetail from "./pages/DiretorioDetail.tsx";
 import Investidores from "./pages/Investidores.tsx";
 import InvestidorDetail from "./pages/InvestidorDetail.tsx";
 import InvestidoresCRM from "./pages/investidores/InvestidoresCRM.tsx";
+import InvestidoresBoletas from "./pages/investidores/InvestidoresBoletas.tsx";
+import AdminSeriesInvestidor from "./pages/admin/AdminSeriesInvestidor.tsx";
 import RoleGuard from "@/components/RoleGuard";
 import NotFound from "./pages/NotFound.tsx";
 
@@ -78,6 +80,14 @@ const App = () => (
                 element={
                   <RoleGuard role={["admin","comercial","cadastro","credito","comite","formalizacao"]} moduleKey="relacao_investidores">
                     <InvestidoresCRM />
+                  </RoleGuard>
+                }
+              />
+              <Route
+                path="/investidores/boletas"
+                element={
+                  <RoleGuard role={["admin","comercial","cadastro","credito","comite","formalizacao"]} moduleKey="relacao_investidores">
+                    <InvestidoresBoletas />
                   </RoleGuard>
                 }
               />
@@ -135,6 +145,7 @@ const App = () => (
                 <Route path="pipeline" element={<AdminPipeline />} />
                 <Route path="categorias" element={<AdminCategorias />} />
                 <Route path="permissoes" element={<AdminPermissoes />} />
+                <Route path="series-investidor" element={<AdminSeriesInvestidor />} />
               </Route>
 
               {/* BI / Relatórios */}

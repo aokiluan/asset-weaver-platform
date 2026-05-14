@@ -168,7 +168,10 @@ export default function InvestidoresCRM() {
     <div>
       <PageTabs
         title="Relação com Investidores"
-        tabs={[{ label: "CRM de Prospecção", to: "/investidores/crm" }]}
+        tabs={[
+          { label: "CRM de Prospecção", to: "/investidores/crm" },
+          { label: "Boletas", to: "/investidores/boletas" },
+        ]}
         actions={
           <>
             <Button
