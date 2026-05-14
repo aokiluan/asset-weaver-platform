@@ -358,17 +358,37 @@ export function BoletaWizardSheet({ open, onOpenChange, contact, boleta, onSaved
             </div>
           )}
 
-          {step === 3 && (
-            <div className="space-y-3">
-              <div className="text-[12px] text-muted-foreground">
-                Faça upload do contrato/termo assinado pelo investidor (PDF).
-              </div>
-              <FileUploader
-                accept="application/pdf"
-                currentPath={contratoPath}
-                uploading={uploading}
-                onFile={(f) => uploadFile(f, "contrato")}
-              />
+          {step === 3 && boletaId && selectedSeries && (
+            <SignatureStep
+              boletaId={boletaId}
+              dados={dados}
+              series={selectedSeries}
+              boleta={{
+                id: boletaId,
+                contact_id: contact!.id,
+                series_id: seriesId,
+                user_id: user!.id,
+                valor,
+                prazo_meses: selectedSeries.prazo_meses,
+                taxa_efetiva: null,
+                status: boleta?.status ?? "rascunho",
+                current_step: step,
+                dados_investidor: dados,
+                observacoes: null,
+                contrato_path: contratoPath,
+                contrato_assinado_em: null,
+                comprovante_path: comprovantePath,
+                pagamento_enviado_em: null,
+                concluida_em: null,
+                created_at: "",
+                updated_at: "",
+              }}
+              onAdvance={() => { setStep(4); onSaved(); }}
+            />
+          )}
+          {step === 3 && (!boletaId || !selectedSeries) && (
+            <div className="text-[12px] text-muted-foreground">
+              Complete os passos anteriores para gerar os documentos de assinatura.
             </div>
           )}
 

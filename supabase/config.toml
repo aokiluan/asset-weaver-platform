@@ -5,3 +5,12 @@ verify_jwt = false
 
 [functions.validate-cep]
 verify_jwt = false
+
+[functions.send-to-autentique]
+verify_jwt = false
+
+[functions.sync-autentique-status]
+verify_jwt = false
+
+[functions.autentique-webhook]
+verify_jwt = false
