@@ -54,9 +54,9 @@ td,th{border:1px solid #000;padding:4px 6px;font-size:10pt;vertical-align:top}th
 <table><tr><th>Cautelas</th><th>Operação</th><th>Data</th><th>CNPJ</th></tr>
 <tr><td class="italic">1</td><td class="italic">Venda</td><td class="italic">${today}</td><td class="italic">60.353.126/0001-71</td></tr></table>
 <table><tr><th colspan="2">Logradouro</th><th colspan="2">Bairro</th></tr>
-<tr><td colspan="2" class="italic">Avenida Júlio Diniz 257, Sala 09</td><td colspan="2" class="italic">Jardim Nossa Senhora</td></tr>
+<tr><td colspan="2" class="italic">Avenida Doutor Heitor Nascimento, 196, Sala 76, Bloco A — Edifício Centro Comercial Aliança</td><td colspan="2" class="italic">Morumbi</td></tr>
 <tr><th>CEP</th><th>Cidade</th><th colspan="2">UF</th></tr>
-<tr><td class="italic">13075420</td><td class="italic">Campinas</td><td colspan="2" class="italic">SP</td></tr></table>
+<tr><td class="italic">13140-729</td><td class="italic">Paulínia</td><td colspan="2" class="italic">SP</td></tr></table>
 <p class="section-title">Característica da Emissão</p>
 <p class="italic">Emissão privada, aprovada pela AGE da EMISSORA realizada em 28 de Abril de 2025.</p>
 <p>Data da Emissão: 05/05/2025. Série: ${series.nome}. Indexador: ${idx || "—"}. Vencimento: ${maturityDate(series.prazo_meses)}.</p>
@@ -87,13 +87,13 @@ table{width:60%;margin:0 auto;border-collapse:collapse}td,th{border:1px solid #0
 .signatures{display:flex;justify-content:space-between;margin-top:40px;padding:0 40px}.sig-block{text-align:center;width:45%}
 .sig-line{border-top:1px solid #000;margin:50px auto 4px;width:280px}.sig-name{font-weight:bold}.sig-title{font-size:9pt;font-style:italic}
 </style></head><body>
-<div class="header"><h1>S3 CAPITAL SECURITIZADORA S A</h1><p>CNPJ: 60.353.126/0001-71</p><p>Av. Júlio Diniz 257, Sala 09 — Campinas-SP — CEP 13075420</p></div>
+<div class="header"><h1>S3 CAPITAL SECURITIZADORA S A</h1><p>CNPJ: 60.353.126/0001-71</p><p>Avenida Doutor Heitor Nascimento, 196, Sala 76, Bloco A — Edifício Centro Comercial Aliança — Morumbi — Paulínia-SP — CEP 13140-729</p></div>
 <p class="center-bold">Prazo de Duração: Indeterminado</p>
 <div class="debenture-title">DEBÊNTURES SIMPLES, CLASSE SÊNIOR — ${series.nome.toUpperCase()}</div>
 <table><tr><th>Cautela Nº</th><th>Quantidade</th></tr><tr><td style="text-align:center;font-style:italic">1</td><td style="text-align:center;font-style:italic">${qty}</td></tr></table>
 <p class="main-text">Esta cautela representativa de ${qty} (${qtyExt}) debênture(s), no valor nominal unitário de R$ 1.000,00 (UM MIL REAIS), não conversíveis em ações, da emissão privada, série <strong>${series.nome}</strong> (índice ${idx || "—"}), confere ao titular abaixo os direitos previstos na Escritura de Emissão.</p>
 <p class="pague-se">PAGUE-SE A ${(dados.nome ?? "").toUpperCase()}, CPF/CNPJ: ${dados.cpf_cnpj ?? ""}</p>
-<p style="text-align:center;font-style:italic;margin:8px 0">Campinas (SP), ${dateLong()}</p>
+<p style="text-align:center;font-style:italic;margin:8px 0">Paulínia (SP), ${dateLong()}</p>
 <div class="signatures">
 <div class="sig-block"><div class="sig-line"></div><p>S3 CAPITAL SECURITIZADORA S A</p><p class="sig-title">Diretor Presidente</p><p class="sig-name">Everaldo Fernando Silvério</p></div>
 <div class="sig-block"><div class="sig-line"></div><p>S3 CAPITAL SECURITIZADORA S A</p><p class="sig-title">Diretor de Relação com Investidores</p><p class="sig-name">Luan Aoki Helena Schuwarten</p></div>

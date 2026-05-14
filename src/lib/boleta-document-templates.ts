@@ -105,9 +105,9 @@ p { margin: 4px 0; font-size: 10pt; }
 
 <table>
   <tr><th colspan="2">Logradouro</th><th colspan="2">Bairro</th></tr>
-  <tr><td colspan="2" class="italic">Avenida Júlio Diniz 257, Sala 09</td><td colspan="2" class="italic">Jardim Nossa Senhora</td></tr>
+  <tr><td colspan="2" class="italic">Avenida Doutor Heitor Nascimento, 196, Sala 76, Bloco A — Edifício Centro Comercial Aliança</td><td colspan="2" class="italic">Morumbi</td></tr>
   <tr><th>CEP</th><th>Cidade</th><th colspan="2">UF</th></tr>
-  <tr><td class="italic">13075420</td><td class="italic">Campinas</td><td colspan="2" class="italic">SP</td></tr>
+  <tr><td class="italic">13140-729</td><td class="italic">Paulínia</td><td colspan="2" class="italic">SP</td></tr>
 </table>
 
 <p class="section-title">Característica da Emissão</p>
@@ -194,7 +194,7 @@ th { font-style: italic; }
 <div class="header">
   <h1>S3 CAPITAL SECURITIZADORA S A</h1>
   <p>CNPJ/MF: 60.353.126/0001-71</p>
-  <p>Avenida Júlio Diniz 257, Sala 09 — Jardim Nossa Senhora — Campinas-SP — CEP: 13075420</p>
+  <p>Avenida Doutor Heitor Nascimento, 196, Sala 76, Bloco A — Edifício Centro Comercial Aliança — Morumbi — Paulínia-SP — CEP: 13140-729</p>
 </div>
 
 <p class="center-bold">Prazo de Duração da Sociedade: Indeterminado</p>
@@ -212,7 +212,7 @@ Esta cautela representativa de ${qty} (${qtyExt}) debênture(s), no valor nomina
 
 <p class="pague-se">PAGUE-SE ESTA(S) DEBÊNTURE(S) A ${(dados.nome ?? "").toUpperCase()}, CPF/CNPJ: ${dados.cpf_cnpj ?? ""}</p>
 
-<p style="text-align: center; font-style: italic; margin: 8px 0;">Campinas (SP), ${dateLong()}</p>
+<p style="text-align: center; font-style: italic; margin: 8px 0;">Paulínia (SP), ${dateLong()}</p>
 
 <div class="signatures">
   <div class="sig-block">
