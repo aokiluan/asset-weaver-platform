@@ -106,6 +106,7 @@ export function BoletaWizardSheet({ open, onOpenChange, contact, boleta, onSaved
       ...extra,
     } as never;
 
+    let savedId: string | null = null;
     if (boletaId) {
       const { error } = await supabase
         .from("investor_boletas")
@@ -115,7 +116,7 @@ export function BoletaWizardSheet({ open, onOpenChange, contact, boleta, onSaved
         toast.error("Erro ao salvar", { description: error.message });
         return null;
       }
-      return boletaId;
+      savedId = boletaId;
     } else {
       const { data, error } = await supabase
         .from("investor_boletas")
@@ -127,9 +128,20 @@ export function BoletaWizardSheet({ open, onOpenChange, contact, boleta, onSaved
         return null;
       }
       setBoletaId(data.id);
-      return data.id;
+      savedId = data.id;
     }
-  }
+
+    // Sincroniza o nome do investidor no cadastro do contato (kanban / listas)
+    // para garantir uma única fonte de verdade.
+    const dadosNome = extractDadosNome(dados);
+    if (dadosNome && dadosNome !== contact.name) {
+      await supabase
+        .from("investor_contacts")
+        .update({ name: dadosNome })
+        .eq("id", contact.id);
+    }
+
+    return savedId;
 
   async function handleNext() {
     if (!user || !contact) return;
