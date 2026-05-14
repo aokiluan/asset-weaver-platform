@@ -269,20 +269,7 @@ export default function Pipeline() {
           />
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-1">
-            {(["todos", ...setores] as SetorFilter[]).map((t) => (
-              <Button
-                key={t}
-                variant={setorFilter === t ? "secondary" : "ghost"}
-                size="sm"
-                className="h-7 px-2.5 text-[12px]"
-                onClick={() => setSetorFilter(t)}
-              >
-                {t === "todos" ? "Todos" : t}
-              </Button>
-            ))}
-          </div>
+        <div className="flex flex-wrap items-center justify-end gap-3">
           <ToggleGroup
             type="single"
             value={view}
