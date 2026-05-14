@@ -131,7 +131,7 @@ const GROUPS: Group[] = [
     label: "Relação com Investidores",
     icon: IconHandshake,
     items: [
-      { title: "CRM de Prospecção", url: "/investidores/crm", icon: IconKanban },
+      { title: "Pipeline de Investidores", url: "/investidores/crm", icon: IconKanban },
     ],
   },
   {
