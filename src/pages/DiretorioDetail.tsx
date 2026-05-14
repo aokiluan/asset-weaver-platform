@@ -1348,6 +1348,7 @@ function UploadAnexoLivreDialog({
   onOpenChange,
   cedente,
   catLivre,
+  categorias,
   userId,
   onUploaded,
   initialFiles,
@@ -1356,37 +1357,61 @@ function UploadAnexoLivreDialog({
   onOpenChange: (v: boolean) => void;
   cedente: Cedente;
   catLivre: Categoria | null;
+  categorias: Categoria[];
   userId: string | null;
   onUploaded: () => void;
   initialFiles: File[] | null;
 }) {
   const fileRef = useRef<HTMLInputElement | null>(null);
-  const [files, setFiles] = useState<File[]>([]);
+  const [items, setItems] = useState<{ file: File; categoriaId: string }[]>([]);
   const [obs, setObs] = useState("");
   const [busy, setBusy] = useState(false);
 
+  const defaultCatId = catLivre?.id ?? categorias[0]?.id ?? "";
+
   useEffect(() => {
     if (open && initialFiles && initialFiles.length > 0) {
-      setFiles(initialFiles);
+      setItems(initialFiles.map((f) => ({ file: f, categoriaId: defaultCatId })));
     } else if (!open) {
-      setFiles([]);
+      setItems([]);
       setObs("");
     }
-  }, [open, initialFiles]);
+  }, [open, initialFiles, defaultCatId]);
+
+  const addFiles = (fs: File[]) => {
+    setItems((prev) => [...prev, ...fs.map((f) => ({ file: f, categoriaId: defaultCatId }))]);
+  };
+
+  const removeAt = (i: number) => setItems((prev) => prev.filter((_, idx) => idx !== i));
+  const setCategoriaAt = (i: number, categoriaId: string) =>
+    setItems((prev) => prev.map((it, idx) => (idx === i ? { ...it, categoriaId } : it)));
+
+  const canSubmit =
+    items.length > 0 && items.every((it) => !!it.categoriaId) && !busy && !!userId;
 
   const handleUpload = async () => {
-    if (files.length === 0 || !catLivre || !userId) return;
+    if (!canSubmit) return;
     setBusy(true);
     try {
-      const { count: baseCount } = await supabase
-        .from("documentos")
-        .select("id", { count: "exact", head: true })
-        .eq("cedente_id", cedente.id)
-        .eq("categoria_id", catLivre.id);
-      let next = (baseCount ?? 0) + 1;
+      // Próxima versão por categoria usada no batch
+      const usedCatIds = Array.from(new Set(items.map((it) => it.categoriaId)));
+      const nextByCat: Record<string, number> = {};
+      await Promise.all(
+        usedCatIds.map(async (cid) => {
+          const { count } = await supabase
+            .from("documentos")
+            .select("id", { count: "exact", head: true })
+            .eq("cedente_id", cedente.id)
+            .eq("categoria_id", cid);
+          nextByCat[cid] = (count ?? 0) + 1;
+        }),
+      );
 
       let okCount = 0;
-      for (const file of files) {
+      for (const it of items) {
+        const cat = categorias.find((c) => c.id === it.categoriaId);
+        if (!cat) continue;
+        const file = it.file;
         const safe = file.name.replace(/[^\w.\-]+/g, "_");
         const path = `${cedente.id}/${Date.now()}-${Math.random().toString(36).slice(2, 6)}-${safe}`;
 
@@ -1398,26 +1423,27 @@ function UploadAnexoLivreDialog({
           continue;
         }
 
+        const versao = nextByCat[cat.id]++;
         const novoNome = buildDocumentoFileName({
           originalName: file.name,
-          categoria: catLivre.nome,
+          categoria: cat.nome,
           cedente: cedente.razao_social,
-          versao: next,
+          versao,
         });
 
         const { error: insErr } = await supabase.from("documentos").insert({
           cedente_id: cedente.id,
-          categoria_id: catLivre.id,
+          categoria_id: cat.id,
           nome_arquivo: novoNome,
           nome_arquivo_original: file.name,
           storage_path: path,
           tamanho_bytes: file.size,
           mime_type: file.type || null,
-          uploaded_by: userId,
+          uploaded_by: userId!,
           status: "aprovado",
           classificacao_status: "sugerido",
           observacoes: obs.trim() || null,
-          reviewed_by: userId,
+          reviewed_by: userId!,
           reviewed_at: new Date().toISOString(),
         });
         if (insErr) {
@@ -1425,7 +1451,6 @@ function UploadAnexoLivreDialog({
           toast.error(`Erro em ${file.name}`, { description: insErr.message });
           continue;
         }
-        next++;
         okCount++;
       }
 
@@ -1445,29 +1470,70 @@ function UploadAnexoLivreDialog({
         <DialogHeader>
           <DialogTitle className="text-[14px]">Adicionar anexo livre</DialogTitle>
           <DialogDescription className="text-[12px]">
-            Arquivos enviados aqui ficam no dossiê e <b>não entram</b> na fila de conciliação do Cadastro.
+            Classifique cada arquivo na categoria correspondente. Os nomes serão
+            padronizados automaticamente (<code>aaaa.mm.dd_categoria_cedente_vNN.ext</code>).
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-2.5">
           <div>
-            <label className="text-[11px] text-muted-foreground">Arquivo(s)</label>
+            <label className="text-[11px] text-muted-foreground">Arquivos e classificação</label>
             <Input
               ref={fileRef}
               type="file"
               multiple
-              onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
+              onChange={(e) => {
+                const fs = Array.from(e.target.files ?? []);
+                if (fs.length > 0) addFiles(fs);
+                if (fileRef.current) fileRef.current.value = "";
+              }}
               className="h-7 text-[12px]"
             />
-            {files.length > 0 && (
-              <ul className="text-[10px] text-muted-foreground mt-1 space-y-0.5">
-                {files.map((f, i) => (
-                  <li key={i}>
-                    {f.name} · {(f.size / 1024).toFixed(1)} KB
+            {items.length > 0 && (
+              <ul className="mt-1.5 space-y-1">
+                {items.map((it, i) => (
+                  <li
+                    key={i}
+                    className="flex items-center gap-2 rounded-md border border-border/60 px-2 py-1"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-[12px] leading-tight">{it.file.name}</div>
+                      <div className="text-[10px] text-muted-foreground leading-none">
+                        {(it.file.size / 1024).toFixed(1)} KB
+                      </div>
+                    </div>
+                    <Select
+                      value={it.categoriaId}
+                      onValueChange={(v) => setCategoriaAt(i, v)}
+                    >
+                      <SelectTrigger className="h-7 w-[160px] text-[11px]">
+                        <SelectValue placeholder="Categoria" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categorias.map((c) => (
+                          <SelectItem key={c.id} value={c.id} className="text-[12px]">
+                            {c.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 shrink-0"
+                      onClick={() => removeAt(i)}
+                      title="Remover"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
                   </li>
                 ))}
               </ul>
             )}
+            <p className="mt-1 text-[10px] text-muted-foreground leading-tight">
+              Use <b>Outros / Anexo livre</b> para itens sem categoria. Anexos classificados
+              entram normalmente no dossiê do Cadastro.
+            </p>
           </div>
           <div>
             <label className="text-[11px] text-muted-foreground">Observação (opcional)</label>
@@ -1485,7 +1551,7 @@ function UploadAnexoLivreDialog({
           <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button size="sm" onClick={handleUpload} disabled={files.length === 0 || busy || !catLivre}>
+          <Button size="sm" onClick={handleUpload} disabled={!canSubmit}>
             {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Upload className="h-3.5 w-3.5 mr-1" />}
             Enviar
           </Button>
