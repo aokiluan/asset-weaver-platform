@@ -2263,6 +2263,7 @@ export type Database = {
         | "reuniao"
         | "nota"
         | "tarefa"
+        | "whatsapp"
       lead_tipo: "cedente" | "investidor"
       opinion_recommendation:
         | "favoravel"
@@ -2429,7 +2430,14 @@ export const Constants = {
       ],
       dashboard_widget_tipo: ["kpi", "bar", "line", "pie", "table"],
       documento_status: ["pendente", "aprovado", "reprovado"],
-      investor_activity_type: ["ligacao", "email", "reuniao", "nota", "tarefa"],
+      investor_activity_type: [
+        "ligacao",
+        "email",
+        "reuniao",
+        "nota",
+        "tarefa",
+        "whatsapp",
+      ],
       lead_tipo: ["cedente", "investidor"],
       opinion_recommendation: [
         "favoravel",
