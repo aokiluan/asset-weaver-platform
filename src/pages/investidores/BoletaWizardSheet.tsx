@@ -142,6 +142,7 @@ export function BoletaWizardSheet({ open, onOpenChange, contact, boleta, onSaved
     }
 
     return savedId;
+  }
 
   async function handleNext() {
     if (!user || !contact) return;
