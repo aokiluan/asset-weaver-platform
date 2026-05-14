@@ -1526,6 +1526,5 @@ function UploadAnexoLivreDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-    </Dialog>
   );
 }
