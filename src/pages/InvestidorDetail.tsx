@@ -218,6 +218,15 @@ export default function InvestidorDetail() {
                               <FileText className="h-3 w-3 text-muted-foreground shrink-0" />
                               <div className="min-w-0 flex-1 text-[11px] truncate">{f.name}</div>
                               <Button
+                                variant="ghost" size="sm" className="h-6 text-[11px] px-2"
+                                onClick={() => handleView(f.storage_path)}
+                                disabled={viewing === f.storage_path}
+                              >
+                                {viewing === f.storage_path
+                                  ? <Loader2 className="h-3 w-3 animate-spin" />
+                                  : <><Eye className="h-3 w-3 mr-1" /> Ver</>}
+                              </Button>
+                              <Button
                                 variant="ghost" size="sm" className="h-6 text-[11px]"
                                 onClick={() => handleDownload(f.storage_path, f.name)}
                                 disabled={downloading === f.storage_path}
