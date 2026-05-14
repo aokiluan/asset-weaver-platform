@@ -11,7 +11,7 @@ import { type AppRole, ROLE_LABEL, OPERACAO_ROLES } from "@/lib/roles";
 
 const OTHER_MODULES: { key: string; label: string }[] = [
   { key: "gestao", label: "Gestão" },
-  { key: "diretorio", label: "Diretório" },
+  { key: "governanca", label: "Governança" },
   { key: "financeiro_mod", label: "Financeiro" },
   { key: "config", label: "Config" },
   { key: "bi", label: "BI" },
