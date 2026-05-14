@@ -1533,6 +1533,7 @@ export type Database = {
           current_step: number
           dados_investidor: Json
           id: string
+          investidor_id: string | null
           observacoes: string | null
           pagamento_enviado_em: string | null
           prazo_meses: number | null
@@ -1553,6 +1554,7 @@ export type Database = {
           current_step?: number
           dados_investidor?: Json
           id?: string
+          investidor_id?: string | null
           observacoes?: string | null
           pagamento_enviado_em?: string | null
           prazo_meses?: number | null
@@ -1573,6 +1575,7 @@ export type Database = {
           current_step?: number
           dados_investidor?: Json
           id?: string
+          investidor_id?: string | null
           observacoes?: string | null
           pagamento_enviado_em?: string | null
           prazo_meses?: number | null
@@ -2166,6 +2169,7 @@ export type Database = {
           document_name: string | null
           finished_at: string | null
           id: string
+          signed_files: Json
           signers: Json
           status: string
           updated_at: string
@@ -2177,6 +2181,7 @@ export type Database = {
           document_name?: string | null
           finished_at?: string | null
           id?: string
+          signed_files?: Json
           signers?: Json
           status?: string
           updated_at?: string
@@ -2188,6 +2193,7 @@ export type Database = {
           document_name?: string | null
           finished_at?: string | null
           id?: string
+          signed_files?: Json
           signers?: Json
           status?: string
           updated_at?: string

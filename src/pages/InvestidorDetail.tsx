@@ -3,7 +3,8 @@ import { Link, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { PageTabs } from "@/components/PageTabs";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, FileText, Download, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface Investidor {
   id: string;
@@ -47,25 +48,65 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
+interface BoletaRow {
+  id: string;
+  valor: number | null;
+  concluida_em: string | null;
+  status: string;
+  signed_files: Array<{ name: string; storage_path: string }>;
+}
+
+const fmtMoneyBRL = (v: number | null) =>
+  v == null ? "—" : v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+const fmtDate = (s: string | null) =>
+  s ? new Date(s).toLocaleDateString("pt-BR") : "—";
+
 export default function InvestidorDetail() {
   const { id } = useParams();
   const [data, setData] = useState<Investidor | null>(null);
   const [loading, setLoading] = useState(true);
+  const [boletas, setBoletas] = useState<BoletaRow[]>([]);
+  const [downloading, setDownloading] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
       if (!id) return;
       setLoading(true);
       const { data } = await supabase
-        .from("investidores")
-        .select("*")
-        .eq("id", id)
-        .maybeSingle();
+        .from("investidores").select("*").eq("id", id).maybeSingle();
       setData(data as Investidor | null);
+
+      const { data: bols } = await supabase
+        .from("investor_boletas")
+        .select("id,valor,concluida_em,status")
+        .eq("investidor_id", id)
+        .order("concluida_em", { ascending: false });
+      const ids = (bols ?? []).map((b: any) => b.id);
+      let byBoleta: Record<string, any[]> = {};
+      if (ids.length) {
+        const { data: tracks } = await (supabase.from as any)("signature_tracking")
+          .select("boleta_id, signed_files").in("boleta_id", ids);
+        for (const t of (tracks ?? []) as any[]) {
+          if (Array.isArray(t.signed_files)) byBoleta[t.boleta_id] = t.signed_files;
+        }
+      }
+      setBoletas(((bols ?? []) as any[]).map((b) => ({ ...b, signed_files: byBoleta[b.id] ?? [] })));
       setLoading(false);
       document.title = `${(data as any)?.razao_social ?? "Investidor"} | Securitizadora`;
     })();
   }, [id]);
+
+  async function handleDownload(path: string) {
+    setDownloading(path);
+    const { data, error } = await supabase.storage
+      .from("investor-boletas").createSignedUrl(path, 60);
+    setDownloading(null);
+    if (error || !data?.signedUrl) {
+      toast.error("Não foi possível gerar o link", { description: error?.message });
+      return;
+    }
+    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+  }
 
   return (
     <>
@@ -125,6 +166,47 @@ export default function InvestidorDetail() {
                 <Field label="Cidade" value={data.cidade} />
                 <Field label="Estado" value={data.estado} />
               </div>
+            </div>
+
+            <div className="rounded-md border bg-card p-2.5 space-y-2">
+              <div className="text-[10px] leading-none uppercase tracking-wide text-muted-foreground">
+                Boletas e documentos assinados
+              </div>
+              {boletas.length === 0 ? (
+                <div className="text-[11px] text-muted-foreground/80 py-2">Nenhuma boleta vinculada.</div>
+              ) : (
+                <div className="space-y-2">
+                  {boletas.map((b) => (
+                    <div key={b.id} className="rounded border p-2 space-y-1.5">
+                      <div className="text-[12px] leading-tight">
+                        Boleta · {fmtMoneyBRL(b.valor)}
+                        <span className="text-muted-foreground"> · {fmtDate(b.concluida_em)}</span>
+                      </div>
+                      {b.signed_files.length === 0 ? (
+                        <div className="text-[10px] text-muted-foreground/70">Nenhum PDF assinado salvo.</div>
+                      ) : (
+                        <div className="space-y-1">
+                          {b.signed_files.map((f) => (
+                            <div key={f.storage_path} className="flex items-center gap-2">
+                              <FileText className="h-3 w-3 text-muted-foreground shrink-0" />
+                              <div className="min-w-0 flex-1 text-[11px] truncate">{f.name}</div>
+                              <Button
+                                variant="ghost" size="sm" className="h-6 text-[11px]"
+                                onClick={() => handleDownload(f.storage_path)}
+                                disabled={downloading === f.storage_path}
+                              >
+                                {downloading === f.storage_path
+                                  ? <Loader2 className="h-3 w-3 animate-spin" />
+                                  : <><Download className="h-3 w-3 mr-1" /> Baixar</>}
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {data.observacoes && (

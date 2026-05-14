@@ -18,18 +18,22 @@ import {
 } from "@/lib/investor-boletas";
 import { type InvestorContact } from "@/lib/investor-contacts";
 import { BoletaWizardSheet } from "./BoletaWizardSheet";
+import { BoletaConcluidaSheet } from "./BoletaConcluidaSheet";
 
 export default function InvestidoresBoletas() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [boletas, setBoletas] = useState<InvestorBoleta[]>([]);
   const [contacts, setContacts] = useState<InvestorContact[]>([]);
+  const [extraContacts, setExtraContacts] = useState<InvestorContact[]>([]);
   const [series, setSeries] = useState<InvestorSeries[]>([]);
   const [search, setSearch] = useState("");
 
   const [wizardOpen, setWizardOpen] = useState(false);
   const [wizardContact, setWizardContact] = useState<InvestorContact | null>(null);
   const [wizardBoleta, setWizardBoleta] = useState<InvestorBoleta | null>(null);
+
+  const [viewBoleta, setViewBoleta] = useState<InvestorBoleta | null>(null);
 
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
@@ -51,6 +55,22 @@ export default function InvestidoresBoletas() {
     setBoletas((b.data ?? []) as unknown as InvestorBoleta[]);
     setContacts((c.data ?? []) as InvestorContact[]);
     setSeries((s.data ?? []) as InvestorSeries[]);
+
+    // Carrega contatos referenciados em boletas concluídas (não estão no funil ativo)
+    const closedIds = Array.from(
+      new Set(((b.data ?? []) as any[])
+        .filter((x) => x.status === "concluida" || x.status === "cancelada")
+        .map((x) => x.contact_id)),
+    );
+    const inFunil = new Set(((c.data ?? []) as any[]).map((x) => x.id));
+    const missing = closedIds.filter((id) => !inFunil.has(id));
+    if (missing.length > 0) {
+      const { data: extra } = await supabase
+        .from("investor_contacts").select("*").in("id", missing);
+      setExtraContacts((extra ?? []) as InvestorContact[]);
+    } else {
+      setExtraContacts([]);
+    }
     setLoading(false);
   }
 
@@ -119,7 +139,7 @@ export default function InvestidoresBoletas() {
   }
 
   function contactById(id: string) {
-    return contacts.find((c) => c.id === id);
+    return contacts.find((c) => c.id === id) ?? extraContacts.find((c) => c.id === id);
   }
 
   async function handleDelete() {
@@ -201,12 +221,16 @@ export default function InvestidoresBoletas() {
                 {concluidasRecentes.map((b) => {
                   const c = contactById(b.contact_id);
                   return (
-                    <Card key={b.id} className="p-2.5">
+                    <Card
+                      key={b.id}
+                      className="p-2.5 hover:border-primary/40 cursor-pointer transition-colors"
+                      onClick={() => setViewBoleta(b)}
+                    >
                       <div className="flex items-center gap-3">
                         <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
-                            <div className="text-[12px] font-medium truncate">{c?.name ?? "—"}</div>
+                            <div className="text-[12px] font-medium truncate">{c?.name ?? (b.dados_investidor as any)?.nome ?? "—"}</div>
                             <Badge variant={BOLETA_STATUS_VARIANT[b.status]} className="text-[9px] h-4 px-1.5">
                               {BOLETA_STATUS_LABEL[b.status]}
                             </Badge>
@@ -215,6 +239,7 @@ export default function InvestidoresBoletas() {
                             {b.series_id ? seriesById.get(b.series_id)?.nome ?? "Série" : "Sem série"} · {fmtBRL(b.valor)}
                           </div>
                         </div>
+                        <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
                       </div>
                     </Card>
                   );
@@ -234,6 +259,14 @@ export default function InvestidoresBoletas() {
         contact={wizardContact}
         boleta={wizardBoleta}
         onSaved={load}
+      />
+
+      <BoletaConcluidaSheet
+        open={!!viewBoleta}
+        onOpenChange={(v) => { if (!v) setViewBoleta(null); }}
+        boleta={viewBoleta}
+        contact={viewBoleta ? contactById(viewBoleta.contact_id) ?? null : null}
+        series={viewBoleta?.series_id ? seriesById.get(viewBoleta.series_id) : undefined}
       />
 
       <AlertDialog open={!!deleteId} onOpenChange={(v) => !v && setDeleteId(null)}>
