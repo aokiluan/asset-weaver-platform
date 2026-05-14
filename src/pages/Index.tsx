@@ -25,7 +25,7 @@ const STAGE_LABELS: Record<string, string> = {
 const COLORS = ["hsl(var(--primary))", "hsl(var(--accent))", "#22c55e", "#eab308", "#ef4444", "#8b5cf6", "#06b6d4"];
 
 export default function Index() {
-  const { user, roles } = useAuth();
+  useAuth();
 
   useEffect(() => {
     document.title = "Dashboard Executivo | Securitizadora";
