@@ -139,6 +139,7 @@ const GROUPS: Group[] = [
     icon: IconSettings,
     adminOnly: true,
     items: [
+      { title: "Parâmetros", url: "/configuracoes", icon: IconSettings },
       {
         title: "Financeiro",
         url: "/financeiro",
@@ -146,11 +147,6 @@ const GROUPS: Group[] = [
         roles: ["admin"] as const,
         moduleKey: "financeiro_mod",
       },
-      
-      { title: "Equipes", url: "/configuracoes/equipes", icon: IconUsers },
-      { title: "Alçadas", url: "/configuracoes/alcadas", icon: IconGavel },
-      { title: "Pipeline", url: "/configuracoes/pipeline", icon: IconListChecks },
-      { title: "Categorias de doc.", url: "/configuracoes/categorias", icon: IconTags },
       { title: "BI – Datasets", url: "/bi/datasets", icon: IconDatabase, moduleKey: "bi" },
       { title: "BI – Uploads", url: "/bi/uploads", icon: IconExcel, moduleKey: "bi" },
       { title: "BI – Widgets", url: "/bi/widgets", icon: IconGrid, moduleKey: "bi" },
