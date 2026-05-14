@@ -145,16 +145,7 @@ export default function Pipeline() {
 
   useEffect(() => { load(); }, [load]);
 
-  const setores = useMemo(() => {
-    const s = new Set<string>();
-    cedentes.forEach((c) => c.setor && s.add(c.setor));
-    return Array.from(s).sort();
-  }, [cedentes]);
-
-  const filtered = useMemo(
-    () => (setorFilter === "todos" ? cedentes : cedentes.filter((c) => c.setor === setorFilter)),
-    [cedentes, setorFilter],
-  );
+  const filtered = cedentes;
 
   const metrics = useMemo(() => {
     const ativos = cedentes.filter((c) => c.stage === "ativo");
