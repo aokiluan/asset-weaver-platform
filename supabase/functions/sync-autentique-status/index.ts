@@ -134,9 +134,10 @@ export async function promoteBoletaToInvestidor(
       for (const [tag, url] of items) {
         if (!url) continue;
         try {
-          const fr = await fetch(url);
-          if (!fr.ok) continue;
+          const fr = await fetch(url, { headers: { Authorization: `Bearer ${apiKey}` } });
+          if (!fr.ok) { console.warn(`autentique ${tag} ${fr.status}`); continue; }
           const bytes = new Uint8Array(await fr.arrayBuffer());
+          if (bytes.byteLength < 1024) { console.warn(`autentique ${tag} arquivo vazio`); continue; }
           const path = `${investidorId}/${boletaId}/${baseName}-${tag}.pdf`;
           const { error: upErr } = await supabase.storage
             .from("investor-boletas")

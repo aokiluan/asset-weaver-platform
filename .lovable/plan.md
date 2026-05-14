@@ -1,71 +1,33 @@
-## Objetivo
+## Diagnóstico
 
-Quando uma boleta for **concluída**:
-1. **Consultar info da boleta** na seção "Concluídas recentes" (hoje aparece "—" porque o nome do contato não é carregado, e o card não abre nada).
-2. **Auto-criar Investidor** no Diretório → Pasta de Investidores, vinculado à boleta, com os PDFs assinados disponíveis para download.
+A lógica de download dos PDFs assinados **já está implementada** em `sync-autentique-status` e `autentique-webhook` (consulta GraphQL `files { signed, pades }` → upload no bucket `investor-boletas` → registro em `signature_tracking.signed_files`).
 
-## Mudanças
+Porém, a boleta do Marcos (única `concluida` hoje) tem `signed_files: []`. Motivo: ela foi marcada como concluída **manualmente via SQL** no backfill anterior, sem passar pela função que baixa os arquivos. Por isso a pasta do investidor no diretório está vazia.
 
-### 1. Schema (migração)
+## Plano
 
-- Em `investor_boletas`, adicionar `investidor_id uuid` (FK lógica para `investidores.id`, nullable). Permite linkar boleta ↔ investidor após conclusão.
-- Em `signature_tracking`, adicionar `signed_files jsonb default '[]'::jsonb` para armazenar `[{name, storage_path, signed_at}]` com os PDFs salvos do Autentique.
-- Storage: usar bucket existente `investidor-boletas` com layout `{investidor_id}/{boleta_id}/{tipo}.pdf`. Adicionar policies (SELECT/INSERT) para usuários autenticados via service role nas funções e via RLS para SELECT (autor da boleta + admin/financeiro).
+1. **Reexecutar a sincronização para a boleta existente**
+   - Invocar `sync-autentique-status` com `{ boletaId: "fbd7bb52-86ee-4b48-9417-876d3e83a3b9" }`.
+   - A função vai consultar a Autentique pelo `autentique_document_id` já salvo (`e1db12acbf85…`), baixar `signed` e `pades`, gravar em `investor-boletas/{investidor_id}/{boleta_id}/...pdf` e atualizar `signed_files`.
+   - Conferir logs para garantir que a Autentique devolveu URLs (documentos antigos podem ter URLs expiradas; nesse caso reusamos `original` como fallback).
 
-### 2. Edge functions — promover a investidor + baixar PDFs
+2. **Tornar o fluxo idempotente / resiliente**
+   - Em `promoteBoletaToInvestidor` (ambas as functions), se `signed_files` já estiver vazio mas a boleta já foi promovida, permitir reprocessar só a etapa 4 (download + upload) sem duplicar investidor.
+   - Adicionar fallback: se `files.signed` vier nulo, tentar `files.pades`; se ambos vierem nulos, logar `autentique_no_files` para diagnóstico.
+   - Salvar também `autentique_url` original em `signed_files[].source_url` para auditoria.
 
-Em **`sync-autentique-status`** e **`autentique-webhook`**, dentro do bloco `allSigned`/`markFinishedIfNeeded` (após marcar boleta `concluida` e contato `investidor_ativo`):
+3. **Botão "Rebaixar arquivos" no `BoletaConcluidaSheet`** (apenas UI + invoke da function existente)
+   - Quando `signed_files` estiver vazio, mostrar botão "Buscar arquivos assinados" que chama `sync-autentique-status` e recarrega o sheet.
+   - Útil para boletas legadas e como recuperação manual em caso de falha de webhook.
 
-a) **Buscar PDFs assinados** via GraphQL Autentique:
-```graphql
-document(id: ...) { name files { signed pades } }
-```
-Para cada arquivo (boletim + certificado), `fetch(signedUrl)` → `arrayBuffer` → `supabase.storage.from('investidor-boletas').upload('<investidor_id>/<boleta_id>/<slug>.pdf', bytes, { contentType: 'application/pdf', upsert: true })`.
+4. **Validação**
+   - Após passo 1, verificar:
+     - `signature_tracking.signed_files` populado.
+     - Objetos visíveis em `storage.objects` no bucket `investor-boletas`.
+     - PDFs aparecem no `BoletaConcluidaSheet` e em `InvestidorDetail` → seção "Boletas e documentos assinados".
 
-b) **Upsert em `investidores`** usando `dados_investidor` da boleta:
-- `cnpj` = `cpf_cnpj` (limpo). Como `cnpj` é UNIQUE, fazer `upsert({...}, { onConflict: 'cnpj' })`.
-- `tipo_pessoa` = `'pj'` se 14 dígitos, `'pf'` se 11.
-- `razao_social` = nome, `email`, `telefone`, endereço, etc.
-- `valor_investido` = soma dos valores de boletas concluídas do mesmo CNPJ.
+## Detalhes técnicos
 
-c) **Vincular**: `update investor_boletas set investidor_id = <id>` para a boleta atual.
-
-d) **Salvar paths** em `signature_tracking.signed_files`.
-
-(Compartilhar lógica em helper `promoteToInvestidor(supabase, boletaId, autentiqueDocId, apiKey)` ou duplicar curto entre os dois arquivos — Edge Functions não compartilham módulos facilmente, então duplico um trecho enxuto.)
-
-### 3. Frontend
-
-**`src/pages/investidores/InvestidoresBoletas.tsx`** (página atual com seção quebrada):
-- Carregar contatos referenciados pelas boletas concluídas em fetch separado (sem filtro de stage):
-  ```ts
-  const ids = [...new Set(boletas.map(b => b.contact_id))];
-  supabase.from('investor_contacts').select('*').in('id', ids);
-  ```
-- Tornar cards de "Concluídas recentes" clicáveis → abrir um novo `BoletaConcluidaSheet` (read-only) com:
-  - Dados da boleta (série, valor, prazo, taxa, datas).
-  - Dados do investidor cadastrado (link para `/diretorio/investidores/{investidor_id}`).
-  - Lista de **PDFs assinados** (do `signature_tracking.signed_files`), com botão "Baixar" via `supabase.storage.from('investidor-boletas').createSignedUrl(path, 60)`.
-
-**`src/pages/InvestidorDetail.tsx`**:
-- Adicionar nova seção "Boletas e documentos assinados": query `investor_boletas` por `investidor_id`, listar com link para download dos PDFs (via `signed_files` do tracking associado).
-
-### 4. Backfill da boleta já concluída (Marcos)
-
-Após o deploy, rodar uma função one-shot (chamada manual ao endpoint `sync-autentique-status` com o `boletaId` da Marcos) para gerar o investidor + baixar os PDFs já assinados, ou um SQL/insert criando o investidor manualmente caso a chamada Autentique falhe (documento já pode ter expirado o link de download — a API retorna `null` em `files.signed` se removido). Plano principal: invocar a edge function; fallback: criar registro mínimo em `investidores` apenas com nome/CNPJ a partir de `dados_investidor` e marcar `signed_files=[]`.
-
-## Resultado
-
-- Card de "Concluídas recentes" mostra nome + abre sheet com detalhes e PDFs assinados.
-- Investidor aparece automaticamente em `/diretorio/investidores`, com a pasta contendo as boletas e PDFs.
-- Boletas ficam vinculadas ao investidor para futuras consultas.
-
-## Arquivos
-
-- **Migração**: nova (add `investidor_id` em boletas, `signed_files` em tracking, policies do bucket).
-- `supabase/functions/sync-autentique-status/index.ts` (edit).
-- `supabase/functions/autentique-webhook/index.ts` (edit).
-- `src/pages/investidores/InvestidoresBoletas.tsx` (edit + sheet read-only).
-- `src/pages/investidores/BoletaConcluidaSheet.tsx` (novo).
-- `src/pages/InvestidorDetail.tsx` (edit — seção de boletas/PDFs).
-- Backfill: chamada à edge function para a boleta Marcos.
+- Bucket `investor-boletas` já existe (privado) com RLS adequada — sem mudança de schema.
+- Sem nova migration: apenas edição das duas edge functions e do `BoletaConcluidaSheet.tsx`.
+- A consulta GraphQL atual é compatível com a API v2 da Autentique; nenhum novo secret necessário (`AUTENTIQUE_API_KEY` já configurado).

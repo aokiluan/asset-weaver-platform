@@ -41,24 +41,42 @@ export function BoletaConcluidaSheet({ open, onOpenChange, boleta, contact, seri
   const [investidorId, setInvestidorId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [downloading, setDownloading] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState(false);
+
+  async function loadFiles(boletaId: string) {
+    setLoading(true);
+    const [{ data: t }, { data: b }] = await Promise.all([
+      (supabase.from as any)("signature_tracking")
+        .select("signed_files").eq("boleta_id", boletaId)
+        .order("created_at", { ascending: false }).limit(1),
+      supabase.from("investor_boletas").select("investidor_id").eq("id", boletaId).maybeSingle(),
+    ]);
+    const row = (t as any[])?.[0];
+    const files = Array.isArray(row?.signed_files) ? row.signed_files as SignedFile[] : [];
+    setSignedFiles(files);
+    setInvestidorId((b as any)?.investidor_id ?? null);
+    setLoading(false);
+  }
 
   useEffect(() => {
     if (!open || !boleta) return;
-    (async () => {
-      setLoading(true);
-      const [{ data: t }, { data: b }] = await Promise.all([
-        (supabase.from as any)("signature_tracking")
-          .select("signed_files").eq("boleta_id", boleta.id)
-          .order("created_at", { ascending: false }).limit(1),
-        supabase.from("investor_boletas").select("investidor_id").eq("id", boleta.id).maybeSingle(),
-      ]);
-      const row = (t as any[])?.[0];
-      const files = Array.isArray(row?.signed_files) ? row.signed_files as SignedFile[] : [];
-      setSignedFiles(files);
-      setInvestidorId((b as any)?.investidor_id ?? null);
-      setLoading(false);
-    })();
+    loadFiles(boleta.id);
   }, [open, boleta]);
+
+  async function handleResync() {
+    if (!boleta) return;
+    setSyncing(true);
+    const { error } = await supabase.functions.invoke("sync-autentique-status", {
+      body: { boletaId: boleta.id },
+    });
+    setSyncing(false);
+    if (error) {
+      toast.error("Falha ao buscar arquivos", { description: error.message });
+      return;
+    }
+    await loadFiles(boleta.id);
+    toast.success("Sincronização concluída");
+  }
 
   async function handleDownload(file: SignedFile) {
     setDownloading(file.storage_path);
@@ -124,8 +142,20 @@ export function BoletaConcluidaSheet({ open, onOpenChange, boleta, contact, seri
           </div>
 
           <div className="rounded-md border bg-card p-2.5 space-y-2">
-            <div className="text-[10px] uppercase tracking-wide text-muted-foreground leading-none">
-              Documentos assinados
+            <div className="flex items-center justify-between">
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground leading-none">
+                Documentos assinados
+              </div>
+              <Button
+                variant="outline" size="sm"
+                className="h-6 text-[11px]"
+                onClick={handleResync}
+                disabled={syncing}
+              >
+                {syncing
+                  ? <><Loader2 className="h-3 w-3 animate-spin mr-1" /> Sincronizando</>
+                  : "Buscar arquivos"}
+              </Button>
             </div>
             {loading ? (
               <div className="flex items-center text-[11px] text-muted-foreground py-2">
