@@ -54,8 +54,6 @@ serve(async (req) => {
 
     const { error: bErr } = await supabase.from("investor_boletas").update({
       status: "cancelada",
-      cancelada_em: new Date().toISOString(),
-      cancelamento_motivo: motivo,
     }).eq("id", boletaId);
     if (bErr) throw bErr;
 
