@@ -93,7 +93,7 @@ table{width:60%;margin:0 auto;border-collapse:collapse}td,th{border:1px solid #0
 <table><tr><th>Cautela Nº</th><th>Quantidade</th></tr><tr><td style="text-align:center;font-style:italic">1</td><td style="text-align:center;font-style:italic">${qty}</td></tr></table>
 <p class="main-text">Esta cautela representativa de ${qty} (${qtyExt}) debênture(s), no valor nominal unitário de R$ 1.000,00 (UM MIL REAIS), não conversíveis em ações, da emissão privada, série <strong>${series.nome}</strong> (índice ${idx || "—"}), confere ao titular abaixo os direitos previstos na Escritura de Emissão.</p>
 <p class="pague-se">PAGUE-SE A ${(dados.nome ?? "").toUpperCase()}, CPF/CNPJ: ${dados.cpf_cnpj ?? ""}</p>
-<p style="text-align:center;font-style:italic;margin:8px 0">Campinas (SP), ${dateLong()}</p>
+<p style="text-align:center;font-style:italic;margin:8px 0">Paulínia (SP), ${dateLong()}</p>
 <div class="signatures">
 <div class="sig-block"><div class="sig-line"></div><p>S3 CAPITAL SECURITIZADORA S A</p><p class="sig-title">Diretor Presidente</p><p class="sig-name">Everaldo Fernando Silvério</p></div>
 <div class="sig-block"><div class="sig-line"></div><p>S3 CAPITAL SECURITIZADORA S A</p><p class="sig-title">Diretor de Relação com Investidores</p><p class="sig-name">Luan Aoki Helena Schuwarten</p></div>
