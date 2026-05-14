@@ -362,15 +362,6 @@ export default function Cedentes() {
         </div>
       </div>
 
-      <CedenteNovoSheet
-        open={novoOpen}
-        onOpenChange={setNovoOpen}
-        onCreated={async (id) => {
-          await load();
-          setSelectedId(id);
-        }}
-      />
-
       <CedenteImportDialog
         open={importOpen}
         onOpenChange={setImportOpen}
