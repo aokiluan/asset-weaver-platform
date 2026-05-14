@@ -3,6 +3,8 @@ import { Link, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { PageTabs } from "@/components/PageTabs";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { PdfPreview } from "@/components/ui/pdf-preview";
 import { ArrowLeft, FileText, Download, Eye, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
