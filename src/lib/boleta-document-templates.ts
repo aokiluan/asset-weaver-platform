@@ -146,7 +146,7 @@ p { margin: 2px 0; font-size: 8.5pt; }
   <tr><td class="italic">PIX</td><td class="italic" colspan="3"></td></tr>
 </table>
 
-<p style="margin-top: 16px;">Recebemos a referida integralização no valor acima.</p>
+<p style="margin-top: 8px;">Recebemos a referida integralização no valor acima.</p>
 
 <div class="signature-block">
   <div class="signature-line"></div>
@@ -154,9 +154,9 @@ p { margin: 2px 0; font-size: 8.5pt; }
   <p><strong><em>S3 CAPITAL SECURITIZADORA S A</em></strong></p>
 </div>
 
-<hr style="margin: 24px 0; border: 0; border-top: 1px solid #000;" />
+<hr style="margin: 10px 0; border: 0; border-top: 1px solid #000;" />
 
-<p class="italic" style="font-size: 9pt;">
+<p class="declaracao">
 Declaro(amos) para todos os fins que estou(amos) de acordo com as condições expressas no presente recibo; além de ter(mos) recebido uma cópia do instrumento Particular da Escritura da Emissão Privada de Debêntures Simples, celebrada em 5 de Maio de 2025.
 </p>
 
