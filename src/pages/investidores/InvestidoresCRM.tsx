@@ -175,11 +175,8 @@ export default function InvestidoresCRM() {
   return (
     <div>
       <PageTabs
-        title="Relação com Investidores"
-        tabs={[
-          { label: "Pipeline de Investidores", to: "/investidores/crm" },
-          { label: "Boletas", to: "/investidores/boletas" },
-        ]}
+        title="Pipeline de Investidores"
+        tabs={[]}
         actions={
           <>
             <Button

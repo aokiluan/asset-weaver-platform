@@ -158,11 +158,8 @@ export default function InvestidoresBoletas() {
   return (
     <div>
       <PageTabs
-        title="Relação com Investidores"
-        tabs={[
-          { label: "Pipeline de Investidores", to: "/investidores/crm" },
-          { label: "Boletas", to: "/investidores/boletas" },
-        ]}
+        title="Boletas"
+        tabs={[]}
       />
 
       <div className="space-y-4">
