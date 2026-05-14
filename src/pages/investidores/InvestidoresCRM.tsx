@@ -69,7 +69,7 @@ export default function InvestidoresCRM() {
   } | null>(null);
 
   useEffect(() => {
-    document.title = "CRM de Prospecção | Relação com Investidores";
+    document.title = "Pipeline de Investidores | Relação com Investidores";
   }, []);
 
   async function load() {
