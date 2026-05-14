@@ -107,6 +107,15 @@ serve(async (req) => {
         concluida_em: new Date().toISOString(),
         current_step: 3,
       }).eq("id", tracking.boleta_id);
+
+      const { data: bol } = await supabase
+        .from("investor_boletas").select("contact_id").eq("id", tracking.boleta_id).maybeSingle();
+      if (bol?.contact_id) {
+        await supabase.from("investor_contacts").update({
+          stage: "investidor_ativo",
+          last_contact_date: new Date().toISOString().slice(0, 10),
+        }).eq("id", bol.contact_id);
+      }
     }
 
     return new Response(JSON.stringify({

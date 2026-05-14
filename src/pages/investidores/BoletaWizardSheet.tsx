@@ -215,29 +215,7 @@ export function BoletaWizardSheet({ open, onOpenChange, contact, boleta, onSaved
     onSaved();
   }
 
-  async function handleConcluir(moverParaAtivo: boolean) {
-    if (!boletaId || !contact) return;
-    setSaving(true);
-    const { error } = await supabase
-      .from("investor_boletas")
-      .update({ status: "concluida", concluida_em: new Date().toISOString() })
-      .eq("id", boletaId);
-    if (error) {
-      toast.error("Erro ao concluir", { description: error.message });
-      setSaving(false);
-      return;
-    }
-    if (moverParaAtivo) {
-      await supabase
-        .from("investor_contacts")
-        .update({ stage: "investidor_ativo" })
-        .eq("id", contact.id);
-    }
-    setSaving(false);
-    toast.success("Boleta concluída");
-    onSaved();
-    onOpenChange(false);
-  }
+
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>

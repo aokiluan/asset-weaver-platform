@@ -1,47 +1,48 @@
 ## Objetivo
 
-Eliminar a 4ª etapa (upload de comprovante de pagamento) e fazer com que a boleta seja **concluída automaticamente** assim que todos os signatários assinarem no Autentique.
+Quando uma boleta for **concluída** (todos assinaram via Autentique), o contato deve avançar **automaticamente** no kanban de `boleta_em_andamento` → `investidor_ativo`. Além disso, **travar** a movimentação manual para `investidor_ativo` no kanban — só o trigger de assinatura concluída pode promover.
 
-## Alterações
+## Mudanças
 
-### 1. `src/lib/investor-boletas.ts`
-- `BOLETA_STEPS`: remover `{ id: 4, label: "Pagamento" }`. Wizard passa a ter 3 passos: **Dados → Série e valor → Assinatura**.
-- `isInProgressStatus`: passa a considerar apenas `aguardando_assinatura` (e `assinada` como estado transitório curto). `pagamento_enviado` deixa de ser usado em novas boletas (mantido no enum por compatibilidade com dados antigos).
+### 1. Auto-promoção do contato (backend)
 
-### 2. `src/pages/investidores/BoletaWizardSheet.tsx`
-- Remover todo o bloco `step === 4` (FileUploader de comprovante + botões "Concluir e marcar como Ativo" / "Apenas concluir").
-- Remover estados/handlers obsoletos: `comprovantePath`, `uploadFile('comprovante')`, `handleConcluir`. Manter `contratoPath` apenas se ainda referenciado pelo SignatureStep (não é).
-- `handleNext`: cap em `Math.min(s + 1, 3)`.
-- Footer: botão "Próximo" deixa de aparecer quando `step === 3` (assinatura controla o avanço).
-- Stepper passa a renderizar 3 bolinhas.
+Hoje o contato só é movido para `investidor_ativo` no antigo `handleConcluir` (botão removido). O avanço precisa acontecer no mesmo ponto onde a boleta vira `concluida`:
 
-### 3. `src/pages/investidores/SignatureStep.tsx`
-Quando `tracking.status === 'finished'`:
-- Estado `signed` agora é **terminal**, não chama mais `onAdvance` automático.
-- Renderizar:
-  - Mensagem "Boleta concluída — todos os signatários assinaram".
-  - Botão **Fechar** que dispara `onSaved()` + fecha o sheet (props nova `onClose`).
-  - (Opcional) botão para marcar contato como `investidor_ativo`.
-- O avanço de status da boleta é feito pelo backend (`sync-autentique-status`), não pelo client.
+- **`supabase/functions/sync-autentique-status/index.ts`**: quando `allSigned` → após o `update` em `investor_boletas`, fazer também:
+  ```ts
+  const { data: boleta } = await supabase
+    .from("investor_boletas")
+    .select("contact_id")
+    .eq("id", tracking.boleta_id).maybeSingle();
+  if (boleta?.contact_id) {
+    await supabase.from("investor_contacts")
+      .update({ stage: "investidor_ativo", last_contact_date: new Date().toISOString().slice(0,10) })
+      .eq("id", boleta.contact_id);
+  }
+  ```
+- **`supabase/functions/autentique-webhook/index.ts`**: replicar a mesma lógica dentro de `markFinishedIfNeeded` (buscar `contact_id` a partir do `boleta_id` e atualizar o contato).
+- Redeploy das duas functions.
 
-### 4. Edge function `supabase/functions/sync-autentique-status/index.ts`
-Quando `allSigned` virar `true`, em vez de marcar `status='assinada'` + `current_step=4`, marcar **direto como concluída**:
-```ts
-await supabase.from("investor_boletas").update({
-  status: "concluida",
-  contrato_assinado_em: new Date().toISOString(),
-  concluida_em: new Date().toISOString(),
-  current_step: 3,
-}).eq("id", tracking.boleta_id);
-```
+### 2. Travar movimento manual no kanban (frontend)
 
-### 5. Edge function `autentique-webhook`
-Mesma alteração da #4 — qualquer caminho que detectasse `allSigned` deve concluir a boleta.
+Em **`src/pages/investidores/InvestidoresCRM.tsx`**, dentro de `requestStageMove`:
 
-### 6. Bug paralelo (erro 500 atual `Autentique [200]`)
-Logar `result.errors` em `send-to-autentique` antes de lançar, para identificar a causa real (provavelmente signatário inválido / e-mail repetido). Retornar a mensagem do Autentique no payload de erro para aparecer no toast do frontend.
+- Bloquear qualquer destino `investidor_ativo` por drag/seta:
+  ```ts
+  if (newStage === "investidor_ativo") {
+    toast.info("O investidor é promovido automaticamente quando a boleta é concluída.");
+    return;
+  }
+  ```
+- Também bloquear movimentos *saindo* de `investidor_ativo` manualmente (estágio é resultado de processo, não deve ser desfeito por arrasto). Manter apenas movimentos para estágios terminais (`perdido`/etc.) se desejado — proposta: bloquear totalmente saída manual.
 
-## Notas
+Em **`KanbanColumn`** (mesmo arquivo): quando `stage === "investidor_ativo"`, marcar como não-droppable visualmente (já temos `terminal` flag — adicionar `locked` similar) para o usuário entender que essa coluna não aceita drop manual.
 
-- Boletas legadas que estiverem em `current_step=4` ou `status='pagamento_enviado'` continuam abrindo (o wizard cai no step 3 já que passamos a limitar).
-- Não removo as colunas `comprovante_path` / `pagamento_enviado_em` da tabela — só deixo de usá-las (evita migração destrutiva). Se quiser, posso fazer migration removendo depois.
+### 3. Limpeza
+
+- Em **`src/pages/investidores/BoletaWizardSheet.tsx`**, remover a função `handleConcluir` (lines ~218–240) que ainda referencia `pagamento_enviado`/move manual — é código morto após a remoção da etapa 4.
+
+## Resultado
+
+- Concluir assinatura → boleta `concluida` + contato `investidor_ativo` automaticamente, em ambos os caminhos (polling e webhook).
+- Kanban: coluna `Investidor Ativo` recusa drop manual com aviso. Promoção/demoção só ocorre via trigger de assinatura.
