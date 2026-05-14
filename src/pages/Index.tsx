@@ -192,9 +192,6 @@ export default function Index() {
     <div className="space-y-3 max-w-7xl mx-auto">
       <header>
         <h1 className="text-[20px] font-medium tracking-tight text-foreground">Dashboard Executivo</h1>
-        <p className="text-sm text-muted-foreground">
-          {user?.email} · {roles.length > 0 ? roles.join(" · ") : "aguardando atribuição de função"}
-        </p>
       </header>
 
       {/* KPIs principais */}

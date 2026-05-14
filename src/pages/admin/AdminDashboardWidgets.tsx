@@ -106,9 +106,6 @@ export default function AdminDashboardWidgets() {
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-[20px] font-medium tracking-tight">Widgets do Dashboard</h1>
-          <p className="text-sm text-muted-foreground">
-            Configure os cartões e gráficos que aparecem no painel principal.
-          </p>
         </div>
         <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setEditing(empty); }}>
           <DialogTrigger asChild>

@@ -91,9 +91,6 @@ export default function AdminDatasets() {
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-[20px] font-medium tracking-tight">Tipos de relatório</h1>
-          <p className="text-sm text-muted-foreground">
-            Defina os "moldes" das planilhas que serão importadas (colunas esperadas e tipos).
-          </p>
         </div>
         <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setEditing(empty); }}>
           <DialogTrigger asChild>

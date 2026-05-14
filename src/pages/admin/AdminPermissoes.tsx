@@ -210,9 +210,6 @@ export default function AdminPermissoes() {
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
           <h1 className="text-[20px] font-medium tracking-tight">Permissões</h1>
-          <p className="text-[12px] text-muted-foreground leading-tight mt-1">
-            Acesso por usuário: administrador, módulos do menu e funções de Operação. Padrão bloqueado.
-          </p>
         </div>
         <div className="flex items-center gap-2">
           <Input

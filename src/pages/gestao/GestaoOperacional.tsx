@@ -4,7 +4,6 @@ export default function GestaoOperacional() {
   return (
     <PlaceholderPage
       title="Dashboard Operacional"
-      description="Indicadores operacionais a partir dos relatórios diários enviados em XLS/CSV."
       comingItems={[
         "Volume operado no período (PV, valor de face)",
         "Carteira ativa por sacado e por cedente",
