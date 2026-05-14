@@ -54,9 +54,9 @@ td,th{border:1px solid #000;padding:4px 6px;font-size:10pt;vertical-align:top}th
 <table><tr><th>Cautelas</th><th>Operação</th><th>Data</th><th>CNPJ</th></tr>
 <tr><td class="italic">1</td><td class="italic">Venda</td><td class="italic">${today}</td><td class="italic">60.353.126/0001-71</td></tr></table>
 <table><tr><th colspan="2">Logradouro</th><th colspan="2">Bairro</th></tr>
-<tr><td colspan="2" class="italic">Avenida Júlio Diniz 257, Sala 09</td><td colspan="2" class="italic">Jardim Nossa Senhora</td></tr>
+<tr><td colspan="2" class="italic">Avenida Doutor Heitor Nascimento, 196, Sala 76, Bloco A — Edifício Centro Comercial Aliança</td><td colspan="2" class="italic">Morumbi</td></tr>
 <tr><th>CEP</th><th>Cidade</th><th colspan="2">UF</th></tr>
-<tr><td class="italic">13075420</td><td class="italic">Campinas</td><td colspan="2" class="italic">SP</td></tr></table>
+<tr><td class="italic">13140-729</td><td class="italic">Paulínia</td><td colspan="2" class="italic">SP</td></tr></table>
 <p class="section-title">Característica da Emissão</p>
 <p class="italic">Emissão privada, aprovada pela AGE da EMISSORA realizada em 28 de Abril de 2025.</p>
 <p>Data da Emissão: 05/05/2025. Série: ${series.nome}. Indexador: ${idx || "—"}. Vencimento: ${maturityDate(series.prazo_meses)}.</p>
