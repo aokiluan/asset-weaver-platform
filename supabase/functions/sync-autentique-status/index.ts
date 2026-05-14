@@ -101,21 +101,7 @@ serve(async (req) => {
     }
 
     if (allSigned) {
-      await supabase.from("investor_boletas").update({
-        status: "concluida",
-        contrato_assinado_em: new Date().toISOString(),
-        concluida_em: new Date().toISOString(),
-        current_step: 3,
-      }).eq("id", tracking.boleta_id);
-
-      const { data: bol } = await supabase
-        .from("investor_boletas").select("contact_id").eq("id", tracking.boleta_id).maybeSingle();
-      if (bol?.contact_id) {
-        await supabase.from("investor_contacts").update({
-          stage: "investidor_ativo",
-          last_contact_date: new Date().toISOString().slice(0, 10),
-        }).eq("id", bol.contact_id);
-      }
+      await promoteBoletaToInvestidor(supabase, tracking.boleta_id, tracking.id, tracking.autentique_document_id, apiKey);
     }
 
     return new Response(JSON.stringify({
