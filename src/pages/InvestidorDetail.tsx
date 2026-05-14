@@ -3,7 +3,8 @@ import { Link, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { PageTabs } from "@/components/PageTabs";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, FileText, Download, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface Investidor {
   id: string;
