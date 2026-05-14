@@ -138,7 +138,7 @@ export function BoletaConcluidaSheet({ open, onOpenChange, boleta, contact, seri
       <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
         <SheetHeader>
           <SheetTitle className="text-[14px] flex items-center gap-2">
-            {dados.nome ?? contact?.name ?? "Boleta concluída"}
+            {resolveInvestorName(contact, boleta, "Boleta concluída")}
             <Badge variant={BOLETA_STATUS_VARIANT[boleta.status]} className="text-[9px] h-4 px-1.5">
               {BOLETA_STATUS_LABEL[boleta.status]}
             </Badge>
