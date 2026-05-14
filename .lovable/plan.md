@@ -1,53 +1,58 @@
-# Mover Pasta de Investidores e renomear módulo Diretório → Governança
+# Reorganizar módulo Configurações
 
-## 1. Sidebar (`src/components/AppSidebar.tsx`)
+## Estado final das abas (`src/pages/Configuracoes.tsx`)
 
-- Mover item "Pasta de Investidores" do grupo `diretorio` para o grupo `relacao_investidores`, renomeando para **"Investidores"**. URL `/diretorio/investidores` é mantida (sem renomear rota — não foi pedido).
-- Renomear o grupo `diretorio` para chave `governanca`, label **"Governança"**. O grupo fica sem itens; como o filtro atual exige `items.length > 0`, ele simplesmente não renderiza no menu — comportamento desejado ("vai ficar sem nenhuma seção").
-- Grupo `relacao_investidores` final:
-  ```
-  RELAÇÃO COM INVESTIDORES
-    Pipeline de Investidores  → /investidores/crm
-    Investidores              → /diretorio/investidores
-  ```
-
-## 2. Renomear chave de módulo `diretorio` → `governanca` em todo o app
-
-Substituir literais e tipos:
-- `src/hooks/useModulePermissions.ts`: trocar `"diretorio"` por `"governanca"` no union `ModuleKey`.
-- `src/pages/admin/UserAccessDrawer.tsx` (linha 14): `{ key: "diretorio", label: "Diretório" }` → `{ key: "governanca", label: "Governança" }`.
-- `src/pages/admin/AdminPermissoes.tsx` (linha 21): no array `ALL_MODULE_KEYS`, trocar `"diretorio"` por `"governanca"`.
-- Buscar e revisar qualquer outro `moduleKey: "diretorio"` no código (atualmente nenhum item de sidebar usa explicitamente — o filtro `isModuleEnabled(g.key)` usa a `key` do grupo, então a renomeação acima já cobre).
-
-## 3. Migração de dados (`user_module_permissions`)
-
-Atualmente existem registros com `module_key = 'diretorio'` no banco. Para preservar permissões já configuradas:
-
-```sql
-update public.user_module_permissions
-set module_key = 'governanca'
-where module_key = 'diretorio';
+```
+Configurações
+  1. Permissões              → /configuracoes/permissoes
+  2. Equipes                 → /configuracoes/equipes
+  3. Alçadas de crédito      → /configuracoes/alcadas
+  4. Séries de investimento  → /configuracoes/series-investidor
 ```
 
-Aplicada via `supabase--migration`. Sem alteração de schema (a coluna é `text` livre).
+- A aba **Pipeline** é removida (etapas comerciais já fechadas — sem necessidade de edição).
+- A aba **Categorias de doc.** sai do nível raiz e passa a viver **dentro de Alçadas de crédito** como sub-aba, alinhada à ideia de que a exigibilidade documental varia por faixa de faturamento.
+- Renomear "Alçadas" → "Alçadas de crédito".
 
-## 4. Roteamento (`src/App.tsx`)
+## Estrutura interna de Alçadas de crédito
 
-Sem mudanças — todas as rotas `/diretorio/...` continuam funcionando como hoje (`/diretorio/investidores`, `/diretorio/investidores/:id`, `/diretorio/:id` e o redirect `/diretorio` → `/cedentes`). O usuário não pediu para renomear URLs e fazer isso quebraria links externos / favoritos.
+`/configuracoes/alcadas` ganha um nível de sub-abas próprio (PageTabs interno ou `Tabs` do shadcn — sub-abs leves para não conflitar com o `PageTabs` da página pai). Sub-abas:
+
+```
+Alçadas de crédito
+  • Faixas de alçada        (conteúdo atual de AdminAlcadas)
+  • Categorias de documento (conteúdo atual de AdminCategorias)
+```
+
+Implementação: criar uma página container `AdminAlcadasIndex` (novo arquivo `src/pages/admin/AdminAlcadasIndex.tsx`) que renderiza um `Tabs` com os dois conteúdos, mostrando `<AdminAlcadas />` ou `<AdminCategorias />` conforme aba selecionada (state local + query param `?sub=categorias`). Sem rotas filhas — mantém URL única e reaproveita 100% dos componentes existentes.
+
+> Nota: o vínculo real "categoria exigida por faixa" exige nova relação no schema (`approval_level_id` em `documento_categorias` ou tabela ponte). **Não está nesta task** — fica como evolução futura. Esta task apenas organiza a UI para preparar a transição visual.
+
+## Rotas (`src/App.tsx`)
+
+- Remover rotas: `<Route path="pipeline" element={<AdminPipeline />} />` e `<Route path="categorias" element={<AdminCategorias />} />`.
+- Substituir `<Route path="alcadas" element={<AdminAlcadas />} />` por `<Route path="alcadas" element={<AdminAlcadasIndex />} />`.
+- Adicionar redirects de compatibilidade:
+  - `/configuracoes/pipeline` → `/configuracoes/permissoes` (Navigate replace)
+  - `/configuracoes/categorias` → `/configuracoes/alcadas?sub=categorias` (Navigate replace)
+- Imports: remover `AdminPipeline` e (se não usado em outro lugar) `AdminCategorias` direto; adicionar `AdminAlcadasIndex`.
 
 ## Detalhes técnicos
 
 - Arquivos a editar:
-  - `src/components/AppSidebar.tsx`
-  - `src/hooks/useModulePermissions.ts`
-  - `src/pages/admin/UserAccessDrawer.tsx`
-  - `src/pages/admin/AdminPermissoes.tsx`
-- Migração SQL via `supabase--migration` para preservar permissões.
-- Sem alteração em RLS, edge functions, schemas de tabelas, lógica de negócio, componentes de página, ou na rota `/diretorio/*`.
-- O grupo "Governança" fica oculto no menu (sem itens), mas aparece nas telas de permissões/usuários para configuração futura.
+  - `src/pages/Configuracoes.tsx` (lista e ordem das abas; renomear "Alçadas" → "Alçadas de crédito"; remover Pipeline e Categorias de doc.)
+  - `src/App.tsx` (rotas)
+- Arquivos a criar:
+  - `src/pages/admin/AdminAlcadasIndex.tsx` — container com `Tabs` internas, lê/escreve `?sub=categorias` no query string para deep-link.
+- Arquivos preservados sem alteração interna:
+  - `src/pages/admin/AdminAlcadas.tsx` (passa a ser embutido pelo Index)
+  - `src/pages/admin/AdminCategorias.tsx` (passa a ser embutido pelo Index)
+  - `src/pages/admin/AdminPipeline.tsx` (fica órfão de rota, pode ser limpo no futuro)
+- Sem alterações em: schema do banco (`documento_categorias`, `approval_levels`), RLS, hooks, edge functions, ou qualquer outra lógica.
+- `useModulePermissions` / `RoleGuard` continuam apontando para `moduleKey: "config"` no nível raiz — sub-abas herdam.
 
 ## Fora de escopo
 
-- Renomear rotas `/diretorio/...` para `/governanca/...`.
-- Adicionar novas seções em Governança.
-- Mexer em qualquer lógica de Pasta de Investidores além do local no menu/label.
+- Vincular categorias de documento a faixas de alçada no banco (modelagem futura).
+- Remover fisicamente `AdminPipeline.tsx`.
+- Renomear rotas (`/configuracoes/alcadas` permanece).
