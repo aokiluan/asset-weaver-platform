@@ -15,7 +15,7 @@ import {
 import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Loader2, LayoutGrid, List as ListIcon, Eye, Phone } from "lucide-react";
+import { Loader2, Plus, LayoutGrid, List as ListIcon, Eye, Phone } from "lucide-react";
 import {
   DndContext, DragOverlay, PointerSensor, useSensor, useSensors,
   DragEndEvent, DragStartEvent, useDroppable, useDraggable,
