@@ -1,86 +1,35 @@
-## Nova seção "Boletas" no módulo Relação com Investidores
+## Objetivo
 
-Adiciona uma aba **Boletas** ao lado de "CRM de Prospecção" que lista os contatos no estágio `boleta_em_andamento` e permite executar um fluxo de boleta multi-etapas (dados → série → assinatura → pagamento), inspirado no projeto Invest Fácil mas integrado ao CRM e à base de dados deste projeto.
+A aba **Boletas** deixa de ser uma lista de registros `investor_boletas` e passa a ser a continuação natural do funil: lista todos os contatos do CRM no estágio **"Boleta em andamento"**, e cada linha permite iniciar/avançar a boleta.
 
----
+## Mudanças (apenas frontend, em `src/pages/investidores/InvestidoresBoletas.tsx`)
 
-### 1. Banco de dados (migração)
+1. **Fonte da lista**: `investor_contacts` filtrados por `stage = 'boleta_em_andamento'` (em vez de `investor_boletas`).
+2. **Join com boleta**: para cada contato, buscar a boleta aberta mais recente (status ≠ `concluida`/`cancelada`) em `investor_boletas`. Se não existir, contato aparece como "Não iniciada".
+3. **Card por contato** (padrão Nibo VIEW denso, `p-2.5`):
+   - Nome do contato + tipo
+   - Estado da boleta: badge com `BOLETA_STATUS_LABEL` ou "Não iniciada"
+   - Indicador de etapa atual (`Etapa X de 4`) + nome da etapa de `BOLETA_STEPS`
+   - Série e valor (se já preenchidos)
+   - Botão primário:
+     - "Iniciar boleta" se não houver registro
+     - "Continuar — {nome da próxima etapa}" se houver
+4. **Métricas no topo** (recalculadas):
+   - Contatos aguardando boleta (sem registro ou em rascunho)
+   - Boletas em andamento (status intermediários)
+   - Concluídas no mês (consulta separada de `investor_boletas` com `concluida_em` no mês)
+5. **Seções**:
+   - "Aguardando início" — contatos sem boleta ou com status `rascunho`
+   - "Em andamento" — contatos com boleta em status `aguardando_assinatura`, `assinada`, `pagamento_enviado`
+   - "Concluídas recentes" (collapsible, opcional) — últimas boletas `concluida` para referência
+6. **Ações secundárias por linha**: abrir contato no CRM, excluir boleta (se existir e for rascunho).
+7. **Remover**: botão "Nova boleta" do header e o `AlertDialog` de seleção de contato — deixa de fazer sentido, pois cada contato elegível já aparece listado.
 
-**Tabela `investor_series`** (catálogo administrável)
-- nome, descricao, indexador (ex.: CDI), spread (numeric), prazo_meses, ativa (boolean), ordem
+## Sem mudanças
 
-**Tabela `investor_boletas`** (uma por boleta de um contato)
-- contact_id → `investor_contacts`
-- series_id → `investor_series`
-- valor (numeric), prazo_meses, taxa_efetiva (numeric, opcional)
-- status: enum `boleta_status` com `rascunho | aguardando_assinatura | assinada | pagamento_enviado | concluida | cancelada`
-- current_step (int 1–4), dados_investidor (jsonb: nome, doc, RG, endereço, e-mail), observacoes
-- contrato_path, contrato_assinado_em, comprovante_path, pagamento_enviado_em
-- concluida_em, created_by, timestamps
+- Schema do banco, RLS, wizard (`BoletaWizardSheet`), helpers de `investor-boletas.ts` e admin de séries permanecem como estão.
+- O wizard continua sendo aberto com `wizardContact` + `wizardBoleta` (null se for primeira vez).
 
-**Tabela `investor_boleta_history`** (auditoria de transições)
-- boleta_id, user_id, evento, detalhes (jsonb), created_at
+## Resultado para o usuário
 
-**RLS:** todas seguem o padrão "dono do contato" (`contact.user_id = auth.uid()`); admin enxerga tudo. `investor_series` é leitura para autenticados, escrita só para admin.
-
-**Storage:** bucket privado `investor-boletas` com políticas baseadas em `auth.uid()/<boleta_id>/...`.
-
-**Trigger:** ao mudar `status` para `concluida`, registra histórico e (opcional, sem auto-mover) deixa o usuário decidir mover o contato para `investidor_ativo`.
-
----
-
-### 2. Admin de séries
-
-- Nova página `src/pages/admin/AdminSeriesInvestidor.tsx` listando séries com CRUD (nome, indexador, spread, prazo, ativo).
-- Entrada no `AdminSidebar`/Configurações já existente.
-
----
-
-### 3. UI no módulo de investidores
-
-**`PageTabs` em `InvestidoresCRM`** ganha segunda aba `/investidores/boletas`.
-
-**Nova página `src/pages/investidores/Boletas.tsx`:**
-- Header com filtro por contato (busca por nome) e botão "Nova boleta" (abre seletor de contato em estágio `boleta_em_andamento`).
-- Bloco **Rascunhos** (boletas em `rascunho` ou `aguardando_assinatura`): card compacto com nome do investidor, série, valor, etapa atual, "Continuar".
-- Bloco **Em andamento** (`assinada`, `pagamento_enviado`): cartão com status colorido + ações.
-- Bloco **Concluídas** (recolhível): histórico recente.
-- Métricas no topo: total em andamento, valor pipeline, qtd concluídas no mês.
-- Layout segue padrão Nibo ultracompacto (cards p-2.5, h-7, ícones 3.5).
-
-**Wizard `BoletaWizardSheet.tsx`** (Sheet lateral direita, mesmo padrão dos outros sheets do projeto):
-1. **Dados do investidor** — pré-preenche com `investor_contacts` (nome, telefone), pede CPF/CNPJ, RG, endereço, e-mail.
-2. **Série e valor** — Select carrega `investor_series` ativas; input de valor; mostra prazo/taxa derivados.
-3. **Assinatura** — upload do contrato assinado (PDF) → bucket `investor-boletas`; ao salvar, status = `assinada`.
-4. **Pagamento** — upload do comprovante (PDF/imagem); status = `pagamento_enviado`; botão "Concluir boleta" → `concluida` + opção "Mover contato para Investidor Ativo".
-
-Cada etapa salva como rascunho automaticamente (reaproveita `useFormDraft`); usuário pode fechar e voltar pela lista.
-
-**Ações por linha:**
-- Continuar (abre wizard na `current_step` salva)
-- Visualizar (sheet read-only com timeline)
-- Excluir (só rascunhos, não concluídas)
-
----
-
-### 4. Helpers / lib
-
-- `src/lib/investor-boletas.ts`: tipos (`Boleta`, `BoletaStatus`), labels, helpers de transição e formatação.
-- Reaproveita `fmtCompactBRL`, `formatCpfCnpj`, etc.
-
----
-
-### 5. Rotas
-
-- `/investidores/crm` (atual)
-- `/investidores/boletas` (nova) — protegida por `useModulePermissions('relacao_investidores')`.
-- `/admin/series-investidor` (admin).
-
----
-
-### Fora do escopo desta entrega
-- Geração automática de minuta/contrato em PDF (anexa-se manualmente).
-- Integração com assinador eletrônico externo (DocuSign/Clicksign).
-- Cobrança automática / boleto bancário real — apenas registro do fluxo interno.
-
-Posso seguir com essa estrutura?
+Ao abrir **Boletas**, vê imediatamente todos os contatos do funil prontos para boleta, com status visível da etapa em que cada um está, e um clique avança no wizard — sem precisar lembrar quem precisa ser cadastrado.

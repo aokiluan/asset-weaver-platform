@@ -7,20 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
-import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Loader2, ChevronRight, Trash2, FileText } from "lucide-react";
+import { Loader2, ChevronRight, Trash2, FileText, PlayCircle } from "lucide-react";
 import { toast } from "sonner";
 import {
-  BOLETA_STATUS_LABEL, BOLETA_STATUS_VARIANT, fmtBRL,
-  isClosedStatus, isInProgressStatus, isOpenStatus,
-  type InvestorBoleta, type InvestorSeries,
+  BOLETA_STATUS_LABEL, BOLETA_STATUS_VARIANT, BOLETA_STEPS, fmtBRL,
+  isClosedStatus, type InvestorBoleta, type InvestorSeries,
 } from "@/lib/investor-boletas";
-import { STAGE_LABEL, type InvestorContact } from "@/lib/investor-contacts";
+import { type InvestorContact } from "@/lib/investor-contacts";
 import { BoletaWizardSheet } from "./BoletaWizardSheet";
 
 export default function InvestidoresBoletas() {
@@ -35,9 +31,6 @@ export default function InvestidoresBoletas() {
   const [wizardContact, setWizardContact] = useState<InvestorContact | null>(null);
   const [wizardBoleta, setWizardBoleta] = useState<InvestorBoleta | null>(null);
 
-  const [pickContactOpen, setPickContactOpen] = useState(false);
-  const [pickContactId, setPickContactId] = useState("");
-
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -48,7 +41,11 @@ export default function InvestidoresBoletas() {
     setLoading(true);
     const [b, c, s] = await Promise.all([
       supabase.from("investor_boletas").select("*").order("updated_at", { ascending: false }),
-      supabase.from("investor_contacts").select("*").order("name"),
+      supabase
+        .from("investor_contacts")
+        .select("*")
+        .eq("stage", "boleta_em_andamento")
+        .order("name"),
       supabase.from("investor_series").select("*").eq("ativa", true).order("ordem"),
     ]);
     setBoletas((b.data ?? []) as unknown as InvestorBoleta[]);
@@ -61,69 +58,68 @@ export default function InvestidoresBoletas() {
     if (user) load();
   }, [user]);
 
-  const contactById = useMemo(() => {
-    const m = new Map<string, InvestorContact>();
-    contacts.forEach((c) => m.set(c.id, c));
-    return m;
-  }, [contacts]);
   const seriesById = useMemo(() => {
     const m = new Map<string, InvestorSeries>();
     series.forEach((s) => m.set(s.id, s));
     return m;
   }, [series]);
 
-  const filtered = useMemo(() => {
-    if (!search.trim()) return boletas;
+  // boleta aberta (não concluída/cancelada) mais recente por contato
+  const activeBoletaByContact = useMemo(() => {
+    const m = new Map<string, InvestorBoleta>();
+    for (const b of boletas) {
+      if (isClosedStatus(b.status)) continue;
+      if (!m.has(b.contact_id)) m.set(b.contact_id, b);
+    }
+    return m;
+  }, [boletas]);
+
+  const filteredContacts = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return boletas.filter((b) => {
-      const c = contactById.get(b.contact_id);
-      return c?.name?.toLowerCase().includes(q);
-    });
-  }, [boletas, search, contactById]);
+    if (!q) return contacts;
+    return contacts.filter((c) => c.name?.toLowerCase().includes(q));
+  }, [contacts, search]);
 
-  const drafts = filtered.filter((b) => isOpenStatus(b.status));
-  const inProgress = filtered.filter((b) => isInProgressStatus(b.status));
-  const closed = filtered.filter((b) => isClosedStatus(b.status));
+  type Row = { contact: InvestorContact; boleta: InvestorBoleta | null };
+  const rows: Row[] = useMemo(
+    () => filteredContacts.map((c) => ({ contact: c, boleta: activeBoletaByContact.get(c.id) ?? null })),
+    [filteredContacts, activeBoletaByContact],
+  );
 
-  // contatos que estão no estágio boleta_em_andamento
-  const eligibleContacts = useMemo(
-    () => contacts.filter((c) => c.stage === "boleta_em_andamento"),
-    [contacts],
+  const aguardando = rows.filter((r) => !r.boleta || r.boleta.status === "rascunho");
+  const emAndamento = rows.filter(
+    (r) => r.boleta && r.boleta.status !== "rascunho",
+  );
+
+  const concluidasRecentes = useMemo(
+    () => boletas.filter((b) => b.status === "concluida").slice(0, 10),
+    [boletas],
   );
 
   const metrics = useMemo(() => {
-    const open = [...drafts, ...inProgress];
-    const valorPipeline = open.reduce((a, b) => a + (b.valor ?? 0), 0);
     const monthStart = new Date();
     monthStart.setDate(1);
     monthStart.setHours(0, 0, 0, 0);
-    const concluidasMes = closed.filter(
+    const concluidasMes = boletas.filter(
       (b) => b.status === "concluida" && b.concluida_em && new Date(b.concluida_em) >= monthStart,
     ).length;
-    return { totalAbertas: open.length, valorPipeline, concluidasMes };
-  }, [drafts, inProgress, closed]);
+    const valorPipeline = rows.reduce((a, r) => a + (r.boleta?.valor ?? 0), 0);
+    return {
+      aguardando: aguardando.length,
+      emAndamento: emAndamento.length,
+      valorPipeline,
+      concluidasMes,
+    };
+  }, [rows, aguardando.length, emAndamento.length, boletas]);
 
-  function openContinue(b: InvestorBoleta) {
-    setWizardContact(contactById.get(b.contact_id) ?? null);
-    setWizardBoleta(b);
+  function openRow(row: Row) {
+    setWizardContact(row.contact);
+    setWizardBoleta(row.boleta);
     setWizardOpen(true);
   }
 
-  function openNew() {
-    setPickContactId(eligibleContacts[0]?.id ?? "");
-    setPickContactOpen(true);
-  }
-
-  function startWizardWithPicked() {
-    const c = contactById.get(pickContactId);
-    if (!c) {
-      toast.error("Selecione um contato");
-      return;
-    }
-    setWizardContact(c);
-    setWizardBoleta(null);
-    setPickContactOpen(false);
-    setWizardOpen(true);
+  function contactById(id: string) {
+    return contacts.find((c) => c.id === id);
   }
 
   async function handleDelete() {
@@ -146,16 +142,12 @@ export default function InvestidoresBoletas() {
           { label: "CRM de Prospecção", to: "/investidores/crm" },
           { label: "Boletas", to: "/investidores/boletas" },
         ]}
-        actions={
-          <Button size="sm" className="h-7" onClick={openNew}>
-            <Plus className="h-3.5 w-3.5 mr-1" /> Nova boleta
-          </Button>
-        }
       />
 
       <div className="space-y-4">
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          <Metric label="Boletas em andamento" value={String(metrics.totalAbertas)} />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <Metric label="Aguardando início" value={String(metrics.aguardando)} />
+          <Metric label="Em andamento" value={String(metrics.emAndamento)} />
           <Metric label="Valor em pipeline" value={fmtBRL(metrics.valorPipeline)} />
           <Metric label="Concluídas no mês" value={String(metrics.concluidasMes)} />
         </div>
@@ -173,49 +165,60 @@ export default function InvestidoresBoletas() {
           <div className="flex items-center justify-center py-16 text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin mr-2" /> Carregando...
           </div>
+        ) : contacts.length === 0 ? (
+          <div className="text-[12px] text-muted-foreground/80 text-center py-12 border border-dashed rounded-md">
+            Nenhum contato no estágio "Boleta em andamento". Mova um contato pelo CRM para começar.
+          </div>
         ) : (
           <div className="space-y-4">
-            <Section title="Rascunhos" empty="Nenhum rascunho.">
-              {drafts.map((b) => (
-                <BoletaCard
-                  key={b.id}
-                  boleta={b}
-                  contact={contactById.get(b.contact_id)}
-                  series={b.series_id ? seriesById.get(b.series_id) : undefined}
-                  onContinue={() => openContinue(b)}
-                  onDelete={() => setDeleteId(b.id)}
-                  canDelete
+            <Section title="Aguardando início">
+              {aguardando.map((r) => (
+                <ContactBoletaCard
+                  key={r.contact.id}
+                  row={r}
+                  series={r.boleta?.series_id ? seriesById.get(r.boleta.series_id) : undefined}
+                  onOpen={() => openRow(r)}
+                  onDelete={r.boleta ? () => setDeleteId(r.boleta!.id) : undefined}
                 />
               ))}
-              {drafts.length === 0 && <EmptyRow text="Nenhum rascunho." />}
+              {aguardando.length === 0 && <EmptyRow text="Todos os contatos já iniciaram sua boleta." />}
             </Section>
 
-            <Section title="Em andamento" empty="Nenhuma boleta em andamento.">
-              {inProgress.map((b) => (
-                <BoletaCard
-                  key={b.id}
-                  boleta={b}
-                  contact={contactById.get(b.contact_id)}
-                  series={b.series_id ? seriesById.get(b.series_id) : undefined}
-                  onContinue={() => openContinue(b)}
-                  onDelete={() => setDeleteId(b.id)}
+            <Section title="Em andamento">
+              {emAndamento.map((r) => (
+                <ContactBoletaCard
+                  key={r.contact.id}
+                  row={r}
+                  series={r.boleta?.series_id ? seriesById.get(r.boleta.series_id) : undefined}
+                  onOpen={() => openRow(r)}
                 />
               ))}
-              {inProgress.length === 0 && <EmptyRow text="Nenhuma boleta em andamento." />}
+              {emAndamento.length === 0 && <EmptyRow text="Nenhuma boleta em andamento." />}
             </Section>
 
-            {closed.length > 0 && (
-              <Section title="Concluídas / Canceladas">
-                {closed.slice(0, 20).map((b) => (
-                  <BoletaCard
-                    key={b.id}
-                    boleta={b}
-                    contact={contactById.get(b.contact_id)}
-                    series={b.series_id ? seriesById.get(b.series_id) : undefined}
-                    onContinue={() => openContinue(b)}
-                    readOnly
-                  />
-                ))}
+            {concluidasRecentes.length > 0 && (
+              <Section title="Concluídas recentes">
+                {concluidasRecentes.map((b) => {
+                  const c = contactById(b.contact_id);
+                  return (
+                    <Card key={b.id} className="p-2.5">
+                      <div className="flex items-center gap-3">
+                        <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <div className="text-[12px] font-medium truncate">{c?.name ?? "—"}</div>
+                            <Badge variant={BOLETA_STATUS_VARIANT[b.status]} className="text-[9px] h-4 px-1.5">
+                              {BOLETA_STATUS_LABEL[b.status]}
+                            </Badge>
+                          </div>
+                          <div className="text-[11px] text-muted-foreground leading-tight truncate mt-0.5">
+                            {b.series_id ? seriesById.get(b.series_id)?.nome ?? "Série" : "Sem série"} · {fmtBRL(b.valor)}
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                })}
               </Section>
             )}
           </div>
@@ -233,44 +236,12 @@ export default function InvestidoresBoletas() {
         onSaved={load}
       />
 
-      <AlertDialog open={pickContactOpen} onOpenChange={setPickContactOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Nova boleta</AlertDialogTitle>
-            <AlertDialogDescription className="text-[12px]">
-              Selecione um contato no estágio "{STAGE_LABEL.boleta_em_andamento}".
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <Select value={pickContactId} onValueChange={setPickContactId}>
-            <SelectTrigger className="h-8 text-[12px]">
-              <SelectValue placeholder="Selecione um contato" />
-            </SelectTrigger>
-            <SelectContent>
-              {eligibleContacts.length === 0 && (
-                <div className="text-[12px] text-muted-foreground p-2">
-                  Nenhum contato em "Boleta em Andamento". Mova um contato no CRM primeiro.
-                </div>
-              )}
-              {eligibleContacts.map((c) => (
-                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={startWizardWithPicked} disabled={!pickContactId}>
-              Iniciar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
       <AlertDialog open={!!deleteId} onOpenChange={(v) => !v && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir boleta?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação não pode ser desfeita.
+              Esta ação não pode ser desfeita. O contato continuará no funil.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -297,7 +268,7 @@ function Metric({ label, value }: { label: string; value: string }) {
   );
 }
 
-function Section({ title, children, empty }: { title: string; children: React.ReactNode; empty?: string }) {
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="space-y-2">
       <div className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">{title}</div>
@@ -314,37 +285,58 @@ function EmptyRow({ text }: { text: string }) {
   );
 }
 
-function BoletaCard({
-  boleta, contact, series, onContinue, onDelete, canDelete, readOnly,
+function ContactBoletaCard({
+  row, series, onOpen, onDelete,
 }: {
-  boleta: InvestorBoleta;
-  contact: InvestorContact | undefined;
+  row: { contact: InvestorContact; boleta: InvestorBoleta | null };
   series: InvestorSeries | undefined;
-  onContinue: () => void;
+  onOpen: () => void;
   onDelete?: () => void;
-  canDelete?: boolean;
-  readOnly?: boolean;
 }) {
+  const { contact, boleta } = row;
+  const step = boleta?.current_step ?? 1;
+  const stepLabel = BOLETA_STEPS.find((s) => s.id === step)?.label ?? "—";
+  const cta = !boleta
+    ? "Iniciar boleta"
+    : boleta.status === "rascunho"
+      ? `Continuar — ${stepLabel}`
+      : `Avançar — ${stepLabel}`;
+
   return (
     <Card
-      className="p-2.5 hover:border-primary/40 cursor-pointer"
-      onClick={onContinue}
+      className="p-2.5 hover:border-primary/40 cursor-pointer transition-colors"
+      onClick={onOpen}
     >
       <div className="flex items-center gap-3">
-        <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+        <div className="h-7 w-7 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
+          {boleta ? <FileText className="h-3.5 w-3.5" /> : <PlayCircle className="h-3.5 w-3.5" />}
+        </div>
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <div className="text-[12px] font-medium truncate">{contact?.name ?? "—"}</div>
-            <Badge variant={BOLETA_STATUS_VARIANT[boleta.status]} className="text-[9px] h-4 px-1.5">
-              {BOLETA_STATUS_LABEL[boleta.status]}
-            </Badge>
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="text-[12px] font-medium truncate">{contact.name}</div>
+            {boleta ? (
+              <Badge variant={BOLETA_STATUS_VARIANT[boleta.status]} className="text-[9px] h-4 px-1.5">
+                {BOLETA_STATUS_LABEL[boleta.status]}
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="text-[9px] h-4 px-1.5">Não iniciada</Badge>
+            )}
           </div>
           <div className="text-[11px] text-muted-foreground leading-tight truncate mt-0.5">
-            {series?.nome ?? "Sem série"} · {fmtBRL(boleta.valor)}
-            {!readOnly && ` · Etapa ${boleta.current_step}/4`}
+            {boleta
+              ? <>{series?.nome ?? "Sem série"} · {fmtBRL(boleta.valor)} · Etapa {step}/4 · {stepLabel}</>
+              : <>Sem boleta — pronta para iniciar</>}
           </div>
         </div>
-        {canDelete && onDelete && (
+        <Button
+          size="sm"
+          variant={boleta ? "outline" : "default"}
+          className="h-7 text-[11px] hidden sm:inline-flex"
+          onClick={(e) => { e.stopPropagation(); onOpen(); }}
+        >
+          {cta}
+        </Button>
+        {onDelete && (
           <Button
             variant="ghost"
             size="icon"
