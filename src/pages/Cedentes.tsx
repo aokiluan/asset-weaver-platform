@@ -5,14 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Trash2, ExternalLink, Building2, History, Upload, FolderOpen } from "lucide-react";
+import { Search, Trash2, ExternalLink, Building2, History, Upload, FolderOpen } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { CedenteNovoSheet } from "@/components/cedentes/CedenteNovoSheet";
+
 import { CedenteImportDialog } from "@/components/cedentes/CedenteImportDialog";
 import { useAuth } from "@/hooks/useAuth";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -58,7 +58,7 @@ export default function Cedentes() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [novoOpen, setNovoOpen] = useState(false);
+  
   const [importOpen, setImportOpen] = useState(false);
 
   const load = async () => {
@@ -130,22 +130,6 @@ export default function Cedentes() {
                 <span tabIndex={0} className="inline-flex">
                   <Button variant="outline" onClick={() => setImportOpen(true)} disabled={authLoading || !canCreate}>
                     <Upload className="h-4 w-4 mr-2" /> Importar Cedentes
-                  </Button>
-                </span>
-              </TooltipTrigger>
-              {!canCreate && !authLoading && (
-                <TooltipContent side="bottom" className="max-w-xs text-xs">
-                  Seu usuário não tem permissão
-                </TooltipContent>
-              )}
-            </Tooltip>
-          </TooltipProvider>
-          <TooltipProvider delayDuration={200}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span tabIndex={0} className="inline-flex">
-                  <Button onClick={() => setNovoOpen(true)} disabled={authLoading || !canCreate}>
-                    <Plus className="h-4 w-4 mr-2" /> Novo cadastro
                   </Button>
                 </span>
               </TooltipTrigger>
@@ -377,15 +361,6 @@ export default function Cedentes() {
           )}
         </div>
       </div>
-
-      <CedenteNovoSheet
-        open={novoOpen}
-        onOpenChange={setNovoOpen}
-        onCreated={async (id) => {
-          await load();
-          setSelectedId(id);
-        }}
-      />
 
       <CedenteImportDialog
         open={importOpen}

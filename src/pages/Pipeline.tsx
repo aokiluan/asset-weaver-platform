@@ -15,7 +15,7 @@ import {
 import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Loader2, LayoutGrid, List as ListIcon, Eye, Phone } from "lucide-react";
+import { Loader2, Plus, LayoutGrid, List as ListIcon, Eye, Phone } from "lucide-react";
 import {
   DndContext, DragOverlay, PointerSensor, useSensor, useSensors,
   DragEndEvent, DragStartEvent, useDroppable, useDraggable,
@@ -33,6 +33,7 @@ import {
   type CedenteQuickView,
 } from "@/components/cedentes/CedenteQuickViewDialog";
 import { RegistrarContatoCedenteDialog } from "@/components/cedentes/RegistrarContatoCedenteDialog";
+import { CedenteNovoSheet } from "@/components/cedentes/CedenteNovoSheet";
 
 interface CedenteCard {
   id: string;
@@ -101,7 +102,9 @@ function toQuickView(c: CedenteCard): CedenteQuickView {
 
 export default function Pipeline() {
   const navigate = useNavigate();
-  const { user, roles } = useAuth();
+  const { user, roles, hasRole, loading: authLoading } = useAuth();
+  const canCreate = hasRole("admin") || hasRole("comercial");
+  const [novoOpen, setNovoOpen] = useState(false);
   const [cedentes, setCedentes] = useState<CedenteCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -198,7 +201,33 @@ export default function Pipeline() {
 
   return (
     <>
-      <PageTabs title="Pipeline de Cedentes" tabs={[]} />
+      <PageTabs
+        title="Pipeline de Cedentes"
+        tabs={[]}
+        actions={
+          <TooltipProvider delayDuration={200}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span tabIndex={0} className="inline-flex">
+                  <Button
+                    onClick={() => setNovoOpen(true)}
+                    disabled={authLoading || !canCreate}
+                    size="sm"
+                    className="h-7 text-[12px]"
+                  >
+                    <Plus className="h-3.5 w-3.5 mr-1" /> Novo cadastro
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              {!canCreate && !authLoading && (
+                <TooltipContent side="bottom" className="max-w-xs text-xs">
+                  Seu usuário não tem permissão
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
+        }
+      />
 
       <div className="space-y-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -355,6 +384,15 @@ export default function Pipeline() {
         onOpenChange={(v) => !v && setRegisterFor(null)}
         cedente={registerFor}
         onSaved={load}
+      />
+
+      <CedenteNovoSheet
+        open={novoOpen}
+        onOpenChange={setNovoOpen}
+        onCreated={async (id) => {
+          await load();
+          navigate(`/cedentes/${id}`);
+        }}
       />
     </>
   );
