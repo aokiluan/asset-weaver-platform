@@ -145,10 +145,10 @@ export function BoletaWizardSheet({ open, onOpenChange, contact, boleta, onSaved
       }
     }
     setSaving(true);
-    const id = await ensureBoleta({ current_step: Math.min(step + 1, 4) });
+    const id = await ensureBoleta({ current_step: Math.min(step + 1, 3) });
     setSaving(false);
     if (id) {
-      setStep((s) => Math.min(s + 1, 4));
+      setStep((s) => Math.min(s + 1, 3));
       onSaved();
     }
   }
