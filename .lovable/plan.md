@@ -1,94 +1,47 @@
 ## Objetivo
 
-Substituir a etapa 3 (Assinatura) do wizard de boleta — hoje um upload manual de PDF — pela mesma integração com **Autentique** do projeto Invest Fácil: gera o **Boletim de Subscrição** + **Certificado de Debêntures**, envia em um único envelope com 3 signatários (2 diretores + investidor) e acompanha o status em tempo real até a conclusão.
+Eliminar a 4ª etapa (upload de comprovante de pagamento) e fazer com que a boleta seja **concluída automaticamente** assim que todos os signatários assinarem no Autentique.
 
-## Pré-requisito
+## Alterações
 
-Adicionar o secret **`AUTENTIQUE_API_KEY`** (token Bearer da API v2 do Autentique). Você precisa fornecer esse valor antes de prosseguir — sem ele as edge functions não funcionam.
+### 1. `src/lib/investor-boletas.ts`
+- `BOLETA_STEPS`: remover `{ id: 4, label: "Pagamento" }`. Wizard passa a ter 3 passos: **Dados → Série e valor → Assinatura**.
+- `isInProgressStatus`: passa a considerar apenas `aguardando_assinatura` (e `assinada` como estado transitório curto). `pagamento_enviado` deixa de ser usado em novas boletas (mantido no enum por compatibilidade com dados antigos).
 
-## Fluxo na etapa 3 do wizard
+### 2. `src/pages/investidores/BoletaWizardSheet.tsx`
+- Remover todo o bloco `step === 4` (FileUploader de comprovante + botões "Concluir e marcar como Ativo" / "Apenas concluir").
+- Remover estados/handlers obsoletos: `comprovantePath`, `uploadFile('comprovante')`, `handleConcluir`. Manter `contratoPath` apenas se ainda referenciado pelo SignatureStep (não é).
+- `handleNext`: cap em `Math.min(s + 1, 3)`.
+- Footer: botão "Próximo" deixa de aparecer quando `step === 3` (assinatura controla o avanço).
+- Stepper passa a renderizar 3 bolinhas.
 
-```text
-[Preview Boletim] [Preview Certificado]
-        ↓
-[Enviar para assinatura]   ← chama edge function
-        ↓
-"Aguardando assinatura"    ← polling 15s + signers list (✓/⏳)
-        ↓ (todos assinaram)
-[✓ Assinado]  → status boleta = "assinada", current_step = 4 (auto)
+### 3. `src/pages/investidores/SignatureStep.tsx`
+Quando `tracking.status === 'finished'`:
+- Estado `signed` agora é **terminal**, não chama mais `onAdvance` automático.
+- Renderizar:
+  - Mensagem "Boleta concluída — todos os signatários assinaram".
+  - Botão **Fechar** que dispara `onSaved()` + fecha o sheet (props nova `onClose`).
+  - (Opcional) botão para marcar contato como `investidor_ativo`.
+- O avanço de status da boleta é feito pelo backend (`sync-autentique-status`), não pelo client.
+
+### 4. Edge function `supabase/functions/sync-autentique-status/index.ts`
+Quando `allSigned` virar `true`, em vez de marcar `status='assinada'` + `current_step=4`, marcar **direto como concluída**:
+```ts
+await supabase.from("investor_boletas").update({
+  status: "concluida",
+  contrato_assinado_em: new Date().toISOString(),
+  concluida_em: new Date().toISOString(),
+  current_step: 3,
+}).eq("id", tracking.boleta_id);
 ```
 
-Sem upload manual. Continua sendo possível "Voltar". Autosave permanece ativo nas etapas 1–2.
+### 5. Edge function `autentique-webhook`
+Mesma alteração da #4 — qualquer caminho que detectasse `allSigned` deve concluir a boleta.
 
-## Banco de dados (migration)
+### 6. Bug paralelo (erro 500 atual `Autentique [200]`)
+Logar `result.errors` em `send-to-autentique` antes de lançar, para identificar a causa real (provavelmente signatário inválido / e-mail repetido). Retornar a mensagem do Autentique no payload de erro para aparecer no toast do frontend.
 
-Nova tabela `public.signature_tracking`:
+## Notas
 
-- `boleta_id` (FK → `investor_boletas.id`, on delete cascade)
-- `autentique_document_id` (text, único)
-- `document_name` (text)
-- `status` (text: `pending` | `in_progress` | `finished`)
-- `signers` (jsonb: `[{ name, email, publicId, signed }]`)
-- `finished_at` (timestamptz, nullable)
-- `created_at`, `updated_at`
-
-RLS: usuários autenticados leem/escrevem tracking de boletas que eles enxergam (mesma política do `investor_boletas`). Service role livre (edge functions usam service role).
-
-## Edge functions (3)
-
-Adaptadas do projeto Invest Fácil — substituem `operationId` por `boletaId` e leem dados direto do banco.
-
-1. **`send-to-autentique`** (público, sem JWT)
-   - Input: `{ boletaId }`
-   - Carrega `investor_boletas` + `investor_series` + `dados_investidor`.
-   - Gera HTML do Boletim + Certificado (lib portada — ver abaixo) e combina em um único arquivo.
-   - Cria documento via GraphQL `createDocument` no Autentique com 3 signers (Everaldo, Luan, investidor).
-   - Insere registro em `signature_tracking` e atualiza `investor_boletas.status = 'aguardando_assinatura'`.
-
-2. **`sync-autentique-status`** (público)
-   - Input: `{ boletaId }`. Consulta documento no Autentique, faz merge dos signers, atualiza tracking. Se todos assinaram: `status='finished'`, `boleta.status='assinada'`, `boleta.contrato_assinado_em=now()`, `current_step=4`.
-
-3. **`autentique-webhook`** (público, sem JWT)
-   - Recebe eventos `document.finished`, `document.updated`, `signature.accepted` e atualiza tracking + boleta da mesma forma. URL precisa ser cadastrada no painel do Autentique.
-
-## Frontend — arquivos novos
-
-- **`src/lib/boleta-document-templates.ts`** — porta de `document-templates.ts` adaptada à nova fonte de dados (`InvestorBoleta` + `BoletaDadosInvestidor` + `InvestorSeries`):
-  - Lê série/indexador/prazo/spread direto de `investor_series` (não mais hardcoded CDI+1,5%/2,0%).
-  - Quantidade de debêntures = `floor(valor / 1000)`.
-  - Mantém layout/HTML idênticos (Times New Roman, A4, tabelas com bordas).
-
-- **`src/lib/signature-tracking.ts`** — porta direta (troca `operation_id` por `boleta_id`).
-
-## Frontend — alteração em `BoletaWizardSheet.tsx`
-
-Substituir o conteúdo atual de `step === 3` por um componente `<BoletaSignatureStep boleta={…} dados={…} series={…} onSigned={…} />` com 4 estados (`preview` | `sending` | `pending` | `signed`):
-
-- **preview**: cards de Boletim e Certificado com botões "Visualizar" (Dialog com iframe srcDoc) e "Baixar HTML"; lista os 3 signatários; botão primário "Enviar para assinatura".
-- **sending**: spinner.
-- **pending**: alerta âmbar "Aguardando assinatura" + lista de signers com ✓/⏳ + polling a cada 15s via `sync-autentique-status`.
-- **signed**: avança automaticamente para step 4 (Pagamento) após 2s.
-
-Ao reabrir uma boleta com tracking existente, o componente faz `getLatestSignatureTracking(boleta.id)` no mount e já entra no estado correto — não reenvia documento.
-
-## Hardcoded vs configurável
-
-Mantenho os 2 diretores **hardcoded** no edge function (Everaldo/Luan, mesmos CPFs/emails do Invest Fácil), igual à versão original. Se quiser depois movemos para uma tabela `signatarios_padrao` no admin — fora do escopo desta etapa.
-
-## Endereço da emissora no Boletim
-
-Hardcoded igual ao Invest Fácil (S3 Capital Securitizadora, Avenida Júlio Diniz 257, Campinas-SP). Posso parametrizar depois se for outra emissora.
-
-## Não muda
-
-- Etapas 1, 2 e 4 do wizard.
-- Autosave, CEP autocomplete, séries do admin, listagem de boletas.
-- Step 4 (Pagamento) continua com upload manual de comprovante — só a Assinatura passa a ser via Autentique.
-
-## Webhook
-
-Após o deploy, copio a URL pública do `autentique-webhook` e te envio para você cadastrar no painel do Autentique (Configurações → Webhooks). Sem o webhook a sincronização só ocorre via polling.
-
-## Próximo passo
-
-Aprove o plano e me forneça o `AUTENTIQUE_API_KEY` para eu pedir o secret e executar.
+- Boletas legadas que estiverem em `current_step=4` ou `status='pagamento_enviado'` continuam abrindo (o wizard cai no step 3 já que passamos a limitar).
+- Não removo as colunas `comprovante_path` / `pagamento_enviado_em` da tabela — só deixo de usá-las (evita migração destrutiva). Se quiser, posso fazer migration removendo depois.

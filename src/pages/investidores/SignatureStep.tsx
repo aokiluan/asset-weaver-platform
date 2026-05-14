@@ -25,9 +25,10 @@ interface Props {
   dados: BoletaDadosInvestidor;
   series: InvestorSeries;
   onAdvance: () => void;
+  onClose?: () => void;
 }
 
-export function SignatureStep({ boletaId, boleta, dados, series, onAdvance }: Props) {
+export function SignatureStep({ boletaId, boleta, dados, series, onAdvance, onClose }: Props) {
   const [state, setState] = useState<State>("preview");
   const [signers, setSigners] = useState<SignerStatus[]>([]);
   const [previewDoc, setPreviewDoc] = useState<"boletim" | "certificado" | null>(null);
@@ -40,8 +41,8 @@ export function SignatureStep({ boletaId, boleta, dados, series, onAdvance }: Pr
     setSigners(t.signers);
     if (t.status === "finished") {
       setState("signed");
-      if (notify) toast.success("Todos assinaram!");
-      setTimeout(onAdvance, 1500);
+      if (notify) toast.success("Boleta concluída — todos assinaram!");
+      onAdvance();
       return;
     }
     setState("pending");
@@ -176,8 +177,13 @@ export function SignatureStep({ boletaId, boleta, dados, series, onAdvance }: Pr
       {state === "signed" && (
         <div className="flex flex-col items-center gap-2 py-6">
           <CheckCircle2 className="h-6 w-6 text-emerald-600" />
-          <p className="text-[12px] font-medium">Contratos assinados!</p>
-          <p className="text-[11px] text-muted-foreground">Avançando…</p>
+          <p className="text-[12px] font-medium">Boleta concluída!</p>
+          <p className="text-[11px] text-muted-foreground leading-tight text-center">
+            Todos os signatários assinaram. A boleta foi marcada como concluída automaticamente.
+          </p>
+          {onClose && (
+            <Button size="sm" className="h-7 mt-2" onClick={onClose}>Fechar</Button>
+          )}
         </div>
       )}
 

@@ -21,8 +21,12 @@ serve(async (req) => {
     async function markFinishedIfNeeded(docId: string) {
       const { data: tracking } = await supabase.from("signature_tracking").select("boleta_id").eq("autentique_document_id", docId).single();
       if (tracking) {
+        const nowIso = new Date().toISOString();
         await supabase.from("investor_boletas").update({
-          status: "assinada", contrato_assinado_em: new Date().toISOString(), current_step: 4,
+          status: "concluida",
+          contrato_assinado_em: nowIso,
+          concluida_em: nowIso,
+          current_step: 3,
         }).eq("id", tracking.boleta_id);
       }
     }

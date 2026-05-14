@@ -77,14 +77,13 @@ export const BOLETA_STEPS = [
   { id: 1, label: "Dados" },
   { id: 2, label: "Série e valor" },
   { id: 3, label: "Assinatura" },
-  { id: 4, label: "Pagamento" },
 ] as const;
 
 export function isOpenStatus(s: BoletaStatus): boolean {
   return s === "rascunho" || s === "aguardando_assinatura";
 }
 export function isInProgressStatus(s: BoletaStatus): boolean {
-  return s === "assinada" || s === "pagamento_enviado";
+  return s === "assinada";
 }
 export function isClosedStatus(s: BoletaStatus): boolean {
   return s === "concluida" || s === "cancelada";

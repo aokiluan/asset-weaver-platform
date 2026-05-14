@@ -63,7 +63,7 @@ export function BoletaWizardSheet({ open, onOpenChange, contact, boleta, onSaved
     if (!open) return;
     if (boleta) {
       setBoletaId(boleta.id);
-      setStep(boleta.current_step || 1);
+      setStep(Math.min(boleta.current_step || 1, 3));
       setDados(boleta.dados_investidor || {});
       setSeriesId(boleta.series_id ?? "");
       setValor(boleta.valor ?? null);
@@ -145,10 +145,10 @@ export function BoletaWizardSheet({ open, onOpenChange, contact, boleta, onSaved
       }
     }
     setSaving(true);
-    const id = await ensureBoleta({ current_step: Math.min(step + 1, 4) });
+    const id = await ensureBoleta({ current_step: Math.min(step + 1, 3) });
     setSaving(false);
     if (id) {
-      setStep((s) => Math.min(s + 1, 4));
+      setStep((s) => Math.min(s + 1, 3));
       onSaved();
     }
   }
@@ -384,53 +384,13 @@ export function BoletaWizardSheet({ open, onOpenChange, contact, boleta, onSaved
                 created_at: "",
                 updated_at: "",
               }}
-              onAdvance={() => { setStep(4); onSaved(); }}
+              onAdvance={() => { onSaved(); }}
+              onClose={() => onOpenChange(false)}
             />
           )}
           {step === 3 && (!boletaId || !selectedSeries) && (
             <div className="text-[12px] text-muted-foreground">
               Complete os passos anteriores para gerar os documentos de assinatura.
-            </div>
-          )}
-
-          {step === 4 && (
-            <div className="space-y-3">
-              <div className="text-[12px] text-muted-foreground">
-                Faça upload do comprovante de pagamento.
-              </div>
-              <FileUploader
-                accept="application/pdf,image/*"
-                currentPath={comprovantePath}
-                uploading={uploading}
-                onFile={(f) => uploadFile(f, "comprovante")}
-              />
-              {comprovantePath && (
-                <div className="border rounded-md p-3 bg-muted/30 space-y-2">
-                  <div className="text-[12px] font-medium">Resumo</div>
-                  <div className="text-[11px] text-muted-foreground">
-                    {dados.nome} · {selectedSeries?.nome} · {fmtBRL(valor)}
-                  </div>
-                  <div className="flex gap-2 pt-2">
-                    <Button
-                      size="sm"
-                      className="h-7"
-                      disabled={saving}
-                      onClick={() => handleConcluir(true)}
-                    >
-                      Concluir e marcar como Ativo
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-7"
-                      disabled={saving}
-                      onClick={() => handleConcluir(false)}
-                    >
-                      Apenas concluir
-                    </Button>
-                  </div>
-                </div>
-              )}
             </div>
           )}
         </div>
@@ -457,7 +417,7 @@ export function BoletaWizardSheet({ open, onOpenChange, contact, boleta, onSaved
                 </span>
               ) : null}
             </span>
-            {step < 4 && (
+            {step < 3 && (
               <Button size="sm" className="h-7" disabled={saving} onClick={handleNext}>
                 {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <>Próximo <ArrowRight className="h-3.5 w-3.5 ml-1" /></>}
               </Button>

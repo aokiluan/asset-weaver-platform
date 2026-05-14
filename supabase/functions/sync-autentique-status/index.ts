@@ -102,9 +102,10 @@ serve(async (req) => {
 
     if (allSigned) {
       await supabase.from("investor_boletas").update({
-        status: "assinada",
+        status: "concluida",
         contrato_assinado_em: new Date().toISOString(),
-        current_step: 4,
+        concluida_em: new Date().toISOString(),
+        current_step: 3,
       }).eq("id", tracking.boleta_id);
     }
 
