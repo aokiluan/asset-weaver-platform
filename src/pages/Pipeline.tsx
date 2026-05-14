@@ -15,8 +15,9 @@ import {
 import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Loader2, Plus, Upload, LayoutGrid, List as ListIcon, Eye, Phone } from "lucide-react";
+import { Loader2, Plus, Upload, LayoutGrid, List as ListIcon, Filter, Eye, Phone } from "lucide-react";
 import { CedenteImportDialog } from "@/components/cedentes/CedenteImportDialog";
+import { FunnelView, type FunnelStage } from "@/components/pipeline/FunnelView";
 import {
   DndContext, DragOverlay, PointerSensor, useSensor, useSensors,
   DragEndEvent, DragStartEvent, useDroppable, useDraggable,
@@ -52,7 +53,7 @@ interface CedenteCard {
   last_contact_date: string | null;
 }
 
-type View = "kanban" | "list";
+type View = "kanban" | "list" | "funnel";
 type SetorFilter = "todos" | string;
 
 const fmtBRL = (v: number | null | undefined) =>
@@ -303,6 +304,9 @@ export default function Pipeline() {
             <ToggleGroupItem value="list" className="h-7 px-2">
               <ListIcon className="h-3.5 w-3.5" />
             </ToggleGroupItem>
+            <ToggleGroupItem value="funnel" className="h-7 px-2">
+              <Filter className="h-3.5 w-3.5" />
+            </ToggleGroupItem>
           </ToggleGroup>
         </div>
 
@@ -352,6 +356,20 @@ export default function Pipeline() {
               </DragOverlay>
             </DndContext>
           </TooltipProvider>
+        ) : view === "funnel" ? (
+          <FunnelView
+            stages={[...STAGE_ORDER, "inativo" as CedenteStage].map<FunnelStage>((stage) => {
+              const items = filtered.filter((c) => c.stage === stage);
+              return {
+                key: stage,
+                label: STAGE_LABEL[stage],
+                count: items.length,
+                value: items.reduce((a, c) => a + (c.faturamento_medio ?? 0), 0),
+                terminal: isTerminal(stage),
+              };
+            })}
+            fmtValue={fmtCompactBRL}
+          />
         ) : (
           <ListView
             rows={filtered}
