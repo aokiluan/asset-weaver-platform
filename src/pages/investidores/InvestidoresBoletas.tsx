@@ -160,7 +160,7 @@ export default function InvestidoresBoletas() {
       <PageTabs
         title="Relação com Investidores"
         tabs={[
-          { label: "CRM de Prospecção", to: "/investidores/crm" },
+          { label: "Pipeline de Investidores", to: "/investidores/crm" },
           { label: "Boletas", to: "/investidores/boletas" },
         ]}
       />
