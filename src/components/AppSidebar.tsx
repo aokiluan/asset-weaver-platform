@@ -103,6 +103,7 @@ const GROUPS: Group[] = [
     items: [
       { title: "Pipeline de Cedentes", url: "/pipeline", icon: IconKanban },
       { title: "Cedentes", url: "/cedentes", icon: IconBuilding },
+      { title: "Esteira de Crédito", url: "/esteira", icon: IconListChecks },
       {
         title: "Comitê",
         url: "/comite",
@@ -122,7 +123,6 @@ const GROUPS: Group[] = [
     label: "Diretório",
     icon: IconFolder,
     items: [
-      { title: "Pasta de Cedentes", url: "/diretorio", icon: IconBuilding },
       { title: "Pasta de Investidores", url: "/diretorio/investidores", icon: IconWallet },
     ],
   },

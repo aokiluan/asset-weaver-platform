@@ -34,6 +34,8 @@ import Comite from "./pages/Comite.tsx";
 import Formalizacao from "./pages/Formalizacao.tsx";
 import Diretorio from "./pages/Diretorio.tsx";
 import DiretorioDetail from "./pages/DiretorioDetail.tsx";
+import Esteira from "./pages/Esteira.tsx";
+import EsteiraDetail from "./pages/EsteiraDetail.tsx";
 import Investidores from "./pages/Investidores.tsx";
 import InvestidorDetail from "./pages/InvestidorDetail.tsx";
 import InvestidoresCRM from "./pages/investidores/InvestidoresCRM.tsx";
@@ -68,9 +70,12 @@ const App = () => (
               <Route path="/cedentes/novo" element={<CedenteCadastro />} />
               <Route path="/cedentes/:id/editar" element={<CedenteCadastro />} />
               <Route path="/cedentes/:id" element={<CedenteDetail />} />
-              <Route path="/diretorio" element={<Diretorio />} />
+              <Route path="/esteira" element={<Esteira />} />
+              <Route path="/esteira/:id" element={<EsteiraDetail />} />
               <Route path="/diretorio/investidores" element={<Investidores />} />
               <Route path="/diretorio/investidores/:id" element={<InvestidorDetail />} />
+              {/* Pasta de Cedentes foi absorvida pelo hub /cedentes */}
+              <Route path="/diretorio" element={<Navigate to="/cedentes" replace />} />
               <Route path="/diretorio/:id" element={<DiretorioDetail />} />
 
               {/* Relação com Investidores */}
