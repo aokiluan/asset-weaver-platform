@@ -73,6 +73,7 @@ export default function InvestidorDetail() {
   const [viewing, setViewing] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewName, setPreviewName] = useState<string>("");
+  const [activities, setActivities] = useState<InvestorActivity[]>([]);
 
   useEffect(() => {
     (async () => {
