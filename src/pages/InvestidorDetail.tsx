@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { PdfPreview } from "@/components/ui/pdf-preview";
 import { ArrowLeft, FileText, Download, Eye, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { INVESTOR_ACTIVITY_LABEL, type InvestorActivity } from "@/lib/investor-contacts";
 
 interface Investidor {
   id: string;
@@ -72,6 +73,7 @@ export default function InvestidorDetail() {
   const [viewing, setViewing] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewName, setPreviewName] = useState<string>("");
+  const [activities, setActivities] = useState<InvestorActivity[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -83,9 +85,22 @@ export default function InvestidorDetail() {
 
       const { data: bols } = await supabase
         .from("investor_boletas")
-        .select("id,valor,concluida_em,status")
+        .select("id,valor,concluida_em,status,contact_id")
         .eq("investidor_id", id)
         .order("concluida_em", { ascending: false });
+      const contactIds = Array.from(
+        new Set(((bols ?? []) as any[]).map((b) => b.contact_id).filter(Boolean)),
+      );
+      if (contactIds.length) {
+        const { data: acts } = await supabase
+          .from("investor_contact_activities")
+          .select("*")
+          .in("contact_id", contactIds)
+          .order("occurred_at", { ascending: false });
+        setActivities((acts ?? []) as InvestorActivity[]);
+      } else {
+        setActivities([]);
+      }
       const ids = (bols ?? []).map((b: any) => b.id);
       let byBoleta: Record<string, any[]> = {};
       if (ids.length) {
@@ -248,6 +263,31 @@ export default function InvestidorDetail() {
                           ))}
                         </div>
                       )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-md border bg-card p-2.5 space-y-2">
+              <div className="text-[10px] leading-none uppercase tracking-wide text-muted-foreground">
+                Histórico de contatos
+              </div>
+              {activities.length === 0 ? (
+                <div className="text-[11px] text-muted-foreground/80 py-2">
+                  Nenhum contato registrado.
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  {activities.map((a) => (
+                    <div key={a.id} className="border-l-2 border-border pl-2">
+                      <div className="text-[10px] leading-none text-muted-foreground">
+                        {new Date(a.occurred_at).toLocaleDateString("pt-BR")} ·{" "}
+                        {INVESTOR_ACTIVITY_LABEL[a.type]}
+                      </div>
+                      <div className="text-[12px] leading-tight text-foreground mt-0.5 whitespace-pre-wrap">
+                        {a.description}
+                      </div>
                     </div>
                   ))}
                 </div>
