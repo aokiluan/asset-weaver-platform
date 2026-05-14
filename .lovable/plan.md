@@ -1,58 +1,53 @@
 ## Objetivo
 
-Hoje o diálogo "Adicionar anexo livre" (`UploadAnexoLivreDialog` em `src/pages/DiretorioDetail.tsx`) força todos os arquivos para a categoria fixa `catLivre` (a única com `requer_conciliacao = false`). O upload já passa por `buildDocumentoFileName`, mas como a categoria é sempre a mesma, todos viram `..._outros_..._vNN.ext`.
+Compactar o diálogo "Adicionar anexo livre" e trocar o campo "Observação (opcional)" (textarea) por um campo "Descrição" (input curto) **por arquivo**, que será incorporado ao nome padronizado do arquivo no upload.
 
-Você quer que, ao adicionar anexo livre:
-1. Cada arquivo seja **classificado em uma categoria do projeto** antes do envio.
-2. Cada arquivo seja **renomeado seguindo o padrão global** (`aaaa.mm.dd_categoria_cedente_vNN.ext`) usando a categoria escolhida.
+## Mudanças em `src/pages/DiretorioDetail.tsx` (apenas no `UploadAnexoLivreDialog`)
 
-## Mudanças (apenas no diálogo)
+### 1. Header mais enxuto
+- `DialogTitle`: manter texto, reduzir para `text-[13px]`.
+- `DialogDescription`: encurtar para uma linha só, sem o `<code>` cheio:
+  > "Classifique e descreva cada arquivo. Os nomes seguem o padrão do projeto."
+  Tamanho `text-[11px] leading-tight`.
+- `DialogHeader`: `space-y-0.5` para colar título e descrição.
 
-### 1. Estado por arquivo
-Trocar `files: File[]` por `items: { file: File; categoriaId: string }[]`.
-Ao selecionar arquivos no input, cada item começa com `categoriaId = catLivre.id` (default = "Outros / Anexo livre"), permitindo classificar logo em seguida.
+### 2. Estado por arquivo passa a incluir descrição
+- Trocar `items: { file; categoriaId }[]` por `items: { file; categoriaId; descricao: string }[]`.
+- Remover `obs` e o textarea inteiro.
+- `addFiles` inicia `descricao: ""`.
+- Novo helper `setDescricaoAt(i, value)`.
 
-### 2. UI: lista com seletor de categoria
-Em vez da `<ul>` informativa, renderizar uma lista compacta (tier FORM, h-7) onde cada linha tem:
+### 3. UI da lista de arquivos (compacta, 2 linhas por item)
+Cada `<li>` passa a ter duas linhas internas:
 
 ```
-[ícone] nome.pdf · 12.4 KB        [ Select categoria ▼ ]   [x]
+[ nome.pdf · 12.4 KB ]                          [ Categoria ▼ ]   [x]
+[ Input "Descrição (ex.: contrato aditivo)"  maxLength=40 ]
 ```
 
-- `Select` (shadcn) populado com `categorias` (todas as categorias ativas, não só `catLivre`).
-- Botão `x` (ghost h-6 w-6) para remover o arquivo da lista.
-- Label do bloco: "Arquivos e classificação".
-- Texto auxiliar: "Arquivos classificados em categorias do Cadastro entram normalmente no dossiê. Use *Outros / Anexo livre* para itens sem categoria."
+- Linha 1: nome (truncado, `text-[12px]`) + tamanho (`text-[10px]`) à esquerda; `Select` h-7 w-[150px] + botão remover à direita.
+- Linha 2: `<Input>` h-7 `text-[11px]` `placeholder="Descrição (curta) — usada no nome do arquivo"` `maxLength={40}`.
+- Texto auxiliar abaixo da lista vira uma linha só: "Use Outros / Anexo livre p/ itens sem categoria."
 
-### 3. Validação
-Botão **Enviar** desabilitado se:
-- `items.length === 0`, ou
-- algum `item.categoriaId` estiver vazio, ou
-- `busy === true`.
+### 4. Validação
+`canSubmit` exige também `items.every(it => it.descricao.trim().length > 0)`.
 
-### 4. Upload (handleUpload)
-- Calcular `nextByCategoria: Record<string, number>` fazendo **um** `select count` agrupado por `categoria_id` para todas as categorias usadas no batch (ou um count por categoria distinta, em paralelo).
-- Para cada item:
-  - `cat = categorias.find(c => c.id === item.categoriaId)`
-  - `versao = nextByCategoria[cat.id]++`
-  - `novoNome = buildDocumentoFileName({ originalName: file.name, categoria: cat.nome, cedente: cedente.razao_social, versao })`
-  - Insert em `documentos` com `categoria_id = cat.id`.
-  - Manter `status: "aprovado"` e `classificacao_status: "sugerido"` (igual ao atual).
-- Toast resume: `N anexo(s) adicionado(s) ao dossiê`.
+### 5. Renomeação usa a descrição
+Padrão final: `aaaa.mm.dd_categoria_cedente_descricao_vNN.ext`.
 
-### 5. Props/integração
-- `UploadAnexoLivreDialog` passa a receber `categorias: Categoria[]` (além do `catLivre`, que vira apenas o default).
-- Atualizar a chamada em `DiretorioDetail` (linha 1060) para passar `categorias={categorias}`.
+- Adicionar `descricao` (opcional) em `BuildNameInput` e em `buildDocumentoFileName` (`src/lib/documento-filename.ts`):
+  - Se vier `descricao`, slugificar (`slugify(desc, 24)`) e inserir entre `cedente` e `vNN`.
+  - Se vazio/undefined, manter o padrão atual (não quebra outros usos).
+- No `handleUpload`, passar `descricao: it.descricao` para `buildDocumentoFileName`.
+- `nome_arquivo_original` continua = `file.name`.
+- `observacoes` no insert passa a guardar a `descricao` (mesma string), assim a busca/listagem ainda mostra o texto.
 
-## Padrão visual (Nibo ultracompacto)
-
-- Dialog `max-w-md` mantido.
-- Form tier: `space-y-2.5`, labels `text-[11px] text-muted-foreground`, inputs/selects `h-7 text-[12px]`.
-- Lista de arquivos: cada linha `flex items-center gap-2 text-[12px]`, nome truncado, tamanho `text-[10px] text-muted-foreground`.
-- Footer mantém `Cancelar` ghost + `Enviar` primário.
+### 6. Espaçamento Nibo
+- `space-y-2` no corpo (em vez de `2.5`).
+- Lista `space-y-1`, cada `<li>` `px-2 py-1.5 space-y-1`.
 
 ## Fora do escopo
 
-- Sem mudanças em schema, RLS, storage, ou no nome do botão "Adicionar anexo livre".
-- Sem mexer em `documento-filename.ts` — o padrão já está correto.
-- Sem mudar o fluxo de conciliação do Cadastro.
+- Sem mudar schema, RLS, storage ou regra de versionamento.
+- Sem alterar outros lugares que chamam `buildDocumentoFileName` (a nova prop é opcional).
+- Sem mexer no botão de abrir o diálogo nem no fluxo pós-upload.
