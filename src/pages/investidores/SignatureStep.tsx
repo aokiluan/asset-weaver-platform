@@ -232,6 +232,27 @@ export function SignatureStep({ boletaId, boleta, dados, series, onAdvance, onCl
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={confirmCancel} onOpenChange={(o) => !cancelling && setConfirmCancel(o)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancelar processo de assinatura?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Os documentos enviados ao Autentique serão excluídos e a boleta marcada como <b>cancelada</b>. Essa ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={cancelling}>Voltar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); handleCancel(); }}
+              disabled={cancelling}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {cancelling ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Sim, cancelar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
