@@ -228,7 +228,7 @@ export default function InvestidorDetail() {
                               <div className="min-w-0 flex-1 text-[11px] truncate">{f.name}</div>
                               <Button
                                 variant="ghost" size="sm" className="h-6 text-[11px] px-2"
-                                onClick={() => handleView(f.storage_path)}
+                                onClick={() => handleView(f.storage_path, f.name)}
                                 disabled={viewing === f.storage_path}
                               >
                                 {viewing === f.storage_path
