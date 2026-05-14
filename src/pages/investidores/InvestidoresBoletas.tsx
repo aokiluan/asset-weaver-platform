@@ -17,6 +17,7 @@ import {
   isClosedStatus, type InvestorBoleta, type InvestorSeries,
 } from "@/lib/investor-boletas";
 import { type InvestorContact } from "@/lib/investor-contacts";
+import { resolveInvestorName } from "@/lib/investor-name";
 import { BoletaWizardSheet } from "./BoletaWizardSheet";
 import { BoletaConcluidaSheet } from "./BoletaConcluidaSheet";
 
