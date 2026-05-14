@@ -199,7 +199,7 @@ export default function Pipeline() {
   return (
     <>
       <PageTabs
-        title="Pipeline"
+        title="Pipeline de Cedentes"
         tabs={[]}
         actions={
           <Button
