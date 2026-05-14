@@ -272,7 +272,7 @@ export default function Cedentes() {
                 </div>
                 <div className="flex gap-2 shrink-0">
                   <Button size="sm" onClick={() => navigate(`/esteira/${selected.id}`)}>
-                    <ExternalLink className="h-4 w-4 mr-2" /> Abrir cadastro completo
+                    <ExternalLink className="h-4 w-4 mr-2" /> Abrir esteira de crédito
                   </Button>
                   <Button
                     size="sm"
