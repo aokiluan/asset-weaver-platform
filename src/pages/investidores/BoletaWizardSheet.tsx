@@ -413,7 +413,7 @@ export function BoletaWizardSheet({ open, onOpenChange, contact, boleta, onSaved
           )}
         </div>
 
-        <SheetFooter className="mt-6 flex-row justify-between gap-2 sm:justify-between">
+        <SheetFooter className="mt-6 flex-row items-center justify-between gap-2 sm:justify-between">
           <Button
             variant="ghost"
             size="sm"
@@ -423,16 +423,18 @@ export function BoletaWizardSheet({ open, onOpenChange, contact, boleta, onSaved
           >
             <ArrowLeft className="h-3.5 w-3.5 mr-1" /> Voltar
           </Button>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7"
-              disabled={saving}
-              onClick={handleSaveDraft}
-            >
-              Salvar rascunho
-            </Button>
+          <div className="flex items-center gap-3">
+            <span className="text-[11px] text-muted-foreground">
+              {autosaveState === "saving" ? (
+                <span className="inline-flex items-center gap-1">
+                  <Loader2 className="h-3 w-3 animate-spin" /> Salvando…
+                </span>
+              ) : autosaveState === "saved" ? (
+                <span className="inline-flex items-center gap-1">
+                  <Check className="h-3 w-3" /> Salvo automaticamente
+                </span>
+              ) : null}
+            </span>
             {step < 4 && (
               <Button size="sm" className="h-7" disabled={saving} onClick={handleNext}>
                 {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <>Próximo <ArrowRight className="h-3.5 w-3.5 ml-1" /></>}
