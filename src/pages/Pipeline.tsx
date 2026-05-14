@@ -15,7 +15,8 @@ import {
 import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Loader2, Plus, LayoutGrid, List as ListIcon, Eye, Phone } from "lucide-react";
+import { Loader2, Plus, Upload, LayoutGrid, List as ListIcon, Eye, Phone } from "lucide-react";
+import { CedenteImportDialog } from "@/components/cedentes/CedenteImportDialog";
 import {
   DndContext, DragOverlay, PointerSensor, useSensor, useSensors,
   DragEndEvent, DragStartEvent, useDroppable, useDraggable,
@@ -105,6 +106,7 @@ export default function Pipeline() {
   const { user, roles, hasRole, loading: authLoading } = useAuth();
   const canCreate = hasRole("admin") || hasRole("comercial");
   const [novoOpen, setNovoOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [cedentes, setCedentes] = useState<CedenteCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -206,25 +208,47 @@ export default function Pipeline() {
         tabs={[]}
         actions={
           <TooltipProvider delayDuration={200}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span tabIndex={0} className="inline-flex">
-                  <Button
-                    onClick={() => setNovoOpen(true)}
-                    disabled={authLoading || !canCreate}
-                    size="sm"
-                    className="h-7 text-[12px]"
-                  >
-                    <Plus className="h-3.5 w-3.5 mr-1" /> Novo cadastro
-                  </Button>
-                </span>
-              </TooltipTrigger>
-              {!canCreate && !authLoading && (
-                <TooltipContent side="bottom" className="max-w-xs text-xs">
-                  Seu usuário não tem permissão
-                </TooltipContent>
-              )}
-            </Tooltip>
+            <div className="flex items-center gap-2">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span tabIndex={0} className="inline-flex">
+                    <Button
+                      variant="outline"
+                      onClick={() => setImportOpen(true)}
+                      disabled={authLoading || !canCreate}
+                      size="sm"
+                      className="h-7 text-[12px]"
+                    >
+                      <Upload className="h-3.5 w-3.5 mr-1" /> Importar Cedentes
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                {!canCreate && !authLoading && (
+                  <TooltipContent side="bottom" className="max-w-xs text-xs">
+                    Seu usuário não tem permissão
+                  </TooltipContent>
+                )}
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span tabIndex={0} className="inline-flex">
+                    <Button
+                      onClick={() => setNovoOpen(true)}
+                      disabled={authLoading || !canCreate}
+                      size="sm"
+                      className="h-7 text-[12px]"
+                    >
+                      <Plus className="h-3.5 w-3.5 mr-1" /> Novo cadastro
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                {!canCreate && !authLoading && (
+                  <TooltipContent side="bottom" className="max-w-xs text-xs">
+                    Seu usuário não tem permissão
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </div>
           </TooltipProvider>
         }
       />
@@ -393,6 +417,12 @@ export default function Pipeline() {
           await load();
           navigate(`/cedentes/${id}`);
         }}
+      />
+
+      <CedenteImportDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        onImported={() => load()}
       />
     </>
   );
