@@ -19,8 +19,8 @@ function dateLong(d = new Date()) {
   return `${d.getDate()} de ${m[d.getMonth()]} de ${d.getFullYear()}`;
 }
 function maturityDate(prazo: number | null) {
-  const e = new Date(2025, 4, 5); const m = prazo ?? 12;
-  const dt = new Date(e); dt.setMonth(dt.getMonth() + m); return dateShort(dt);
+  const m = prazo ?? 12;
+  const dt = new Date(); dt.setMonth(dt.getMonth() + m); return dateShort(dt);
 }
 function serieIdx(s: any) {
   const sp = s.spread != null ? `${String(s.spread).replace(".",",")}%` : "";

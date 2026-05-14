@@ -53,10 +53,9 @@ function dateLong(d = new Date()): string {
   return `${d.getDate()} de ${months[d.getMonth()]} de ${d.getFullYear()}`;
 }
 
-function maturityDate(prazoMeses: number | null): string {
-  const emission = new Date(2025, 4, 5);
+function maturityDate(prazoMeses: number | null, base: Date = new Date()): string {
   const m = prazoMeses ?? 12;
-  const dt = new Date(emission);
+  const dt = new Date(base);
   dt.setMonth(dt.getMonth() + m);
   return dateShort(dt);
 }
