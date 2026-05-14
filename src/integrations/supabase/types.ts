@@ -1469,6 +1469,130 @@ export type Database = {
         }
         Relationships: []
       }
+      investor_boleta_history: {
+        Row: {
+          boleta_id: string
+          created_at: string
+          detalhes: Json | null
+          evento: string
+          id: string
+          status_anterior:
+            | Database["public"]["Enums"]["investor_boleta_status"]
+            | null
+          status_novo:
+            | Database["public"]["Enums"]["investor_boleta_status"]
+            | null
+          user_id: string | null
+        }
+        Insert: {
+          boleta_id: string
+          created_at?: string
+          detalhes?: Json | null
+          evento: string
+          id?: string
+          status_anterior?:
+            | Database["public"]["Enums"]["investor_boleta_status"]
+            | null
+          status_novo?:
+            | Database["public"]["Enums"]["investor_boleta_status"]
+            | null
+          user_id?: string | null
+        }
+        Update: {
+          boleta_id?: string
+          created_at?: string
+          detalhes?: Json | null
+          evento?: string
+          id?: string
+          status_anterior?:
+            | Database["public"]["Enums"]["investor_boleta_status"]
+            | null
+          status_novo?:
+            | Database["public"]["Enums"]["investor_boleta_status"]
+            | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "investor_boleta_history_boleta_id_fkey"
+            columns: ["boleta_id"]
+            isOneToOne: false
+            referencedRelation: "investor_boletas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      investor_boletas: {
+        Row: {
+          comprovante_path: string | null
+          concluida_em: string | null
+          contact_id: string
+          contrato_assinado_em: string | null
+          contrato_path: string | null
+          created_at: string
+          current_step: number
+          dados_investidor: Json
+          id: string
+          observacoes: string | null
+          pagamento_enviado_em: string | null
+          prazo_meses: number | null
+          series_id: string | null
+          status: Database["public"]["Enums"]["investor_boleta_status"]
+          taxa_efetiva: number | null
+          updated_at: string
+          user_id: string
+          valor: number | null
+        }
+        Insert: {
+          comprovante_path?: string | null
+          concluida_em?: string | null
+          contact_id: string
+          contrato_assinado_em?: string | null
+          contrato_path?: string | null
+          created_at?: string
+          current_step?: number
+          dados_investidor?: Json
+          id?: string
+          observacoes?: string | null
+          pagamento_enviado_em?: string | null
+          prazo_meses?: number | null
+          series_id?: string | null
+          status?: Database["public"]["Enums"]["investor_boleta_status"]
+          taxa_efetiva?: number | null
+          updated_at?: string
+          user_id?: string
+          valor?: number | null
+        }
+        Update: {
+          comprovante_path?: string | null
+          concluida_em?: string | null
+          contact_id?: string
+          contrato_assinado_em?: string | null
+          contrato_path?: string | null
+          created_at?: string
+          current_step?: number
+          dados_investidor?: Json
+          id?: string
+          observacoes?: string | null
+          pagamento_enviado_em?: string | null
+          prazo_meses?: number | null
+          series_id?: string | null
+          status?: Database["public"]["Enums"]["investor_boleta_status"]
+          taxa_efetiva?: number | null
+          updated_at?: string
+          user_id?: string
+          valor?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "investor_boletas_series_id_fkey"
+            columns: ["series_id"]
+            isOneToOne: false
+            referencedRelation: "investor_series"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       investor_contact_activities: {
         Row: {
           contact_id: string
@@ -1552,6 +1676,45 @@ export type Database = {
           type?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      investor_series: {
+        Row: {
+          ativa: boolean
+          created_at: string
+          descricao: string | null
+          id: string
+          indexador: string | null
+          nome: string
+          ordem: number
+          prazo_meses: number | null
+          spread: number | null
+          updated_at: string
+        }
+        Insert: {
+          ativa?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          indexador?: string | null
+          nome: string
+          ordem?: number
+          prazo_meses?: number | null
+          spread?: number | null
+          updated_at?: string
+        }
+        Update: {
+          ativa?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          indexador?: string | null
+          nome?: string
+          ordem?: number
+          prazo_meses?: number | null
+          spread?: number | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -2264,6 +2427,13 @@ export type Database = {
         | "nota"
         | "tarefa"
         | "whatsapp"
+      investor_boleta_status:
+        | "rascunho"
+        | "aguardando_assinatura"
+        | "assinada"
+        | "pagamento_enviado"
+        | "concluida"
+        | "cancelada"
       lead_tipo: "cedente" | "investidor"
       opinion_recommendation:
         | "favoravel"
@@ -2437,6 +2607,14 @@ export const Constants = {
         "nota",
         "tarefa",
         "whatsapp",
+      ],
+      investor_boleta_status: [
+        "rascunho",
+        "aguardando_assinatura",
+        "assinada",
+        "pagamento_enviado",
+        "concluida",
+        "cancelada",
       ],
       lead_tipo: ["cedente", "investidor"],
       opinion_recommendation: [
