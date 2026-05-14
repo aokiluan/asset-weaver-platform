@@ -105,9 +105,9 @@ p { margin: 4px 0; font-size: 10pt; }
 
 <table>
   <tr><th colspan="2">Logradouro</th><th colspan="2">Bairro</th></tr>
-  <tr><td colspan="2" class="italic">Avenida Júlio Diniz 257, Sala 09</td><td colspan="2" class="italic">Jardim Nossa Senhora</td></tr>
+  <tr><td colspan="2" class="italic">Avenida Doutor Heitor Nascimento, 196, Sala 76, Bloco A — Edifício Centro Comercial Aliança</td><td colspan="2" class="italic">Morumbi</td></tr>
   <tr><th>CEP</th><th>Cidade</th><th colspan="2">UF</th></tr>
-  <tr><td class="italic">13075420</td><td class="italic">Campinas</td><td colspan="2" class="italic">SP</td></tr>
+  <tr><td class="italic">13140-729</td><td class="italic">Paulínia</td><td colspan="2" class="italic">SP</td></tr>
 </table>
 
 <p class="section-title">Característica da Emissão</p>
