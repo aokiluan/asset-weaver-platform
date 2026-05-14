@@ -140,22 +140,6 @@ export default function Cedentes() {
               )}
             </Tooltip>
           </TooltipProvider>
-          <TooltipProvider delayDuration={200}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span tabIndex={0} className="inline-flex">
-                  <Button onClick={() => setNovoOpen(true)} disabled={authLoading || !canCreate}>
-                    <Plus className="h-4 w-4 mr-2" /> Novo cadastro
-                  </Button>
-                </span>
-              </TooltipTrigger>
-              {!canCreate && !authLoading && (
-                <TooltipContent side="bottom" className="max-w-xs text-xs">
-                  Seu usuário não tem permissão
-                </TooltipContent>
-              )}
-            </Tooltip>
-          </TooltipProvider>
         </div>
       </div>
 
