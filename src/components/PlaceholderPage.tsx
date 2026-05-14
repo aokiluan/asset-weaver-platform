@@ -2,7 +2,7 @@ import { Construction } from "lucide-react";
 
 interface Props {
   title: string;
-  description: string;
+  description?: string;
   comingItems?: string[];
 }
 
@@ -11,7 +11,7 @@ export default function PlaceholderPage({ title, description, comingItems }: Pro
     <div className="space-y-3">
       <div>
         <h1 className="text-[20px] font-medium tracking-tight">{title}</h1>
-        <p className="text-sm text-muted-foreground">{description}</p>
+        {description && <p className="text-sm text-muted-foreground">{description}</p>}
       </div>
 
       <div className="rounded-lg border bg-card p-10 text-center space-y-3">

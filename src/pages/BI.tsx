@@ -6,7 +6,6 @@ export default function BI() {
     <>
       <PageTabs
         title="Relatórios / BI"
-        description="Indicadores construídos a partir dos relatórios externos importados."
         tabs={[
           { label: "Indicadores", to: "/bi/indicadores" },
           { label: "Uploads", to: "/bi/uploads" },

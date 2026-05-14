@@ -67,7 +67,6 @@ export default function Investidores() {
     <>
       <PageTabs
         title="Pasta de Investidores"
-        description="Cadastro consolidado de investidores parceiros."
         tabs={[]}
       />
       <div className="max-w-7xl mx-auto space-y-3">

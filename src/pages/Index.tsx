@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Building2, Scale, TrendingUp, CheckCircle2, AlertTriangle, Wallet, Target } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -25,7 +25,6 @@ const STAGE_LABELS: Record<string, string> = {
 const COLORS = ["hsl(var(--primary))", "hsl(var(--accent))", "#22c55e", "#eab308", "#ef4444", "#8b5cf6", "#06b6d4"];
 
 export default function Index() {
-  const { user, roles } = useAuth();
 
   useEffect(() => {
     document.title = "Dashboard Executivo | Securitizadora";
@@ -192,9 +191,6 @@ export default function Index() {
     <div className="space-y-3 max-w-7xl mx-auto">
       <header>
         <h1 className="text-[20px] font-medium tracking-tight text-foreground">Dashboard Executivo</h1>
-        <p className="text-sm text-muted-foreground">
-          {user?.email} · {roles.length > 0 ? roles.join(" · ") : "aguardando atribuição de função"}
-        </p>
       </header>
 
       {/* KPIs principais */}

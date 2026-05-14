@@ -123,14 +123,9 @@ export default function Comite() {
   return (
     <div className="space-y-3">
       <header>
-        <h1 className="text-[18px] font-medium tracking-tight flex items-center gap-2">
-          <Vote className="h-5 w-5" /> Comitê de Crédito
+        <h1 className="text-[20px] font-medium tracking-tight flex items-center gap-2">
+          <Vote className="h-4 w-4" /> Comitê de Crédito
         </h1>
-        <p className="text-[11px] text-muted-foreground">
-          {canVote
-            ? "Vote em todos os cedentes em pauta sem precisar abrir cada um. Sessão fecha sozinha quando todos os membros votarem."
-            : "Você está em modo somente leitura."}
-        </p>
       </header>
 
       {canVote && (

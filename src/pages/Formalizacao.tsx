@@ -288,12 +288,9 @@ export default function Formalizacao() {
   return (
     <div className="space-y-3">
       <header>
-        <h1 className="text-[18px] font-medium tracking-tight flex items-center gap-2">
-          <FileSignature className="h-5 w-5" /> Formalização
+        <h1 className="text-[20px] font-medium tracking-tight flex items-center gap-2">
+          <FileSignature className="h-4 w-4" /> Formalização
         </h1>
-        <p className="text-[11px] text-muted-foreground">
-          Geração da minuta padrão e controle de assinatura na ferramenta CRDC.
-        </p>
       </header>
 
       <div className="grid gap-2 md:grid-cols-4">

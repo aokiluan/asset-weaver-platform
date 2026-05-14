@@ -85,9 +85,6 @@ export default function AdminEquipes() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-[20px] font-medium tracking-tight">Equipes</h1>
-          <p className="text-muted-foreground">
-            Organize usuários em equipes. O gestor da equipe vê apenas os membros dela; gestores gerais veem tudo do papel.
-          </p>
         </div>
         <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setEditing(empty); }}>
           <DialogTrigger asChild>
