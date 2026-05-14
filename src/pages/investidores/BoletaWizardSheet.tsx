@@ -384,53 +384,13 @@ export function BoletaWizardSheet({ open, onOpenChange, contact, boleta, onSaved
                 created_at: "",
                 updated_at: "",
               }}
-              onAdvance={() => { setStep(4); onSaved(); }}
+              onAdvance={() => { onSaved(); }}
+              onClose={() => onOpenChange(false)}
             />
           )}
           {step === 3 && (!boletaId || !selectedSeries) && (
             <div className="text-[12px] text-muted-foreground">
               Complete os passos anteriores para gerar os documentos de assinatura.
-            </div>
-          )}
-
-          {step === 4 && (
-            <div className="space-y-3">
-              <div className="text-[12px] text-muted-foreground">
-                Faça upload do comprovante de pagamento.
-              </div>
-              <FileUploader
-                accept="application/pdf,image/*"
-                currentPath={comprovantePath}
-                uploading={uploading}
-                onFile={(f) => uploadFile(f, "comprovante")}
-              />
-              {comprovantePath && (
-                <div className="border rounded-md p-3 bg-muted/30 space-y-2">
-                  <div className="text-[12px] font-medium">Resumo</div>
-                  <div className="text-[11px] text-muted-foreground">
-                    {dados.nome} · {selectedSeries?.nome} · {fmtBRL(valor)}
-                  </div>
-                  <div className="flex gap-2 pt-2">
-                    <Button
-                      size="sm"
-                      className="h-7"
-                      disabled={saving}
-                      onClick={() => handleConcluir(true)}
-                    >
-                      Concluir e marcar como Ativo
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-7"
-                      disabled={saving}
-                      onClick={() => handleConcluir(false)}
-                    >
-                      Apenas concluir
-                    </Button>
-                  </div>
-                </div>
-              )}
             </div>
           )}
         </div>
