@@ -44,7 +44,7 @@ export default function Esteira() {
       const { data, error } = await supabase
         .from("cedentes")
         .select("id,razao_social,nome_fantasia,cnpj,stage,setor,limite_aprovado")
-        .in("stage", FLUXO_STAGES as unknown as string[])
+        .in("stage", [...FLUXO_STAGES])
         .order("razao_social", { ascending: true });
       setLoading(false);
       if (error) {
