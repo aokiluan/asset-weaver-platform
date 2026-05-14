@@ -289,7 +289,7 @@ export function generateMinutaPDF(data: MinutaData): jsPDF {
 
   // ============ CLÁUSULA DÉCIMA QUARTA ============
   writeClause("CLÁUSULA DÉCIMA QUARTA – DO FORO COMPETENTE");
-  writeP("14.1. Fica eleito o foro da Comarca de Campinas, estado de São Paulo, para dirimir quaisquer dúvidas ou litígios decorrentes da interpretação ou cumprimento deste contrato, ou casos omissos do presente contrato, excluindo-se qualquer outro, por mais privilegiado que seja.");
+  writeP("14.1. Fica eleito o foro da Comarca de Paulínia, estado de São Paulo, para dirimir quaisquer dúvidas ou litígios decorrentes da interpretação ou cumprimento deste contrato, ou casos omissos do presente contrato, excluindo-se qualquer outro, por mais privilegiado que seja.");
 
   // ============ CONDIÇÕES APROVADAS (opcional) ============
   if (data.proposta && (data.proposta.valor_aprovado || data.proposta.prazo_dias || data.proposta.taxa_sugerida)) {
@@ -306,7 +306,7 @@ export function generateMinutaPDF(data: MinutaData): jsPDF {
   ensureSpace(20);
   y += 4;
   writeP("E assim, por estarem justas e contratadas, assinam as Partes o presente através de certificado digital.");
-  writeP(`Campinas/SP, ${todayLong()}.`, { gap: 8 });
+  writeP(`Paulínia/SP, ${todayLong()}.`, { gap: 8 });
 
   // ============ ASSINATURAS ============
   const sigBlock = (label1: string, label2: string) => {
@@ -389,9 +389,9 @@ export function generateMinutaPDF(data: MinutaData): jsPDF {
   writeClause("CLÁUSULA SEGUNDA – DAS DISPOSIÇÕES GERAIS");
   writeP("2.1. Permanecem inalteradas, bem como são ratificadas no presente momento todas as cláusulas constantes no Contrato de Fomento firmado pelas partes, inclusive a de garantia prestada.");
   writeP("2.2. As partes declaram-se de acordo com a assinatura do presente instrumento através de plataforma digital, não podendo vir a alegar qualquer nulidade ou falsidade de assinaturas em razão disso, bem como concordando com a execução dos exatos termos aqui descritos em caso de inadimplemento de qualquer das disposições.");
-  writeP("2.3. Fica eleito o foro da Comarca de Campinas, estado de São Paulo, para dirimir quaisquer dúvidas ou litígios decorrentes da interpretação ou cumprimento deste contrato, ou casos omissos do presente contrato, excluindo-se qualquer outro, por mais privilegiado que seja.");
+  writeP("2.3. Fica eleito o foro da Comarca de Paulínia, estado de São Paulo, para dirimir quaisquer dúvidas ou litígios decorrentes da interpretação ou cumprimento deste contrato, ou casos omissos do presente contrato, excluindo-se qualquer outro, por mais privilegiado que seja.");
   writeP("E assim, por estarem justas e contratadas, assinam as Partes o presente através de certificado digital.", { gap: 4 });
-  writeP(`Campinas/SP, ${todayLong()}.`, { gap: 8 });
+  writeP(`Paulínia/SP, ${todayLong()}.`, { gap: 8 });
   sigBlock("S3 CAPITAL SECURITIZADORA S/A", "FOMENTADORA");
   sigBlock(data.cedente.razao_social.toUpperCase(), `CNPJ ${data.cedente.cnpj} — FOMENTADA`);
   if (data.fiadores.length > 0) {
