@@ -14,7 +14,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, LayoutGrid, List as ListIcon, Pencil, Loader2, Eye, Phone, Upload } from "lucide-react";
+import { Plus, LayoutGrid, List as ListIcon, Filter, Pencil, Loader2, Eye, Phone, Upload } from "lucide-react";
+import { FunnelView, type FunnelStage } from "@/components/pipeline/FunnelView";
 import {
   DndContext,
   DragEndEvent,
@@ -48,7 +49,7 @@ import { ConfirmStageMoveDialog } from "./ConfirmStageMoveDialog";
 import { QuickViewDialog } from "./QuickViewDialog";
 import { InvestorImportDialog } from "./InvestorImportDialog";
 
-type View = "kanban" | "list";
+type View = "kanban" | "list" | "funnel";
 type TypeFilter = "todos" | InvestorType;
 
 export default function InvestidoresCRM() {
@@ -175,11 +176,8 @@ export default function InvestidoresCRM() {
   return (
     <div>
       <PageTabs
-        title="Relação com Investidores"
-        tabs={[
-          { label: "Pipeline de Investidores", to: "/investidores/crm" },
-          { label: "Boletas", to: "/investidores/boletas" },
-        ]}
+        title="Pipeline de Investidores"
+        tabs={[]}
         actions={
           <>
             <Button
@@ -247,6 +245,9 @@ export default function InvestidoresCRM() {
             <ToggleGroupItem value="list" className="h-7 px-2">
               <ListIcon className="h-3.5 w-3.5" />
             </ToggleGroupItem>
+            <ToggleGroupItem value="funnel" className="h-7 px-2">
+              <Filter className="h-3.5 w-3.5" />
+            </ToggleGroupItem>
           </ToggleGroup>
         </div>
 
@@ -261,6 +262,20 @@ export default function InvestidoresCRM() {
             onStageMove={requestStageMove}
             onQuickView={setQuickView}
             onRegisterContact={setRegisterFor}
+          />
+        ) : view === "funnel" ? (
+          <FunnelView
+            stages={STAGE_ORDER.map<FunnelStage>((stage) => {
+              const items = filtered.filter((r) => r.stage === stage);
+              return {
+                key: stage,
+                label: STAGE_LABEL[stage],
+                count: items.length,
+                value: items.reduce((a, r) => a + (r.ticket ?? 0), 0),
+                terminal: isTerminal(stage),
+              };
+            })}
+            fmtValue={fmtCompactBRL}
           />
         ) : (
           <ListView rows={filtered} onOpen={setSelected} onEdit={openEdit} />

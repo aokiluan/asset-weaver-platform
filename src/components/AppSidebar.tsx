@@ -25,11 +25,13 @@ import {
   NotePencil,
   FolderOpen,
   Handshake,
+  Receipt,
   type Icon as PhosphorIcon,
 } from "@phosphor-icons/react";
 import { forwardRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useModulePermissions } from "@/hooks/useModulePermissions";
+import { useBoletasPendentes } from "@/hooks/useBoletasPendentes";
 import { cn } from "@/lib/utils";
 
 // Wrapper que aplica peso "thin" por padrão e expõe a API simples { className }
@@ -66,6 +68,7 @@ const IconVote = thin(Scales);
 const IconSignature = thin(NotePencil);
 const IconFolder = thin(FolderOpen);
 const IconHandshake = thin(Handshake);
+const IconReceipt = thin(Receipt);
 
 
 type Item = {
@@ -130,6 +133,7 @@ const GROUPS: Group[] = [
     icon: IconHandshake,
     items: [
       { title: "Pipeline de Investidores", url: "/investidores/crm", icon: IconKanban },
+      { title: "Boletas", url: "/investidores/boletas", icon: IconReceipt },
       { title: "Investidores", url: "/diretorio/investidores", icon: IconWallet },
     ],
   },
@@ -163,6 +167,7 @@ export function AppSidebar() {
   const { pathname } = useLocation();
   const { hasRole } = useAuth();
   const { isModuleEnabled } = useModulePermissions();
+  const { count: boletasPendentes } = useBoletasPendentes();
 
   const [pinned, setPinned] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
@@ -319,6 +324,11 @@ export function AppSidebar() {
                         active={isActive(item.url)}
                         expanded={expanded}
                         nested={expanded}
+                        badge={
+                          item.url === "/investidores/boletas" && boletasPendentes > 0
+                            ? boletasPendentes
+                            : undefined
+                        }
                       />
                     ))}
                   </ul>
@@ -344,6 +354,7 @@ function SidebarItem({
   active,
   expanded,
   nested,
+  badge,
 }: {
   to: string;
   end?: boolean;
@@ -352,6 +363,7 @@ function SidebarItem({
   active: boolean;
   expanded: boolean;
   nested: boolean;
+  badge?: number;
 }) {
   return (
     <li>
@@ -366,8 +378,25 @@ function SidebarItem({
           expanded ? (nested ? "mx-2 pl-5 pr-3" : "mx-2 px-3") : "mx-1.5 justify-center px-0",
         )}
       >
-        <Icon className={cn("h-4 w-4 shrink-0", active && "text-sidebar-accent-foreground")} />
-        {expanded && <span className="truncate">{label}</span>}
+        <span className="relative shrink-0">
+          <Icon className={cn("h-4 w-4", active && "text-sidebar-accent-foreground")} />
+          {badge != null && badge > 0 && !expanded && (
+            <span
+              className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-destructive ring-2 ring-sidebar"
+              aria-label={`${badge} pendência(s)`}
+            />
+          )}
+        </span>
+        {expanded && (
+          <>
+            <span className="truncate flex-1">{label}</span>
+            {badge != null && badge > 0 && (
+              <span className="ml-auto inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] font-medium tabular-nums">
+                {badge > 99 ? "99+" : badge}
+              </span>
+            )}
+          </>
+        )}
       </NavLink>
     </li>
   );
