@@ -103,6 +103,9 @@ export function BoletaConcluidaSheet({ open, onOpenChange, boleta, contact, seri
   }
 
   const [viewing, setViewing] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewName, setPreviewName] = useState<string>("");
+
   async function handleView(file: SignedFile) {
     setViewing(file.storage_path);
     try {
@@ -111,14 +114,19 @@ export function BoletaConcluidaSheet({ open, onOpenChange, boleta, contact, seri
         .download(file.storage_path);
       if (error || !data) throw error ?? new Error("Falha ao abrir");
       const url = URL.createObjectURL(new Blob([data], { type: "application/pdf" }));
-      const w = window.open(url, "_blank", "noopener,noreferrer");
-      if (!w) toast.error("Pop-up bloqueado pelo navegador");
-      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      setPreviewName(file.name);
+      setPreviewUrl(url);
     } catch (e: any) {
       toast.error("Não foi possível visualizar", { description: e?.message });
     } finally {
       setViewing(null);
     }
+  }
+
+  function closePreview() {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+    setPreviewName("");
   }
 
   if (!boleta) return null;
