@@ -1,33 +1,58 @@
-## Diagnóstico
+## Objetivo
 
-A lógica de download dos PDFs assinados **já está implementada** em `sync-autentique-status` e `autentique-webhook` (consulta GraphQL `files { signed, pades }` → upload no bucket `investor-boletas` → registro em `signature_tracking.signed_files`).
+1. Ajustar o template `generateBoletimHtml` em `src/lib/boleta-document-templates.ts` para o **Boletim de Subscrição de Debêntures Simples** caber sempre em uma única página A4.
+2. Garantir que a informação **"Classe: Sênior"** apareça com destaque claro em "Característica da Emissão" (hoje está pequena, em itálico, no meio de outra linha).
 
-Porém, a boleta do Marcos (única `concluida` hoje) tem `signed_files: []`. Motivo: ela foi marcada como concluída **manualmente via SQL** no backfill anterior, sem passar pela função que baixa os arquivos. Por isso a pasta do investidor no diretório está vazia.
+## Mudanças no CSS (1 página A4)
 
-## Plano
+Em `src/lib/boleta-document-templates.ts`, dentro de `generateBoletimHtml`:
 
-1. **Reexecutar a sincronização para a boleta existente**
-   - Invocar `sync-autentique-status` com `{ boletaId: "fbd7bb52-86ee-4b48-9417-876d3e83a3b9" }`.
-   - A função vai consultar a Autentique pelo `autentique_document_id` já salvo (`e1db12acbf85…`), baixar `signed` e `pades`, gravar em `investor-boletas/{investidor_id}/{boleta_id}/...pdf` e atualizar `signed_files`.
-   - Conferir logs para garantir que a Autentique devolveu URLs (documentos antigos podem ter URLs expiradas; nesse caso reusamos `original` como fallback).
+- `@page { size: A4; margin: 12mm 15mm; }` (era `20mm 25mm`)
+- Remover `padding: 20px` do `body` (margens duplicadas hoje deixam a área útil minúscula)
+- `body` 9.5pt (era 11pt)
+- `h1` 12pt, `margin: 0 0 6px`
+- `td/th` 8.5pt, `padding: 2px 4px`, `vertical-align: middle`
+- `p` 8.5pt, `margin: 2px 0`
+- `.section-title` `margin: 6px 0 2px`
+- `table { margin-bottom: 4px; }`
+- `.signature-block { margin-top: 14px; }`
+- `.signature-line { margin: 22px auto 2px; width: 240px; }`
+- `<hr>` com `margin: 10px 0`
+- Parágrafo declaratório a 8pt com `line-height: 1.25`
+- `body { page-break-inside: avoid; }`
 
-2. **Tornar o fluxo idempotente / resiliente**
-   - Em `promoteBoletaToInvestidor` (ambas as functions), se `signed_files` já estiver vazio mas a boleta já foi promovida, permitir reprocessar só a etapa 4 (download + upload) sem duplicar investidor.
-   - Adicionar fallback: se `files.signed` vier nulo, tentar `files.pades`; se ambos vierem nulos, logar `autentique_no_files` para diagnóstico.
-   - Salvar também `autentique_url` original em `signed_files[].source_url` para auditoria.
+Texto, dados e estrutura permanecem idênticos — só CSS muda.
 
-3. **Botão "Rebaixar arquivos" no `BoletaConcluidaSheet`** (apenas UI + invoke da function existente)
-   - Quando `signed_files` estiver vazio, mostrar botão "Buscar arquivos assinados" que chama `sync-autentique-status` e recarrega o sheet.
-   - Útil para boletas legadas e como recuperação manual em caso de falha de webhook.
+## Destacar "Classe Sênior"
 
-4. **Validação**
-   - Após passo 1, verificar:
-     - `signature_tracking.signed_files` populado.
-     - Objetos visíveis em `storage.objects` no bucket `investor-boletas`.
-     - PDFs aparecem no `BoletaConcluidaSheet` e em `InvestidorDetail` → seção "Boletas e documentos assinados".
+Hoje a linha "Característica da Emissão" mistura Classe + Série + Indexador + Vencimento em um único parágrafo, com tudo em itálico de 10pt:
 
-## Detalhes técnicos
+```
+Classe: Sênior. Série: 2025-1. Indexador: CDI + 2%. Data Vencimento: 05/05/2026.
+```
 
-- Bucket `investor-boletas` já existe (privado) com RLS adequada — sem mudança de schema.
-- Sem nova migration: apenas edição das duas edge functions e do `BoletaConcluidaSheet.tsx`.
-- A consulta GraphQL atual é compatível com a API v2 da Autentique; nenhum novo secret necessário (`AUTENTIQUE_API_KEY` já configurado).
+Vou trocar por um bloco mais claro, com a **Classe Sênior em destaque** logo abaixo do título da seção:
+
+```
+Característica da Emissão
+Classe: SÊNIOR
+Emissão privada, aprovada pela AGE da EMISSORA realizada em 28 de Abril de 2025.
+Data da Emissão: 05/05/2025. Valor Total da Emissão: R$ 20.000.000,00 (VINTE MILHÕES DE REAIS), em 11 (ONZE) séries.
+Série: <nome>. Indexador: <idx>. Data Vencimento: <data>.
+```
+
+Implementação: adicionar um `<p>` dedicado logo após `<p class="section-title">Característica da Emissão</p>`:
+
+```html
+<p><strong>Classe:</strong> <strong>SÊNIOR</strong></p>
+```
+
+E remover o trecho `Classe: <span class="italic">Sênior.</span>` da linha que hoje agrupa tudo, mantendo apenas Série/Indexador/Vencimento ali.
+
+## Validação
+
+Após aprovação, abrir uma boleta concluída → "Ver" no boletim → confirmar no `PdfPreview` in-app que:
+- O documento renderiza em **1 página A4**, mesmo com nome/endereço longo.
+- "Classe: SÊNIOR" aparece em negrito, destacado, na seção Característica da Emissão.
+
+Se algum caso extremo ainda quebrar, reduzo a fonte global em mais 0.5pt como fallback.
