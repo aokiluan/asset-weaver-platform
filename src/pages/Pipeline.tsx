@@ -54,7 +54,7 @@ interface CedenteCard {
 }
 
 type View = "kanban" | "list" | "funnel";
-type SetorFilter = "todos" | string;
+
 
 const fmtBRL = (v: number | null | undefined) =>
   v == null
