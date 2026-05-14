@@ -145,6 +145,7 @@ const App = () => (
                 <Route path="pipeline" element={<AdminPipeline />} />
                 <Route path="categorias" element={<AdminCategorias />} />
                 <Route path="permissoes" element={<AdminPermissoes />} />
+                <Route path="series-investidor" element={<AdminSeriesInvestidor />} />
               </Route>
 
               {/* BI / Relatórios */}
