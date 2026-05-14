@@ -5,7 +5,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFo
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -152,14 +152,24 @@ export function BoletaWizardSheet({ open, onOpenChange, contact, boleta, onSaved
     }
   }
 
-  async function handleSaveDraft() {
-    setSaving(true);
-    await ensureBoleta();
-    setSaving(false);
-    toast.success("Rascunho salvo");
-    onSaved();
-    onOpenChange(false);
-  }
+  // Autosave: salva alterações automaticamente após o usuário parar de digitar
+  const [autosaveState, setAutosaveState] = useState<"idle" | "saving" | "saved">("idle");
+  useEffect(() => {
+    if (!open || !user || !contact) return;
+    if (!boletaId && (!dados.nome || !dados.cpf_cnpj)) return;
+    const t = setTimeout(async () => {
+      setAutosaveState("saving");
+      const id = await ensureBoleta();
+      if (id) {
+        setAutosaveState("saved");
+        onSaved();
+      } else {
+        setAutosaveState("idle");
+      }
+    }, 800);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, dados, seriesId, valor, step, contratoPath, comprovantePath]);
 
   async function uploadFile(file: File, kind: "contrato" | "comprovante") {
     if (!user) return;
@@ -345,15 +355,6 @@ export function BoletaWizardSheet({ open, onOpenChange, contact, boleta, onSaved
                   className="h-7 text-[12px]"
                 />
               </div>
-              <div>
-                <Label className="text-[10px] uppercase text-muted-foreground">Observações</Label>
-                <Textarea
-                  rows={3}
-                  value={observacoes}
-                  onChange={(e) => setObservacoes(e.target.value)}
-                  className="text-[12px]"
-                />
-              </div>
             </div>
           )}
 
@@ -413,7 +414,7 @@ export function BoletaWizardSheet({ open, onOpenChange, contact, boleta, onSaved
           )}
         </div>
 
-        <SheetFooter className="mt-6 flex-row justify-between gap-2 sm:justify-between">
+        <SheetFooter className="mt-6 flex-row items-center justify-between gap-2 sm:justify-between">
           <Button
             variant="ghost"
             size="sm"
@@ -423,16 +424,18 @@ export function BoletaWizardSheet({ open, onOpenChange, contact, boleta, onSaved
           >
             <ArrowLeft className="h-3.5 w-3.5 mr-1" /> Voltar
           </Button>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7"
-              disabled={saving}
-              onClick={handleSaveDraft}
-            >
-              Salvar rascunho
-            </Button>
+          <div className="flex items-center gap-3">
+            <span className="text-[11px] text-muted-foreground">
+              {autosaveState === "saving" ? (
+                <span className="inline-flex items-center gap-1">
+                  <Loader2 className="h-3 w-3 animate-spin" /> Salvando…
+                </span>
+              ) : autosaveState === "saved" ? (
+                <span className="inline-flex items-center gap-1">
+                  <Check className="h-3 w-3" /> Salvo automaticamente
+                </span>
+              ) : null}
+            </span>
             {step < 4 && (
               <Button size="sm" className="h-7" disabled={saving} onClick={handleNext}>
                 {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <>Próximo <ArrowRight className="h-3.5 w-3.5 ml-1" /></>}
