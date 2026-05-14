@@ -66,7 +66,7 @@ const App = () => (
               <Route path="/leads" element={<Leads />} />
               <Route path="/pipeline" element={<Pipeline />} />
               <Route path="/cedentes" element={<Cedentes />} />
-              <Route path="/cedentes/novo" element={<CedenteCadastro />} />
+              
               <Route path="/cedentes/:id/editar" element={<CedenteCadastro />} />
               <Route path="/cedentes/:id" element={<CedenteDetail />} />
               <Route path="/esteira" element={<Esteira />} />

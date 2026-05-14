@@ -15,7 +15,7 @@ import {
 import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Loader2, Plus, LayoutGrid, List as ListIcon, Eye, Phone } from "lucide-react";
+import { Loader2, LayoutGrid, List as ListIcon, Eye, Phone } from "lucide-react";
 import {
   DndContext, DragOverlay, PointerSensor, useSensor, useSensors,
   DragEndEvent, DragStartEvent, useDroppable, useDraggable,
@@ -198,19 +198,7 @@ export default function Pipeline() {
 
   return (
     <>
-      <PageTabs
-        title="Pipeline de Cedentes"
-        tabs={[]}
-        actions={
-          <Button
-            onClick={() => navigate("/cedentes/novo")}
-            size="sm"
-            className="h-7 text-[12px]"
-          >
-            <Plus className="h-3.5 w-3.5 mr-1" /> Novo cadastro
-          </Button>
-        }
-      />
+      <PageTabs title="Pipeline de Cedentes" tabs={[]} />
 
       <div className="space-y-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
