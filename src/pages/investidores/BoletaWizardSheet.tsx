@@ -345,15 +345,6 @@ export function BoletaWizardSheet({ open, onOpenChange, contact, boleta, onSaved
                   className="h-7 text-[12px]"
                 />
               </div>
-              <div>
-                <Label className="text-[10px] uppercase text-muted-foreground">Observações</Label>
-                <Textarea
-                  rows={3}
-                  value={observacoes}
-                  onChange={(e) => setObservacoes(e.target.value)}
-                  className="text-[12px]"
-                />
-              </div>
             </div>
           )}
 
