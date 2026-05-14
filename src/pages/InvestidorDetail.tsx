@@ -115,7 +115,24 @@ export default function InvestidorDetail() {
       toast.error("Não foi possível baixar", { description: e?.message });
     } finally {
       setDownloading(null);
+  }
+
+  async function handleView(path: string) {
+    setViewing(path);
+    try {
+      const { data, error } = await supabase.storage
+        .from("investor-boletas").download(path);
+      if (error || !data) throw error ?? new Error("Falha ao abrir");
+      const url = URL.createObjectURL(new Blob([data], { type: "application/pdf" }));
+      const w = window.open(url, "_blank", "noopener,noreferrer");
+      if (!w) toast.error("Pop-up bloqueado pelo navegador");
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (e: any) {
+      toast.error("Não foi possível visualizar", { description: e?.message });
+    } finally {
+      setViewing(null);
     }
+  }
   }
 
   return (
