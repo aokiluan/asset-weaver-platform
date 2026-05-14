@@ -5,13 +5,15 @@ import { PageTabs } from "@/components/PageTabs";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Search, FolderOpen, ArrowRight } from "lucide-react";
+import { Search, FolderOpen, ArrowRight, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import {
   computeRenovacao,
   renovacaoLabel,
   renovacaoSortKey,
   type RenovacaoInfo,
+  type RenovacaoStatus,
 } from "@/lib/cadastro-renovacao";
+import { STAGE_LABEL, STAGE_ORDER, type CedenteStage } from "@/lib/cedente-stages";
 import { cn } from "@/lib/utils";
 
 interface Row {
@@ -19,12 +21,25 @@ interface Row {
   razao_social: string;
   nome_fantasia: string | null;
   cnpj: string;
-  stage: string;
+  stage: CedenteStage;
   cadastro_revisado_em: string | null;
   minuta_assinada_em: string | null;
   docCount: number;
   ultimaAta: string | null;
 }
+
+type StageFilter = "todos" | CedenteStage;
+type RenovFilter = "todas" | RenovacaoStatus;
+type SortKey = "cedente" | "stage" | "renovacao" | "docs" | "ata";
+type SortDir = "asc" | "desc";
+
+const RENOV_FILTERS: { key: RenovFilter; label: string }[] = [
+  { key: "todas", label: "Todas" },
+  { key: "vencida", label: "Vencida" },
+  { key: "atencao", label: "Atenção" },
+  { key: "em_dia", label: "Em dia" },
+  { key: "sem_dados", label: "Sem registro" },
+];
 
 const fmtCNPJ = (s: string) => {
   const d = (s ?? "").replace(/\D/g, "");
@@ -52,6 +67,12 @@ export default function Diretorio() {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [stageFilter, setStageFilter] = useState<StageFilter>("todos");
+  const [renovFilter, setRenovFilter] = useState<RenovFilter>("todas");
+  const [sort, setSort] = useState<{ key: SortKey; dir: SortDir }>({
+    key: "renovacao",
+    dir: "asc",
+  });
 
   useEffect(() => {
     document.title = "Diretório | Securitizadora";
@@ -66,8 +87,8 @@ export default function Diretorio() {
         .order("razao_social", { ascending: true });
 
       const ids = (ceds ?? []).map((c) => c.id);
-      let docCounts: Record<string, number> = {};
-      let lastAta: Record<string, string> = {};
+      const docCounts: Record<string, number> = {};
+      const lastAta: Record<string, string> = {};
       if (ids.length) {
         const [{ data: docs }, { data: atas }] = await Promise.all([
           supabase.from("documentos").select("cedente_id").in("cedente_id", ids),
@@ -102,33 +123,87 @@ export default function Diretorio() {
     })();
   }, []);
 
-  const filtered = useMemo(() => {
+  // Cache de RenovacaoInfo por id
+  const renovMap = useMemo(() => {
+    const m = new Map<string, RenovacaoInfo>();
+    for (const r of rows) {
+      m.set(r.id, computeRenovacao(r.cadastro_revisado_em, r.minuta_assinada_em));
+    }
+    return m;
+  }, [rows]);
+
+  const stagesPresent = useMemo(() => {
+    const s = new Set<CedenteStage>();
+    rows.forEach((r) => s.add(r.stage));
+    return STAGE_ORDER.filter((st) => s.has(st)).concat(s.has("inativo" as CedenteStage) ? ["inativo" as CedenteStage] : []);
+  }, [rows]);
+
+  const filteredSorted = useMemo(() => {
     const q = search.trim().toLowerCase();
+    const qDigits = q.replace(/\D/g, "");
     const list = rows.filter((r) => {
-      if (!q) return true;
-      return (
-        r.razao_social.toLowerCase().includes(q) ||
-        (r.nome_fantasia ?? "").toLowerCase().includes(q) ||
-        r.cnpj.replace(/\D/g, "").includes(q.replace(/\D/g, ""))
-      );
+      if (q) {
+        const matchText =
+          r.razao_social.toLowerCase().includes(q) ||
+          (r.nome_fantasia ?? "").toLowerCase().includes(q) ||
+          (qDigits && r.cnpj.replace(/\D/g, "").includes(qDigits));
+        if (!matchText) return false;
+      }
+      if (stageFilter !== "todos" && r.stage !== stageFilter) return false;
+      if (renovFilter !== "todas") {
+        const info = renovMap.get(r.id);
+        if (!info || info.status !== renovFilter) return false;
+      }
+      return true;
     });
-    // Ordena por urgência de renovação
+
+    const dir = sort.dir === "asc" ? 1 : -1;
+    const cmp = (a: Row, b: Row): number => {
+      switch (sort.key) {
+        case "cedente":
+          return a.razao_social.localeCompare(b.razao_social) * dir;
+        case "stage": {
+          const ia = STAGE_ORDER.indexOf(a.stage);
+          const ib = STAGE_ORDER.indexOf(b.stage);
+          return ((ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib)) * dir;
+        }
+        case "renovacao": {
+          const ia = renovacaoSortKey(renovMap.get(a.id)!);
+          const ib = renovacaoSortKey(renovMap.get(b.id)!);
+          return (ia - ib) * dir;
+        }
+        case "docs":
+          return (a.docCount - b.docCount) * dir;
+        case "ata": {
+          const ta = a.ultimaAta ? new Date(a.ultimaAta).getTime() : 0;
+          const tb = b.ultimaAta ? new Date(b.ultimaAta).getTime() : 0;
+          return (ta - tb) * dir;
+        }
+        default:
+          return 0;
+      }
+    };
+
     return list.sort((a, b) => {
-      const ia = computeRenovacao(a.cadastro_revisado_em, a.minuta_assinada_em);
-      const ib = computeRenovacao(b.cadastro_revisado_em, b.minuta_assinada_em);
-      const sa = renovacaoSortKey(ia);
-      const sb = renovacaoSortKey(ib);
-      if (sa !== sb) return sa - sb;
+      const r = cmp(a, b);
+      if (r !== 0) return r;
       return a.razao_social.localeCompare(b.razao_social);
     });
-  }, [rows, search]);
+  }, [rows, search, stageFilter, renovFilter, sort, renovMap]);
+
+  function handleSort(key: SortKey) {
+    setSort((prev) => {
+      if (prev.key === key) return { key, dir: prev.dir === "asc" ? "desc" : "asc" };
+      // defaults: docs e ata abrem em desc; restante asc
+      return { key, dir: key === "docs" || key === "ata" ? "desc" : "asc" };
+    });
+  }
+
+  const hasFilters = stageFilter !== "todos" || renovFilter !== "todas" || search.trim() !== "";
 
   return (
     <>
-      <PageTabs
-        title="Pasta de Cedentes"
-        tabs={[]}
-      />
+      <PageTabs title="Pasta de Cedentes" tabs={[]} />
       <div className="max-w-7xl mx-auto space-y-3">
         <div className="flex items-center gap-2">
           <div className="relative flex-1 max-w-md">
@@ -141,20 +216,68 @@ export default function Diretorio() {
             />
           </div>
           <span className="text-[11px] text-muted-foreground">
-            {filtered.length} cedente(s)
+            {filteredSorted.length} cedente(s)
           </span>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <div className="flex flex-wrap items-center gap-1">
+            <span className="text-[10px] uppercase tracking-wide text-muted-foreground mr-1">
+              Stage
+            </span>
+            <Chip active={stageFilter === "todos"} onClick={() => setStageFilter("todos")}>
+              Todos
+            </Chip>
+            {stagesPresent.map((st) => (
+              <Chip
+                key={st}
+                active={stageFilter === st}
+                onClick={() => setStageFilter(st)}
+              >
+                {STAGE_LABEL[st]}
+              </Chip>
+            ))}
+          </div>
+          <div className="flex flex-wrap items-center gap-1">
+            <span className="text-[10px] uppercase tracking-wide text-muted-foreground mr-1">
+              Renovação
+            </span>
+            {RENOV_FILTERS.map((r) => (
+              <Chip
+                key={r.key}
+                active={renovFilter === r.key}
+                onClick={() => setRenovFilter(r.key)}
+              >
+                {r.label}
+              </Chip>
+            ))}
+            {hasFilters && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-[11px] ml-auto text-muted-foreground"
+                onClick={() => {
+                  setStageFilter("todos");
+                  setRenovFilter("todas");
+                  setSearch("");
+                }}
+              >
+                Limpar filtros
+              </Button>
+            )}
+          </div>
         </div>
 
         <div className="rounded-md border bg-card overflow-hidden">
           <table className="w-full text-[12px]">
             <thead className="bg-muted/40 text-[10px] uppercase tracking-wide text-muted-foreground">
               <tr>
-                <th className="text-left px-3 py-2 font-medium">Cedente</th>
+                <Th sortKey="cedente" sort={sort} onSort={handleSort}>Cedente</Th>
                 <th className="text-left px-3 py-2 font-medium">CNPJ</th>
-                <th className="text-left px-3 py-2 font-medium">Stage</th>
-                <th className="text-left px-3 py-2 font-medium">Renovação</th>
-                <th className="text-right px-3 py-2 font-medium">Docs</th>
-                <th className="text-left px-3 py-2 font-medium">Última ata</th>
+                <Th sortKey="stage" sort={sort} onSort={handleSort}>Stage</Th>
+                <Th sortKey="renovacao" sort={sort} onSort={handleSort}>Renovação</Th>
+                <Th sortKey="docs" sort={sort} onSort={handleSort} align="right">Docs</Th>
+                <Th sortKey="ata" sort={sort} onSort={handleSort}>Última ata</Th>
                 <th className="px-3 py-2"></th>
               </tr>
             </thead>
@@ -166,7 +289,7 @@ export default function Diretorio() {
                   </td>
                 </tr>
               )}
-              {!loading && filtered.length === 0 && (
+              {!loading && filteredSorted.length === 0 && (
                 <tr>
                   <td colSpan={7} className="px-3 py-8 text-center text-muted-foreground">
                     Nenhum cedente encontrado.
@@ -174,8 +297,8 @@ export default function Diretorio() {
                 </tr>
               )}
               {!loading &&
-                filtered.map((r) => {
-                  const info = computeRenovacao(r.cadastro_revisado_em, r.minuta_assinada_em);
+                filteredSorted.map((r) => {
+                  const info = renovMap.get(r.id)!;
                   return (
                     <tr key={r.id} className="border-t hover:bg-muted/30 transition-colors">
                       <td className="px-3 py-2">
@@ -194,7 +317,7 @@ export default function Diretorio() {
                       </td>
                       <td className="px-3 py-2">
                         <Badge variant="outline" className="text-[10px] capitalize">
-                          {r.stage}
+                          {STAGE_LABEL[r.stage] ?? r.stage}
                         </Badge>
                       </td>
                       <td className="px-3 py-2">
@@ -222,5 +345,63 @@ export default function Diretorio() {
         </div>
       </div>
     </>
+  );
+}
+
+function Chip({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <Button
+      type="button"
+      variant={active ? "secondary" : "ghost"}
+      size="sm"
+      className="h-7 px-2.5 text-[12px]"
+      onClick={onClick}
+    >
+      {children}
+    </Button>
+  );
+}
+
+function Th({
+  sortKey,
+  sort,
+  onSort,
+  align = "left",
+  children,
+}: {
+  sortKey: SortKey;
+  sort: { key: SortKey; dir: SortDir };
+  onSort: (k: SortKey) => void;
+  align?: "left" | "right";
+  children: React.ReactNode;
+}) {
+  const active = sort.key === sortKey;
+  const Icon = active ? (sort.dir === "asc" ? ArrowUp : ArrowDown) : ArrowUpDown;
+  return (
+    <th
+      className={cn(
+        "px-3 py-2 font-medium select-none cursor-pointer hover:text-foreground transition-colors",
+        align === "right" ? "text-right" : "text-left",
+      )}
+      onClick={() => onSort(sortKey)}
+    >
+      <span
+        className={cn(
+          "inline-flex items-center gap-1",
+          align === "right" && "justify-end",
+        )}
+      >
+        {children}
+        <Icon className={cn("h-3 w-3", !active && "opacity-40")} />
+      </span>
+    </th>
   );
 }
