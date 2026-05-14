@@ -1,0 +1,1 @@
+ALTER TYPE investor_activity_type ADD VALUE IF NOT EXISTS 'whatsapp';
