@@ -1066,7 +1066,7 @@ export default function DiretorioDetail() {
         }}
         cedente={cedente}
         catLivre={catLivre}
-        categorias={categorias}
+        
         userId={user?.id ?? null}
         onUploaded={reload}
         initialFiles={uploadInitialFiles}
@@ -1348,7 +1348,6 @@ function UploadAnexoLivreDialog({
   onOpenChange,
   cedente,
   catLivre,
-  categorias,
   userId,
   onUploaded,
   initialFiles,
@@ -1357,62 +1356,50 @@ function UploadAnexoLivreDialog({
   onOpenChange: (v: boolean) => void;
   cedente: Cedente;
   catLivre: Categoria | null;
-  categorias: Categoria[];
   userId: string | null;
   onUploaded: () => void;
   initialFiles: File[] | null;
 }) {
   const fileRef = useRef<HTMLInputElement | null>(null);
-  const [items, setItems] = useState<{ file: File; categoriaId: string; descricao: string }[]>([]);
+  const [items, setItems] = useState<{ file: File; descricao: string }[]>([]);
   const [busy, setBusy] = useState(false);
-
-  const defaultCatId = catLivre?.id ?? categorias[0]?.id ?? "";
 
   useEffect(() => {
     if (open && initialFiles && initialFiles.length > 0) {
-      setItems(initialFiles.map((f) => ({ file: f, categoriaId: defaultCatId, descricao: "" })));
+      setItems(initialFiles.map((f) => ({ file: f, descricao: "" })));
     } else if (!open) {
       setItems([]);
     }
-  }, [open, initialFiles, defaultCatId]);
+  }, [open, initialFiles]);
 
   const addFiles = (fs: File[]) => {
-    setItems((prev) => [...prev, ...fs.map((f) => ({ file: f, categoriaId: defaultCatId, descricao: "" }))]);
+    setItems((prev) => [...prev, ...fs.map((f) => ({ file: f, descricao: "" }))]);
   };
 
   const removeAt = (i: number) => setItems((prev) => prev.filter((_, idx) => idx !== i));
-  const setCategoriaAt = (i: number, categoriaId: string) =>
-    setItems((prev) => prev.map((it, idx) => (idx === i ? { ...it, categoriaId } : it)));
   const setDescricaoAt = (i: number, descricao: string) =>
     setItems((prev) => prev.map((it, idx) => (idx === i ? { ...it, descricao } : it)));
 
   const canSubmit =
     items.length > 0 &&
-    items.every((it) => !!it.categoriaId && it.descricao.trim().length > 0) &&
+    items.every((it) => it.descricao.trim().length > 0) &&
     !busy &&
-    !!userId;
+    !!userId &&
+    !!catLivre;
 
   const handleUpload = async () => {
-    if (!canSubmit) return;
+    if (!canSubmit || !catLivre) return;
     setBusy(true);
     try {
-      const usedCatIds = Array.from(new Set(items.map((it) => it.categoriaId)));
-      const nextByCat: Record<string, number> = {};
-      await Promise.all(
-        usedCatIds.map(async (cid) => {
-          const { count } = await supabase
-            .from("documentos")
-            .select("id", { count: "exact", head: true })
-            .eq("cedente_id", cedente.id)
-            .eq("categoria_id", cid);
-          nextByCat[cid] = (count ?? 0) + 1;
-        }),
-      );
+      const { count } = await supabase
+        .from("documentos")
+        .select("id", { count: "exact", head: true })
+        .eq("cedente_id", cedente.id)
+        .eq("categoria_id", catLivre.id);
+      let next = (count ?? 0) + 1;
 
       let okCount = 0;
       for (const it of items) {
-        const cat = categorias.find((c) => c.id === it.categoriaId);
-        if (!cat) continue;
         const file = it.file;
         const safe = file.name.replace(/[^\w.\-]+/g, "_");
         const path = `${cedente.id}/${Date.now()}-${Math.random().toString(36).slice(2, 6)}-${safe}`;
@@ -1425,11 +1412,11 @@ function UploadAnexoLivreDialog({
           continue;
         }
 
-        const versao = nextByCat[cat.id]++;
+        const versao = next++;
         const descricao = it.descricao.trim();
         const novoNome = buildDocumentoFileName({
           originalName: file.name,
-          categoria: cat.nome,
+          categoria: catLivre.nome,
           cedente: cedente.razao_social,
           versao,
           descricao,
@@ -1437,7 +1424,7 @@ function UploadAnexoLivreDialog({
 
         const { error: insErr } = await supabase.from("documentos").insert({
           cedente_id: cedente.id,
-          categoria_id: cat.id,
+          categoria_id: catLivre.id,
           nome_arquivo: novoNome,
           nome_arquivo_original: file.name,
           storage_path: path,
@@ -1474,78 +1461,58 @@ function UploadAnexoLivreDialog({
         <DialogHeader className="space-y-0.5">
           <DialogTitle className="text-[13px]">Adicionar anexo livre</DialogTitle>
           <DialogDescription className="text-[11px] leading-tight">
-            Classifique e descreva cada arquivo. Os nomes seguem o padrão do projeto.
+            Descreva cada arquivo. Os nomes seguem o padrão do projeto.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-2">
-          <div>
-            <label className="text-[11px] text-muted-foreground">Arquivos</label>
-            <Input
-              ref={fileRef}
-              type="file"
-              multiple
-              onChange={(e) => {
-                const fs = Array.from(e.target.files ?? []);
-                if (fs.length > 0) addFiles(fs);
-                if (fileRef.current) fileRef.current.value = "";
-              }}
-              className="h-7 text-[12px]"
-            />
-            {items.length > 0 && (
-              <ul className="mt-1.5 space-y-1">
-                {items.map((it, i) => (
-                  <li
-                    key={i}
-                    className="rounded-md border border-border/60 px-2 py-1.5 space-y-1"
-                  >
-                    <div className="flex items-center gap-2">
-                      <div className="min-w-0 flex-1">
-                        <div className="truncate text-[12px] leading-tight">{it.file.name}</div>
-                        <div className="text-[10px] text-muted-foreground leading-none">
-                          {(it.file.size / 1024).toFixed(1)} KB
-                        </div>
+          <label className="text-[11px] text-muted-foreground">Arquivos</label>
+          <Input
+            ref={fileRef}
+            type="file"
+            multiple
+            onChange={(e) => {
+              const fs = Array.from(e.target.files ?? []);
+              if (fs.length > 0) addFiles(fs);
+              if (fileRef.current) fileRef.current.value = "";
+            }}
+            className="h-7 text-[12px]"
+          />
+          {items.length > 0 && (
+            <ul className="space-y-1">
+              {items.map((it, i) => (
+                <li
+                  key={i}
+                  className="rounded-md border border-border/60 px-2 py-1.5 space-y-1"
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-[12px] leading-tight">{it.file.name}</div>
+                      <div className="text-[10px] text-muted-foreground leading-none">
+                        {(it.file.size / 1024).toFixed(1)} KB
                       </div>
-                      <Select
-                        value={it.categoriaId}
-                        onValueChange={(v) => setCategoriaAt(i, v)}
-                      >
-                        <SelectTrigger className="h-7 w-[150px] text-[11px]">
-                          <SelectValue placeholder="Categoria" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {categorias.map((c) => (
-                            <SelectItem key={c.id} value={c.id} className="text-[12px]">
-                              {c.nome}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 shrink-0"
-                        onClick={() => removeAt(i)}
-                        title="Remover"
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </Button>
                     </div>
-                    <Input
-                      value={it.descricao}
-                      onChange={(e) => setDescricaoAt(i, e.target.value)}
-                      placeholder="Descrição (curta) — usada no nome do arquivo"
-                      maxLength={40}
-                      className="h-7 text-[11px]"
-                    />
-                  </li>
-                ))}
-              </ul>
-            )}
-            <p className="mt-1 text-[10px] text-muted-foreground leading-tight">
-              Use <b>Outros / Anexo livre</b> p/ itens sem categoria.
-            </p>
-          </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 shrink-0"
+                      onClick={() => removeAt(i)}
+                      title="Remover"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                  <Input
+                    value={it.descricao}
+                    onChange={(e) => setDescricaoAt(i, e.target.value)}
+                    placeholder="Descrição (curta) — usada no nome do arquivo"
+                    maxLength={40}
+                    className="h-7 text-[11px]"
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
         <DialogFooter>
