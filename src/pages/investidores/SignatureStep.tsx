@@ -25,9 +25,10 @@ interface Props {
   dados: BoletaDadosInvestidor;
   series: InvestorSeries;
   onAdvance: () => void;
+  onClose?: () => void;
 }
 
-export function SignatureStep({ boletaId, boleta, dados, series, onAdvance }: Props) {
+export function SignatureStep({ boletaId, boleta, dados, series, onAdvance, onClose }: Props) {
   const [state, setState] = useState<State>("preview");
   const [signers, setSigners] = useState<SignerStatus[]>([]);
   const [previewDoc, setPreviewDoc] = useState<"boletim" | "certificado" | null>(null);
@@ -40,8 +41,8 @@ export function SignatureStep({ boletaId, boleta, dados, series, onAdvance }: Pr
     setSigners(t.signers);
     if (t.status === "finished") {
       setState("signed");
-      if (notify) toast.success("Todos assinaram!");
-      setTimeout(onAdvance, 1500);
+      if (notify) toast.success("Boleta concluída — todos assinaram!");
+      onAdvance();
       return;
     }
     setState("pending");
