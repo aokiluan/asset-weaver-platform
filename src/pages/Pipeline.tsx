@@ -112,7 +112,7 @@ export default function Pipeline() {
   const [loading, setLoading] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [view, setView] = useState<View>("kanban");
-  const [setorFilter, setSetorFilter] = useState<SetorFilter>("todos");
+  
   const [pendingMove, setPendingMove] = useState<{
     cedente: CedenteCard;
     to: CedenteStage;
