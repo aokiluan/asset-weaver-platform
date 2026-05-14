@@ -15,6 +15,7 @@ import {
   type InvestorBoleta, type InvestorSeries,
 } from "@/lib/investor-boletas";
 import { type InvestorContact } from "@/lib/investor-contacts";
+import { resolveInvestorName } from "@/lib/investor-name";
 
 interface SignedFile { name: string; storage_path: string; saved_at?: string }
 
