@@ -70,6 +70,8 @@ export default function InvestidorDetail() {
   const [boletas, setBoletas] = useState<BoletaRow[]>([]);
   const [downloading, setDownloading] = useState<string | null>(null);
   const [viewing, setViewing] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewName, setPreviewName] = useState<string>("");
 
   useEffect(() => {
     (async () => {
