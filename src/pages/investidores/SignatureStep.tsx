@@ -2,7 +2,11 @@ import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Loader2, Send, Eye, Download, FileText, CheckCircle2, Clock, AlertCircle } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Loader2, Send, Eye, Download, FileText, CheckCircle2, Clock, AlertCircle, XCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -32,6 +36,8 @@ export function SignatureStep({ boletaId, boleta, dados, series, onAdvance, onCl
   const [state, setState] = useState<State>("preview");
   const [signers, setSigners] = useState<SignerStatus[]>([]);
   const [previewDoc, setPreviewDoc] = useState<"boletim" | "certificado" | null>(null);
+  const [confirmCancel, setConfirmCancel] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
 
   const boletimHtml = generateBoletimHtml({ boleta, dados, series });
   const certificadoHtml = generateCertificadoHtml({ boleta, dados, series });
@@ -98,6 +104,23 @@ export function SignatureStep({ boletaId, boleta, dados, series, onAdvance, onCl
     a.download = `${kind}-${dados.nome ?? "boleta"}.html`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const handleCancel = async () => {
+    setCancelling(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("cancel-autentique", { body: { boletaId } });
+      if (error) throw error;
+      if (!(data as any)?.success) throw new Error((data as any)?.error || "Erro ao cancelar");
+      toast.success("Processo de assinatura cancelado");
+      setConfirmCancel(false);
+      onClose?.();
+    } catch (err) {
+      console.error(err);
+      toast.error(err instanceof Error ? err.message : "Erro ao cancelar");
+    } finally {
+      setCancelling(false);
+    }
   };
 
   return (
@@ -171,6 +194,12 @@ export function SignatureStep({ boletaId, boleta, dados, series, onAdvance, onCl
             ))}
           </div>
           <p className="text-[10px] text-muted-foreground">Atualizando a cada 15s…</p>
+          <div className="pt-1">
+            <Button variant="outline" size="sm" className="h-7 text-destructive hover:text-destructive"
+              onClick={() => setConfirmCancel(true)} disabled={cancelling}>
+              <XCircle className="h-3.5 w-3.5 mr-1" /> Cancelar processo de assinatura
+            </Button>
+          </div>
         </>
       )}
 
@@ -203,6 +232,27 @@ export function SignatureStep({ boletaId, boleta, dados, series, onAdvance, onCl
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={confirmCancel} onOpenChange={(o) => !cancelling && setConfirmCancel(o)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancelar processo de assinatura?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Os documentos enviados ao Autentique serão excluídos e a boleta marcada como <b>cancelada</b>. Essa ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={cancelling}>Voltar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); handleCancel(); }}
+              disabled={cancelling}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {cancelling ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Sim, cancelar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
