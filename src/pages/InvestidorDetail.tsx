@@ -269,6 +269,31 @@ export default function InvestidorDetail() {
               )}
             </div>
 
+            <div className="rounded-md border bg-card p-2.5 space-y-2">
+              <div className="text-[10px] leading-none uppercase tracking-wide text-muted-foreground">
+                Histórico de contatos
+              </div>
+              {activities.length === 0 ? (
+                <div className="text-[11px] text-muted-foreground/80 py-2">
+                  Nenhum contato registrado.
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  {activities.map((a) => (
+                    <div key={a.id} className="border-l-2 border-border pl-2">
+                      <div className="text-[10px] leading-none text-muted-foreground">
+                        {new Date(a.occurred_at).toLocaleDateString("pt-BR")} ·{" "}
+                        {INVESTOR_ACTIVITY_LABEL[a.type]}
+                      </div>
+                      <div className="text-[12px] leading-tight text-foreground mt-0.5 whitespace-pre-wrap">
+                        {a.description}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             {data.observacoes && (
               <div className="rounded-md border bg-card p-2.5 space-y-2">
                 <div className="text-[10px] leading-none uppercase tracking-wide text-muted-foreground">
