@@ -36,6 +36,8 @@ export function SignatureStep({ boletaId, boleta, dados, series, onAdvance, onCl
   const [state, setState] = useState<State>("preview");
   const [signers, setSigners] = useState<SignerStatus[]>([]);
   const [previewDoc, setPreviewDoc] = useState<"boletim" | "certificado" | null>(null);
+  const [confirmCancel, setConfirmCancel] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
 
   const boletimHtml = generateBoletimHtml({ boleta, dados, series });
   const certificadoHtml = generateCertificadoHtml({ boleta, dados, series });
