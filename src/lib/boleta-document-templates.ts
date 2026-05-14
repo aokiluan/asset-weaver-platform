@@ -212,7 +212,7 @@ Esta cautela representativa de ${qty} (${qtyExt}) debênture(s), no valor nomina
 
 <p class="pague-se">PAGUE-SE ESTA(S) DEBÊNTURE(S) A ${(dados.nome ?? "").toUpperCase()}, CPF/CNPJ: ${dados.cpf_cnpj ?? ""}</p>
 
-<p style="text-align: center; font-style: italic; margin: 8px 0;">Campinas (SP), ${dateLong()}</p>
+<p style="text-align: center; font-style: italic; margin: 8px 0;">Paulínia (SP), ${dateLong()}</p>
 
 <div class="signatures">
   <div class="sig-block">
