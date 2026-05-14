@@ -152,14 +152,24 @@ export function BoletaWizardSheet({ open, onOpenChange, contact, boleta, onSaved
     }
   }
 
-  async function handleSaveDraft() {
-    setSaving(true);
-    await ensureBoleta();
-    setSaving(false);
-    toast.success("Rascunho salvo");
-    onSaved();
-    onOpenChange(false);
-  }
+  // Autosave: salva alterações automaticamente após o usuário parar de digitar
+  const [autosaveState, setAutosaveState] = useState<"idle" | "saving" | "saved">("idle");
+  useEffect(() => {
+    if (!open || !user || !contact) return;
+    if (!boletaId && (!dados.nome || !dados.cpf_cnpj)) return;
+    const t = setTimeout(async () => {
+      setAutosaveState("saving");
+      const id = await ensureBoleta();
+      if (id) {
+        setAutosaveState("saved");
+        onSaved();
+      } else {
+        setAutosaveState("idle");
+      }
+    }, 800);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, dados, seriesId, valor, step, contratoPath, comprovantePath]);
 
   async function uploadFile(file: File, kind: "contrato" | "comprovante") {
     if (!user) return;
