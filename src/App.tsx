@@ -20,8 +20,7 @@ import BIIndicadores from "./pages/bi/BIIndicadores.tsx";
 
 import AdminEquipes from "./pages/admin/AdminEquipes.tsx";
 import AdminAlcadas from "./pages/admin/AdminAlcadas.tsx";
-import AdminPipeline from "./pages/admin/AdminPipeline.tsx";
-import AdminCategorias from "./pages/admin/AdminCategorias.tsx";
+import AdminAlcadasIndex from "./pages/admin/AdminAlcadasIndex.tsx";
 import AdminPermissoes from "./pages/admin/AdminPermissoes.tsx";
 import AdminDatasets from "./pages/admin/AdminDatasets.tsx";
 import AdminRelatorios from "./pages/admin/AdminRelatorios.tsx";
@@ -146,9 +145,9 @@ const App = () => (
                 <Route index element={<Navigate to="permissoes" replace />} />
                 <Route path="usuarios" element={<Navigate to="/configuracoes/permissoes" replace />} />
                 <Route path="equipes" element={<AdminEquipes />} />
-                <Route path="alcadas" element={<AdminAlcadas />} />
-                <Route path="pipeline" element={<AdminPipeline />} />
-                <Route path="categorias" element={<AdminCategorias />} />
+                <Route path="alcadas" element={<AdminAlcadasIndex />} />
+                <Route path="pipeline" element={<Navigate to="/configuracoes/permissoes" replace />} />
+                <Route path="categorias" element={<Navigate to="/configuracoes/alcadas?sub=categorias" replace />} />
                 <Route path="permissoes" element={<AdminPermissoes />} />
                 <Route path="series-investidor" element={<AdminSeriesInvestidor />} />
               </Route>
