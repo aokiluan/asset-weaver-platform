@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { PageTabs } from "@/components/PageTabs";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, FileText, Download, Loader2 } from "lucide-react";
+import { ArrowLeft, FileText, Download, Eye, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface Investidor {
@@ -67,6 +67,7 @@ export default function InvestidorDetail() {
   const [loading, setLoading] = useState(true);
   const [boletas, setBoletas] = useState<BoletaRow[]>([]);
   const [downloading, setDownloading] = useState<string | null>(null);
+  const [viewing, setViewing] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -114,6 +115,23 @@ export default function InvestidorDetail() {
       toast.error("Não foi possível baixar", { description: e?.message });
     } finally {
       setDownloading(null);
+    }
+  }
+
+  async function handleView(path: string) {
+    setViewing(path);
+    try {
+      const { data, error } = await supabase.storage
+        .from("investor-boletas").download(path);
+      if (error || !data) throw error ?? new Error("Falha ao abrir");
+      const url = URL.createObjectURL(new Blob([data], { type: "application/pdf" }));
+      const w = window.open(url, "_blank", "noopener,noreferrer");
+      if (!w) toast.error("Pop-up bloqueado pelo navegador");
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (e: any) {
+      toast.error("Não foi possível visualizar", { description: e?.message });
+    } finally {
+      setViewing(null);
     }
   }
 
@@ -199,6 +217,15 @@ export default function InvestidorDetail() {
                             <div key={f.storage_path} className="flex items-center gap-2">
                               <FileText className="h-3 w-3 text-muted-foreground shrink-0" />
                               <div className="min-w-0 flex-1 text-[11px] truncate">{f.name}</div>
+                              <Button
+                                variant="ghost" size="sm" className="h-6 text-[11px] px-2"
+                                onClick={() => handleView(f.storage_path)}
+                                disabled={viewing === f.storage_path}
+                              >
+                                {viewing === f.storage_path
+                                  ? <Loader2 className="h-3 w-3 animate-spin" />
+                                  : <><Eye className="h-3 w-3 mr-1" /> Ver</>}
+                              </Button>
                               <Button
                                 variant="ghost" size="sm" className="h-6 text-[11px]"
                                 onClick={() => handleDownload(f.storage_path, f.name)}

@@ -6,7 +6,7 @@ import {
 } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Download, FileText, ExternalLink, Loader2 } from "lucide-react";
+import { Download, Eye, FileText, ExternalLink, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   BOLETA_STATUS_LABEL, BOLETA_STATUS_VARIANT, fmtBRL,
@@ -100,6 +100,25 @@ export function BoletaConcluidaSheet({ open, onOpenChange, boleta, contact, seri
     }
   }
 
+  const [viewing, setViewing] = useState<string | null>(null);
+  async function handleView(file: SignedFile) {
+    setViewing(file.storage_path);
+    try {
+      const { data, error } = await supabase.storage
+        .from("investor-boletas")
+        .download(file.storage_path);
+      if (error || !data) throw error ?? new Error("Falha ao abrir");
+      const url = URL.createObjectURL(new Blob([data], { type: "application/pdf" }));
+      const w = window.open(url, "_blank", "noopener,noreferrer");
+      if (!w) toast.error("Pop-up bloqueado pelo navegador");
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (e: any) {
+      toast.error("Não foi possível visualizar", { description: e?.message });
+    } finally {
+      setViewing(null);
+    }
+  }
+
   if (!boleta) return null;
   const dados = (boleta.dados_investidor || {}) as Record<string, any>;
 
@@ -180,6 +199,17 @@ export function BoletaConcluidaSheet({ open, onOpenChange, boleta, contact, seri
                   <div key={f.storage_path} className="flex items-center gap-2 rounded border p-2">
                     <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                     <div className="min-w-0 flex-1 text-[12px] truncate">{f.name}</div>
+                    <Button
+                      variant="ghost" size="sm"
+                      className="h-6 text-[11px] px-2"
+                      onClick={() => handleView(f)}
+                      disabled={viewing === f.storage_path}
+                      title="Visualizar"
+                    >
+                      {viewing === f.storage_path
+                        ? <Loader2 className="h-3 w-3 animate-spin" />
+                        : <><Eye className="h-3 w-3 mr-1" /> Ver</>}
+                    </Button>
                     <Button
                       variant="outline" size="sm"
                       className="h-6 text-[11px]"
