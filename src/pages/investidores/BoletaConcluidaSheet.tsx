@@ -142,8 +142,20 @@ export function BoletaConcluidaSheet({ open, onOpenChange, boleta, contact, seri
           </div>
 
           <div className="rounded-md border bg-card p-2.5 space-y-2">
-            <div className="text-[10px] uppercase tracking-wide text-muted-foreground leading-none">
-              Documentos assinados
+            <div className="flex items-center justify-between">
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground leading-none">
+                Documentos assinados
+              </div>
+              <Button
+                variant="outline" size="sm"
+                className="h-6 text-[11px]"
+                onClick={handleResync}
+                disabled={syncing}
+              >
+                {syncing
+                  ? <><Loader2 className="h-3 w-3 animate-spin mr-1" /> Sincronizando</>
+                  : "Buscar arquivos"}
+              </Button>
             </div>
             {loading ? (
               <div className="flex items-center text-[11px] text-muted-foreground py-2">
