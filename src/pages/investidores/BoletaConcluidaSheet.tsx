@@ -100,6 +100,25 @@ export function BoletaConcluidaSheet({ open, onOpenChange, boleta, contact, seri
     }
   }
 
+  const [viewing, setViewing] = useState<string | null>(null);
+  async function handleView(file: SignedFile) {
+    setViewing(file.storage_path);
+    try {
+      const { data, error } = await supabase.storage
+        .from("investor-boletas")
+        .download(file.storage_path);
+      if (error || !data) throw error ?? new Error("Falha ao abrir");
+      const url = URL.createObjectURL(new Blob([data], { type: "application/pdf" }));
+      const w = window.open(url, "_blank", "noopener,noreferrer");
+      if (!w) toast.error("Pop-up bloqueado pelo navegador");
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (e: any) {
+      toast.error("Não foi possível visualizar", { description: e?.message });
+    } finally {
+      setViewing(null);
+    }
+  }
+
   if (!boleta) return null;
   const dados = (boleta.dados_investidor || {}) as Record<string, any>;
 
