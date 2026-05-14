@@ -21,6 +21,7 @@ import {
   type InvestorSeries,
 } from "@/lib/investor-boletas";
 import type { InvestorContact } from "@/lib/investor-contacts";
+import { SignatureStep } from "./SignatureStep";
 
 interface Props {
   open: boolean;
