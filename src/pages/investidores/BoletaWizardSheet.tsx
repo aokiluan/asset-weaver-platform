@@ -290,7 +290,20 @@ export function BoletaWizardSheet({ open, onOpenChange, contact, boleta, onSaved
                 <Field label="Órgão emissor" value={dados.orgao_emissor ?? ""} onChange={(v) => setDados({ ...dados, orgao_emissor: v })} />
               </div>
               <div className="grid grid-cols-3 gap-2">
-                <Field label="CEP" value={dados.cep ?? ""} onChange={(v) => setDados({ ...dados, cep: v })} />
+                <CepField
+                  value={dados.cep ?? ""}
+                  onChange={(v) => setDados((d) => ({ ...d, cep: v }))}
+                  onResolved={(addr) =>
+                    setDados((d) => ({
+                      ...d,
+                      cep: addr.cep,
+                      endereco: addr.logradouro || d.endereco,
+                      bairro: addr.bairro || d.bairro,
+                      cidade: addr.cidade || d.cidade,
+                      estado: addr.estado || d.estado,
+                    }))
+                  }
+                />
                 <Field label="Cidade" value={dados.cidade ?? ""} onChange={(v) => setDados({ ...dados, cidade: v })} />
                 <Field label="UF" value={dados.estado ?? ""} onChange={(v) => setDados({ ...dados, estado: v })} />
               </div>
