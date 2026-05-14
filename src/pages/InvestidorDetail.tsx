@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { PdfPreview } from "@/components/ui/pdf-preview";
 import { ArrowLeft, FileText, Download, Eye, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { INVESTOR_ACTIVITY_LABEL, type InvestorActivity } from "@/lib/investor-contacts";
 
 interface Investidor {
   id: string;
