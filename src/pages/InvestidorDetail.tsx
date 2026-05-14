@@ -201,7 +201,7 @@ export default function InvestidorDetail() {
                               <div className="min-w-0 flex-1 text-[11px] truncate">{f.name}</div>
                               <Button
                                 variant="ghost" size="sm" className="h-6 text-[11px]"
-                                onClick={() => handleDownload(f.storage_path)}
+                                onClick={() => handleDownload(f.storage_path, f.name)}
                                 disabled={downloading === f.storage_path}
                               >
                                 {downloading === f.storage_path
