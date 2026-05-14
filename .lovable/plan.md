@@ -1,58 +1,93 @@
+
 ## Objetivo
 
-1. Ajustar o template `generateBoletimHtml` em `src/lib/boleta-document-templates.ts` para o **Boletim de Subscrição de Debêntures Simples** caber sempre em uma única página A4.
-2. Garantir que a informação **"Classe: Sênior"** apareça com destaque claro em "Característica da Emissão" (hoje está pequena, em itálico, no meio de outra linha).
+1. **Operação → Pipeline de Cedentes**: alinhar visual e UX ao CRM de prospecção (`InvestidoresCRM`), que já é o padrão Nibo ultracompacto consolidado.
+2. **Pente fino geral**: remover descrições/subtítulos verbosos espalhados pelos módulos anteriores (Cedentes, Diretório, Financeiro, Comitê, Formalização, BI, Gestão, Admin, Leads), aplicando o padrão "clean e objetivo" do CRM novo.
 
-## Mudanças no CSS (1 página A4)
+Nada de mudanças de regra de negócio — só apresentação.
 
-Em `src/lib/boleta-document-templates.ts`, dentro de `generateBoletimHtml`:
+---
 
-- `@page { size: A4; margin: 12mm 15mm; }` (era `20mm 25mm`)
-- Remover `padding: 20px` do `body` (margens duplicadas hoje deixam a área útil minúscula)
-- `body` 9.5pt (era 11pt)
-- `h1` 12pt, `margin: 0 0 6px`
-- `td/th` 8.5pt, `padding: 2px 4px`, `vertical-align: middle`
-- `p` 8.5pt, `margin: 2px 0`
-- `.section-title` `margin: 6px 0 2px`
-- `table { margin-bottom: 4px; }`
-- `.signature-block { margin-top: 14px; }`
-- `.signature-line { margin: 22px auto 2px; width: 240px; }`
-- `<hr>` com `margin: 10px 0`
-- Parágrafo declaratório a 8pt com `line-height: 1.25`
-- `body { page-break-inside: avoid; }`
+## Parte 1 — Pipeline de Cedentes (`src/pages/Pipeline.tsx`)
 
-Texto, dados e estrutura permanecem idênticos — só CSS muda.
+Hoje o Pipeline já é compacto, mas é "cru" comparado ao CRM de investidores. Vou trazer os mesmos componentes/padrões:
 
-## Destacar "Classe Sênior"
+- **Header (PageTabs)**: remover a `description` "Arraste os cards entre estágios. Duplo-clique abre o cedente." (poluição visual, padrão dos demais módulos será sem descrição).
+- **Faixa de métricas no topo** (mesmo `MetricCard` do CRM de investidores, p-2.5, label 10px uppercase, valor 16px):
+  - Total de cedentes
+  - Em negociação (não-terminais)
+  - Faturamento total na esteira (soma `faturamento_medio`)
+  - Ticket médio
+- **Filtros** em linha logo abaixo das métricas, no mesmo estilo dos chips do CRM (Button ghost/secondary h-7 text-[12px]): por setor (chips dinâmicos a partir dos cedentes carregados) + alternância Kanban/Lista (`ToggleGroup` h-7 com ícones `LayoutGrid`/`ListIcon`).
+- **Colunas Kanban**: trocar pela mesma estrutura de `KanbanColumn` do CRM:
+  - Largura `w-[220px]`, header fora do card (label + Badge h-4 px-1.5 com contagem + total à direita).
+  - Drop area `rounded-md p-1 min-h-[80px]`, `ring-2 ring-primary` em hover, terminal com borda tracejada e `bg-muted/20`.
+  - Cards `p-2.5 rounded-md border bg-card` com nome 12px, secundárias 10px, ticket à direita.
+- **Vista Lista**: implementar `ListView` espelhando o do CRM (Table com colunas: Razão social, CNPJ, Setor, Faturamento, Estágio-badge, ações Ver/Editar). Mesmas alturas (`h-7`) e tipografia.
+- **Confirmação de movimentação**: reaproveitar o mesmo padrão do `ConfirmStageMoveDialog` (criar `ConfirmCedenteStageMoveDialog` com a mesma estética) ao arrastar entre estágios — atualmente o Pipeline move sem confirmação.
+- **DragOverlay**: idêntico ao do CRM (largura 220px, sombra elegante).
+- Manter toda a lógica atual de `supabase.from("cedentes").update({stage})`, navegação, etc.
 
-Hoje a linha "Característica da Emissão" mistura Classe + Série + Indexador + Vencimento em um único parágrafo, com tudo em itálico de 10pt:
+Resultado: Pipeline e CRM de prospecção visualmente indistinguíveis em estrutura.
 
-```
-Classe: Sênior. Série: 2025-1. Indexador: CDI + 2%. Data Vencimento: 05/05/2026.
-```
+---
 
-Vou trocar por um bloco mais claro, com a **Classe Sênior em destaque** logo abaixo do título da seção:
+## Parte 2 — Pente fino nos módulos anteriores
 
-```
-Característica da Emissão
-Classe: SÊNIOR
-Emissão privada, aprovada pela AGE da EMISSORA realizada em 28 de Abril de 2025.
-Data da Emissão: 05/05/2025. Valor Total da Emissão: R$ 20.000.000,00 (VINTE MILHÕES DE REAIS), em 11 (ONZE) séries.
-Série: <nome>. Indexador: <idx>. Data Vencimento: <data>.
-```
+### 2.1 Remover descrições do `PageTabs` em todas as páginas
 
-Implementação: adicionar um `<p>` dedicado logo após `<p class="section-title">Característica da Emissão</p>`:
+A `description` no `PageTabs` é o maior ofensor (texto miúdo cinza embaixo do título sem agregar valor para quem já conhece o módulo). Remover de:
 
-```html
-<p><strong>Classe:</strong> <strong>SÊNIOR</strong></p>
-```
+- `src/pages/Pipeline.tsx`
+- `src/pages/Investidores.tsx`
+- `src/pages/Diretorio.tsx`
+- `src/pages/BI.tsx`
+- `src/pages/gestao/GestaoDiario.tsx`
+- `src/pages/gestao/GestaoComercial.tsx`
+- `src/pages/gestao/GestaoFinanceiro.tsx`
+- `src/pages/gestao/GestaoOperacional.tsx`
 
-E remover o trecho `Classe: <span class="italic">Sênior.</span>` da linha que hoje agrupa tudo, mantendo apenas Série/Indexador/Vencimento ali.
+Manter `description` apenas onde é dado dinâmico útil:
+- `src/pages/InvestidorDetail.tsx` (nome fantasia)
+- `src/pages/DiretorioDetail.tsx` (razão social do cedente)
 
-## Validação
+### 2.2 Páginas Admin — remover subtítulos `<p className="text-muted-foreground">…</p>`
 
-Após aprovação, abrir uma boleta concluída → "Ver" no boletim → confirmar no `PdfPreview` in-app que:
-- O documento renderiza em **1 página A4**, mesmo com nome/endereço longo.
-- "Classe: SÊNIOR" aparece em negrito, destacado, na seção Característica da Emissão.
+Cada tela admin tem um título + parágrafo descritivo. Vou remover o `<p>` e manter só o `<h1>`:
 
-Se algum caso extremo ainda quebrar, reduzo a fonte global em mais 0.5pt como fallback.
+- `src/pages/admin/AdminPipeline.tsx` ("Configure as colunas do funil comercial.")
+- `src/pages/admin/AdminCategorias.tsx` ("Tipos de documento aceitos…")
+- `src/pages/admin/AdminAlcadas.tsx` ("Faixas de valor…")
+- `src/pages/admin/AdminEquipes.tsx`
+- `src/pages/admin/AdminDatasets.tsx`, `AdminPermissoes.tsx`, `AdminRelatorios.tsx`, `AdminDashboardWidgets.tsx` — verificar e remover o subtítulo onde existir.
+
+### 2.3 Demais subtítulos avulsos
+
+- `src/pages/Leads.tsx`: remover "Cedentes e investidores no pipeline comercial." (linha 110).
+- `src/pages/Index.tsx`: revisar bloco "Dashboard Executivo" — checar se há subtítulo redundante para remover.
+
+### 2.4 Padronização leve de títulos
+
+Onde o título já está em `text-[20px] font-medium tracking-tight`, manter (já é Nibo). Apenas:
+
+- `src/pages/Formalizacao.tsx` (linha 291) e `src/pages/Comite.tsx` (linha 126) usam `text-[18px]` — alinhar para `text-[20px] font-medium tracking-tight` para uniformidade com o restante.
+- `src/pages/NotFound.tsx`: `text-xl` → `text-[14px] text-muted-foreground` (padrão Nibo).
+
+### 2.5 Atualizar memória do projeto
+
+Adicionar à `mem://index.md` em **Core**:
+> Páginas: `<PageTabs>` SEM `description`, exceto quando o subtítulo for dado dinâmico (nome do registro). Nunca usar `<p className="text-muted-foreground">` como subtítulo decorativo abaixo do `<h1>`.
+
+---
+
+## Fora de escopo
+
+- Não mudar lógica de drag-and-drop, queries, RLS ou endpoints.
+- Não mexer em wizard de boleta, geração de PDFs ou edge functions.
+- Não tocar em componentes de detalhe que já estão Nibo (cards de form/view internos).
+
+## Detalhes técnicos
+
+- Os componentes `MetricCard`, `KanbanColumn` e `ListView` do `InvestidoresCRM.tsx` serão **replicados** (não extraídos para módulo compartilhado nesta passada) dentro de `Pipeline.tsx` para manter o blast radius pequeno. Extração para `src/components/crm/*` pode virar refactor futuro se você quiser.
+- O `ConfirmStageMoveDialog` existente é específico de `InvestorStage`. Vou criar um irmão `ConfirmCedenteStageMoveDialog` em `src/components/cedentes/`.
+- Toda alteração textual usa apenas tokens semânticos já existentes — sem novas variáveis CSS.
