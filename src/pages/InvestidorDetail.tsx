@@ -115,6 +115,7 @@ export default function InvestidorDetail() {
       toast.error("Não foi possível baixar", { description: e?.message });
     } finally {
       setDownloading(null);
+    }
   }
 
   async function handleView(path: string) {
@@ -132,7 +133,6 @@ export default function InvestidorDetail() {
     } finally {
       setViewing(null);
     }
-  }
   }
 
   return (
