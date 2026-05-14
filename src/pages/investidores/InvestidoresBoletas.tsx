@@ -25,12 +25,15 @@ export default function InvestidoresBoletas() {
   const [loading, setLoading] = useState(true);
   const [boletas, setBoletas] = useState<InvestorBoleta[]>([]);
   const [contacts, setContacts] = useState<InvestorContact[]>([]);
+  const [extraContacts, setExtraContacts] = useState<InvestorContact[]>([]);
   const [series, setSeries] = useState<InvestorSeries[]>([]);
   const [search, setSearch] = useState("");
 
   const [wizardOpen, setWizardOpen] = useState(false);
   const [wizardContact, setWizardContact] = useState<InvestorContact | null>(null);
   const [wizardBoleta, setWizardBoleta] = useState<InvestorBoleta | null>(null);
+
+  const [viewBoleta, setViewBoleta] = useState<InvestorBoleta | null>(null);
 
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
