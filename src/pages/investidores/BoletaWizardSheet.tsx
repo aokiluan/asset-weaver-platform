@@ -88,26 +88,26 @@ export function BoletaWizardSheet({ open, onOpenChange, contact, boleta, onSaved
     [series, seriesId],
   );
 
-  async function ensureBoleta(extra: Partial<InvestorBoleta> = {}): Promise<string | null> {
+  async function ensureBoleta(extra: Record<string, unknown> = {}): Promise<string | null> {
     if (!user || !contact) return null;
-    const payload: Record<string, unknown> = {
+    const base = {
       contact_id: contact.id,
       user_id: user.id,
       series_id: seriesId || null,
       valor: valor,
       prazo_meses: selectedSeries?.prazo_meses ?? null,
-      dados_investidor: dados,
+      dados_investidor: dados as never,
       observacoes: observacoes || null,
       current_step: step,
       contrato_path: contratoPath,
       comprovante_path: comprovantePath,
       ...extra,
-    };
+    } as never;
 
     if (boletaId) {
       const { error } = await supabase
         .from("investor_boletas")
-        .update(payload)
+        .update(base)
         .eq("id", boletaId);
       if (error) {
         toast.error("Erro ao salvar", { description: error.message });
