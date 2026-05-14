@@ -9,9 +9,7 @@ export default function Configuracoes() {
         tabs={[
           { label: "Permissões", to: "/configuracoes/permissoes" },
           { label: "Equipes", to: "/configuracoes/equipes" },
-          { label: "Alçadas", to: "/configuracoes/alcadas" },
-          { label: "Pipeline", to: "/configuracoes/pipeline" },
-          { label: "Categorias de doc.", to: "/configuracoes/categorias" },
+          { label: "Alçadas de crédito", to: "/configuracoes/alcadas" },
           { label: "Séries de investimento", to: "/configuracoes/series-investidor" },
         ]}
       />
