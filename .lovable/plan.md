@@ -1,31 +1,60 @@
-# Desabilitar "+ Novo cadastro" do Pipeline de Cedentes
+# Boletas no sidebar + visualização em funil nos pipelines
 
-## Análise de impacto (sem riscos)
+## 1. Mover "Boletas" para o sidebar (Relação com Investidores)
 
-Mapeei todas as referências ao fluxo acionado pelo botão:
+**`src/components/AppSidebar.tsx`** — grupo `relacao_investidores`:
 
-| Item | Onde é usado | Decisão |
-|------|--------------|---------|
-| Botão "Novo cadastro" em `Pipeline.tsx` (linhas 204-212) | Apenas no Pipeline | **Remover** |
-| Rota `/cedentes/novo` em `App.tsx` (linha 69) | Acionada **somente** por esse botão. Nenhum outro `navigate`, `Link` ou `href` aponta para ela | **Remover** |
-| Página `CedenteCadastro.tsx` | Também serve `/cedentes/:id/editar` (edição de cedente existente) | **Manter** — mexer quebraria a edição |
-| `CedenteNovoSheet.tsx` | Usado pelo botão "Novo cadastro" da página `/cedentes` (lista) — fluxo separado, em sheet | **Manter** — fluxo independente |
-| Backend (tabela `cedentes`, RLS, edge functions) | Compartilhado com a lista, edição, importação, etc. | **Não tocar** |
+```
+Pipeline de Investidores  → /investidores/crm
+Boletas                   → /investidores/boletas   ← NOVO
+Investidores              → /diretorio/investidores
+```
 
-Nenhum hook, edge function, migration ou outro componente depende exclusivamente do caminho `/cedentes/novo`. Logo, removê-lo não tem efeito colateral.
+Ícone novo: `Receipt` ou `FileText` (Phosphor) com wrapper `thin()`.
 
-## Mudanças
+A rota `/investidores/boletas` já existe — não há mudança em `App.tsx`. As abas internas em `InvestidoresCRM.tsx` e `InvestidoresBoletas.tsx` (`PageTabs` com tabs `Pipeline` / `Boletas`) podem ser **removidas** já que viram itens de sidebar — ficam só como `<PageTabs title=… tabs={[]} />`, mantendo o cabeçalho e ações.
 
-**1. `src/pages/Pipeline.tsx`**
-- Remover a prop `actions={...}` do `<PageTabs>` (linhas 204-212).
-- Remover o import não usado `Plus` de `lucide-react` se ficar órfão (verificar — `Plus` não é usado em outro lugar do arquivo).
-- Remover o `useNavigate` se ficar não usado (ele ainda é usado em `navigate("/cedentes/${id}")`, então **mantém**).
+### Badge de pendência no item "Boletas"
 
-**2. `src/App.tsx`**
-- Remover a linha 69: `<Route path="/cedentes/novo" element={<CedenteCadastro />} />`.
-- Manter a linha 70 (`/cedentes/:id/editar`) e o import de `CedenteCadastro`.
+Quando houver pelo menos 1 investidor em `stage = 'boleta_em_andamento'` SEM boleta aberta vinculada, mostrar um indicador no item da sidebar:
+- **Sidebar expandido:** `Badge` redondo com a contagem à direita do label (ex.: `2`).
+- **Sidebar colapsado:** dot vermelho no canto superior direito do ícone.
+
+**Implementação** (novo hook `src/hooks/useBoletasPendentes.ts`):
+1. Query inicial: contar `investor_contacts` em `boleta_em_andamento` que NÃO têm linha em `investor_boletas` com `status NOT IN ('concluida','cancelada')` — usar duas selects e fazer o diff em memória (mesmo padrão de `InvestidoresBoletas.tsx`).
+2. Subscription Realtime nas tabelas `investor_contacts` e `investor_boletas` para atualizar a contagem ao vivo.
+3. Retornar `{ count: number }`.
+
+`AppSidebar` consome o hook e passa `badge` para `SidebarItem` apenas quando `item.url === '/investidores/boletas'` e `count > 0`. Estende `SidebarItem` com prop opcional `badge?: number`.
+
+> Realtime: `investor_contacts` e `investor_boletas` precisam estar na publication `supabase_realtime`. Se ainda não estiverem, criar migration adicionando.
+
+## 2. Visualização em funil nos pipelines
+
+Adicionar um terceiro modo no `ToggleGroup` de view, ao lado de `kanban` e `list`: ícone `Filter`/`Funnel`.
+
+**Novo componente compartilhado** `src/components/pipeline/FunnelView.tsx`:
+- Recebe `stages: Array<{ key, label, count, value, color? }>` e `onStageClick?(key)`.
+- Renderiza barras horizontais com largura proporcional à contagem (ou ao valor — toggle interno secundário "por nº" / "por valor").
+- Cada barra mostra: nome do estágio, contagem, valor compacto (BRL), e taxa de conversão vs o estágio anterior (%).
+- Visual ultra-compacto Nibo: barras h-7, label 12px, números tabulares, cores via tokens `--primary` com opacity decrescente, fundo `bg-muted`.
+- Estágios terminais (`isTerminal`) renderizados separados abaixo, em cinza, sem entrar no cálculo de conversão.
+
+**Integração:**
+- `src/pages/Pipeline.tsx` (Pipeline de Cedentes): adiciona `funnel` no ToggleGroup e ramo `view === "funnel"` que monta `stages` a partir de `STAGE_ORDER` × `filtered` (cedentes), com valor = `faturamento_medio`.
+- `src/pages/investidores/InvestidoresCRM.tsx`: idem com `STAGE_ORDER` de investidores e valor = `ticket`.
+
+Click numa etapa do funil filtra/scrolla — comportamento simples: alterna para `kanban` e foca a coluna correspondente (opcional, fora do MVP).
+
+## Detalhes técnicos
+
+- `STAGE_ORDER` e `STAGE_LABEL` já exportados em `src/lib/cedente-stages.ts` e `src/lib/investor-contacts.ts` — reaproveitar.
+- Conversão = `count[i] / count[0]` (do primeiro estágio não-terminal). Mostrar `—` quando `count[0] === 0`.
+- Ícone funil: `Funnel` do `@phosphor-icons/react` (já é a fonte de ícones do sidebar) e `Filter` de `lucide-react` para os toggle buttons (já usados em outros lugares).
+- Sem mudanças de schema, RLS ou edge functions, exceto a migration opcional de Realtime publication.
 
 ## Fora de escopo
 
-- Nenhuma alteração em schema, RLS, edge functions ou outros componentes.
-- O fluxo de criar cedente continua disponível via `/cedentes` (lista) → botão "Novo cadastro" → `CedenteNovoSheet`.
+- Reordenar/renomear estágios.
+- Drill-down ao clicar no funil (apenas troca de view, sem scroll automático).
+- Permissões: o item "Boletas" herda as regras já aplicadas ao grupo `relacao_investidores`.
