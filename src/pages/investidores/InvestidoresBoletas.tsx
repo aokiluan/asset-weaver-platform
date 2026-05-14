@@ -324,7 +324,7 @@ function ContactBoletaCard({
           </div>
           <div className="text-[11px] text-muted-foreground leading-tight truncate mt-0.5">
             {boleta
-              ? <>{series?.nome ?? "Sem série"} · {fmtBRL(boleta.valor)} · Etapa {step}/4 · {stepLabel}</>
+              ? <>{series?.nome ?? "Sem série"} · {fmtBRL(boleta.valor)} · Etapa {step}/{BOLETA_STEPS.length} · {stepLabel}</>
               : <>Sem boleta — pronta para iniciar</>}
           </div>
         </div>
