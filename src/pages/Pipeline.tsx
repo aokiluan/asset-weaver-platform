@@ -12,15 +12,27 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2, Plus, LayoutGrid, List as ListIcon, Eye } from "lucide-react";
+import {
+  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Loader2, Plus, LayoutGrid, List as ListIcon, Eye, Phone } from "lucide-react";
 import {
   DndContext, DragOverlay, PointerSensor, useSensor, useSensors,
   DragEndEvent, DragStartEvent, useDroppable, useDraggable,
 } from "@dnd-kit/core";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { CedenteStage, STAGE_LABEL, STAGE_ORDER } from "@/lib/cedente-stages";
+import {
+  CedenteStage, STAGE_LABEL, STAGE_ORDER,
+  canMoveStage, canDragFromStage,
+} from "@/lib/cedente-stages";
 import { PageTabs } from "@/components/PageTabs";
+import { useAuth } from "@/hooks/useAuth";
+import {
+  CedenteQuickViewDialog,
+  type CedenteQuickView,
+} from "@/components/cedentes/CedenteQuickViewDialog";
+import { RegistrarContatoCedenteDialog } from "@/components/cedentes/RegistrarContatoCedenteDialog";
 
 interface CedenteCard {
   id: string;
@@ -30,6 +42,12 @@ interface CedenteCard {
   stage: CedenteStage;
   faturamento_medio: number | null;
   setor: string | null;
+  cidade: string | null;
+  estado: string | null;
+  limite_aprovado: number | null;
+  owner_id: string | null;
+  next_action: string | null;
+  last_contact_date: string | null;
 }
 
 type View = "kanban" | "list";
@@ -58,10 +76,32 @@ const fmtCNPJ = (s: string | null) => {
   return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}/${d.slice(8, 12)}-${d.slice(12)}`;
 };
 
+const fmtDate = (s: string | null) => {
+  if (!s) return "—";
+  return new Date(`${s}T00:00:00`).toLocaleDateString("pt-BR");
+};
+
 const isTerminal = (s: CedenteStage) => s === "ativo" || s === "inativo";
+
+function toQuickView(c: CedenteCard): CedenteQuickView {
+  return {
+    id: c.id,
+    razao_social: c.razao_social,
+    cnpj: c.cnpj,
+    stage: c.stage,
+    setor: c.setor,
+    faturamento_medio: c.faturamento_medio,
+    cidade: c.cidade,
+    estado: c.estado,
+    limite_aprovado: c.limite_aprovado,
+    next_action: c.next_action,
+    last_contact_date: c.last_contact_date,
+  };
+}
 
 export default function Pipeline() {
   const navigate = useNavigate();
+  const { user, roles } = useAuth();
   const [cedentes, setCedentes] = useState<CedenteCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -71,6 +111,8 @@ export default function Pipeline() {
     cedente: CedenteCard;
     to: CedenteStage;
   } | null>(null);
+  const [quickView, setQuickView] = useState<CedenteQuickView | null>(null);
+  const [registerFor, setRegisterFor] = useState<CedenteQuickView | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -84,7 +126,9 @@ export default function Pipeline() {
     setLoading(true);
     const { data, error } = await supabase
       .from("cedentes")
-      .select("id,razao_social,nome_fantasia,cnpj,stage,faturamento_medio,setor")
+      .select(
+        "id,razao_social,nome_fantasia,cnpj,stage,faturamento_medio,setor,cidade,estado,limite_aprovado,owner_id,next_action,last_contact_date",
+      )
       .order("created_at", { ascending: false });
     if (error) {
       toast.error("Erro ao carregar cedentes", { description: error.message });
@@ -125,6 +169,12 @@ export default function Pipeline() {
   function requestStageMove(cedenteId: string, newStage: CedenteStage) {
     const c = cedentes.find((x) => x.id === cedenteId);
     if (!c || c.stage === newStage) return;
+    const isOwner = !!user && c.owner_id === user.id;
+    const check = canMoveStage(roles, isOwner, c.stage, newStage);
+    if (!check.ok) {
+      toast.error(check.reason ?? "Movimento não permitido");
+      return;
+    }
     setPendingMove({ cedente: c, to: newStage });
   }
 
@@ -220,44 +270,54 @@ export default function Pipeline() {
             <Loader2 className="h-4 w-4 animate-spin mr-2" /> Carregando...
           </div>
         ) : view === "kanban" ? (
-          <DndContext
-            sensors={sensors}
-            onDragStart={(e: DragStartEvent) => setActiveId(String(e.active.id))}
-            onDragEnd={(e: DragEndEvent) => {
-              setActiveId(null);
-              const { active, over } = e;
-              if (!over) return;
-              requestStageMove(String(active.id), String(over.id) as CedenteStage);
-            }}
-            onDragCancel={() => setActiveId(null)}
-          >
-            <div className="overflow-x-auto -mx-2 px-2">
-              <div className="flex gap-3 min-w-max pb-2">
-                {STAGE_ORDER.map((stage) => (
-                  <KanbanColumn
-                    key={stage}
-                    stage={stage}
-                    items={filtered.filter((c) => c.stage === stage)}
-                    onOpen={(id) => navigate(`/cedentes/${id}`)}
-                  />
-                ))}
-              </div>
-            </div>
-            <DragOverlay>
-              {activeCedente && (
-                <div className="w-[220px] rounded-md border bg-card p-2.5 shadow-[var(--shadow-elegant)]">
-                  <div className="text-[12px] font-medium text-foreground leading-tight truncate">
-                    {activeCedente.razao_social}
-                  </div>
-                  <div className="text-[10px] text-muted-foreground mt-1 tabular-nums">
-                    {fmtCompactBRL(activeCedente.faturamento_medio)}
-                  </div>
+          <TooltipProvider delayDuration={200}>
+            <DndContext
+              sensors={sensors}
+              onDragStart={(e: DragStartEvent) => setActiveId(String(e.active.id))}
+              onDragEnd={(e: DragEndEvent) => {
+                setActiveId(null);
+                const { active, over } = e;
+                if (!over) return;
+                requestStageMove(String(active.id), String(over.id) as CedenteStage);
+              }}
+              onDragCancel={() => setActiveId(null)}
+            >
+              <div className="overflow-x-auto -mx-2 px-2">
+                <div className="flex gap-3 min-w-max pb-2">
+                  {STAGE_ORDER.map((stage) => (
+                    <KanbanColumn
+                      key={stage}
+                      stage={stage}
+                      items={filtered.filter((c) => c.stage === stage)}
+                      userId={user?.id ?? null}
+                      roles={roles}
+                      onQuickView={(c) => setQuickView(toQuickView(c))}
+                      onRegister={(c) => setRegisterFor(toQuickView(c))}
+                    />
+                  ))}
                 </div>
-              )}
-            </DragOverlay>
-          </DndContext>
+              </div>
+              <DragOverlay>
+                {activeCedente && (
+                  <div className="w-[220px] rounded-md border bg-card p-2.5 shadow-[var(--shadow-elegant)]">
+                    <div className="text-[12px] font-medium text-foreground leading-tight truncate">
+                      {activeCedente.razao_social}
+                    </div>
+                    <div className="text-[10px] text-muted-foreground mt-1 tabular-nums">
+                      {fmtCompactBRL(activeCedente.faturamento_medio)}
+                    </div>
+                  </div>
+                )}
+              </DragOverlay>
+            </DndContext>
+          </TooltipProvider>
         ) : (
-          <ListView rows={filtered} onOpen={(id) => navigate(`/cedentes/${id}`)} />
+          <ListView
+            rows={filtered}
+            onOpen={(id) => navigate(`/cedentes/${id}`)}
+            onQuickView={(c) => setQuickView(toQuickView(c))}
+            onRegister={(c) => setRegisterFor(toQuickView(c))}
+          />
         )}
       </div>
 
@@ -271,6 +331,10 @@ export default function Pipeline() {
                   Mover <span className="font-medium text-foreground">{pendingMove.cedente.razao_social}</span> de{" "}
                   <span className="font-medium text-foreground">{STAGE_LABEL[pendingMove.cedente.stage]}</span> para{" "}
                   <span className="font-medium text-foreground">{STAGE_LABEL[pendingMove.to]}</span>?
+                  <br />
+                  <span className="text-[11px] text-muted-foreground">
+                    Pendências (documentos, parecer, etc.) só são checadas dentro do cedente.
+                  </span>
                 </>
               )}
             </AlertDialogDescription>
@@ -289,6 +353,21 @@ export default function Pipeline() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <CedenteQuickViewDialog
+        open={!!quickView}
+        onOpenChange={(v) => !v && setQuickView(null)}
+        cedente={quickView}
+        onRegisterContact={(c) => setRegisterFor(c)}
+        onOpenDetails={(c) => navigate(`/cedentes/${c.id}`)}
+      />
+
+      <RegistrarContatoCedenteDialog
+        open={!!registerFor}
+        onOpenChange={(v) => !v && setRegisterFor(null)}
+        cedente={registerFor}
+        onSaved={load}
+      />
     </>
   );
 }
@@ -312,11 +391,17 @@ function MetricCard({ label, value, sub }: { label: string; value: string; sub?:
 function KanbanColumn({
   stage,
   items,
-  onOpen,
+  userId,
+  roles,
+  onQuickView,
+  onRegister,
 }: {
   stage: CedenteStage;
   items: CedenteCard[];
-  onOpen: (id: string) => void;
+  userId: string | null;
+  roles: import("@/lib/roles").AppRole[];
+  onQuickView: (c: CedenteCard) => void;
+  onRegister: (c: CedenteCard) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: stage });
   const total = items.reduce((a, r) => a + (r.faturamento_medio ?? 0), 0);
@@ -349,7 +434,13 @@ function KanbanColumn({
         )}
       >
         {items.map((c) => (
-          <KanbanCard key={c.id} cedente={c} onOpen={onOpen} />
+          <KanbanCard
+            key={c.id}
+            cedente={c}
+            canDrag={canDragFromStage(roles, !!userId && c.owner_id === userId, c.stage)}
+            onQuickView={onQuickView}
+            onRegister={onRegister}
+          />
         ))}
         {items.length === 0 && (
           <div className="text-[11px] text-muted-foreground/70 text-center py-6 border border-dashed rounded-md">
@@ -363,33 +454,43 @@ function KanbanColumn({
 
 function KanbanCard({
   cedente,
-  onOpen,
+  canDrag,
+  onQuickView,
+  onRegister,
 }: {
   cedente: CedenteCard;
-  onOpen: (id: string) => void;
+  canDrag: boolean;
+  onQuickView: (c: CedenteCard) => void;
+  onRegister: (c: CedenteCard) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: cedente.id,
+    disabled: !canDrag,
   });
   const style = transform
     ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
     : undefined;
 
-  return (
+  const cardInner = (
     <div
       ref={setNodeRef}
       style={style}
-      onDoubleClick={() => onOpen(cedente.id)}
+      onDoubleClick={() => onQuickView(cedente)}
+      aria-disabled={!canDrag}
       className={cn(
         "rounded-md border bg-card p-2.5 hover:border-primary/40 hover:shadow-sm transition-colors",
         isDragging && "opacity-40",
+        !canDrag && "opacity-70",
       )}
     >
       <div className="flex items-start justify-between gap-1">
         <div
-          {...listeners}
-          {...attributes}
-          className="flex-1 min-w-0 cursor-grab active:cursor-grabbing"
+          {...(canDrag ? listeners : {})}
+          {...(canDrag ? attributes : {})}
+          className={cn(
+            "flex-1 min-w-0",
+            canDrag ? "cursor-grab active:cursor-grabbing" : "cursor-not-allowed",
+          )}
         >
           <div className="text-[12px] font-medium text-foreground leading-tight truncate">
             {cedente.razao_social}
@@ -400,22 +501,36 @@ function KanbanCard({
             </div>
           )}
         </div>
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onOpen(cedente.id);
-          }}
-          className="h-5 w-5 inline-flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted shrink-0"
-          aria-label="Abrir cedente"
-        >
-          <Eye className="h-3 w-3" />
-        </button>
+        <div className="flex items-center gap-0.5 shrink-0">
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onQuickView(cedente); }}
+            className="h-5 w-5 inline-flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted"
+            aria-label="Visualizar"
+          >
+            <Eye className="h-3 w-3" />
+          </button>
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onRegister(cedente); }}
+            className="h-5 w-5 inline-flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted"
+            aria-label="Registrar contato"
+          >
+            <Phone className="h-3 w-3" />
+          </button>
+        </div>
       </div>
+
+      {cedente.next_action && (
+        <div className="text-[11px] text-primary leading-tight mt-1.5 truncate">
+          → {cedente.next_action}
+        </div>
+      )}
+
       <div
-        {...listeners}
-        {...attributes}
-        className="cursor-grab active:cursor-grabbing"
+        {...(canDrag ? listeners : {})}
+        {...(canDrag ? attributes : {})}
+        className={canDrag ? "cursor-grab active:cursor-grabbing" : "cursor-not-allowed"}
       >
         <div className="flex items-center justify-between mt-1.5">
           {cedente.setor ? (
@@ -432,14 +547,32 @@ function KanbanCard({
       </div>
     </div>
   );
+
+  if (!canDrag) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div>{cardInner}</div>
+        </TooltipTrigger>
+        <TooltipContent side="right" className="text-[11px]">
+          Você não tem permissão para mover desta etapa
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+  return cardInner;
 }
 
 function ListView({
   rows,
   onOpen,
+  onQuickView,
+  onRegister,
 }: {
   rows: CedenteCard[];
   onOpen: (id: string) => void;
+  onQuickView: (c: CedenteCard) => void;
+  onRegister: (c: CedenteCard) => void;
 }) {
   return (
     <Card className="p-0 overflow-hidden">
@@ -451,6 +584,9 @@ function ListView({
             <TableHead className="text-[11px]">Setor</TableHead>
             <TableHead className="text-[11px]">Faturamento</TableHead>
             <TableHead className="text-[11px]">Estágio</TableHead>
+            <TableHead className="text-[11px]">Último contato</TableHead>
+            <TableHead className="text-[11px]">Próxima ação</TableHead>
+            <TableHead className="text-[11px] w-[80px]">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -482,12 +618,38 @@ function ListView({
                   {STAGE_LABEL[c.stage]}
                 </Badge>
               </TableCell>
+              <TableCell className="text-[12px] text-muted-foreground tabular-nums">
+                {fmtDate(c.last_contact_date)}
+              </TableCell>
+              <TableCell className="text-[12px] text-primary max-w-[180px] truncate">
+                {c.next_action ?? "—"}
+              </TableCell>
+              <TableCell onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center gap-0.5">
+                  <button
+                    type="button"
+                    onClick={() => onQuickView(c)}
+                    className="h-6 w-6 inline-flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted"
+                    aria-label="Visualizar"
+                  >
+                    <Eye className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onRegister(c)}
+                    className="h-6 w-6 inline-flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted"
+                    aria-label="Registrar contato"
+                  >
+                    <Phone className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </TableCell>
             </TableRow>
           ))}
           {rows.length === 0 && (
             <TableRow>
               <TableCell
-                colSpan={5}
+                colSpan={8}
                 className="text-center text-[12px] text-muted-foreground py-8"
               >
                 Nenhum cedente encontrado.

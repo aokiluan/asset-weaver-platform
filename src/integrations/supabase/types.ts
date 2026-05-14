@@ -53,6 +53,36 @@ export type Database = {
         }
         Relationships: []
       }
+      cedente_contact_activities: {
+        Row: {
+          cedente_id: string
+          created_at: string
+          description: string
+          id: string
+          occurred_at: string
+          type: Database["public"]["Enums"]["cedente_activity_type"]
+          user_id: string
+        }
+        Insert: {
+          cedente_id: string
+          created_at?: string
+          description: string
+          id?: string
+          occurred_at?: string
+          type: Database["public"]["Enums"]["cedente_activity_type"]
+          user_id?: string
+        }
+        Update: {
+          cedente_id?: string
+          created_at?: string
+          description?: string
+          id?: string
+          occurred_at?: string
+          type?: Database["public"]["Enums"]["cedente_activity_type"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       cedente_history: {
         Row: {
           cedente_id: string
@@ -562,6 +592,7 @@ export type Database = {
           estado: string | null
           faturamento_medio: number | null
           id: string
+          last_contact_date: string | null
           lead_id: string | null
           limite_aprovado: number | null
           logradouro: string | null
@@ -569,6 +600,7 @@ export type Database = {
           minuta_assinada_em: string | null
           minuta_assinada_por: string | null
           natureza_juridica: string | null
+          next_action: string | null
           nome_fantasia: string | null
           numero: string | null
           observacoes: string | null
@@ -601,6 +633,7 @@ export type Database = {
           estado?: string | null
           faturamento_medio?: number | null
           id?: string
+          last_contact_date?: string | null
           lead_id?: string | null
           limite_aprovado?: number | null
           logradouro?: string | null
@@ -608,6 +641,7 @@ export type Database = {
           minuta_assinada_em?: string | null
           minuta_assinada_por?: string | null
           natureza_juridica?: string | null
+          next_action?: string | null
           nome_fantasia?: string | null
           numero?: string | null
           observacoes?: string | null
@@ -640,6 +674,7 @@ export type Database = {
           estado?: string | null
           faturamento_medio?: number | null
           id?: string
+          last_contact_date?: string | null
           lead_id?: string | null
           limite_aprovado?: number | null
           logradouro?: string | null
@@ -647,6 +682,7 @@ export type Database = {
           minuta_assinada_em?: string | null
           minuta_assinada_por?: string | null
           natureza_juridica?: string | null
+          next_action?: string | null
           nome_fantasia?: string | null
           numero?: string | null
           observacoes?: string | null
@@ -2460,6 +2496,14 @@ export type Database = {
         | "financeiro"
         | "gestor_geral"
       approver_kind: "analista_credito" | "gestor_risco" | "comite"
+      cedente_activity_type:
+        | "ligacao"
+        | "whatsapp"
+        | "email"
+        | "reuniao"
+        | "visita"
+        | "nota"
+        | "tarefa"
       cedente_stage:
         | "novo"
         | "cadastro"
@@ -2639,6 +2683,15 @@ export const Constants = {
         "gestor_geral",
       ],
       approver_kind: ["analista_credito", "gestor_risco", "comite"],
+      cedente_activity_type: [
+        "ligacao",
+        "whatsapp",
+        "email",
+        "reuniao",
+        "visita",
+        "nota",
+        "tarefa",
+      ],
       cedente_stage: [
         "novo",
         "cadastro",
