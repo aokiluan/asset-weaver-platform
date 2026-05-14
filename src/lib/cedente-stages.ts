@@ -140,3 +140,76 @@ export const STAGE_PERMISSIONS: Record<CedenteStage, AppRole[]> = {
   ativo: [],
   inativo: [],
 };
+
+// Roles que podem DEVOLVER um cedente (de qualquer etapa) para "novo".
+const RETURN_ROLES: AppRole[] = [
+  "admin",
+  "cadastro",
+  "credito",
+  "comite",
+  "formalizacao",
+];
+
+/**
+ * Verifica se o usuário pode mover um cedente entre dois estágios via Pipeline.
+ * Não avalia gates de pendências (docs, parecer, etc.) — esses são checados
+ * dentro do detalhe do cedente, em `CedenteStageActions`.
+ */
+export function canMoveStage(
+  roles: AppRole[],
+  isOwner: boolean,
+  from: CedenteStage,
+  to: CedenteStage,
+  userId?: string | null,
+): { ok: boolean; reason?: string } {
+  if (from === to) return { ok: false, reason: "Cedente já está nesta etapa" };
+  if (roles.includes("admin") || roles.includes("gestor_geral")) return { ok: true };
+
+  // Devolução para "novo" (qualquer etapa interna)
+  if (to === "novo" && from !== "novo" && !isTerminal(from)) {
+    if (roles.some((r) => RETURN_ROLES.includes(r))) return { ok: true };
+    return { ok: false, reason: "Você não tem permissão para devolver ao Comercial" };
+  }
+
+  // Avanço linear (next stage)
+  const next = nextStage(from);
+  if (to === next) {
+    const allowed = STAGE_PERMISSIONS[from] ?? [];
+    if (allowed.some((r) => roles.includes(r))) return { ok: true };
+    // Owner override em "novo" → "cadastro"
+    if (from === "novo" && isOwner) return { ok: true };
+    return {
+      ok: false,
+      reason: `Você não tem permissão para enviar de ${STAGE_LABEL[from]} para ${STAGE_LABEL[to]}`,
+    };
+  }
+
+  return {
+    ok: false,
+    reason: "Movimento não permitido por aqui — abra o cedente para ver opções",
+  };
+}
+
+/**
+ * Existe alguma transição permitida a partir desta etapa para o usuário?
+ * Usado para habilitar/desabilitar o drag do card no Pipeline.
+ */
+export function canDragFromStage(
+  roles: AppRole[],
+  isOwner: boolean,
+  from: CedenteStage,
+): boolean {
+  if (isTerminal(from)) return false;
+  if (roles.includes("admin") || roles.includes("gestor_geral")) return true;
+  // Pode avançar?
+  const allowed = STAGE_PERMISSIONS[from] ?? [];
+  if (allowed.some((r) => roles.includes(r))) return true;
+  if (from === "novo" && isOwner) return true;
+  // Pode devolver?
+  if (from !== "novo" && roles.some((r) => RETURN_ROLES.includes(r))) return true;
+  return false;
+}
+
+function isTerminal(s: CedenteStage): boolean {
+  return s === "ativo" || s === "inativo";
+}
