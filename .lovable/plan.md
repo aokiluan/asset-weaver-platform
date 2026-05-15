@@ -1,29 +1,34 @@
-## Objetivo
+## Entendimento
 
-Substituir o filtro de status (Ativo / Inativo / Prospect) na tela `Investidores` (`/diretorio/investidores`) por um filtro baseado nos **estágios do pipeline de investidores** — os mesmos exibidos no Kanban/CRM (`Lead`, `Primeiro Contato`, `Em Negociação`, `Boleta em Andamento`, `Investidor Ativo`, `Manter Relacionamento`, `Perdido`).
+Hoje a tela `/diretorio/investidores` lista apenas registros da tabela `investidores` (cadastro definitivo, criado quando uma boleta é concluída). Por isso só aparece "luan" (que já é Investidor Ativo). Todos os demais leads do pipeline (Lead, Primeiro Contato, Em Negociação, Boleta em Andamento, Manter Relacionamento, Perdido) ficam invisíveis aqui — eles existem só em `investor_contacts`.
 
-## Como o vínculo funciona
+Você quer que esta tela passe a mostrar **todos os contatos do pipeline**, e não só os efetivados.
 
-A tabela `investidores` (cadastro definitivo) não tem coluna `stage`. O estágio mora em `investor_contacts.stage`. O elo entre os dois é a tabela `investor_boletas`, que possui `contact_id` (FK para `investor_contacts`) e `investidor_id` (FK para `investidores`) — preenchido quando a boleta é concluída e o investidor passa a constar no diretório.
+## Mudança proposta
 
-Para cada investidor, derivamos o estágio assim:
-1. Buscar a boleta mais recente do investidor (`investor_boletas` ordenada por `updated_at desc`).
-2. Pegar o `contact_id` dessa boleta e ler `investor_contacts.stage`.
-3. Se não houver boleta vinculada (ex.: investidor importado direto), exibir o estágio como "—".
+Trocar a fonte de dados da tela: a lista passa a ler de `investor_contacts` (todo o pipeline). Quando o contato já tiver virado investidor cadastrado (vínculo via `investor_boletas.investidor_id`), enriquecemos com dados de `investidores` (CNPJ, valor investido, perfil etc.).
 
-## Mudanças propostas
+### Detalhes (`src/pages/Investidores.tsx`)
 
-**`src/pages/Investidores.tsx`** (frontend, único arquivo):
+1. **Fetch principal**: `investor_contacts` (id, name, type, stage, ticket, contact_name, phone, last_contact_date, next_action) ordenado por `name`.
+2. **Fetch auxiliar**: `investor_boletas` (contact_id, investidor_id da boleta mais recente) + `investidores` (dados completos dos efetivados). Monta `Map<contact_id, investidor>`.
+3. **Renderização da lista**:
+   - Item: nome do contato + badge do estágio (`STAGE_LABEL`) + tipo (PF/PJ/assessoria/institucional). Se houver investidor vinculado, mostra também o CNPJ formatado.
+4. **Filtro de estágio**: continua igual, mas agora opera diretamente sobre `contact.stage`.
+5. **Painel de detalhe**:
+   - Cabeçalho: nome + badge estágio + badge tipo. Se houver investidor vinculado, mostra CNPJ; senão, mostra contato/telefone do pipeline.
+   - KPIs:
+     - Se vinculado a investidor: "Valor investido" (do `investidores.valor_investido`) e "Perfil".
+     - Se ainda não vinculado: "Ticket esperado" (do `contact.ticket`) e "Próxima ação" (do `contact.next_action`).
+   - Botão "Abrir detalhes" só aparece quando há investidor vinculado (rota `/diretorio/investidores/:id`); para leads puros, botão vira "Abrir no pipeline" → navega para o CRM com o contato selecionado (ou só esconde, se preferir manter simples).
+6. **KPIs do topo**:
+   - "Total no pipeline" → `investor_contacts.length`.
+   - "Investidores ativos" → contatos com `stage = investidor_ativo`.
+   - "Volume investido" → soma de `investidores.valor_investido` dos vinculados.
+   - "Ticket médio (pipeline)" → média de `contact.ticket` dos não-terminais.
 
-- Importar `STAGE_ORDER`, `STAGE_LABEL`, `InvestorStage` de `@/lib/investor-contacts`.
-- Trocar `STATUS_OPTIONS` (`ativo/inativo/prospect`) por `STAGE_ORDER`. O `<Select>` passa a listar "Todos os estágios" + cada `STAGE_LABEL[stage]`.
-- No `load()`, fazer um segundo fetch a `investor_boletas` (`select investidor_id,contact_id,updated_at`) e a `investor_contacts` (`select id,stage`) para construir um `Map<investidor_id, stage>`.
-- Aplicar o filtro por estágio em memória (`items.filter(i => stageMap.get(i.id) === stageFilter)`).
-- No card de detalhe e na lista, substituir o `Badge` que mostra `selected.status` (capitalize) por um `Badge` que mostra `STAGE_LABEL[stage] ?? "—"`.
-- Manter o campo `status` cru no banco intacto (não há migração).
+## Fora de escopo
 
-## Pontos fora de escopo
-
-- Não vamos alterar a coluna `status` da tabela `investidores` nem migrar dados.
-- Não criamos vínculo automático para investidores que ainda não passaram por boleta — eles aparecem com estágio "—" e ficam fora dos filtros de estágio específico (aparecem só em "Todos os estágios").
-- KPIs (Total cadastrado, Ativos, Volume investido, Ticket médio) continuam usando `investidores.status = 'ativo'` para preservar o significado financeiro atual.
+- Sem mudanças no banco.
+- Sem alteração na rota de detalhe do investidor cadastrado.
+- Importação/criação de novo contato continua sendo feita pelas telas do pipeline (CRM/Boletas).
