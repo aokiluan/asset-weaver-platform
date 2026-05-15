@@ -234,15 +234,15 @@ export default function Investidores() {
                 className="pl-9 h-9"
               />
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select value={stageFilter} onValueChange={setStageFilter}>
               <SelectTrigger className="h-8 text-xs">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos os status</SelectItem>
-                {STATUS_OPTIONS.map((s) => (
-                  <SelectItem key={s} value={s} className="capitalize">
-                    {s}
+                <SelectItem value="all">Todos os estágios</SelectItem>
+                {STAGE_ORDER.map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {STAGE_LABEL[s]}
                   </SelectItem>
                 ))}
               </SelectContent>
