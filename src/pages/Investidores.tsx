@@ -386,6 +386,14 @@ export default function Investidores() {
                       <ExternalLink className="h-4 w-4 mr-2" /> Abrir no pipeline
                     </Button>
                   )}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-destructive hover:text-destructive"
+                    onClick={() => setDeleteOpen(true)}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" /> Excluir
+                  </Button>
                 </div>
               </div>
 
