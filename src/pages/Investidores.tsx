@@ -73,7 +73,8 @@ export default function Investidores() {
   const [items, setItems] = useState<Investidor[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [stageFilter, setStageFilter] = useState<string>("all");
+  const [stageMap, setStageMap] = useState<Map<string, InvestorStage>>(new Map());
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -82,14 +83,38 @@ export default function Investidores() {
 
   const load = async () => {
     setLoading(true);
-    let q = supabase
+    const { data, error } = await supabase
       .from("investidores")
       .select(
         "id,razao_social,nome_fantasia,cnpj,tipo_pessoa,email,telefone,endereco,cidade,estado,perfil,status,valor_investido,observacoes,created_at",
       )
       .order("razao_social", { ascending: true });
-    if (statusFilter !== "all") q = q.eq("status", statusFilter);
-    const { data, error } = await q;
+
+    // Deriva o estágio de cada investidor a partir da boleta mais recente -> contato no pipeline
+    const [boletasRes, contactsRes] = await Promise.all([
+      supabase
+        .from("investor_boletas")
+        .select("investidor_id,contact_id,updated_at")
+        .not("investidor_id", "is", null)
+        .order("updated_at", { ascending: false }),
+      supabase.from("investor_contacts").select("id,stage"),
+    ]);
+
+    const contactStage = new Map<string, InvestorStage>();
+    for (const c of (contactsRes.data ?? []) as { id: string; stage: InvestorStage }[]) {
+      contactStage.set(c.id, c.stage);
+    }
+    const map = new Map<string, InvestorStage>();
+    for (const b of (boletasRes.data ?? []) as {
+      investidor_id: string;
+      contact_id: string;
+    }[]) {
+      if (map.has(b.investidor_id)) continue; // só a mais recente
+      const st = contactStage.get(b.contact_id);
+      if (st) map.set(b.investidor_id, st);
+    }
+    setStageMap(map);
+
     setLoading(false);
     if (error) {
       toast.error("Erro ao carregar", { description: error.message });
@@ -100,7 +125,7 @@ export default function Investidores() {
 
   useEffect(() => {
     load();
-  }, [statusFilter]); // eslint-disable-line
+  }, []);
 
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase();
