@@ -1,60 +1,29 @@
-# Boletas no sidebar + visualização em funil nos pipelines
+## Objetivo
 
-## 1. Mover "Boletas" para o sidebar (Relação com Investidores)
+Substituir o filtro de status (Ativo / Inativo / Prospect) na tela `Investidores` (`/diretorio/investidores`) por um filtro baseado nos **estágios do pipeline de investidores** — os mesmos exibidos no Kanban/CRM (`Lead`, `Primeiro Contato`, `Em Negociação`, `Boleta em Andamento`, `Investidor Ativo`, `Manter Relacionamento`, `Perdido`).
 
-**`src/components/AppSidebar.tsx`** — grupo `relacao_investidores`:
+## Como o vínculo funciona
 
-```
-Pipeline de Investidores  → /investidores/crm
-Boletas                   → /investidores/boletas   ← NOVO
-Investidores              → /diretorio/investidores
-```
+A tabela `investidores` (cadastro definitivo) não tem coluna `stage`. O estágio mora em `investor_contacts.stage`. O elo entre os dois é a tabela `investor_boletas`, que possui `contact_id` (FK para `investor_contacts`) e `investidor_id` (FK para `investidores`) — preenchido quando a boleta é concluída e o investidor passa a constar no diretório.
 
-Ícone novo: `Receipt` ou `FileText` (Phosphor) com wrapper `thin()`.
+Para cada investidor, derivamos o estágio assim:
+1. Buscar a boleta mais recente do investidor (`investor_boletas` ordenada por `updated_at desc`).
+2. Pegar o `contact_id` dessa boleta e ler `investor_contacts.stage`.
+3. Se não houver boleta vinculada (ex.: investidor importado direto), exibir o estágio como "—".
 
-A rota `/investidores/boletas` já existe — não há mudança em `App.tsx`. As abas internas em `InvestidoresCRM.tsx` e `InvestidoresBoletas.tsx` (`PageTabs` com tabs `Pipeline` / `Boletas`) podem ser **removidas** já que viram itens de sidebar — ficam só como `<PageTabs title=… tabs={[]} />`, mantendo o cabeçalho e ações.
+## Mudanças propostas
 
-### Badge de pendência no item "Boletas"
+**`src/pages/Investidores.tsx`** (frontend, único arquivo):
 
-Quando houver pelo menos 1 investidor em `stage = 'boleta_em_andamento'` SEM boleta aberta vinculada, mostrar um indicador no item da sidebar:
-- **Sidebar expandido:** `Badge` redondo com a contagem à direita do label (ex.: `2`).
-- **Sidebar colapsado:** dot vermelho no canto superior direito do ícone.
+- Importar `STAGE_ORDER`, `STAGE_LABEL`, `InvestorStage` de `@/lib/investor-contacts`.
+- Trocar `STATUS_OPTIONS` (`ativo/inativo/prospect`) por `STAGE_ORDER`. O `<Select>` passa a listar "Todos os estágios" + cada `STAGE_LABEL[stage]`.
+- No `load()`, fazer um segundo fetch a `investor_boletas` (`select investidor_id,contact_id,updated_at`) e a `investor_contacts` (`select id,stage`) para construir um `Map<investidor_id, stage>`.
+- Aplicar o filtro por estágio em memória (`items.filter(i => stageMap.get(i.id) === stageFilter)`).
+- No card de detalhe e na lista, substituir o `Badge` que mostra `selected.status` (capitalize) por um `Badge` que mostra `STAGE_LABEL[stage] ?? "—"`.
+- Manter o campo `status` cru no banco intacto (não há migração).
 
-**Implementação** (novo hook `src/hooks/useBoletasPendentes.ts`):
-1. Query inicial: contar `investor_contacts` em `boleta_em_andamento` que NÃO têm linha em `investor_boletas` com `status NOT IN ('concluida','cancelada')` — usar duas selects e fazer o diff em memória (mesmo padrão de `InvestidoresBoletas.tsx`).
-2. Subscription Realtime nas tabelas `investor_contacts` e `investor_boletas` para atualizar a contagem ao vivo.
-3. Retornar `{ count: number }`.
+## Pontos fora de escopo
 
-`AppSidebar` consome o hook e passa `badge` para `SidebarItem` apenas quando `item.url === '/investidores/boletas'` e `count > 0`. Estende `SidebarItem` com prop opcional `badge?: number`.
-
-> Realtime: `investor_contacts` e `investor_boletas` precisam estar na publication `supabase_realtime`. Se ainda não estiverem, criar migration adicionando.
-
-## 2. Visualização em funil nos pipelines
-
-Adicionar um terceiro modo no `ToggleGroup` de view, ao lado de `kanban` e `list`: ícone `Filter`/`Funnel`.
-
-**Novo componente compartilhado** `src/components/pipeline/FunnelView.tsx`:
-- Recebe `stages: Array<{ key, label, count, value, color? }>` e `onStageClick?(key)`.
-- Renderiza barras horizontais com largura proporcional à contagem (ou ao valor — toggle interno secundário "por nº" / "por valor").
-- Cada barra mostra: nome do estágio, contagem, valor compacto (BRL), e taxa de conversão vs o estágio anterior (%).
-- Visual ultra-compacto Nibo: barras h-7, label 12px, números tabulares, cores via tokens `--primary` com opacity decrescente, fundo `bg-muted`.
-- Estágios terminais (`isTerminal`) renderizados separados abaixo, em cinza, sem entrar no cálculo de conversão.
-
-**Integração:**
-- `src/pages/Pipeline.tsx` (Pipeline de Cedentes): adiciona `funnel` no ToggleGroup e ramo `view === "funnel"` que monta `stages` a partir de `STAGE_ORDER` × `filtered` (cedentes), com valor = `faturamento_medio`.
-- `src/pages/investidores/InvestidoresCRM.tsx`: idem com `STAGE_ORDER` de investidores e valor = `ticket`.
-
-Click numa etapa do funil filtra/scrolla — comportamento simples: alterna para `kanban` e foca a coluna correspondente (opcional, fora do MVP).
-
-## Detalhes técnicos
-
-- `STAGE_ORDER` e `STAGE_LABEL` já exportados em `src/lib/cedente-stages.ts` e `src/lib/investor-contacts.ts` — reaproveitar.
-- Conversão = `count[i] / count[0]` (do primeiro estágio não-terminal). Mostrar `—` quando `count[0] === 0`.
-- Ícone funil: `Funnel` do `@phosphor-icons/react` (já é a fonte de ícones do sidebar) e `Filter` de `lucide-react` para os toggle buttons (já usados em outros lugares).
-- Sem mudanças de schema, RLS ou edge functions, exceto a migration opcional de Realtime publication.
-
-## Fora de escopo
-
-- Reordenar/renomear estágios.
-- Drill-down ao clicar no funil (apenas troca de view, sem scroll automático).
-- Permissões: o item "Boletas" herda as regras já aplicadas ao grupo `relacao_investidores`.
+- Não vamos alterar a coluna `status` da tabela `investidores` nem migrar dados.
+- Não criamos vínculo automático para investidores que ainda não passaram por boleta — eles aparecem com estágio "—" e ficam fora dos filtros de estágio específico (aparecem só em "Todos os estágios").
+- KPIs (Total cadastrado, Ativos, Volume investido, Ticket médio) continuam usando `investidores.status = 'ativo'` para preservar o significado financeiro atual.

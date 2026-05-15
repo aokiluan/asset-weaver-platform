@@ -15,6 +15,11 @@ import { Search, Trash2, ExternalLink, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
+  STAGE_ORDER,
+  STAGE_LABEL,
+  type InvestorStage,
+} from "@/lib/investor-contacts";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -45,7 +50,7 @@ interface Investidor {
   created_at: string;
 }
 
-const STATUS_OPTIONS = ["ativo", "inativo", "prospect"];
+
 
 const fmtBRL = (v: number | null) =>
   v == null
@@ -68,7 +73,8 @@ export default function Investidores() {
   const [items, setItems] = useState<Investidor[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [stageFilter, setStageFilter] = useState<string>("all");
+  const [stageMap, setStageMap] = useState<Map<string, InvestorStage>>(new Map());
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -77,14 +83,38 @@ export default function Investidores() {
 
   const load = async () => {
     setLoading(true);
-    let q = supabase
+    const { data, error } = await supabase
       .from("investidores")
       .select(
         "id,razao_social,nome_fantasia,cnpj,tipo_pessoa,email,telefone,endereco,cidade,estado,perfil,status,valor_investido,observacoes,created_at",
       )
       .order("razao_social", { ascending: true });
-    if (statusFilter !== "all") q = q.eq("status", statusFilter);
-    const { data, error } = await q;
+
+    // Deriva o estágio de cada investidor a partir da boleta mais recente -> contato no pipeline
+    const [boletasRes, contactsRes] = await Promise.all([
+      supabase
+        .from("investor_boletas")
+        .select("investidor_id,contact_id,updated_at")
+        .not("investidor_id", "is", null)
+        .order("updated_at", { ascending: false }),
+      supabase.from("investor_contacts").select("id,stage"),
+    ]);
+
+    const contactStage = new Map<string, InvestorStage>();
+    for (const c of (contactsRes.data ?? []) as { id: string; stage: InvestorStage }[]) {
+      contactStage.set(c.id, c.stage);
+    }
+    const map = new Map<string, InvestorStage>();
+    for (const b of (boletasRes.data ?? []) as {
+      investidor_id: string;
+      contact_id: string;
+    }[]) {
+      if (map.has(b.investidor_id)) continue; // só a mais recente
+      const st = contactStage.get(b.contact_id);
+      if (st) map.set(b.investidor_id, st);
+    }
+    setStageMap(map);
+
     setLoading(false);
     if (error) {
       toast.error("Erro ao carregar", { description: error.message });
@@ -95,19 +125,23 @@ export default function Investidores() {
 
   useEffect(() => {
     load();
-  }, [statusFilter]); // eslint-disable-line
+  }, []);
 
   const filtered = useMemo(() => {
+    let list = items;
+    if (stageFilter !== "all") {
+      list = list.filter((c) => stageMap.get(c.id) === stageFilter);
+    }
     const s = search.trim().toLowerCase();
-    if (!s) return items;
+    if (!s) return list;
     const digits = s.replace(/\D/g, "");
-    return items.filter(
+    return list.filter(
       (c) =>
         c.razao_social.toLowerCase().includes(s) ||
         (c.nome_fantasia ?? "").toLowerCase().includes(s) ||
         (digits && c.cnpj.replace(/\D/g, "").includes(digits)),
     );
-  }, [items, search]);
+  }, [items, search, stageFilter, stageMap]);
 
   useEffect(() => {
     if (filtered.length === 0) {
@@ -200,15 +234,15 @@ export default function Investidores() {
                 className="pl-9 h-9"
               />
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select value={stageFilter} onValueChange={setStageFilter}>
               <SelectTrigger className="h-8 text-xs">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos os status</SelectItem>
-                {STATUS_OPTIONS.map((s) => (
-                  <SelectItem key={s} value={s} className="capitalize">
-                    {s}
+                <SelectItem value="all">Todos os estágios</SelectItem>
+                {STAGE_ORDER.map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {STAGE_LABEL[s]}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -282,8 +316,10 @@ export default function Investidores() {
                       </p>
                     )}
                   <div className="flex items-center gap-2 mt-2">
-                    <Badge variant="outline" className="capitalize">
-                      {selected.status}
+                    <Badge variant="outline">
+                      {stageMap.get(selected.id)
+                        ? STAGE_LABEL[stageMap.get(selected.id)!]
+                        : "Sem pipeline"}
                     </Badge>
                     <Badge variant="outline" className="uppercase text-[10px]">
                       {selected.tipo_pessoa}
