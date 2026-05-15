@@ -128,16 +128,20 @@ export default function Investidores() {
   }, []);
 
   const filtered = useMemo(() => {
+    let list = items;
+    if (stageFilter !== "all") {
+      list = list.filter((c) => stageMap.get(c.id) === stageFilter);
+    }
     const s = search.trim().toLowerCase();
-    if (!s) return items;
+    if (!s) return list;
     const digits = s.replace(/\D/g, "");
-    return items.filter(
+    return list.filter(
       (c) =>
         c.razao_social.toLowerCase().includes(s) ||
         (c.nome_fantasia ?? "").toLowerCase().includes(s) ||
         (digits && c.cnpj.replace(/\D/g, "").includes(digits)),
     );
-  }, [items, search]);
+  }, [items, search, stageFilter, stageMap]);
 
   useEffect(() => {
     if (filtered.length === 0) {
