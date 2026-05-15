@@ -50,7 +50,7 @@ interface Investidor {
   created_at: string;
 }
 
-const STATUS_OPTIONS = ["ativo", "inativo", "prospect"];
+
 
 const fmtBRL = (v: number | null) =>
   v == null
