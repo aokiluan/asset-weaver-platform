@@ -15,6 +15,11 @@ import { Search, Trash2, ExternalLink, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
+  STAGE_ORDER,
+  STAGE_LABEL,
+  type InvestorStage,
+} from "@/lib/investor-contacts";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
