@@ -316,8 +316,10 @@ export default function Investidores() {
                       </p>
                     )}
                   <div className="flex items-center gap-2 mt-2">
-                    <Badge variant="outline" className="capitalize">
-                      {selected.status}
+                    <Badge variant="outline">
+                      {stageMap.get(selected.id)
+                        ? STAGE_LABEL[stageMap.get(selected.id)!]
+                        : "Sem pipeline"}
                     </Badge>
                     <Badge variant="outline" className="uppercase text-[10px]">
                       {selected.tipo_pessoa}
