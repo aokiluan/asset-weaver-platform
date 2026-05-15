@@ -11,8 +11,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, ExternalLink, Wallet } from "lucide-react";
+import { Search, ExternalLink, Wallet, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import {
   STAGE_ORDER,
@@ -76,6 +86,8 @@ export default function Investidores() {
   const [search, setSearch] = useState("");
   const [stageFilter, setStageFilter] = useState<string>("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     document.title = "Investidores | Securitizadora";
@@ -374,6 +386,14 @@ export default function Investidores() {
                       <ExternalLink className="h-4 w-4 mr-2" /> Abrir no pipeline
                     </Button>
                   )}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-destructive hover:text-destructive"
+                    onClick={() => setDeleteOpen(true)}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" /> Excluir
+                  </Button>
                 </div>
               </div>
 
@@ -474,6 +494,70 @@ export default function Investidores() {
           )}
         </div>
       </div>
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir contato do pipeline?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {selected && (
+                <>
+                  Esta ação remove permanentemente <b>{selected.name}</b> e todo o
+                  histórico de atividades vinculado.
+                  {selectedInvestor && (
+                    <>
+                      {" "}
+                      O cadastro do investidor (CNPJ {fmtDoc(selectedInvestor.cnpj)})
+                      <b> não será excluído</b> — apague-o pela tela de detalhes
+                      do investidor, se necessário.
+                    </>
+                  )}
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={async (e) => {
+                e.preventDefault();
+                if (!selected) return;
+                setDeleting(true);
+                const { error: bErr } = await supabase
+                  .from("investor_boletas")
+                  .delete()
+                  .eq("contact_id", selected.id);
+                if (bErr) {
+                  setDeleting(false);
+                  toast.error("Erro ao excluir boletas vinculadas", {
+                    description: bErr.message,
+                  });
+                  return;
+                }
+                const { error } = await supabase
+                  .from("investor_contacts")
+                  .delete()
+                  .eq("id", selected.id);
+                setDeleting(false);
+                if (error) {
+                  toast.error("Erro ao excluir contato", {
+                    description: error.message,
+                  });
+                  return;
+                }
+                toast.success("Contato excluído");
+                setDeleteOpen(false);
+                setSelectedId(null);
+                load();
+              }}
+            >
+              {deleting ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
