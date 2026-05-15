@@ -494,6 +494,70 @@ export default function Investidores() {
           )}
         </div>
       </div>
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir contato do pipeline?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {selected && (
+                <>
+                  Esta ação remove permanentemente <b>{selected.name}</b> e todo o
+                  histórico de atividades vinculado.
+                  {selectedInvestor && (
+                    <>
+                      {" "}
+                      O cadastro do investidor (CNPJ {fmtDoc(selectedInvestor.cnpj)})
+                      <b> não será excluído</b> — apague-o pela tela de detalhes
+                      do investidor, se necessário.
+                    </>
+                  )}
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={async (e) => {
+                e.preventDefault();
+                if (!selected) return;
+                setDeleting(true);
+                const { error: bErr } = await supabase
+                  .from("investor_boletas")
+                  .delete()
+                  .eq("contact_id", selected.id);
+                if (bErr) {
+                  setDeleting(false);
+                  toast.error("Erro ao excluir boletas vinculadas", {
+                    description: bErr.message,
+                  });
+                  return;
+                }
+                const { error } = await supabase
+                  .from("investor_contacts")
+                  .delete()
+                  .eq("id", selected.id);
+                setDeleting(false);
+                if (error) {
+                  toast.error("Erro ao excluir contato", {
+                    description: error.message,
+                  });
+                  return;
+                }
+                toast.success("Contato excluído");
+                setDeleteOpen(false);
+                setSelectedId(null);
+                load();
+              }}
+            >
+              {deleting ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
